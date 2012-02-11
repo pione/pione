@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+# -*- ruby-mode -*-
+
+require 'innocent-white/tuple-space-receiver'
+require 'innocent-white/agent/broker'
+
+# tuple space receiver
+receiver = InnocentWhite::TupleSpaceReceiver.instance
+
+# broker
+broker = InnocentWhite::Agent[:broker].new(resource: 4)
+broker.start_service
+
+# regist broker
+receiver.regist(broker)
+
+# wait
+DRb.thread.join

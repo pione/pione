@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+# -*- ruby-mode -*-
+
+require 'innocent-white/tuple-space-provider'
+require 'innocent-white/simulator/agent/file-generator'
+require 'innocent-white/agent/process-manager'
+
+# tuple space provider
+provider = InnocentWhite::TupleSpaceProvider.instance
+
+# server
+server = InnocentWhite::TupleSpaceServer.new(resource: 2)
+
+# regist tuple space server
+provier.regist server
+
+# file provider
+range = "test-001".."test-100"
+file_generator = InnocentWhite::Agent[:file_generator].new(range, "a")
+file_generator.run(server)
+
+# process manager
+manager = InnocentWhite::Agent[:process_manager].new(doc)
+manager.run(server)
+
+DRb.thread.join
