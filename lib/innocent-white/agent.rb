@@ -7,16 +7,31 @@ module InnocentWhite
       TABLE[type]
     end
 
-    # Define a agent of the type.
-    def self.define_agent(type, klass)
-      TABLE[type] = klass
+    # Set a agent of the system.
+    def self.set_agent(klass)
+      TABLE[klass.agent_type] = klass
     end
 
     class Base
+      # -- class methods --
+
+      # Set the agent type.
+      def self.set_agent_type(agent_type)
+        @agent_type = agent_type
+      end
+
+      # Return the agent type.
+      def self.agent_type
+        @agent_type
+      end
+
+      # -- instance methods --
+
       attr_reader :state
       attr_reader :runnable
       attr_reader :thread
       attr_reader :agent_id
+      attr_reader :agent_type
 
       # Initialize agent's state.
       def initialize
@@ -30,12 +45,15 @@ module InnocentWhite
         @runnable = false
       end
 
-      def change_tuplespace(tuplespace)
-        @next_tuplespace = tuplespace
+      # Change tuple space.
+      def change_tuple_space(tuple_space)
+        @next_tuple_space = tuple_space
       end
 
+      # Convert a agent tuple.
       def to_agent_tuple
-        Tuple[:agent].new(agent_id: @agent_id)
+        Tuple[:agent].new(agent_type: self.class.agent_type,
+                          agent_id: @agent_id)
       end
 
       private
@@ -48,7 +66,7 @@ module InnocentWhite
           @runnable = true
 
           # task loop
-          white @runnable do
+          while @runnable do
             # tuple space
             if @next_tuplespace
               ts = @next_tuplespace
@@ -56,7 +74,7 @@ module InnocentWhite
               @tuple_space = ts
             end
             # do task
-            eval b
+            b.call
           end
 
           # stop

@@ -9,6 +9,17 @@ describe "TupleSpaceServer" do
     @ts_server = TupleSpaceServer.new(task_worker_resource: 4)
   end
 
+  it "should raise ArgumentError" do
+    should.raise(ArgumentError) { TupleSpaceServer.new }
+  end
+
+  it "should count tuple size" do
+    @ts_server.write([:test, :a])
+    @ts_server.count_tuple([:test, nil]).should == 1
+    @ts_server.write([:test, :b])
+    @ts_server.count_tuple([:test, nil]).should == 2
+  end
+
   it "should count worker" do
     @ts_server.current_task_worker_size.should == 0
     t1 = Tuple[:agent].new(agent_type: :task_worker, agent_id: Util.uuid)

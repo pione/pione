@@ -7,12 +7,19 @@ module InnocentWhite
       @ts = Rinda::TupleSpace.new
       if data.has_key?(:task_worker_resource)
         write(Tuple[:task_worker_resource].new(number: data[:task_worker_resource]))
+      else
+        raise ArgumentError
       end
     end
 
     # Return the worker resource size of the server.
     def task_worker_resource
       read(Tuple[:task_worker_resource].any).to_tuple.number
+    end
+
+    # Return the number of tuples matched with specified tuple.
+    def count_tuple(tuple)
+      read_all(tuple).size
     end
 
     # Return the current worker size of the server.

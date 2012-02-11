@@ -3,6 +3,8 @@ require 'innocent-white/agent'
 module InnocentWhite
   module Agent
     class TaskWorker < Base
+      set_agent_type :task_worker
+
       attr_accessor :tuple_space_server
 
       def initialize(ts_server)
@@ -19,8 +21,7 @@ module InnocentWhite
       # Start running for processing tasks
       def run
         start do
-          task = @tuple_space_server.take(Tuple[:task].any)
-          work task
+          work(@tuple_space_server.take(Tuple[:task].any))
         end
       end
 
@@ -31,6 +32,6 @@ module InnocentWhite
       end
     end
 
-    define_agent(:task_worker, TaskWorker)
+    set_agent TaskWorker
   end
 end

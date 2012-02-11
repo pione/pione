@@ -1,0 +1,5 @@
+Required gems for use:
+uuidtools
+
+Required gems for development:
+bacon
