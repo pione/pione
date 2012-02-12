@@ -2,11 +2,10 @@ module InnocentWhite
   module Simulator
     module Agent
       class FileGenerator < InnocentWhite::Agent::Base
-        def initialize(range, ext)
-          super()
+        def initialize(ts_server, range, ext)
+          super(ts_server)
           @range = range
           @ext = ext
-          @ts_server = nil
         end
 
         def data_tuple(basename)
@@ -19,11 +18,11 @@ module InnocentWhite
         end
 
         def run(server)
-          @ts_server = server
           @range.to_a.each do |basename|
             tuple = data_tuple(basename)
-            @ts_server.write(tuple)
+            @taple_space_server.write(tuple)
           end
+          stop
         end
       end
     end
