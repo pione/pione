@@ -3,31 +3,34 @@ require 'innocent-white/agent'
 module InnocentWhite
   module Agent
     class TaskWorker < Base
+      class TaskWorkerStatus < AgentStatus
+        define_sub_state :running, :task_waiting
+        define_sub_state :running, :task_processing
+      end
+
+      set_status_class TaskWorkerStatus
       set_agent_type :task_worker
 
       attr_accessor :tuple_space_server
 
       def initialize(ts_server)
-        super()
-        @tuple_space_server = ts_server
+        super(ts_server)
         hello()
-        run()
-      end
-
-      def hello
-        @tuple_space_server.write(self.to_agent_tuple)
+        unless start_running()
+          raise
+        end
       end
 
       # Start running for processing tasks
       def run
-        start do
-          work(@tuple_space_server.take(Tuple[:task].any))
-        end
+        @status.task_waiting
+        process_task(@tuple_space_server.take(Tuple[:task].any))
       end
 
       private
 
-      def work(task)
+      def process_task(task)
+        @status.task_processing
         # dummy
       end
     end

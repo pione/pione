@@ -16,6 +16,13 @@ describe "TaskWorker" do
                               outputs: ["1.b"])
   end
 
+  it "should wait tasks" do
+    sleep 0.05
+    @worker1.status.should.be.task_waiting
+    @worker2.status.should.be.task_waiting
+    @worker3.status.should.be.task_waiting
+  end
+
   it "should announce that the worker go into the tuple space server" do
     tuple1 = @worker1.to_agent_tuple
     tuple1.should == Tuple[:agent].new(agent_type: :task_worker,
@@ -31,7 +38,7 @@ describe "TaskWorker" do
 
   it "should work" do
     @ts_server.write(@task1)
-    sleep 0.1
+    sleep 0.05
     @ts_server.count_tuple(Tuple[:task].any).should == 0
   end
 

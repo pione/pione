@@ -5,6 +5,7 @@ module InnocentWhite
   class TupleSpaceServer
     def initialize(data={})
       @ts = Rinda::TupleSpace.new
+      def @ts.to_s;"#<Rinda::TupleSpace>" end
       if data.has_key?(:task_worker_resource)
         write(Tuple[:task_worker_resource].new(number: data[:task_worker_resource]))
       else
@@ -44,6 +45,14 @@ module InnocentWhite
     # Shutdown the server.
     def shutdown
       write(Tuple[:tuple_server_status].new(status: :stop))
+    end
+
+    def report
+      txt = <<-REPORT
+task_worker_resource: #{task_worker_resource}
+current_task_worker_size: #{current_task_worker_size}
+tuples:
+REPORT
     end
 
     private
