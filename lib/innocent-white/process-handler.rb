@@ -23,6 +23,10 @@ module InnocentWhite
         @sentences = []
         @callers = []
       end
+
+      def find()
+        
+      end
     end
 
     class Action < ModuleBase
