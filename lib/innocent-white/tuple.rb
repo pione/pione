@@ -91,6 +91,8 @@ module InnocentWhite
     define_format [:parent_agent, :parent_id, :child_id]
     define_format [:log, :level, :message]
     define_format [:task_worker_resource, :number]
+    define_format [:request_module, :module_name]
+    define_format [:module, :module_name, :content, :status]
   end
 end
 

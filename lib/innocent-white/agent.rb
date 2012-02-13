@@ -1,4 +1,5 @@
 require 'innocent-white/util'
+require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
 
 module InnocentWhite
