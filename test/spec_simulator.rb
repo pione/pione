@@ -16,7 +16,7 @@ describe "Simulator" do
       @ts_server.count_tuple(Tuple[:data].any).should == 100
       should.not.raise(Rinda::RequestExpiredError) do
         (1..100).each do |i|
-          tuple = Tuple[:data].new(path: "input/#{i}.a", time: nil)
+          tuple = Tuple[:data].new(name: "#{i}.a", path: "/")
           @ts_server.read(tuple, 0)
         end
       end

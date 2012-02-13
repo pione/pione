@@ -10,7 +10,7 @@ module InnocentWhite
         raise ArgumentError unless data.has_key?(:inputs)
         raise ArgumentError unless data.has_key?(:outputs)
         raise ArgumentError unless data.has_key?(:content)
-        
+
         klass = Class.new(self) do
           @inputs_definition = data[:inputs]
           @outputs_definition = data[:outputs]
@@ -64,24 +64,34 @@ module InnocentWhite
       attr_reader :params
       attr_reader :variable
 
-      def initialize(inputs, params={})
+      def initialize(inputs=[], params={})
+        raise ArugmentError unless inputs.size == inputs_definition.size
+
         # FIXME: bad
         @inputs = inputs
         @outputs = make_outputs
-        
+
         # variable table
         @variable = params.clone
       end
 
       private
 
+      def inputs_definition
+        self.class.inputs_definition
+      end
+
       def make_outputs
         # FIXME: bad bad
-        input = @inputs.first
-        input_def = self.class.inputs_definition.first
-        md = input_def.match(input)
-        output_def = self.class.outputs_definition.first
-        [output_def.gsub(/\{\$(\d)\}/){md["\1".to_i]}] # worst!
+        if not(self.class.outputs_definition.empty?)
+          input = @inputs.first
+          input_def = self.class.inputs_definition.first
+          md = input_def.match(input)
+          output_def = self.class.outputs_definition.first
+          [output_def.gsub(/\{\$(\d)\}/){md["\1".to_i]}] # worst!
+        else
+          []
+        end
       end
 
       # Make auto-variables.
