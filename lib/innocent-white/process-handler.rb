@@ -3,42 +3,101 @@ require 'innocent-white/util'
 
 module InnocentWhite
   module ProcessHandler
-    class ModuleBase
+    class BaseProcess
+      # -- class methods --
+
+      def self.define(data)
+        raise ArgumentError unless data.has_key?(:inputs)
+        raise ArgumentError unless data.has_key?(:outputs)
+        raise ArgumentError unless data.has_key?(:content)
+        
+        klass = Class.new(self) do
+          @inputs_definition = data[:inputs]
+          @outputs_definition = data[:outputs]
+          @params_definitioni = data[:params] || []
+          @content = data[:content]
+        end
+
+      end
+
+      # Return the inputs definition.
+      def self.inputs_definition
+        @inputs_definition
+      end
+
+      # Return the outputs definition.
+      def self.outputs_definition
+        @outputs_definition
+      end
+
+      # Return the parameters definition.
+      def self.params_definition
+        @params_definition
+      end
+
+      # Return the content.
+      def self.content
+        @content
+      end
+
+      # Catch input data from tuple space server.
+      def self.catch_inputs(ts_server, call_path)
+        # FIXME: input handling is very poor now.
+        @catched = @catched || []
+        input = inputs_definition.first
+        data = Tuple[:data].new(name: input,
+                                path: call_path)
+        tuples = ts_server.read_all(data).map{|t| t.to_tuple}
+        tuple = tuples.select{|tuple| not(@catched.include?(tuple.name))}.first
+        begin
+          @catched << tuple.name
+          return [tuple.name]
+        rescue
+          return nil
+        end
+      end
+
+      # -- instance methods --
+
       attr_reader :inputs
       attr_reader :outputs
       attr_reader :params
+      attr_reader :variable
 
-      def initialize
-        @inputs = []
-        @outputs = []
-        @params = []
+      def initialize(inputs, params={})
+        # FIXME: bad
+        @inputs = inputs
+        @outputs = make_outputs
+        
+        # variable table
+        @variable = params.clone
+      end
+
+      private
+
+      def make_outputs
+        # FIXME: bad bad
+        input = @inputs.first
+        input_def = self.class.inputs_definition.first
+        md = input_def.match(input)
+        output_def = self.class.outputs_definition.first
+        [output_def.gsub(/\{\$(\d)\}/){md["\1".to_i]}] # worst!
+      end
+
+      # Make auto-variables.
+      def make_auto_variables
+        # FIXME: bad bad bad
+        @variable["OUTPUT"] = @output.first
       end
     end
 
-    class Rule < ModuleBase
-      attr_reader :callers
-
-      def initialize
-        super()
-        @sentences = []
-        @callers = []
-      end
-
-      def find()
+    class Rule < BaseProcess
+      def excute
         
       end
     end
 
-    class Action < ModuleBase
-      attr_accessor :content
-      attr_reader :variable
-
-      def initialize(data={})
-        super()
-        @content = data[:content]
-        @variable = Hash.new
-      end
-
+    class Action < BaseProcess
       def execute
         write_shell_script {|path| shell path}
       end
@@ -46,12 +105,12 @@ module InnocentWhite
       private
 
       def expand_variables(content)
-        @content.gsub(/\{\$(.+?)\}/){@variable[$1]}
+        content.gsub(/\{\$(.+?)\}/){@variable[$1]}
       end
 
       def write_shell_script(&b)
         file = Tempfile.new(Util.uuid)
-        file.print(expand_variables(@content))
+        file.print(expand_variables(self.class.content))
         file.close(false)
         return b.call(file.path)
       end
@@ -59,27 +118,6 @@ module InnocentWhite
       def shell(path)
         sh = @variable["SHELL"] || "/bin/sh"
         `#{sh} #{path}`
-      end
-    end
-
-    class Caller
-      def initialize(name, content)
-        @name = name
-        @content = content
-      end
-
-      def inputs
-        
-      end
-
-      def outputs
-
-      end
-
-      def match(data)
-        inputs.each do |input|
-          input
-        end
       end
     end
   end

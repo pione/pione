@@ -16,7 +16,7 @@ module InnocentWhite
 
         def data_tuple(basename)
           name = filename(basename)
-          Tuple[:data].new(name: name, path:"input/#{name}", time: Time.now)
+          Tuple[:data].new(name: name, path:"/", time: Time.now)
         end
 
         def filename(basename)
