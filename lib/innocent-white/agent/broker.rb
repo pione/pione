@@ -64,6 +64,11 @@ module InnocentWhite
 
       end
 
+      # Update tuple space server list.
+      def update_tuple_space_servers(tuple_space_servers)
+        @tuple_space_servers = tuple_space_servers
+      end
+
       private
 
       def run
