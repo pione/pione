@@ -5,7 +5,7 @@ module InnocentWhite
     class Logger < Base
       set_agent_type :logger
       
-      def initialize(ts_server, out=$STDOUT)
+      def initialize(ts_server, out=$stdout)
         super(ts_server)
         @out = out
         start_running

@@ -1,6 +1,7 @@
 require 'innocent-white/util'
 require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
+require 'innocent-white/innocent-white-object'
 
 module InnocentWhite
   class AgentStatus
@@ -98,7 +99,7 @@ module InnocentWhite
       TABLE[klass.agent_type] = klass
     end
 
-    class Base
+    class Base < InnocentWhiteObject
       # -- class methods --
 
       # Set the agent type.
@@ -132,15 +133,21 @@ module InnocentWhite
         @__runnable__ = nil
         @agent_id = Util.uuid
         @tuple_space_server = ts_server
+        @__next_tuple_space_server__ = nil
+      end
+
+      def agent_type
+        self.class.agent_type
       end
 
       def hello
-        puts "hello #{@tuple_space_server}" if $DEBUG
+        msg = "hello, I am #{uuid}"
+        log(:debug, msg)
         @tuple_space_server.write(self.to_agent_tuple)
       end
 
       def bye
-        puts "bye #{@tuple_space_server}" if $DEBUG
+        log(:debug, "bye, I am #{uuid}")
         @tuple_space_server.take(self.to_agent_tuple, 0.1)
       end
 
@@ -171,6 +178,12 @@ module InnocentWhite
       def to_agent_tuple
         Tuple[:agent].new(agent_type: self.class.agent_type,
                           agent_id: @agent_id)
+      end
+
+      # Log a message.
+      def log(level, msg)
+        req = Tuple[:log].new(level: level, message: "#{agent_type}: #{msg}")
+        @tuple_space_server.write(req)
       end
 
       private

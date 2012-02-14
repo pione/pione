@@ -3,19 +3,25 @@
 
 require 'innocent-white/tuple-space-provider'
 require 'innocent-white/simulator/input-generator'
+require 'innocent-white/agent/logger'
 require 'innocent-white/agent/process-manager'
+require 'innocent-white/process-handler'
 
 Thread.abort_on_exception = true
 
+DRb.start_service
+
 # tuple space provider
-#provider = InnocentWhite::TupleSpaceProvider.instance
-provider = InnocentWhite.tuple_space_provider
+provider = InnocentWhite::TupleSpaceProvider.get
 
 # server
 server = InnocentWhite::TupleSpaceServer.new(task_worker_resource: 2)
 
-# regist tuple space server
-provider.register server
+# register tuple space server
+provider.add(server)
+
+# logger
+InnocentWhite::Agent[:logger].new(server)
 
 # file provider
 range = "test-001".."test-100"
@@ -24,7 +30,7 @@ InnocentWhite::Agent[:input_generator].new(server, range, "a")
 # process definition document
 main_definition = {inputs: [/test-(\d{3})\.a/], outputs: ["test-{$1}.b"], content: "expr {$VAL_INPUT} \\* 2"}
 main = InnocentWhite::ProcessHandler::Action.define(main_definition)
-doc = { :main => main }
+doc = { "/main" => main }
 
 # process manager
 InnocentWhite::Agent[:process_manager].new(server, doc)

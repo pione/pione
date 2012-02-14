@@ -38,6 +38,8 @@ module InnocentWhite
         output = task
         task_id = task.task_id
 
+        log(:debug, "task prcessing for #{path}(#{inputs.join(',')})")
+
         # excute the process
         mod = Tuple[:module].new(path: task.name, statue: :known)
         process_class = @tuple_space_server.read(mod).to_tuple

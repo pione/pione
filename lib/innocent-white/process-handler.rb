@@ -49,6 +49,7 @@ module InnocentWhite
                                 path: call_path)
         tuples = ts_server.read_all(data).map{|t| t.to_tuple}
         tuple = tuples.select{|tuple| not(@catched.include?(tuple.name))}.first
+        return nil if tuple.nil?
         begin
           @catched << tuple.name
           return [tuple.name]

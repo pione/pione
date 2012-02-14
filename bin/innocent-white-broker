@@ -4,15 +4,17 @@
 require 'innocent-white/tuple-space-receiver'
 require 'innocent-white/agent/broker'
 
+Thread.abort_on_exception = true
+
 # tuple space receiver
-receiver = InnocentWhite::TupleSpaceReceiver.instance
+receiver = InnocentWhite::TupleSpaceReceiver.get
 
 # broker
 broker = InnocentWhite::Agent[:broker].new(resource: 4)
-broker.start_service
+#broker.start_service
 
 # regist broker
-receiver.regist(broker)
+receiver.register(broker)
 
 # wait
 DRb.thread.join

@@ -27,6 +27,7 @@ module InnocentWhite
           @range.to_a.each do |basename|
             tuple = data_tuple(basename)
             @tuple_space_server.write(tuple)
+            log(:debug, "generate #{basename}")
           end
           stop
         end

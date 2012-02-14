@@ -84,7 +84,7 @@ module InnocentWhite
           end
 
           # update
-          @agents.each{|agent| agent.update_tuple_space_servers(@tuple_space_servers.clone)}
+          @agents.each{|agent| agent.update_tuple_space_servers(tuple_space_servers)}
 
           sleep 1
         end

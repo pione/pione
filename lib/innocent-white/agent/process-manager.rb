@@ -15,6 +15,7 @@ module InnocentWhite
 
       def initialize(ts_server, document)
         super(ts_server)
+        raise ArgumentError unless document.has_key?("/main")
         @document = document
         load_document(document)
         @output_threads = []
