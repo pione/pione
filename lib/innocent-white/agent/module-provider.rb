@@ -14,7 +14,7 @@ module InnocentWhite
       end
 
       def add_module(path, content)
-        raise ArgumentError unless content.kind_of?(ProcessHandler::ModuleBase)
+        raise ArgumentError unless content.ancestors.include?(ProcessHandler::BaseProcess)
         @table[path] = content
       end
 

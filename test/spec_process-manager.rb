@@ -17,7 +17,7 @@ describe "ProcessManager" do
   end
   
   it "should make tasks" do
-    sleep 0.1
+    sleep 0.2
     @ts_server.count_tuple(Tuple[:task].any).should == 10
   end
 

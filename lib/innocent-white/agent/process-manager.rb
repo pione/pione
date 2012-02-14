@@ -38,9 +38,11 @@ module InnocentWhite
                                   params: params,
                                   task_id: Util.uuid)
           @tuple_space_server.write(task)
+
+          # confirm outputs
           outputs.each do |name|
             @output_threads << Thread.new do
-              data = Tuple[:data].new(name: name, path: "/")
+              data = Tuple[:data].new(name: name)
               @tuple_space_server.read(data)
             end
           end
