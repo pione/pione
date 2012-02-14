@@ -32,15 +32,16 @@ module InnocentWhite
         if inputs = main.catch_inputs(@tuple_space_server, "/")
           outputs = main.new(inputs).outputs
           params = []
-          @tuple_space_server.write(Tuple[:task].new(name: "/main",
-                                                     inputs: inputs,
-                                                     outputs: outputs,
-                                                     params: params,
-                                                     task_id: Util.uuid))
+          task = Tuple[:task].new(name: "/main",
+                                  inputs: inputs,
+                                  outputs: outputs,
+                                  params: params,
+                                  task_id: Util.uuid)
+          @tuple_space_server.write(task)
           outputs.each do |name|
             @output_threads << Thread.new do
-              @tuple_space_server.read(Tuple[:data].new(name: name,
-                                                        path: "/"))
+              data = Tuple[:data].new(name: name, path: "/")
+              @tuple_space_server.read(data)
             end
           end
         else

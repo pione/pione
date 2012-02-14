@@ -81,13 +81,17 @@ module InnocentWhite
         self.class.inputs_definition
       end
 
+      def outputs_definition
+        self.class.outputs_definition
+      end
+
       def make_outputs
         # FIXME: bad bad
         if not(self.class.outputs_definition.empty?)
           input = @inputs.first
-          input_def = self.class.inputs_definition.first
+          input_def = inputs_definition.first
           md = input_def.match(input)
-          output_def = self.class.outputs_definition.first
+          output_def = outputs_definition.first
           [output_def.gsub(/\{\$(\d)\}/){md["\1".to_i]}] # worst!
         else
           []
@@ -102,7 +106,7 @@ module InnocentWhite
     end
 
     class Rule < BaseProcess
-      def excute
+      def execute
         
       end
     end

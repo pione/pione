@@ -1,4 +1,5 @@
 require 'innocent-white/agent'
+require 'innocent-white/process-handler'
 
 module InnocentWhite
   module Agent
@@ -24,14 +25,32 @@ module InnocentWhite
       # Start running for processing tasks
       def run
         @status.task_waiting
-        process_task(@tuple_space_server.take(Tuple[:task].any))
+        process_task(@tuple_space_server.take(Tuple[:task].any).to_tuple)
       end
 
       private
 
       def process_task(task)
         @status.task_processing
-        # dummy
+
+        path = task.name
+        inputs = task.inputs
+        output = task
+        task_id = task.task_id
+
+        # excute the process
+        mod = Tuple[:module].new(path: task.name, statue: :known)
+        process_class = @tuple_space_server.read(mod).to_tuple
+        handler = process_class.content.new(inputs)
+        result = handler.execute
+
+        # output data
+        # FIXME: handle raw data only now
+        data = Tuple[:data].new(data_type: raw, name: handler.outputs.first)
+
+        # finished
+        finished = Tuple[:finished].new(task_id: task_id, status: :succeeded)
+        @tuple_space_server.write(finished)
       end
     end
 

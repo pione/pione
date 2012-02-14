@@ -4,6 +4,7 @@ require 'innocent-white/tuple-space-server'
 require 'innocent-white/agent/task-worker'
 
 include InnocentWhite
+Thread.abort_on_exception = true
 
 describe "TaskWorker" do
   before do
@@ -11,9 +12,16 @@ describe "TaskWorker" do
     @worker1 = Agent[:task_worker].new(@ts_server)
     @worker2 = Agent[:task_worker].new(@ts_server)
     @worker3 = Agent[:task_worker].new(@ts_server)
-    @task1 = Tuple[:task].new(name: :test1,
+    @task1 = Tuple[:task].new(name: "/test1",
                               inputs: ["1.a"],
-                              outputs: ["1.b"])
+                              outputs: ["1.b"],
+                              task_id: Util.uuid)
+    content = <<-ACTION
+      echo "input: {$INPUT}"
+    ACTION
+    definition = {inputs: [/(\d)\.a/], outputs: ["{$1}.b"], content: content}
+    process = ProcessHandler::Action.define(definition)
+    @ts_server.write(Tuple[:module].new(path: "/test1", content: process, status: :known))
   end
 
   it "should wait tasks" do
@@ -36,10 +44,12 @@ describe "TaskWorker" do
     @ts_server.current_task_worker_size.should == 3
   end
 
-  it "should work" do
+  it "should processing tasks" do
     @ts_server.write(@task1)
     sleep 0.05
     @ts_server.count_tuple(Tuple[:task].any).should == 0
+    finished = @ts_server.read_all(Tuple[:finished].any)
+    finished.size.should == 1
+    finished.first.to_tuple.task_id.should == @task1.task_id
   end
-
 end

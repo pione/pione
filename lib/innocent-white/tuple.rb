@@ -85,8 +85,9 @@ module InnocentWhite
     #
     # define Tuples
     #
-    define_format [:data, :name, :path, :time]
+    define_format [:data, :data_type, :name, :path, :raw, :time]
     define_format [:task, :name, :inputs, :outputs, :params, :task_id]
+    define_format [:finished, :task_id, :status]
     define_format [:agent, :agent_type, :agent_id]
     define_format [:parent_agent, :parent_id, :child_id]
     define_format [:log, :level, :message]
