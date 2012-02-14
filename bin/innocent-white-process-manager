@@ -2,25 +2,31 @@
 # -*- ruby-mode -*-
 
 require 'innocent-white/tuple-space-provider'
-require 'innocent-white/simulator/agent/file-generator'
+require 'innocent-white/simulator/input-generator'
 require 'innocent-white/agent/process-manager'
 
+Thread.abort_on_exception = true
+
 # tuple space provider
-provider = InnocentWhite::TupleSpaceProvider.instance
+#provider = InnocentWhite::TupleSpaceProvider.instance
+provider = InnocentWhite.tuple_space_provider
 
 # server
-server = InnocentWhite::TupleSpaceServer.new(resource: 2)
+server = InnocentWhite::TupleSpaceServer.new(task_worker_resource: 2)
 
 # regist tuple space server
-provier.regist server
+provider.register server
 
 # file provider
 range = "test-001".."test-100"
-file_generator = InnocentWhite::Agent[:file_generator].new(range, "a")
-file_generator.run(server)
+InnocentWhite::Agent[:input_generator].new(server, range, "a")
+
+# process definition document
+main_definition = {inputs: [/test-(\d{3})\.a/], outputs: ["test-{$1}.b"], content: "expr {$VAL_INPUT} \\* 2"}
+main = InnocentWhite::ProcessHandler::Action.define(main_definition)
+doc = { :main => main }
 
 # process manager
-manager = InnocentWhite::Agent[:process_manager].new(doc)
-manager.run(server)
+InnocentWhite::Agent[:process_manager].new(server, doc)
 
 DRb.thread.join

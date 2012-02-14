@@ -1,8 +1,9 @@
 require 'rinda/tuplespace'
+require 'innocent-white/innocent-white-object'
 require 'innocent-white/tuple'
 
 module InnocentWhite
-  class TupleSpaceServer
+  class TupleSpaceServer < InnocentWhiteObject
     def initialize(data={})
       @ts = Rinda::TupleSpace.new
       def @ts.to_s;"#<Rinda::TupleSpace>" end

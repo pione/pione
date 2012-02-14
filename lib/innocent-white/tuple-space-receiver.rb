@@ -1,14 +1,21 @@
-module InnocentWhite
-  class TupleSpaceReceiver
-    URI = "druby://localhost:54321"
+require 'innocent-white/innocent-white-object'
 
-    def self.instance
+module InnocentWhite
+  class TupleSpaceReceiver < InnocentWhiteObject
+    
+    RECEIVER_URI = "druby://localhost:54321"
+
+    # Return the receiver instance.
+    def self.get(data={})
+      uri = data.has_key?(:port) ? "druby://localhost:#{data[:port]}" : RECEIVER_URI
       begin
-        DRbObject.new_with_uri(TupleSpaceProvider::URI)
-      rescue
-        obj = self.new
-        DRb.start_service(URI, obj)
+        obj = DRbObject.new_with_uri(uri)
+        obj.uuid # check the receiver exists
         return obj
+      rescue
+        receiver = self.new(data)
+        DRb.start_service(URI, receiver)
+        return receiver
       end
     end
 
@@ -18,13 +25,14 @@ module InnocentWhite
     def initialize
       @thread = nil
       @agents = []
+      run
     end
 
-    def regist(agent)
+    def register(agent)
       @agents << agent
     end
 
-    def receive(agent_type)
+    def run
       @thread = Thread.new do
         loop do
           msg = @socket.recv(1024)

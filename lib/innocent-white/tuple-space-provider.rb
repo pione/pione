@@ -1,34 +1,58 @@
 require 'drb/drb'
 require 'rinda/tuplespace'
+require 'innocent-white/innocent-white-object'
 
 module InnocentWhite
-  class TupleSpaceProvider
-    PORT = 10101
+  class TupleSpaceProvider < InnocentWhiteObject
+
+    RECEIVER_PORT = 54321
+    PROVIDER_URI = "druby://localhost:10101"
     TIMEOUT = 5
 
-    attr_reader :thread
-    attr_accessor :port
-    attr_accessor :timeout
+    # -- class  --
 
-    def initialize(data)
-      @thread = nil
-      @port = data[:port] || PORT
-      @timeout = data[:timeout] || TIMEOUT
-      @tuple_space = Rinda::TupleSpace.new
+    # Return the provider instance.
+    def self.get(data = {})
+      uri = data.has_key?(:provider_port) ? "druby://localhost:#{data[:provider_port]}" : PROVIDER_URI
+      begin
+        provider = DRbObject.new_with_uri(uri)
+        provider.uuid # check the server exists
+        provider
+      rescue
+        DRb.start_service(uri, self.new(data))
+        DRbObject.new_with_uri(uri)
+      end
     end
 
-    def provider
+    # -- instance --
+
+    attr_reader :thread
+    attr_accessor :timeout
+    attr_accessor :receiver_port
+
+    def initialize(data={})
+      raise ArgumentError if (data.keys - [:provider_port, :receiver_port, :timeout]).size > 0
+      @timeout = data.has_key?(:timeout) ? data[:timeout] : TIMEOUT
+      @receiver_port = data.has_key?(:receiver_port) ? data[:receiver_port] : RECEIVER_PORT
+      @thread = nil
+      @list = []
+      run
+    end
+
+    # Return dumped object.
+    def dump
       Marshal.dump(DRbObject.new(self))
     end
 
-    def provide
+    # Start to run the provider.
+    def run
       @thread = Thread.new do
         loop do
           begin
             # send UDP packet
             socket = UDPSocket.open
             socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, true)
-            socket.send(provider, 0, '<broadcast>', @port)
+            socket.send(dump, 0, '<broadcast>', @receiver_port)
           rescue
             nil
           ensure
@@ -39,22 +63,16 @@ module InnocentWhite
       end
     end
 
-    def start_service(tuple_space)
-      server = DRb.start_service(nil, tuple_space)
-      obj = DRbObject.new(server.uri)
-      @tuple_space.write [:tuple_space, obj]
+    # Add the tuple space server.
+    def add(ts_server)
+      server = DRb.start_service(nil, ts_server)
+      @list << DRbObject.new_with_uri(server.uri)
     end
 
-    def tuple_spaces(agent_type)
-      @tuple_space.read_all([:tuple_space, nil])
+    # Return tuple space servers.
+    def tuple_space_servers
+      @list
     end
   end
 
-  def self.tuple_space_provider
-    begin
-      DRbObject.new_with_uri(TupleSpaceProvider::URI)
-    rescue
-      DRb.start_service(nil, TupleSpaceProvider.new)
-    end
-  end
 end
