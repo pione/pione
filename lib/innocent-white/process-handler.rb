@@ -73,6 +73,7 @@ module InnocentWhite
 
         # variable table
         @variable = params.clone
+        make_auto_variables
       end
 
       private
@@ -92,7 +93,7 @@ module InnocentWhite
           input_def = inputs_definition.first
           md = input_def.match(input)
           output_def = outputs_definition.first
-          [output_def.gsub(/\{\$(\d)\}/){md["\1".to_i]}] # worst!
+          [output_def.gsub(/\{\$(\d)\}/){md[$1.to_i]}] # worst!
         else
           []
         end
@@ -101,7 +102,8 @@ module InnocentWhite
       # Make auto-variables.
       def make_auto_variables
         # FIXME: bad bad bad
-        @variable["OUTPUT"] = @output.first
+        @variable["OUTPUT"] = @outputs.first
+        @variable["INPUT"] = @inputs.first
       end
     end
 

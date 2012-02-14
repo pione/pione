@@ -46,7 +46,11 @@ module InnocentWhite
 
         # output data
         # FIXME: handle raw data only now
-        data = Tuple[:data].new(data_type: raw, name: handler.outputs.first)
+        data = Tuple[:data].new(data_type: :raw,
+                                name: handler.outputs.first,
+                                raw: result)
+        @tuple_space_server.write(data)
+
 
         # finished
         finished = Tuple[:finished].new(task_id: task_id, status: :succeeded)

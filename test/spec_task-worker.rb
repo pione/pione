@@ -16,9 +16,7 @@ describe "TaskWorker" do
                               inputs: ["1.a"],
                               outputs: ["1.b"],
                               task_id: Util.uuid)
-    content = <<-ACTION
-      echo "input: {$INPUT}"
-    ACTION
+    content = 'echo -n "input: {$INPUT}"'
     definition = {inputs: [/(\d)\.a/], outputs: ["{$1}.b"], content: content}
     process = ProcessHandler::Action.define(definition)
     @ts_server.write(Tuple[:module].new(path: "/test1", content: process, status: :known))
@@ -48,8 +46,13 @@ describe "TaskWorker" do
     @ts_server.write(@task1)
     sleep 0.05
     @ts_server.count_tuple(Tuple[:task].any).should == 0
+    sleep 0.05
     finished = @ts_server.read_all(Tuple[:finished].any)
     finished.size.should == 1
     finished.first.to_tuple.task_id.should == @task1.task_id
+    req_data = Tuple[:data].any
+    req_data.name = "1.b"
+    data = @ts_server.read(req_data).to_tuple
+    data.raw.should == "input: 1.a"
   end
 end
