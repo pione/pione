@@ -19,6 +19,7 @@ module InnocentWhite
         @document = document
         load_document(document)
         @output_threads = []
+        @results = []
         start_running
       end
 
@@ -44,12 +45,18 @@ module InnocentWhite
           outputs.each do |name|
             @output_threads << Thread.new do
               data = Tuple[:data].new(name: name)
-              @tuple_space_server.read(data)
+              @results << @tuple_space_server.read(data).to_tuple
             end
           end
         else
           sleep 0.1
-          stop if finished?
+          if finished?
+            stop
+            log(:info, "The process is finished.")
+            @results.each do |result|
+              log(:info, "#{result.name}:#{result.raw}")
+            end
+          end
         end
       end
 

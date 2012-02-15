@@ -66,47 +66,56 @@ module InnocentWhite
 
       # Update tuple space server list.
       def update_tuple_space_servers(tuple_space_servers)
-        # bye
-        (@tuple_space_servers - tuple_space_servers).each do |ts_server|
-          bye(ts_server)
+        begin
+          # bye
+          (@tuple_space_servers - tuple_space_servers).each do |ts_server|
+            bye(ts_server)
+          end
+          # hello
+          (tuple_space_servers - @tuple_space_servers).each do |ts_server|
+            hello(ts_server)
+          end
+          # update
+          @tuple_space_servers = tuple_space_servers
+          p @tuple_space_servers
+        rescue DRb::DRbConnError
+          check_tuple_space_server
         end
-        # hello
-        (tuple_space_servers - @tuple_space_servers).each do |ts_server|
-          hello(ts_server)
-        end
-        # update
-        @tuple_space_servers = tuple_space_servers
-        p @tuple_space_servers
       end
 
       private
 
       def run
-        if @tuple_space_servers.size > 0
-          ratios = calc_resource_ratios
-          min = ratios.values.min
-          max = ratios.values.max
-          min_server = ratios.key(min)
-          max_server = ratios.key(max)
+        begin
+          if @tuple_space_servers.size > 0
+            ratios = calc_resource_ratios
+            min = ratios.values.min
+            max = ratios.values.max
+            min_server = ratios.key(min)
+            max_server = ratios.key(max)
 
-          if excess_workers > 0
-            create_task_worker(min_server)
-          else
-            revision = {min_server => 1, max_server => -1}
-            new_ratios = calc_resource_ratios(revision)
-            if new_ratios[min_server] < new_ratios[max_server]
-              # move worker from max server to min server
-              max_workers = task_workers.select do |worker|
-                worker.tuple_space_server == max_server
+            if excess_workers > 0
+              create_task_worker(min_server)
+            else
+              revision = {min_server => 1, max_server => -1}
+              new_ratios = calc_resource_ratios(revision)
+              if new_ratios[min_server] < new_ratios[max_server]
+                # move worker from max server to min server
+                max_workers = task_workers.select do |worker|
+                  worker.tuple_space_server == max_server
+                end
+                waitings = max_workers.select do |worker|
+                  worker.status.task_waiting?
+                end
+                worker = not(waitings.empty?) ? waitings.first : workers.first
+                worker.move_tuple_space_server(min_server)
               end
-              waitings = max_workers.select do |worker|
-                worker.status.task_waiting?
-              end
-              worker = not(waitings.empty?) ? waitings.first : workers.first
-              worker.move_tuple_space_server(min_server)
             end
           end
+        rescue DRb::DRbConnError
+          check_tuple_space_server
         end
+
         sleep @sleeping_time
       end
 
@@ -122,6 +131,18 @@ module InnocentWhite
         end
         return ratio
       end
+
+      def check_tuple_space_server
+        @tuple_space_servers.select! do |ts|
+          begin
+            ts.uuid
+            true
+          rescue DRb::DRbConnError
+            false
+          end
+        end
+      end
+
     end
 
     set_agent Broker

@@ -25,7 +25,11 @@ module InnocentWhite
       # Start running for processing tasks
       def run
         @status.task_waiting
-        process_task(@tuple_space_server.take(Tuple[:task].any).to_tuple)
+        begin
+          process_task(@tuple_space_server.take(Tuple[:task].any).to_tuple)
+        rescue DRb::DRbConnError
+          stop
+        end
       end
 
       private

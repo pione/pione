@@ -134,6 +134,9 @@ module InnocentWhite
         @agent_id = Util.uuid
         @tuple_space_server = ts_server
         @__next_tuple_space_server__ = nil
+        
+        # send bye message when the object is finalized
+        ObjectSpace.define_finalizer(self, finalizer)
       end
 
       def agent_type
@@ -147,7 +150,7 @@ module InnocentWhite
 
       def bye(ts_server=@tuple_space_server)
         log(:debug, "bye, I am #{uuid}", ts_server)
-        ts_server.take(self.to_agent_tuple, 0.1)
+        ts_server.take(self.to_agent_tuple, 1)
       end
 
       # Stop the agent.
@@ -209,6 +212,10 @@ module InnocentWhite
             run
           end
         end
+      end
+
+      def finalizer
+        Proc.new { bye }
       end
     end
   end
