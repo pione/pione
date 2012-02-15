@@ -56,6 +56,15 @@ tuples:
 REPORT
     end
 
+    def all_tuples
+      tuples = []
+      bag = @ts.instance_variable_get("@bag")
+      bag.instance_variable_get("@hash").values.each do |bin|
+        tuples += bin.instance_variable_get("@bin")
+      end
+      return tuples
+    end
+
     private
 
     alias :method_missing_orig :method_missing

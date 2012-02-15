@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# -*- ruby-mode -*-
+
+require 'innocent-white/tuple'
+require 'innocent-white/agent'
+require 'innocent-white/process-handler'
+require 'innocent-white/tuple-space-provider'
+
+Thread.abort_on_exception = true
+
+DRb.start_service
+
+# tuple space provider
+provider = InnocentWhite::TupleSpaceProvider.get
+provider.tuple_space_servers.each do |ts_server|
+  puts "TupleSpaceServer: #{ts_server.uuid}"
+  ts_server.all_tuples.each do |tuple|
+    puts tuple.value.map{|v|v.inspect}.join(",")
+  end
+end

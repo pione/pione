@@ -140,14 +140,14 @@ module InnocentWhite
         self.class.agent_type
       end
 
-      def hello
-        log(:debug, "hello, I am #{uuid}")
-        @tuple_space_server.write(self.to_agent_tuple)
+      def hello(ts_server=@tuple_space_server)
+        log(:debug, "hello, I am #{uuid}", ts_server)
+        ts_server.write(self.to_agent_tuple)
       end
 
-      def bye
-        log(:debug, "bye, I am #{uuid}")
-        @tuple_space_server.take(self.to_agent_tuple, 0.1)
+      def bye(ts_server=@tuple_space_server)
+        log(:debug, "bye, I am #{uuid}", ts_server)
+        ts_server.take(self.to_agent_tuple, 0.1)
       end
 
       # Stop the agent.
@@ -180,9 +180,9 @@ module InnocentWhite
       end
 
       # Log a message.
-      def log(level, msg)
+      def log(level, msg, ts_server=@tuple_space_server)
         req = Tuple[:log].new(level: level, message: "#{agent_type}: #{msg}")
-        @tuple_space_server.write(req)
+        ts_server.write(req)
       end
 
       private

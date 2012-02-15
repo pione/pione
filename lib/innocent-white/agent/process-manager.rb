@@ -54,7 +54,7 @@ module InnocentWhite
       end
 
       def finished?
-        @output_threads.map {|thread| thread.alive?}.uniq == [false]
+        @output_threads.map{|thread| thread.alive?}.uniq == [false]
       end
     end
 

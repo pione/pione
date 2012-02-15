@@ -66,6 +66,15 @@ module InnocentWhite
 
       # Update tuple space server list.
       def update_tuple_space_servers(tuple_space_servers)
+        # bye
+        (@tuple_space_servers - tuple_space_servers).each do |ts_server|
+          bye(ts_server)
+        end
+        # hello
+        (tuple_space_servers - @tuple_space_servers).each do |ts_server|
+          hello(ts_server)
+        end
+        # update
         @tuple_space_servers = tuple_space_servers
         p @tuple_space_servers
       end

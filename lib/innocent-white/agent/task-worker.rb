@@ -35,28 +35,42 @@ module InnocentWhite
 
         path = task.name
         inputs = task.inputs
-        output = task
         task_id = task.task_id
 
+        # log for debugging
         log(:debug, "task prcessing for #{path}(#{inputs.join(',')})")
 
-        # excute the process
+        # get module
         mod = Tuple[:module].new(path: task.name, statue: :known)
         process_class = @tuple_space_server.read(mod).to_tuple
+
+        # excute the process
         handler = process_class.content.new(inputs)
         result = handler.execute
 
         # output data
         # FIXME: handle raw data only now
-        data = Tuple[:data].new(data_type: :raw,
-                                name: handler.outputs.first,
-                                raw: result)
-        @tuple_space_server.write(data)
+        output_data = Tuple[:data].new(data_type: :raw,
+                                       name: handler.outputs.first,
+                                       raw: result)
+        @tuple_space_server.write(output_data)
 
 
         # finished
         finished = Tuple[:finished].new(task_id: task_id, status: :succeeded)
         @tuple_space_server.write(finished)
+      end
+    end
+
+    private
+
+    def make_inputs(inputs)
+      inputs.map do |name|
+        data = Tuple[:data].new(data_type: :raw, name: name).to_tuple
+        input = ProcessHandler.new
+        input.name = name
+        input.value = data.raw
+        input
       end
     end
 

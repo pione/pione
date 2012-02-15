@@ -10,7 +10,7 @@ Thread.abort_on_exception = true
 receiver = InnocentWhite::TupleSpaceReceiver.get
 
 # broker
-broker = InnocentWhite::Agent[:broker].new(resource: 4)
+broker = InnocentWhite::Agent[:broker].new(task_worker_resource: 4)
 #broker.start_service
 
 # regist broker

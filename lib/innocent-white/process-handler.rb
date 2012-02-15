@@ -52,7 +52,8 @@ module InnocentWhite
         return nil if tuple.nil?
         begin
           @catched << tuple.name
-          return [tuple.name]
+          # FIXME
+          return [Input.new(tuple.name, tuple.raw)]
         rescue
           return nil
         end
@@ -66,6 +67,12 @@ module InnocentWhite
       attr_reader :variable
 
       def initialize(inputs=[], params={})
+        # check arguments
+        inputs.each do |i|
+          unless i.respond_to?(:name) and i.respond_to?(:value)
+            raise ArgumentError.new(i)
+          end
+        end
         raise ArugmentError unless inputs.size == inputs_definition.size
 
         # FIXME: bad
@@ -90,7 +97,7 @@ module InnocentWhite
       def make_outputs
         # FIXME: bad bad
         if not(self.class.outputs_definition.empty?)
-          input = @inputs.first
+          input = @inputs.first.name
           input_def = inputs_definition.first
           md = input_def.match(input)
           output_def = outputs_definition.first
@@ -104,10 +111,13 @@ module InnocentWhite
       def make_auto_variables
         # FIXME: bad bad bad
         @variable["OUTPUT"] = @outputs.first
-        @variable["INPUT"] = @inputs.first
-        # @variable["VAL_INPUT"] = 
+        input = @inputs.first
+        @variable["INPUT"] = input.name
+        @variable["VAL_INPUT"] = input.value if input.value
       end
     end
+
+    Input = Struct.new(:name, :value)
 
     class Rule < BaseProcess
       def execute
