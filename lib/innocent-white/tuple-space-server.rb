@@ -12,6 +12,7 @@ module InnocentWhite
       else
         raise ArgumentError
       end
+      check_agent_life
     end
 
     # Return the worker resource size of the server.
@@ -66,6 +67,15 @@ REPORT
     end
 
     private
+
+    def check_agent_life
+      @thread_check_agent_life = Thread.new do
+        loop do
+          agent = take(Tuple[:bye].any).to_tuple
+          take(Tuple[:agent].new(agent_type: agent.agent_type, uuid: agent.uuid))
+        end
+      end
+    end
 
     alias :method_missing_orig :method_missing
 

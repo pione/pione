@@ -98,12 +98,13 @@ module InnocentWhite
     define_format [:data, :data_type, :name, :path, :raw, :time]
     define_format [:task, :name, :inputs, :outputs, :params, :task_id]
     define_format [:finished, :task_id, :status]
-    define_format [:agent, :agent_type, :agent_id]
+    define_format [:agent, :agent_type, :uuid]
     define_format [:parent_agent, :parent_id, :child_id]
     define_format [:log, :level, :message]
     define_format [:task_worker_resource, :number]
     define_format [:request_module, :path]
     define_format [:module, :path, :content, :status]
+    define_format [:bye, :agent_type, :uuid]
   end
 end
 

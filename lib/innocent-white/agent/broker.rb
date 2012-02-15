@@ -1,5 +1,6 @@
 require 'rinda/tuplespace'
 require 'drb/drb'
+require 'innocent-white'
 require 'innocent-white/agent'
 require 'innocent-white/agent/task-worker'
 
@@ -19,6 +20,16 @@ module InnocentWhite
         @resource = data[:task_worker_resource] || 1
         @sleeping_time = data[:sleeping_time] || 1
         start_running
+      end
+
+      # Send bye message to tuple space servers when the broker is destroid.
+      def finalize
+        @tuple_space_servers.each do |ts_server|
+          bye(ts_server)
+          if InnocentWhite.debug_mode?
+            puts "bye, tuple space server: #{ts_server}"
+          end
+        end
       end
 
       # Start service.
@@ -66,18 +77,22 @@ module InnocentWhite
 
       # Update tuple space server list.
       def update_tuple_space_servers(tuple_space_servers)
+        del_targets = @tuple_space_servers - tuple_space_servers
+        add_targets = tuple_space_servers - @tuple_space_servers
+        return if del_targets.empty? and add_targets.empty?
+
         begin
           # bye
-          (@tuple_space_servers - tuple_space_servers).each do |ts_server|
-            bye(ts_server)
-          end
+          del_targets.each{|ts_server| bye(ts_server)}
           # hello
-          (tuple_space_servers - @tuple_space_servers).each do |ts_server|
-            hello(ts_server)
-          end
+          add_targets.each{|ts_server| hello(ts_server)}
           # update
           @tuple_space_servers = tuple_space_servers
-          p @tuple_space_servers
+
+          # for debug
+          if InnocentWhite.debug_mode?
+            puts "tuple space servers: #{@tuple_space_servers}"
+          end
         rescue DRb::DRbConnError
           check_tuple_space_server
         end

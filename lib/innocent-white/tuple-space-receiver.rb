@@ -90,7 +90,9 @@ module InnocentWhite
           # make drop target
           drop_target = []
           @tuple_space_servers.each do |ts_server, time|
-            drop_target << ts_server if (Time.now - time) > @disconnect_time
+            if (Time.now - time) > @disconnect_time
+              drop_target << ts_server
+            end
           end
 
           # drop targets
@@ -99,8 +101,11 @@ module InnocentWhite
           end
 
           # update
-          @agents.each{|agent| agent.update_tuple_space_servers(tuple_space_servers)}
+          @agents.each do |agent|
+            agent.update_tuple_space_servers(tuple_space_servers)
+          end
 
+          # sleep and go next...
           sleep 1
         end
       end

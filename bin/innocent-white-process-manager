@@ -1,14 +1,17 @@
 #!/usr/bin/env ruby
-# -*- ruby-mode -*-
+# -*- ruby -*-
 
+require 'innocent-white'
 require 'innocent-white/tuple-space-provider'
 require 'innocent-white/simulator/input-generator'
 require 'innocent-white/agent/logger'
 require 'innocent-white/agent/process-manager'
 require 'innocent-white/process-handler'
+require 'innocent-white/document'
 
 Thread.abort_on_exception = true
 
+InnocentWhite.debug_mode
 DRb.start_service
 
 # tuple space provider
@@ -28,9 +31,7 @@ generator = InnocentWhite::Simulator::SimpleInputGeneratorMethod.new("test-001".
 InnocentWhite::Agent[:input_generator].new(server, generator)
 
 # process definition document
-main_definition = {inputs: [/test-(\d{3})\.a/], outputs: ["test-{$1}.b"], content: "expr {$VAL_INPUT} + {$VAL_INPUT}"}
-main = InnocentWhite::ProcessHandler::Action.define(main_definition)
-doc = { "/main" => main }
+doc = InnocentWhite::Document.load(ARGF)
 
 # process manager
 InnocentWhite::Agent[:process_manager].new(server, doc)

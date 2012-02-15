@@ -1,17 +1,19 @@
 #!/usr/bin/env ruby
-# -*- ruby-mode -*-
+# -*- ruby -*-
 
+require 'innocent-white'
 require 'innocent-white/tuple-space-receiver'
 require 'innocent-white/agent/broker'
 
 Thread.abort_on_exception = true
+InnocentWhite.debug_mode
+InnocentWhite.set_signal_trap
 
 # tuple space receiver
 receiver = InnocentWhite::TupleSpaceReceiver.get
 
 # broker
 broker = InnocentWhite::Agent[:broker].new(task_worker_resource: 4)
-#broker.start_service
 
 # regist broker
 receiver.register(broker)

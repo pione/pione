@@ -5,5 +5,10 @@ module InnocentWhite
     def uuid
       @__uuid__ || @__uuid__ = Util.uuid
     end
+
+    # Finalize the object.
+    def finalize
+      # none
+    end
   end
 end

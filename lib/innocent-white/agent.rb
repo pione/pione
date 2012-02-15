@@ -124,19 +124,19 @@ module InnocentWhite
 
       attr_reader :status
       attr_reader :thread
-      attr_reader :agent_id
       attr_reader :agent_type
 
       # Initialize agent's state.
       def initialize(ts_server)
         @status = self.class.status_class.initialized
         @__runnable__ = nil
-        @agent_id = Util.uuid
         @tuple_space_server = ts_server
         @__next_tuple_space_server__ = nil
-        
-        # send bye message when the object is finalized
-        ObjectSpace.define_finalizer(self, finalizer)
+      end
+
+      # Send bye message to the tuple space servers.
+      def finalize
+        bye
       end
 
       def agent_type
@@ -150,7 +150,7 @@ module InnocentWhite
 
       def bye(ts_server=@tuple_space_server)
         log(:debug, "bye, I am #{uuid}", ts_server)
-        ts_server.take(self.to_agent_tuple, 1)
+        ts_server.write(self.to_bye_tuple)
       end
 
       # Stop the agent.
@@ -178,8 +178,11 @@ module InnocentWhite
 
       # Convert a agent tuple.
       def to_agent_tuple
-        Tuple[:agent].new(agent_type: self.class.agent_type,
-                          agent_id: @agent_id)
+        Tuple[:agent].new(agent_type: self.class.agent_type, uuid: uuid)
+      end
+
+      def to_bye_tuple
+        Tuple[:bye].new(agent_type: self.class.agent_type, uuid: uuid)
       end
 
       # Log a message.
@@ -212,10 +215,6 @@ module InnocentWhite
             run
           end
         end
-      end
-
-      def finalizer
-        Proc.new { bye }
       end
     end
   end

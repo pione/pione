@@ -1,0 +1,9 @@
+# -*- ruby -*-
+
+InnocentWhite::Document.new do
+  define_action("/main") do
+    inputs [/test-(\d{3})\.a/]
+    outputs ["test-{$1}.b"]
+    content "expr {$VAL_INPUT} + {$VAL_INPUT}"
+  end
+end
