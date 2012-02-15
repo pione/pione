@@ -2,41 +2,56 @@ require 'socket'
 require 'drb/drb'
 require 'innocent-white/innocent-white-object'
 
-
 module InnocentWhite
   class TupleSpaceReceiver < InnocentWhiteObject
-    
+
     UDP_PORT = 54321
     RECEIVER_URI = "druby://localhost:10102"
     DISCONNECT_TIME = 180
 
+    # -- class --
+
     # Return the receiver instance.
     def self.get(data={})
-      uri = data.has_key?(:receiver_port) ? "druby://localhost:#{data[:receiver_port]}" : RECEIVER_URI
+      uri = if data.has_key?(:receiver_port) then
+              "druby://localhost:#{data[:receiver_port]}"
+            else RECEIVER_URI end
       begin
         obj = DRbObject.new_with_uri(uri)
         obj.uuid # check the receiver exists
         return obj
       rescue
+        # receiver not exists
         receiver = self.new(data)
         DRb.start_service(uri, receiver)
         return receiver
       end
     end
 
+    # -- object --
+
     attr_reader :receiver_thread
+    attr_reader :updater_thread
     attr_reader :agents
     attr_reader :udp_port
 
     def initialize(data={})
-      raise ArgumentError if (data.keys - [:receiver_port, :udp_port, :disconnect_time]).size > 0
+      # check argument
+      if (data.keys - [:receiver_port, :udp_port, :disconnect_time]).size > 0
+        raise ArgumentError
+      end
+
+      # initialize variables
       @receiver_thread = nil
+      @updater_thread = nil
       @agents = []
       @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : UDP_PORT
       @disconnect_time = data.has_key?(:disconnect_time) ? data[:disconnect_time] : DISCONNECT_TIME
       @socket = UDPSocket.open
-      @socket.bind('',@udp_port)
+      @socket.bind('', @udp_port)
       @tuple_space_servers = {}
+
+      # start
       run
     end
 
@@ -70,7 +85,7 @@ module InnocentWhite
     end
 
     def update_tuple_space_servers
-      @update_thread = Thread.new do
+      @updater_thread = Thread.new do
         loop do
           # make drop target
           drop_target = []

@@ -105,6 +105,7 @@ module InnocentWhite
         # FIXME: bad bad bad
         @variable["OUTPUT"] = @outputs.first
         @variable["INPUT"] = @inputs.first
+        # @variable["VAL_INPUT"] = 
       end
     end
 

@@ -60,10 +60,18 @@ REPORT
 
     alias :method_missing_orig :method_missing
 
+    # Send a message to the real tuple space.
     def method_missing(name, *args)
       if @ts.respond_to?(name)
-        # convert tuple into plain form
-        _args = args.map {|obj| obj.kind_of?(Tuple::TupleData) ? obj.to_a : obj}
+        # convert tuple space form
+        _args = args.map do |obj|
+          if obj.respond_to?(:to_tuple_space_form)
+            obj.to_tuple_space_form
+          else
+            obj
+          end
+        end
+
         # call
         @ts.__send__(name,*_args)
       else

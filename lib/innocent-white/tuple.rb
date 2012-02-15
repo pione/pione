@@ -1,8 +1,10 @@
+require 'innocent-white/innocent-white-object'
+
 module InnocentWhite
   module Tuple
     TABLE = Hash.new
 
-    class TupleData
+    class TupleData < InnocentWhiteObject
 
       # -- class methods --
 
@@ -70,6 +72,14 @@ module InnocentWhite
       end
 
       alias :plain :to_a
+
+      def to_s
+        "#<#<TupleData:#{identifier}:#{uuid}> #{to_a.to_s}>"
+      end
+
+      def to_tuple_space_form
+        to_a
+      end
     end
 
     # Define a tuple format and create a class representing it.

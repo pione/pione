@@ -141,8 +141,7 @@ module InnocentWhite
       end
 
       def hello
-        msg = "hello, I am #{uuid}"
-        log(:debug, msg)
+        log(:debug, "hello, I am #{uuid}")
         @tuple_space_server.write(self.to_agent_tuple)
       end
 
