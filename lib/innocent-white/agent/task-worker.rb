@@ -28,7 +28,10 @@ module InnocentWhite
         begin
           process_task(@tuple_space_server.take(Tuple[:task].any).to_tuple)
         rescue DRb::DRbConnError
-          stop
+          if InnocentWhite.debug_mode?
+            puts "task-worker: stop"
+            stop
+          end
         end
       end
 

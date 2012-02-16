@@ -20,6 +20,7 @@ module InnocentWhite
         @resource = data[:task_worker_resource] || 1
         @sleeping_time = data[:sleeping_time] || 1
         start_running
+        check_task_worker_life
       end
 
       # Send bye message to tuple space servers when the broker is destroid.
@@ -78,11 +79,14 @@ module InnocentWhite
       # Update tuple space server list.
       def update_tuple_space_servers(tuple_space_servers)
         begin
+          puts "broker: check new tuple space server"
+          p tuple_space_servers
           #check_tuple_space_server
           #p tuple_space_servers
           del_targets = @tuple_space_servers - tuple_space_servers
           add_targets = tuple_space_servers - @tuple_space_servers
-          return if del_targets.empty? and add_targets.empty?
+          #return if del_targets.empty? and add_targets.empty?
+          #puts "broker: tuple space server changed"
 
           # bye
           del_targets.each{|ts_server| bye(ts_server)}
@@ -105,6 +109,7 @@ module InnocentWhite
       def run
         begin
           if @tuple_space_servers.size > 0
+            puts "broker: worker check..."
             ratios = calc_resource_ratios
             min = ratios.values.min
             max = ratios.values.max
@@ -128,7 +133,7 @@ module InnocentWhite
                 waitings = max_workers.select do |worker|
                   worker.status.task_waiting?
                 end
-                worker = not(waitings.empty?) ? waitings.first : workers.first
+                worker = not(waitings.empty?) ? waitings.first : max_workers.first
                 worker.move_tuple_space_server(min_server)
 
                 # for degging
@@ -143,6 +148,15 @@ module InnocentWhite
         end
 
         sleep @sleeping_time
+      end
+
+      def check_task_worker_life
+        Thread.new do
+          loop do
+            @task_workers.delete_if {|worker| worker.status.stopped? }
+            sleep 1
+          end
+        end
       end
 
       # Calculate resource ratios of tuple space servers.

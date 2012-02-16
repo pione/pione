@@ -33,6 +33,7 @@ module InnocentWhite
     end
 
     def self.load(file)
+      
       return eval(file.read).table
     end
 

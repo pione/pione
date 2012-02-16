@@ -63,6 +63,7 @@ module InnocentWhite
     def run
       receive_tuple_space_servers
       update_tuple_space_servers
+      check_agent_life
     end
 
     def tuple_space_servers
@@ -74,11 +75,22 @@ module InnocentWhite
     def receive_tuple_space_servers
       @receiver_thread = Thread.new do
         loop do
-          msg = @socket.recv(1024)
-          provider = Marshal.load(msg)
-          time = Time.now
-          provider.tuple_space_servers.each do |ts_server|
-            @tuple_space_servers[ts_server] = time
+          begin
+            msg = @socket.recv(1024)
+            provider = Marshal.load(msg)
+            time = Time.now
+            provider.tuple_space_servers.each do |ts_server|
+              @tuple_space_servers[ts_server] = time
+            end
+
+            if InnocentWhite.debug_mode?
+              puts "receive UDP packet..."
+            end
+          rescue DRb::DRbConnError
+            # none
+            if InnocentWhite.debug_mode?
+              puts "tuple space receiver: something bad..."
+            end
           end
         end
       end
@@ -87,6 +99,17 @@ module InnocentWhite
     def update_tuple_space_servers
       @updater_thread = Thread.new do
         loop do
+          puts "check for updating tuple space servers"
+
+          @tuple_space_servers.delete_if do |ts_server, time|
+            begin
+              ts_server.uuid
+              false
+            rescue DRb::DRbConnError
+              true
+            end
+          end
+
           # make drop target
           drop_target = []
           @tuple_space_servers.each do |ts_server, time|
@@ -102,10 +125,35 @@ module InnocentWhite
 
           # update
           @agents.each do |agent|
-            agent.update_tuple_space_servers(tuple_space_servers)
+            begin
+              p tuple_space_servers
+              agent.update_tuple_space_servers(tuple_space_servers)
+            rescue DRb::DRbConnError
+              puts "dead server or agent"
+              # none
+            end
           end
 
           # sleep and go next...
+          sleep 1
+        end
+      end
+    end
+
+    def check_agent_life
+      @check_agent_life_thread = Thread.new do
+        loop do
+          list = []
+          @agents.each do |agent|
+            begin
+              agent.uuid
+              list << agent
+            rescue DRb::DRbConnError
+              # none
+            end
+          end
+          @agents = list
+
           sleep 1
         end
       end

@@ -12,6 +12,7 @@ require 'innocent-white/document'
 Thread.abort_on_exception = true
 
 InnocentWhite.debug_mode
+InnocentWhite.set_signal_trap
 DRb.start_service
 
 # tuple space provider
@@ -31,6 +32,10 @@ generator = InnocentWhite::Simulator::SimpleInputGeneratorMethod.new("test-001".
 InnocentWhite::Agent[:input_generator].new(server, generator)
 
 # process definition document
+if ARGF.filename == "-"
+  puts "No process document."
+  exit
+end
 doc = InnocentWhite::Document.load(ARGF)
 
 # process manager

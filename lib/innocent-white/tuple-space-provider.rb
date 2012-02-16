@@ -20,7 +20,11 @@ module InnocentWhite
         provider.uuid # check the server exists
         provider
       rescue
-        DRb.start_service(uri, self.new(data))
+        #Process.fork do
+          DRb.start_service(uri, self.new(data))
+          # Process.daemon
+          #DRb.thread.join
+        #end
         DRbObject.new_with_uri(uri)
       end
     end
@@ -53,6 +57,13 @@ module InnocentWhite
           sleep @timeout
         end
       end
+
+      @check_thread = Thread.new do
+        loop do
+          check_tuple_space_server_life
+          sleep 1
+        end
+      end
     end
 
     # Add the tuple space server.
@@ -67,14 +78,43 @@ module InnocentWhite
       @list
     end
 
+    def check_tuple_space_server_life
+      old_list = @list
+      new_list = []
+      @list.each do |server|
+        begin
+          server.uuid
+          new_list << server
+        rescue
+          # none
+        end
+      end
+      @list = new_list
+
+      # the list was updated, send a packet again
+      if not((old_list - new_list).empty?) or not((new_list - old_list).empty?)
+        send_packet
+      end
+    end
+
+    def finalize
+      puts "finalize taple space provider #{uuid}"
+      @list = []
+      send_packet
+    end
+
     private
 
     def send_packet
       begin
         # send UDP packet
+        puts "sent UDP packet ..."
+        p @list
         socket = UDPSocket.open
         socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, true)
-        socket.send(dump, 0, '<broadcast>', @udp_port)
+        #socket.send(dump, 0, '<broadcast>', @udp_port)
+        #socket.send(dump, 0, Socket::INADDR_BROADCAST, @udp_port)
+        socket.send(dump, 0, '255.255.255.255', @udp_port)
       rescue
         nil
       ensure
