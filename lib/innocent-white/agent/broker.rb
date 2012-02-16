@@ -77,11 +77,13 @@ module InnocentWhite
 
       # Update tuple space server list.
       def update_tuple_space_servers(tuple_space_servers)
-        del_targets = @tuple_space_servers - tuple_space_servers
-        add_targets = tuple_space_servers - @tuple_space_servers
-        return if del_targets.empty? and add_targets.empty?
-
         begin
+          #check_tuple_space_server
+          #p tuple_space_servers
+          del_targets = @tuple_space_servers - tuple_space_servers
+          add_targets = tuple_space_servers - @tuple_space_servers
+          return if del_targets.empty? and add_targets.empty?
+
           # bye
           del_targets.each{|ts_server| bye(ts_server)}
           # hello
@@ -93,7 +95,7 @@ module InnocentWhite
           if InnocentWhite.debug_mode?
             puts "tuple space servers: #{@tuple_space_servers}"
           end
-        rescue DRb::DRbConnError
+        rescue DRb::DRbConnError, Errno::ECONNREFUSED
           check_tuple_space_server
         end
       end
@@ -111,6 +113,10 @@ module InnocentWhite
 
             if excess_workers > 0
               create_task_worker(min_server)
+
+              if InnocentWhite.debug_mode?
+                puts "create a new task worker in #{min_server}"
+              end
             else
               revision = {min_server => 1, max_server => -1}
               new_ratios = calc_resource_ratios(revision)
@@ -124,6 +130,11 @@ module InnocentWhite
                 end
                 worker = not(waitings.empty?) ? waitings.first : workers.first
                 worker.move_tuple_space_server(min_server)
+
+                # for degging
+                if InnocentWhite.debug_mode?
+                  puts "worker #{worker.uuid} moved from #{max_server} to #{min_server}"
+                end
               end
             end
           end
