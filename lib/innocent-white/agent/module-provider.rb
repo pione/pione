@@ -13,6 +13,10 @@ module InnocentWhite
         start_running()
       end
 
+      define_state :initialized
+      define_state :request_waiting
+      define_state :stopped
+
       def add_module(path, content)
         raise ArgumentError unless content.ancestors.include?(ProcessHandler::BaseProcess)
         @table[path] = content
@@ -21,9 +25,9 @@ module InnocentWhite
       def known_module?(path)
         @table.has_key?(path)
       end
-      
+
       def run
-        tuple = @tuple_space_server.take(Tuple[:request_module].any).to_tuple
+        tuple = take(Tuple[:request_module].any)
         out = Tuple[:module].new(path: tuple.path)
         if known_module?(tuple.path)
           out.status = :known
@@ -31,7 +35,7 @@ module InnocentWhite
         else
           out.status = :unknown
         end
-        @tuple_space_server.write(out)
+        write(out)
       end
     end
 

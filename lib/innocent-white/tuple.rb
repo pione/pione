@@ -71,8 +71,6 @@ module InnocentWhite
         self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
       end
 
-      alias :plain :to_a
-
       def to_s
         "#<#<TupleData:#{identifier}:#{uuid}> #{to_a.to_s}>"
       end
@@ -92,12 +90,23 @@ module InnocentWhite
       TABLE[identifier]
     end
 
+    # Return a tuple data object converted from an array.
+    def self.from_array(ary)
+      return ary unless ary.kind_of?(Array)
+      begin
+        tuple = TABLE[ary.first]
+        keys = tuple.format[1..-1]
+        args = ary[1..-1]
+        tuple.new(Hash[keys.zip(args))
+      rescue ary end
+    end
+
     #
     # define Tuples
     #
     define_format [:data, :data_type, :name, :path, :raw, :time]
-    define_format [:task, :name, :inputs, :outputs, :params, :task_id]
-    define_format [:finished, :task_id, :status]
+    define_format [:task, :name, :inputs, :outputs, :params, :uuid]
+    define_format [:finished, :uuid, :status]
     define_format [:agent, :agent_type, :uuid]
     define_format [:parent_agent, :parent_id, :child_id]
     define_format [:log, :level, :message]
@@ -105,18 +114,5 @@ module InnocentWhite
     define_format [:request_module, :path]
     define_format [:module, :path, :content, :status]
     define_format [:bye, :agent_type, :uuid]
-  end
-end
-
-class Array
-  def to_tuple
-    identifier = self.first
-    arguments = self[1..-1]
-    tuple = InnocentWhite::Tuple[identifier]
-    data = {}
-    (tuple.format.size-1).times do |i|
-      data[tuple.format[i+1]] = self[i+1]
-    end
-    tuple.new(data)
   end
 end

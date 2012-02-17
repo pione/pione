@@ -4,80 +4,71 @@ require 'innocent-white/process-handler'
 module InnocentWhite
   module Agent
     class TaskWorker < Base
-      class TaskWorkerStatus < AgentStatus
-        define_sub_state :running, :task_waiting
-        define_sub_state :running, :task_processing
-      end
-
-      set_status_class TaskWorkerStatus
       set_agent_type :task_worker
 
-      attr_accessor :tuple_space_server
+      define_state(:initialized)
+      define_state(:task_waiting)
+      define_state(:task_processing)
+      define_state(:module_loading)
+      define_state(:task_executing)
+      define_state(:data_outputing)
+      define_state(:task_finishing)
+      define_state(:stopped)
 
-      def initialize(ts_server)
-        super(ts_server)
-        hello()
-        unless start_running()
-          raise
-        end
-      end
-
-      # Start running for processing tasks
-      def run
-        @status.task_waiting
-        begin
-          process_task(@tuple_space_server.take(Tuple[:task].any).to_tuple)
-        rescue DRb::DRbConnError
-          if InnocentWhite.debug_mode?
-            puts "task-worker: stop"
-            stop
-          end
-        end
-      end
+      define_state_transition_table {
+        :initialized => :task_waiting,
+        :task_waiting => :task_processing,
+        :task_processing => :module_loading,
+        :module_loading => :task_executing,
+        :task_excuteing => :task_outputing,
+        :task_outputing => :task_finished,
+        :task_finished => :task_waiting
+      }
+      catch_exception :stopped
 
       private
 
-      def process_task(task)
-        @status.task_processing
+      def transit_to_initialized
+        hello
+      end
 
-        path = task.name
-        inputs = task.inputs
-        task_id = task.task_id
+      def transit_to_task_waiting
+        take(Tuple[:task].any)
+      end
 
-        # log for debugging
-        log(:debug, "task prcessing for #{path}(#{inputs.join(',')})")
+      def transit_to_task_processing(task)
+        log(:debug, "is processing the task for #{path}(#{inputs.join(',')})")
+        return task
+      end
 
-        # get module
+      def transit_to_module_loading(task)
         mod = Tuple[:module].new(path: task.name, statue: :known)
-        process_class = @tuple_space_server.read(mod).to_tuple
+        return task, read(mod)
+      end
 
-        # excute the process
+      def transit_to_task_executed(task, process_class)
         handler = process_class.content.new(inputs)
         result = handler.execute
-
-        # output data
-        # FIXME: handle raw data only now
-        output_data = Tuple[:data].new(data_type: :raw,
-                                       name: handler.outputs.first,
-                                       raw: result)
-        @tuple_space_server.write(output_data)
-
-
-        # finished
-        finished = Tuple[:finished].new(task_id: task_id, status: :succeeded)
-        @tuple_space_server.write(finished)
+        return task, handler, result
       end
-    end
 
-    private
+      def transit_to_data_outputed(task, handler, result)
+        # FIXME: handle raw data only now
+        data = Tuple[:data].new(data_type: :raw,
+                                name: handler.outputs.first,
+                                raw: result)
+        write(data)
+        return task
+      end
 
-    def make_inputs(inputs)
-      inputs.map do |name|
-        data = Tuple[:data].new(data_type: :raw, name: name).to_tuple
-        input = ProcessHandler.new
-        input.name = name
-        input.value = data.raw
-        input
+      def transit_to_task_finished(task)
+        finished = Tuple[:finished].new(uuid: task.uuid, status: :succeeded)
+        write(finished)
+      end
+
+      def transit_to_stopped
+        bye
+        puts "task-worker: stop" if InnocentWhite.debug_mode?
       end
     end
 

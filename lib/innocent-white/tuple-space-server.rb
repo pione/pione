@@ -4,20 +4,43 @@ require 'innocent-white/tuple'
 
 module InnocentWhite
   class TupleSpaceServer < InnocentWhiteObject
+
+    # -- class --
+
+    def self.tuple_space_interface(name)
+      define_method(name) do |*args|
+        # convert tuple space form
+        _args = args.map do |obj|
+          tuple_form = obj.respond_to?(:to_tuple_space_form)
+          tuple_form ? obj.to_tuple_space_form : obj
+        end
+        # send a message to the tuple space
+        result = @ts.__send__(name, _args)
+        # convert the result to tuple object
+        Tuple.from_array(result)
+      end
+    end
+
+    # -- object --
+
     def initialize(data={})
       @ts = Rinda::TupleSpace.new
       def @ts.to_s;"#<Rinda::TupleSpace>" end
+
+      # check task worker resource
       if data.has_key?(:task_worker_resource)
-        write(Tuple[:task_worker_resource].new(number: data[:task_worker_resource]))
+        resource = data[:task_worker_resource]
+        write(Tuple[:task_worker_resource].new(number: resource))
       else
         raise ArgumentError
       end
+
       check_agent_life
     end
 
     # Return the worker resource size of the server.
     def task_worker_resource
-      read(Tuple[:task_worker_resource].any).to_tuple.number
+      read(Tuple[:task_worker_resource].any).number
     end
 
     # Return the number of tuples matched with specified tuple.
@@ -30,18 +53,6 @@ module InnocentWhite
       tuple = Tuple[:agent].any
       tuple.agent_type = :task_worker
       read_all(tuple).size
-    end
-
-    def task_worker_resource_status
-      rs = task_worker_resource_size
-      cw = current_task_worker_size
-      if rs > cw then
-        :less
-      elsif rs < cw
-        :more
-      else
-        :just
-      end
     end
 
     # Shutdown the server.
@@ -57,6 +68,7 @@ tuples:
 REPORT
     end
 
+    # Return all tuples of the tuple space.
     def all_tuples
       tuples = []
       bag = @ts.instance_variable_get("@bag")
@@ -65,6 +77,11 @@ REPORT
       end
       return tuples
     end
+
+    tuple_space_interface :read
+    tuple_space_interface :read_all
+    tuple_space_interface :write
+    tuple_space_interface :take
 
     private
 
@@ -76,27 +93,5 @@ REPORT
         end
       end
     end
-
-    alias :method_missing_orig :method_missing
-
-    # Send a message to the real tuple space.
-    def method_missing(name, *args)
-      if @ts.respond_to?(name)
-        # convert tuple space form
-        _args = args.map do |obj|
-          if obj.respond_to?(:to_tuple_space_form)
-            obj.to_tuple_space_form
-          else
-            obj
-          end
-        end
-
-        # call
-        @ts.__send__(name,*_args)
-      else
-        method_missing_orig(name, *args)
-      end
-    end
-
   end
 end

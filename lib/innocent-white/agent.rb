@@ -100,6 +100,8 @@ module InnocentWhite
     end
 
     class Base < InnocentWhiteObject
+      include TupleSpaceServerInterface
+
       # -- class methods --
 
       # Set the agent type.
@@ -112,10 +114,12 @@ module InnocentWhite
         @agent_type
       end
 
+      # Set the agent status class.
       def self.set_status_class(klass)
         @status_class = klass
       end
 
+      # Return the agent status class.
       def self.status_class
         @status_class || AgentStatus
       end
@@ -139,15 +143,18 @@ module InnocentWhite
         bye
       end
 
+      # Return agent type of the object.
       def agent_type
         self.class.agent_type
       end
 
+      # Hello, tuple space server.
       def hello(ts_server=@tuple_space_server)
         log(:debug, "hello, I am #{uuid}", ts_server)
         ts_server.write(self.to_agent_tuple)
       end
 
+      # Bye, tuple space server.
       def bye(ts_server=@tuple_space_server)
         log(:debug, "bye, I am #{uuid}", ts_server)
         ts_server.write(self.to_bye_tuple)
@@ -178,11 +185,12 @@ module InnocentWhite
 
       # Convert a agent tuple.
       def to_agent_tuple
-        Tuple[:agent].new(agent_type: self.class.agent_type, uuid: uuid)
+        Tuple[:agent].new(agent_type: agent_type, uuid: uuid)
       end
 
+      # Convert a bye tuple
       def to_bye_tuple
-        Tuple[:bye].new(agent_type: self.class.agent_type, uuid: uuid)
+        Tuple[:bye].new(agent_type: agent_type, uuid: uuid)
       end
 
       # Log a message.
