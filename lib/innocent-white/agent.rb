@@ -134,7 +134,7 @@ module InnocentWhite
       def initialize(ts_server)
         @status = self.class.status_class.initialized
         @__runnable__ = nil
-        @tuple_space_server = ts_server
+        set_tuple_space_server(ts_server)
         @__next_tuple_space_server__ = nil
       end
 

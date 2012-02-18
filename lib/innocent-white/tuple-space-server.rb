@@ -7,12 +7,16 @@ module InnocentWhite
 
     # -- class --
 
-    def self.tuple_space_interface(name)
+    def self.tuple_space_interface(name, opt={})
       define_method(name) do |*args|
         # convert tuple space form
         _args = args.map do |obj|
           tuple_form = obj.respond_to?(:to_tuple_space_form)
           tuple_form ? obj.to_tuple_space_form : obj
+        end
+        # check arguments
+        if opt.has_key?(:validator)
+          opt[:validator].call(args)
         end
         # send a message to the tuple space
         result = @ts.__send__(name, _args)
@@ -61,11 +65,9 @@ module InnocentWhite
     end
 
     def report
-      txt = <<-REPORT
-task_worker_resource: #{task_worker_resource}
-current_task_worker_size: #{current_task_worker_size}
-tuples:
-REPORT
+      { task_worker_resource: task_worker_resource,
+        current_task_worker_size: current_task_worker_size,
+        tuples: all_tuples }
     end
 
     # Return all tuples of the tuple space.
@@ -80,8 +82,10 @@ REPORT
 
     tuple_space_interface :read
     tuple_space_interface :read_all
-    tuple_space_interface :write
     tuple_space_interface :take
+    tuple_space_interface :write, :validator => Proc.new {|*args|
+      args.first.writable? if arg.first.kind_of?(Tuple::TupleObject)
+    }
 
     private
 
@@ -93,5 +97,22 @@ REPORT
         end
       end
     end
+  end
+
+  module TupleSpaceServerInterface
+    def self.tuple_space_operation(name)
+      define_method(name) do |*args|
+        @__tuple_space_server__.__send__(name, args)
+      end
+    end
+
+    def set_tuple_space_server(server)
+      @__tuple_space_server__ = server
+    end
+
+    tuple_space_operation :read
+    tuple_space_operation :read_all
+    tuple_space_operation :take
+    tuple_space_operation :write
   end
 end

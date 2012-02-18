@@ -4,7 +4,7 @@ module InnocentWhite
   module Tuple
     TABLE = Hash.new
 
-    class TupleData < InnocentWhiteObject
+    class TupleObject < InnocentWhiteObject
 
       # -- class methods --
 
@@ -47,8 +47,18 @@ module InnocentWhite
 
       # -- instance methods --
 
-      def initialize(data={})
-        @data = data.delete_if {|key,v| not(self.class.format.include?(key))}
+      def initialize(*data)
+        @data = {}
+        return if data.empty?
+
+        format = self.class.format
+        if data.first.kind_of?(Hash)
+          _data = data.first
+          @data = _data.delete_if {|key,v| not(format.include?(key))}
+        else
+          raise ArgumentError.new(data) unless data.size == format.size - 1
+          @data = Hash[format[1..-1].zip(data)]
+        end
       end
 
       def ==(other)
@@ -71,18 +81,48 @@ module InnocentWhite
         self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
       end
 
+      # Convert to string form.
       def to_s
-        "#<#<TupleData:#{identifier}:#{uuid}> #{to_a.to_s}>"
+        "#<#<#{self.class.name}> #{to_a.to_s}>"
       end
 
+      # Convert to plain tuple form.
       def to_tuple_space_form
         to_a
+      end
+
+      # Return the value of the specified position.
+      def value(i = 0)
+        @data[i]
+      end
+
+      def writable?
+        self.class.format.map do |symbol|
+          @data.has_key?(symbol)
+        end.unique == [true]
       end
     end
 
     # Define a tuple format and create a class representing it.
     def self.define_format(format)
-      TABLE[format.first] = TupleData.define(format)
+      identifier = format.first
+
+      # check arguments
+      # format is a list of symbols
+      format.each {|f| raise ArgumentError.new(f) unless Symbol === f}
+      # fobid to define same identifier and different format
+      if TABLE.has_key?(identifier)
+        if not(TABLE[identifier].format == format)
+          raise ArgumentError.new(identifier)
+        else
+          return TABLE[identifier]
+        end
+      end
+
+      # make a class and set it in a table
+      klass = TupleObject.define(format)
+      const_set(identifier.capitalize, klass)
+      TABLE[identifier] = klass
     end
 
     # Return a class corresponding to a tuple identifier.
@@ -92,17 +132,15 @@ module InnocentWhite
 
     # Return a tuple data object converted from an array.
     def self.from_array(ary)
-      return ary unless ary.kind_of?(Array)
-      begin
-        tuple = TABLE[ary.first]
-        keys = tuple.format[1..-1]
-        args = ary[1..-1]
-        tuple.new(Hash[keys.zip(args))
-      rescue ary end
+      raise ArgumentError.new(ary) unless ary.kind_of?(Enumerable)
+      _ary = ary.to_s
+      identifier = ary.first
+      args = ary[1..-1]
+      TABLE[identifier].new(*args)
     end
 
     #
-    # define Tuples
+    # define tuples
     #
     define_format [:data, :data_type, :name, :path, :raw, :time]
     define_format [:task, :name, :inputs, :outputs, :params, :uuid]
