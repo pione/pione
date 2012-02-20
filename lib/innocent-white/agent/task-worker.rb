@@ -1,6 +1,7 @@
 require 'innocent-white'
 require 'innocent-white/agent'
 require 'innocent-white/process-handler'
+require 'innocent-white/tuple'
 
 module InnocentWhite
   module Agent
@@ -85,9 +86,9 @@ module InnocentWhite
         case e
         when UnknownTask
           # FIXME
-          Util.ignore_exception { log(:warn, "ERROR: #{e}, backtrace: #{e.backtrace}") }
+          Util.ignore_exception { write(Tuple[:exception].new(e)) }
         else
-          Util.ignore_exception { log(:warn, "ERROR(#{e.class.name}): #{e}, backtrace: #{e.backtrace}") }
+          Util.ignore_exception { write(Tuple[:exception].new(e)) }
           terminate
         end
       end

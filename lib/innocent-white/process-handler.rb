@@ -70,7 +70,7 @@ module InnocentWhite
         # check arguments
         inputs.each do |i|
           unless i.respond_to?(:name) and i.respond_to?(:value)
-            raise ArgumentError.new(i)
+            raise ArgumentError.new(inputs)
           end
         end
         raise ArugmentError unless inputs.size == inputs_definition.size

@@ -162,8 +162,6 @@ module InnocentWhite
               next_state = state_transition_table[@__current_state__]
               @__current_state__ = next_state
               @__result__ = call_transition_method(next_state, *@__result__)
-              p next_state
-              p @__result__
             end
           rescue Exception => e
             call_transition_method(exception_handler, e)
@@ -181,9 +179,6 @@ module InnocentWhite
         method = transition_method(state)
         arity = method.arity
         _args = args[0...arity]
-        #puts "------------------------------------<<<<"
-        #p state
-        #p args
         method.call(*_args)
       end
 

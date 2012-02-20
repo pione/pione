@@ -2,6 +2,7 @@ require 'innocent-white/util'
 require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
 require 'innocent-white/agent/task-worker'
+require 'innocent-white/test-util'
 
 include InnocentWhite
 Thread.abort_on_exception = true
@@ -25,6 +26,7 @@ describe "TaskWorker" do
     @worker1.should.be.task_waiting
     @worker2.should.be.task_waiting
     @worker3.should.be.task_waiting
+    check_exceptions(@ts_server)
   end
 
   it "should say hello and bye" do
@@ -47,6 +49,7 @@ describe "TaskWorker" do
     agents.should.not.include @worker2.to_agent_tuple
     agents.should.not.include @worker3.to_agent_tuple
     @ts_server.current_task_worker_size.should == 0
+    check_exceptions(@ts_server)
   end
 
   it "should process tasks" do
@@ -54,7 +57,7 @@ describe "TaskWorker" do
     sleep 0.1
     @ts_server.count_tuple(Tuple[:task].any).should == 0
     sleep 0.1
-    p @ts_server.all_tuples
+    check_exceptions(@ts_server)
     finished = @ts_server.read_all(Tuple[:finished].any)
     finished.size.should == 1
     finished.first.to_tuple.task_id.should == @task1.task_id

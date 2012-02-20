@@ -6,7 +6,7 @@ module InnocentWhite
 
     class TupleObject < InnocentWhiteObject
 
-      # -- class methods --
+      # -- class --
 
       # Define a tuple data and return its class.
       def self.define(format)
@@ -45,7 +45,7 @@ module InnocentWhite
         new
       end
 
-      # -- instance methods --
+      # -- instance --
 
       def initialize(*data)
         @data = {}
@@ -62,7 +62,12 @@ module InnocentWhite
       end
 
       def ==(other)
-        to_a.eql?(other.to_a)
+        case other
+        when TupleObject
+          to_tuple_space_form == other.to_tuple_space_form
+        else
+          to_tuple_space_form == other.to_a
+        end
       end
 
       alias :eql? :==
@@ -76,19 +81,14 @@ module InnocentWhite
         self.class.identifier
       end
 
-      # Convert to plain tuple form.
-      #def to_a
-      #  self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
-      #end
-
       # Convert to string form.
       def to_s
-        "#<#<#{self.class.name}> #{to_a.to_s}>"
+        "#<#<#{self.class.name}> #{to_tuple_space_form.to_s}>"
       end
 
       # Convert to plain tuple form.
       def to_tuple_space_form
-        to_a
+        self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
       end
 
       # Return the value of the specified position.
@@ -152,5 +152,6 @@ module InnocentWhite
     define_format [:request_module, :path]
     define_format [:module, :path, :content, :status]
     define_format [:bye, :agent_type, :uuid]
+    define_format [:exception, :value]
   end
 end
