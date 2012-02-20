@@ -77,9 +77,9 @@ module InnocentWhite
       end
 
       # Convert to plain tuple form.
-      def to_a
-        self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
-      end
+      #def to_a
+      #  self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
+      #end
 
       # Convert to string form.
       def to_s
@@ -143,7 +143,7 @@ module InnocentWhite
     # define tuples
     #
     define_format [:data, :data_type, :name, :path, :raw, :time]
-    define_format [:task, :name, :inputs, :outputs, :params, :uuid]
+    define_format [:task, :module_path, :inputs, :outputs, :params, :uuid]
     define_format [:finished, :uuid, :status]
     define_format [:agent, :agent_type, :uuid]
     define_format [:parent_agent, :parent_id, :child_id]

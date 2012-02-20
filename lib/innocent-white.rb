@@ -8,7 +8,7 @@ module InnocentWhite
 
   # Return true if the system is debug mode.
   def self.debug_mode?
-    @debug_mode || false
+    @debug_mode ||= false
   end
 
   # Start finalization process for InnocentWhite world.

@@ -8,14 +8,12 @@ Thread.abort_on_exception = true
 
 describe "TaskWorker" do
   before do
-    @ts_server = TupleSpaceServer.new(task_worker_resource: 3)
+    @remote_server = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3))
+    @ts_server = DRbObject.new(nil, @remote_server.uri)
     @worker1 = Agent[:task_worker].new(@ts_server)
     @worker2 = Agent[:task_worker].new(@ts_server)
     @worker3 = Agent[:task_worker].new(@ts_server)
-    @task1 = Tuple[:task].new(name: "/test1",
-                              inputs: ["1.a"],
-                              outputs: ["1.b"],
-                              task_id: Util.uuid)
+    @task1 = Tuple[:task].new(module_path: "/test1", inputs: ["1.a"], outputs: ["1.b"], uuid: Util.uuid)
     content = 'echo -n "input: {$INPUT}"'
     definition = {inputs: [/(\d)\.a/], outputs: ["{$1}.b"], content: content}
     process = ProcessHandler::Action.define(definition)
@@ -23,30 +21,40 @@ describe "TaskWorker" do
   end
 
   it "should wait tasks" do
-    sleep 0.05
-    @worker1.status.should.be.task_waiting
-    @worker2.status.should.be.task_waiting
-    @worker3.status.should.be.task_waiting
+    sleep 0.1
+    @worker1.should.be.task_waiting
+    @worker2.should.be.task_waiting
+    @worker3.should.be.task_waiting
   end
 
-  it "should announce that the worker go into the tuple space server" do
-    tuple1 = @worker1.to_agent_tuple
-    tuple1.should == Tuple[:agent].new(agent_type: :task_worker,
-                                       agent_id: @worker1.agent_id)
-    tuple2 = @worker2.to_agent_tuple
-    tuple2.should == Tuple[:agent].new(agent_type: :task_worker,
-                                       agent_id: @worker2.agent_id)
-    tuple3 = @worker3.to_agent_tuple
-    tuple3.should == Tuple[:agent].new(agent_type: :task_worker,
-                                       agent_id: @worker3.agent_id)
+  it "should say hello and bye" do
+    @worker1.wait_till(:task_waiting)
+    @worker2.wait_till(:task_waiting)
+    @worker3.wait_till(:task_waiting)
+    agents = @ts_server.read_all(Tuple[:agent].any)
+    agents.should.include @worker1.to_agent_tuple
+    agents.should.include @worker2.to_agent_tuple
+    agents.should.include @worker3.to_agent_tuple
     @ts_server.current_task_worker_size.should == 3
+    @worker1.terminate
+    @worker2.terminate
+    @worker3.terminate
+    @worker1.wait_till(:terminated)
+    @worker2.wait_till(:terminated)
+    @worker3.wait_till(:terminated)
+    agents = @ts_server.read_all(Tuple[:agent].any)
+    agents.should.not.include @worker1.to_agent_tuple
+    agents.should.not.include @worker2.to_agent_tuple
+    agents.should.not.include @worker3.to_agent_tuple
+    @ts_server.current_task_worker_size.should == 0
   end
 
-  it "should processing tasks" do
+  it "should process tasks" do
     @ts_server.write(@task1)
-    sleep 0.05
+    sleep 0.1
     @ts_server.count_tuple(Tuple[:task].any).should == 0
-    sleep 0.05
+    sleep 0.1
+    p @ts_server.all_tuples
     finished = @ts_server.read_all(Tuple[:finished].any)
     finished.size.should == 1
     finished.first.to_tuple.task_id.should == @task1.task_id

@@ -1,9 +1,12 @@
+require 'drb/drb'
 require 'rinda/tuplespace'
 require 'innocent-white/innocent-white-object'
 require 'innocent-white/tuple'
 
 module InnocentWhite
   class TupleSpaceServer < InnocentWhiteObject
+    include DRbUndumped
+
 
     # -- class --
 
@@ -29,7 +32,7 @@ module InnocentWhite
       end
     end
 
-    # -- object --
+    # -- instance --
 
     def initialize(data={})
       @ts = Rinda::TupleSpace.new
@@ -69,9 +72,11 @@ module InnocentWhite
     end
 
     def report
-      { task_worker_resource: task_worker_resource,
+      {
+        task_worker_resource: task_worker_resource,
         current_task_worker_size: current_task_worker_size,
-        tuples: all_tuples }
+        tuples: all_tuples
+      }
     end
 
     # Return all tuples of the tuple space.
@@ -86,7 +91,7 @@ module InnocentWhite
     end
 
     tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}
-    tuple_space_interface :read_all
+    tuple_space_interface :read_all, :result => lambda{|list| list.map{|t| Tuple.from_array(t)}}
     tuple_space_interface :take, :result => lambda{|t| Tuple.from_array(t)}
     tuple_space_interface :write, :validator => Proc.new {|*args|
       args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
@@ -111,19 +116,26 @@ module InnocentWhite
       end
     end
 
-    def set_tuple_space_server(server)
-      @__tuple_space_server__ = server
-    end
-
     tuple_space_operation :read
     tuple_space_operation :read_all
     tuple_space_operation :take
     tuple_space_operation :write
+    tuple_space_operation :count_tuple
 
     # Log a message.
     def log(level, msg)
       write(Tuple[:log].new(level, msg))
     end
 
+    private
+
+    def set_tuple_space_server(server)
+      @__tuple_space_server__ = server
+
+      # override #to_s because dead remote objects cause exceptions when you watch the agent
+      def @__tuple_space_server__.to_s
+        __drburi
+      end
+    end
   end
 end
