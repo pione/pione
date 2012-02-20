@@ -19,9 +19,13 @@ module InnocentWhite
           opt[:validator].call(args)
         end
         # send a message to the tuple space
-        result = @ts.__send__(name, _args)
+        result = @ts.__send__(name, *_args)
         # convert the result to tuple object
-        Tuple.from_array(result)
+        if converter = opt[:result]
+          converter.call(result)
+        else
+          result
+        end
       end
     end
 
@@ -77,14 +81,15 @@ module InnocentWhite
       bag.instance_variable_get("@hash").values.each do |bin|
         tuples += bin.instance_variable_get("@bin")
       end
-      return tuples
+      _tuples = tuples.map{|t| t.value}
+      return _tuples
     end
 
-    tuple_space_interface :read
+    tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}
     tuple_space_interface :read_all
-    tuple_space_interface :take
+    tuple_space_interface :take, :result => lambda{|t| Tuple.from_array(t)}
     tuple_space_interface :write, :validator => Proc.new {|*args|
-      args.first.writable? if arg.first.kind_of?(Tuple::TupleObject)
+      args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
     }
 
     private
@@ -92,7 +97,7 @@ module InnocentWhite
     def check_agent_life
       @thread_check_agent_life = Thread.new do
         loop do
-          agent = take(Tuple[:bye].any).to_tuple
+          agent = take(Tuple[:bye].any)
           take(Tuple[:agent].new(agent_type: agent.agent_type, uuid: agent.uuid))
         end
       end
@@ -102,7 +107,7 @@ module InnocentWhite
   module TupleSpaceServerInterface
     def self.tuple_space_operation(name)
       define_method(name) do |*args|
-        @__tuple_space_server__.__send__(name, args)
+        @__tuple_space_server__.__send__(name, *args)
       end
     end
 
@@ -114,5 +119,11 @@ module InnocentWhite
     tuple_space_operation :read_all
     tuple_space_operation :take
     tuple_space_operation :write
+
+    # Log a message.
+    def log(level, msg)
+      write(Tuple[:log].new(level, msg))
+    end
+
   end
 end

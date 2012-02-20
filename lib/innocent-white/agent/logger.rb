@@ -12,13 +12,11 @@ module InnocentWhite
 
       define_state :initialized
       define_state :logging
-      define_state :stopped
+      define_state :terminated
 
-      define_state_trasition_table {
-        :initialized => :logging,
-        :logging => :logging
-      }
-      catch_exception :stopped
+      define_state_transition :initialized => :logging
+      define_state_transition :logging => :logging
+      define_exception_handler :terminated
 
       private
 
@@ -31,9 +29,12 @@ module InnocentWhite
         @out.puts "#{log.level}: #{log.message}"
       end
 
-      def transit_to_stopped
+      def transit_to_terminated
         bye
-        @out.close if close?
+        unless @out == STDOUT
+          p @out.closed?
+          #@out.close
+        end
       end
     end
 

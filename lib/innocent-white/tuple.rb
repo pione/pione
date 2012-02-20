@@ -133,9 +133,9 @@ module InnocentWhite
     # Return a tuple data object converted from an array.
     def self.from_array(ary)
       raise ArgumentError.new(ary) unless ary.kind_of?(Enumerable)
-      _ary = ary.to_s
-      identifier = ary.first
-      args = ary[1..-1]
+      _ary = ary.to_a
+      identifier = _ary.first
+      args = _ary[1..-1]
       TABLE[identifier].new(*args)
     end
 

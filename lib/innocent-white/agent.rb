@@ -124,6 +124,32 @@ module InnocentWhite
         @status_class || AgentStatus
       end
 
+      def self.define_state(name)
+        @states ||= []
+        @states << name
+
+        define_method("#{name}?") do
+          @__current_state__ == name
+        end
+      end
+
+      def self.state_transition_table
+        @__state_transition_table__ ||= {nil => :initialized}
+      end
+
+      def self.exception_handler
+        @__exception_handler__ ||= :terminated
+      end
+
+      def self.define_state_transition(data)
+        table = state_transition_table
+        table.merge!(data)
+      end
+
+      def self.define_exception_handler(state)
+        @__exception_handler__ = state
+      end
+
       # -- instance methods --
 
       attr_reader :status
@@ -136,6 +162,16 @@ module InnocentWhite
         @__runnable__ = nil
         set_tuple_space_server(ts_server)
         @__next_tuple_space_server__ = nil
+
+        start_running
+      end
+
+      def terminate
+        @running_thread.kill unless @running_thread == Thread.current
+        res = call_transition_method(:terminated)
+        @__current_state__ = :terminated
+        @running_thread.kill
+        return res
       end
 
       # Send bye message to the tuple space servers.
@@ -149,15 +185,15 @@ module InnocentWhite
       end
 
       # Hello, tuple space server.
-      def hello(ts_server=@tuple_space_server)
-        log(:debug, "hello, I am #{uuid}", ts_server)
-        ts_server.write(self.to_agent_tuple)
+      def hello
+        log(:debug, "hello, I am #{uuid}")
+        write(to_agent_tuple)
       end
 
       # Bye, tuple space server.
-      def bye(ts_server=@tuple_space_server)
-        log(:debug, "bye, I am #{uuid}", ts_server)
-        ts_server.write(self.to_bye_tuple)
+      def bye
+        log(:debug, "bye, I am #{uuid}")
+        write(to_bye_tuple)
       end
 
       # Stop the agent.
@@ -183,6 +219,42 @@ module InnocentWhite
         end
       end
 
+      def log(level, msg)
+        super(level, "#{agent_type}: #{msg}")
+      end
+
+      private
+
+      def start_running
+        state_transition_table = self.class.state_transition_table
+        exception_handler = self.class.exception_handler
+
+        @running_thread = Thread.new do
+          begin
+            loop do
+              next_state = state_transition_table[@__current_state__]
+              @__result__ = call_transition_method(next_state, @__result__)
+              @__current_state__ = next_state
+            end
+          rescue Exception => e
+            call_transition_method(exception_handler, e)
+          end
+        end
+      end
+
+      # Return a transition method of the state.
+      def transition_method(state)
+        method("transit_to_#{state}")
+      end
+
+      # Call a transition method.
+      def call_transition_method(state, *args)
+        method = transition_method(state)
+        arity = method.arity
+        _args = args[0...(arity-1)]
+        method.call(*_args)
+      end
+
       # Convert a agent tuple.
       def to_agent_tuple
         Tuple[:agent].new(agent_type: agent_type, uuid: uuid)
@@ -193,37 +265,6 @@ module InnocentWhite
         Tuple[:bye].new(agent_type: agent_type, uuid: uuid)
       end
 
-      # Log a message.
-      def log(level, msg, ts_server=@tuple_space_server)
-        req = Tuple[:log].new(level: level, message: "#{agent_type}: #{msg}")
-        ts_server.write(req)
-      end
-
-      private
-
-      # Start the action.
-      def start_running
-        return nil if not(@thread.nil?) and not(@thread.stop?)
-        @thread = Thread.new do
-          # start
-          @status.running
-          @__runnable__ = true
-
-          # job loop
-          while @__runnable__ do
-            # set tuple space
-            if @__next_tuple_space_server__
-              ts = @__next_tuple_space_server__
-              @__next_tuple_space_server__ = nil
-              @tuple_space_server = ts
-              hello()
-            end
-
-            # do agent job
-            run
-          end
-        end
-      end
     end
   end
 end
