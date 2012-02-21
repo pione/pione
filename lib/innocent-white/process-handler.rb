@@ -2,9 +2,12 @@ require 'tempfile'
 require 'innocent-white/util'
 
 module InnocentWhite
-  module ProcessHandler
-    class BaseProcess
-      # -- class methods --
+  module Rule
+    RuleIO = Struct.new(:name, :value)
+
+    class Base
+
+      # -- class --
 
       def self.define(data)
         raise ArgumentError unless data.has_key?(:inputs)
@@ -17,7 +20,6 @@ module InnocentWhite
           @params_definitioni = data[:params] || []
           @content = data[:content]
         end
-
       end
 
       # Return the inputs definition.
@@ -53,13 +55,13 @@ module InnocentWhite
         begin
           @catched << tuple.name
           # FIXME
-          return [Input.new(tuple.name, tuple.raw)]
+          return [RuleInput.new(tuple.name, tuple.raw)]
         rescue
           return nil
         end
       end
 
-      # -- instance methods --
+      # -- instance --
 
       attr_reader :inputs
       attr_reader :outputs
@@ -110,22 +112,38 @@ module InnocentWhite
       # Make auto-variables.
       def make_auto_variables
         # FIXME: bad bad bad
-        @variable["OUTPUT"] = @outputs.first
-        input = @inputs.first
-        @variable["INPUT"] = input.name
-        @variable["VAL_INPUT"] = input.value if input.value
+        @inputs.each_with_index do |input, i|
+          @variable["INPUT_NAME[#{i}]"] = input.name
+          @variable["INPUT_VALUE[#{i}]"] = input.value if input.value
+        end
+        @outputs.each_with_index do |output, i|
+          @variable["OUTPUT_NAME[#{i}]"] = output.name
+          # @variable["OUTPUT_VALUE"] = output.value
+        end
       end
     end
 
-    Input = Struct.new(:name, :value)
-
-    class Rule < BaseProcess
+    class FlowRule < Rule
       def execute
         
       end
     end
 
-    class Action < BaseProcess
+    module FlowParts
+      class Caller
+        attr_reader :rule_path
+      end
+
+      class Condition
+
+      end
+
+      class Assignment
+
+      end
+    end
+
+    class ActionRule < Rule
       def execute
         write_shell_script {|path| shell path}
       end
