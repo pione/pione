@@ -103,7 +103,7 @@ module InnocentWhite
       @thread_check_agent_life = Thread.new do
         loop do
           agent = take(Tuple[:bye].any)
-          take(Tuple[:agent].new(agent_type: agent.agent_type, uuid: agent.uuid))
+          take(Tuple[:agent].new(uuid: agent.uuid))
         end
       end
     end

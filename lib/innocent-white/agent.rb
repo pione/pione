@@ -158,12 +158,12 @@ module InnocentWhite
 
         @running_thread = Thread.new do
           begin
-            loop do
+            while true do
               next_state = state_transition_table[@__current_state__]
               @__current_state__ = next_state
               @__result__ = call_transition_method(next_state, *@__result__)
             end
-          rescue Exception => e
+          rescue Object => e
             call_transition_method(exception_handler, e)
           end
         end

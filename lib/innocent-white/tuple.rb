@@ -142,16 +142,38 @@ module InnocentWhite
     #
     # define tuples
     #
-    define_format [:data, :data_type, :name, :path, :raw, :time]
-    define_format [:task, :module_path, :inputs, :outputs, :params, :uuid]
+
+    # data: data representation
+    define_format [:data, :name, :domain, :value, :path]
+
+    # task: rule application task with inputs, outpus and parameters
+    define_format [:task, :rule_path, :inputs, :outputs, :params, :uuid]
+
+    # finished: task finished notifier
     define_format [:finished, :uuid, :status]
+
+    # agent: agent connection notifier in the tuple space server
     define_format [:agent, :agent_type, :uuid]
+
+    # parent_agent: agent tree information
     define_format [:parent_agent, :parent_id, :child_id]
+
+    # log: log message
     define_format [:log, :level, :message]
+
+    # task_worker_resource: number of task worker for tuple space server
     define_format [:task_worker_resource, :number]
-    define_format [:request_module, :path]
-    define_format [:module, :path, :content, :status]
-    define_format [:bye, :agent_type, :uuid]
+
+    # request_rule: request rule for provider
+    define_format [:request_rule, :rule_path]
+
+    # rule: represent rule content
+    define_format [:rule, :rule_path, :content, :status]
+
+    # bye: bye message from agents
+    define_format [:bye, :uuid]
+
+    # exception: exception notifier from agents
     define_format [:exception, :value]
   end
 end

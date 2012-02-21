@@ -1,50 +1,118 @@
 require 'innocent-white/agent'
 
 module InnocentWhite
-  module Simulator
-    class InputGeneratorMethod
-      def generate(&b)
-        raise RuntimeError
-      end
-    end
+  module Agent
+    class InputGenerator < InnocentWhite::Agent::Base
+      set_agent_type :input_generator
 
-    class SimpleInputGeneratorMethod < InputGeneratorMethod
-      def initialize(name_range, ext, val_range)
-        @name_range = name_range
-        @ext = ext
-        @val_range = val_range
-      end
-      
-      def generate(&b)
-        vals = @val_range.to_a
-        @name_range.to_a.each_with_index do |basename,i|
-          b.call("#{basename}.#{@ext}", vals[i])
+      InputData = Struct.new(:name, :value, :path)
+
+      # Base class for generator methods.
+      class GeneratorMethod
+        def generate
+          raise RuntimeError
         end
       end
-    end
 
-    module Agent
-      class InputGenerator < InnocentWhite::Agent::Base
-        set_agent_type :input_generator
-
-        def initialize(ts_server, generator)
-          raise ArgumentError unless generator.kind_of?(InputGeneratorMethod)
-          super(ts_server)
-          @generator = generator
-          start_running
+      # Simple generator based on range and extension.
+      class SimpleGeneratorMethod < GeneratorMethod
+        def initialize(name_range, ext, value_range)
+          @name_range = name_range.to_enum
+          @ext = ext
+          @value_range = value_range.to_enum
         end
 
-        def run
-          @generator.generate do |name, val|
-            tuple = Tuple[:data].new(data_type: :raw, name: name, path:"/", raw: val, time: Time.now)
-            @tuple_space_server.write(tuple)
-            log(:debug, "generate #{name}: #{val}")
+        def generate
+          name = "#{@name_range.next}.#{@ext}"
+          value = @value_range.next
+          InputData.new(name, value, nil)
+        end
+      end
+
+      # Directory based generator.
+      class DirGeneratorMethod < GeneratorMethod
+        def initialize(dir_path, path_mode=true)
+          @dir_path = dir_path
+          @gen = Dir.open(dir_path).to_enum
+          @path_mode = path_mode
+        end
+
+        def generate
+          name = @gen.next
+          path = File.join(@dir_path, name)
+          if ['.', '..'].include?(name)
+            generate
+          else
+            if @path_mode
+              InputData.new(name, nil, path)
+            else
+              value = File.read(path)
+              InputData.new(name, value, nil)
+            end
           end
-          stop
         end
       end
-    end
-  end
 
-  Agent.set_agent Simulator::Agent::InputGenerator
+      # -- class --
+
+      def self.new_by_simple(ts_server, *args)
+        new(ts_server, SimpleGeneratorMethod.new(*args))
+      end
+
+      def self.new_by_dir(ts_server, *args)
+        new(ts_server, DirGeneratorMethod.new(*args))
+      end
+
+      # -- instance --
+
+      define_state :initialized
+      define_state :generating
+      define_state :terminated
+
+      define_state_transition :initialized => :generating
+      define_state_transition :generating => :generating
+      define_exception_handler :error
+
+      # State initialized.
+      def initialize(ts_server, generator)
+        raise ArgumentError unless generator.kind_of?(GeneratorMethod)
+        super(ts_server)
+        @generator = generator
+      end
+
+      def transit_to_initialized
+        # do nothing
+      end
+
+      # State generating.
+      def transit_to_generating
+        input = @generator.generate
+        tuple = Tuple[:data].new(name: input.name, domain: "/")
+        if input.value
+          tuple.value = input.value
+        else
+          tuple.path = input.path
+        end
+        write(tuple)
+        log(:debug, "generated #{input.name}")
+      end
+
+      # State error.
+      # StopIteration exception means the input generation was completed.
+      def transit_to_error(e)
+        unless e.kind_of?(StopIteration)
+          Util.ignore_exception { write(Tuple[:exception].new(e)) }
+        end
+        terminate
+      end
+
+      # State terminated.
+      def transit_to_terminated
+        Util.ignore_exception { bye }
+      end
+    end
+
+    set_agent InputGenerator
+
+  end
 end

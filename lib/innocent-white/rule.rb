@@ -5,51 +5,49 @@ module InnocentWhite
   module Rule
     RuleIO = Struct.new(:name, :value)
 
-    class Base
+    # Compiler for nput string compiler
+    module InputStringCompiler
+      TABLE = {}
 
-      # -- class --
+      def self.define_matcher(matcher, replace)
+        TABLE[Regexp.escape(matcher)] = replace
+      end
 
-      def self.define(data)
+      define_matcher('*', '(.*)')
+      define_matcher('+', '(.+)')
+
+      def compile(input_string)
+        Regexp.new(Regexp.escape(input_string).gsub(/\\\(\\\$([^)]+?)\\\)/){TABLE[$1]})
+      end
+      module_function :compile
+    end
+
+    # Base rule class for flow rule and action rule.
+    class BaseRule
+      attr_reader :inputs
+      attr_reader :outputs
+      attr_reader :params
+      attr_reader :content
+      attr_reader :variable
+
+      def initialize(inputs, outputs, params, content)
         raise ArgumentError unless data.has_key?(:inputs)
         raise ArgumentError unless data.has_key?(:outputs)
         raise ArgumentError unless data.has_key?(:content)
 
-        klass = Class.new(self) do
-          @inputs_definition = data[:inputs]
-          @outputs_definition = data[:outputs]
-          @params_definitioni = data[:params] || []
-          @content = data[:content]
-        end
+        @inputs_definition = inputs
+        @outputs_definition = outputs
+        @params_definitioni = params
+        @content = data[:content]
       end
 
-      # Return the inputs definition.
-      def self.inputs_definition
-        @inputs_definition
-      end
-
-      # Return the outputs definition.
-      def self.outputs_definition
-        @outputs_definition
-      end
-
-      # Return the parameters definition.
-      def self.params_definition
-        @params_definition
-      end
-
-      # Return the content.
-      def self.content
-        @content
-      end
-
-      # Catch input data from tuple space server.
-      def self.catch_inputs(ts_server, call_path)
+      # find input data from tuple space server.
+      def find_inputs(ts_server, domain)
         # FIXME: input handling is very poor now.
         @catched = @catched || []
-        input = inputs_definition.first
-        data = Tuple[:data].new(name: input,
-                                path: call_path)
-        tuples = ts_server.read_all(data).map{|t| t.to_tuple}
+        input_targets = @inputs.map {|input| Tuple[:data].new(name: input, path: domain)}
+        Hash[@inputs.map {|input| [input, ts_server.read_all(data)]}]
+        tuples = ts_server.read_all(data)
         tuple = tuples.select{|tuple| not(@catched.include?(tuple.name))}.first
         return nil if tuple.nil?
         begin
@@ -61,13 +59,14 @@ module InnocentWhite
         end
       end
 
-      # -- instance --
+      def find_input(ts_server, domain, input)
+        req = Tuple[:data].new(name: input.name, path: domain)
+        tuples = ts_server.read_all(req)
+        tuple = tuples.select{|tuple| 
+      end
+    end
 
-      attr_reader :inputs
-      attr_reader :outputs
-      attr_reader :params
-      attr_reader :variable
-
+    class BaseHandler
       def initialize(inputs=[], params={})
         # check arguments
         inputs.each do |i|
@@ -89,16 +88,16 @@ module InnocentWhite
       private
 
       def inputs_definition
-        self.class.inputs_definition
+        @rule.inputs
       end
 
       def outputs_definition
-        self.class.outputs_definition
+        @rule.outputs
       end
 
       def make_outputs
         # FIXME: bad bad
-        if not(self.class.outputs_definition.empty?)
+        if not(outputs_definition.empty?)
           input = @inputs.first.name
           input_def = inputs_definition.first
           md = input_def.match(input)
@@ -123,7 +122,7 @@ module InnocentWhite
       end
     end
 
-    class FlowRule < Rule
+    class FlowRule < BaseRule
       def execute
         
       end
@@ -135,15 +134,18 @@ module InnocentWhite
       end
 
       class Condition
-
+        attr_reader :condition
+        attr_reader :true_expr
+        attr_reader :false_expr
       end
 
       class Assignment
-
+        attr_reader :variable
+        attr_reader :content
       end
     end
 
-    class ActionRule < Rule
+    class ActionRule < BaseRule
       def execute
         write_shell_script {|path| shell path}
       end
@@ -166,5 +168,45 @@ module InnocentWhite
         `#{sh} #{path}`
       end
     end
+
+    class ActionHandler < BaseHandler
+      def initialize(action, inputs, outputs, params)
+        @action = action
+        @inputs = inputs
+        @outputs = outputs
+        @params = params
+        @variable = {}
+        super
+      end
+
+      # Execute the action.
+      def execute
+        write_shell_script {|path| shell path}
+      end
+
+      private
+
+      # Expand variables in the shell script.
+      # when VAR_NAME := 1,
+      # "__{$VAR_NAME}__" => "__a__"
+      def expand_variables(content)
+        content.gsub(/\{\$(.+?)\}/){@variable[$1]}
+      end
+
+      # Write shell script to the tempfile.
+      def write_shell_script(&b)
+        file = Tempfile.new(Util.uuid)
+        file.print(expand_variables(self.class.content))
+        file.close(false)
+        return b.call(file.path)
+      end
+
+      # Call shell script of the path.
+      def shell(path)
+        sh = @variable["SHELL"] || "/bin/sh"
+        `#{sh} #{path}`
+      end
+    end
+
   end
 end
