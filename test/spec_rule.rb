@@ -68,15 +68,23 @@ describe 'Rule' do
     end
   end
 
-  describe 'BaseRule' do
+  describe 'ActionRule' do
     before do
       @remote_server = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3))
       @ts_server = DRbObject.new(nil, @remote_server.uri)
-      @generator = Agent[:input_generator].new(SimpleInputGeneratorMethod.new(@ts_server, 1..100, "a"))
+      @gen1 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "a", 11..20)
+      @gen2 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "b", 11..20)
+      inputs = ['($*).a', '{$INPUT[1].MATCH[1]}.b']
+      outputs = ['{$INPUT[1].MATCH[1]}.c']
+      @rule = Rule::ActionRule.new(inputs, outputs, [], "expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}")
     end
 
     it 'should find inputs' do
-
+      @gen1.wait_till(:terminated)
+      @gen2.wait_till(:terminated)
+      inputs = @rule.find_inputs(@ts_server, "/")
+      p @ts_server.all_tuples
+      inputs.size.should == 10
     end
   end
 

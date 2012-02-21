@@ -31,38 +31,44 @@ module InnocentWhite
       attr_reader :variable
 
       def initialize(inputs, outputs, params, content)
-        raise ArgumentError unless data.has_key?(:inputs)
-        raise ArgumentError unless data.has_key?(:outputs)
-        raise ArgumentError unless data.has_key?(:content)
-
-        @inputs_definition = inputs
-        @outputs_definition = outputs
-        @params_definitioni = params
-        @content = data[:content]
+        @inputs = inputs
+        @outputs = outputs
+        @params = params
+        @content = content
       end
 
       # find input data from tuple space server.
       def find_inputs(ts_server, domain)
-        # FIXME: input handling is very poor now.
-        @catched = @catched || []
-        input_targets = @inputs.map {|input| Tuple[:data].new(name: input, path: domain)}
-        Hash[@inputs.map {|input| [input, ts_server.read_all(data)]}]
-        tuples = ts_server.read_all(data)
-        tuple = tuples.select{|tuple| not(@catched.include?(tuple.name))}.first
-        return nil if tuple.nil?
-        begin
-          @catched << tuple.name
-          # FIXME
-          return [RuleInput.new(tuple.name, tuple.raw)]
-        rescue
-          return nil
+        _find_inputs(ts_server, domain, @inputs, 1, {})
+      end
+
+      private
+
+      def _find_inputs(ts_server, domain, inuputs, index, var)
+        return _result if inputs.empty?
+
+        input = inputs.first
+        tuples = _find_input(ts_server, domain, input)
+        _var = var.clone
+
+        tuples.map do |tuple|
+          md = input.match(tuple.name)
+          _var["INPUT[#{index}].NAME]"] = tuple.name
+          if tuple.value
+            _var["INPUT[#{index}].VALUE]"] = tuple.value
+          else
+            _var["INPUT[#{index}].PATH"] = tuple.path
+          end
+          md.captures.each_with_index do |s, i|
+            _var["INPUT[#{index}].MATCH[#{i}]"] = s
+          end
+          _find_inputs(ts_server, domain, inputs[1..-1], index+1, _var)
         end
       end
 
-      def find_input(ts_server, domain, input)
-        req = Tuple[:data].new(name: input.name, path: domain)
-        tuples = ts_server.read_all(req)
-        tuple = tuples.select{|tuple| 
+      def _find_input(ts_server, domain, input)
+        req = Tuple[:data].new(name: input, domain: domain)
+        ts_server.read_all(req)
       end
     end
 
