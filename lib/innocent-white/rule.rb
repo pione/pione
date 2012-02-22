@@ -5,19 +5,51 @@ module InnocentWhite
   module Rule
     RuleIO = Struct.new(:name, :value)
 
+    class DataName
+      def initialize(name, modifier = nil)
+        @name = name
+        @modifier = modifier
+      end
+
+      def self.all(name)
+        new(name, :all)
+      end
+
+      def self.regexp(name, variables={})
+        new(name).to_regexp(variables)
+      end
+
+      def to_regexp(variables={})
+        compile_to_regexp(expand_variables(@name, variables))
+      end
+
+      def compile_to_regexp(name)
+        DataNameCompiler.compile(name)
+      end
+
+      def expand_variables(name, variables)
+        name.gsub(/\{\$(.+?)\}/){variables[$1]}
+      end
+    end
+
     # Compiler for nput string compiler
-    module InputStringCompiler
+    module DataNameCompiler
       TABLE = {}
 
       def self.define_matcher(matcher, replace)
         TABLE[Regexp.escape(matcher)] = replace
       end
 
-      define_matcher('*', '(.*)')
-      define_matcher('+', '(.+)')
+      define_matcher('\*', '(.*)')
+      define_matcher('\?', '(.)')
 
-      def compile(input_string)
-        Regexp.new(Regexp.escape(input_string).gsub(/\\\(\\\$([^)]+?)\\\)/){TABLE[$1]})
+      def compile(name)
+        return name unless name.kind_of?(String)
+        s = Regexp.escape(name)
+        TABLE.keys.each do |key|
+          s.gsub!(key){p TABLE; TABLE[$1]}
+        end
+        Regexp.new(s)
       end
       module_function :compile
     end
@@ -30,16 +62,29 @@ module InnocentWhite
       attr_reader :content
       attr_reader :variable
 
-      def initialize(inputs, outputs, params, content)
+      def initialize(rule_path, inputs, outputs, params, content)
+        @rule_path = rule_path
         @inputs = inputs
         @outputs = outputs
         @params = params
         @content = content
       end
 
-      # find input data from tuple space server.
+      # Find input data from tuple space server.
       def find_inputs(ts_server, domain)
         _find_inputs(ts_server, domain, @inputs, 1, {})
+      end
+
+      # Find output data from tuple space server.
+      def find_outputs(ts_server, domain, inputs)
+        # FIXME
+      end
+
+      def make_task(ts_server)
+        find_inputs(ts_server, domain).each do |_inputs|
+          _outputs = find_outputs(ts_server, @domain)
+          Tuple[:task].new(@rule_path, _inputs, outputs, params, content)
+        end
       end
 
       private
@@ -47,29 +92,20 @@ module InnocentWhite
       def _find_inputs(ts_server, domain, _inputs, index, var)
         return [[]] if _inputs.empty?
 
+        # expand variables and compile to regular expression
         input = expand_variables(_inputs.first, var)
-        unless input.kind_of?(Regexp)
-          input = InputStringCompiler.compile(input)
-        end
+        input = InputDataNameCompiler.compile(input)
+
+        # find an input from tuple space server
         tuples = _find_input(ts_server, domain, input)
         _var = var.clone
 
+        # find rest inputs recursively
         result = []
         tuples.each do |tuple|
-          md = input.match(tuple.name)
-          _var["INPUT[#{index}].NAME]"] = tuple.name
-          if tuple.value
-            _var["INPUT[#{index}].VALUE]"] = tuple.value
-          else
-            _var["INPUT[#{index}].PATH"] = tuple.path
-          end
-          md.captures.each_with_index do |s, i|
-            _var["INPUT[#{index}].MATCH[#{i+1}]"] = s
-          end
-          res = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, _var)
-          res.each do |r|
-            result << r.unshift(tuple.name)
-          end
+          make_auto_variables(tuple, _var)
+          rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, _var)
+          rest.each {|r| result << r.unshift(tuple) }
         end
         return result
       end
@@ -82,10 +118,23 @@ module InnocentWhite
       def expand_variables(str, var)
         str.gsub(/\{\$(.+?)\}/){var[$1]}
       end
+
+      def make_auto_variables(tuple, var)
+        md = input.match(tuple.name)
+        var["INPUT[#{index}].NAME]"] = tuple.name
+        if tuple.value
+          var["INPUT[#{index}].VALUE]"] = tuple.value
+        else
+          var["INPUT[#{index}].PATH"] = tuple.path
+        end
+        md.captures.each_with_index do |s, i|
+          var["INPUT[#{index}].MATCH[#{i+1}]"] = s
+        end
+      end
     end
 
     class BaseHandler
-      def initialize(inputs=[], params={})
+      def initialize(inputs, outputs, params, content)
         # check arguments
         inputs.each do |i|
           unless i.respond_to?(:name) and i.respond_to?(:value)

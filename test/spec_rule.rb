@@ -7,17 +7,17 @@ include InnocentWhite
 Thread.abort_on_exception = true
 
 describe 'Rule' do
-  describe 'InputStringCompiler' do
-    it 'should compile input string as regular expression' do
-      input1 = Rule::InputStringCompiler.compile('test-1.a')
+  describe 'DataName' do
+    it 'should compile string as regular expression' do
+      input1 = Rule::DataName.regexp('test-1.a')
       input1.should.match 'test-1.a'
       input1.should.not.match 'test-1_a'
-      input2 = Rule::InputStringCompiler.compile('test-\d.a')
+      input2 = Rule::DataName.regexp('test-\d.a')
       input2.should.not.match 'test-1.a'
     end
 
-    it 'should compile "($*)" as /.*/' do
-      input = Rule::InputStringCompiler.compile('test-($*).a')
+    it 'should handle wildcard "*" as /(.*)/ (Case 1)' do
+      input = Rule::DataName.regexp('test-*.a')
       input.should.match 'test-.a'
       input.match('test-.a')[1].should == ''
       input.should.match 'test-1.a'
@@ -28,24 +28,31 @@ describe 'Rule' do
       input.match('test-3.a')[1].should == '3'
       input.should.match 'test-A.a'
       input.match('test-A.a')[1].should == 'A'
-      input.should.not.match 'test-1_a'
       input.should.match 'test-abc.a'
       input.match('test-abc.a')[1].should == 'abc'
+      input.should.not.match 'test-1_a'
+      input.should.not.match '-1.a'
     end
 
-    it 'should handle "($*)" that written twice in the name 'do
-      input = Rule::InputStringCompiler.compile('test-($*)-($*).a')
+    it 'should handle wildcard "*" as /(.*)/ (Case 2)'do
+      input = Rule::DataName.regexp('test-*-*.a')
       input.should.match 'test-1-2.a'
       input.match('test-1-2.a')[1].should == '1'
       input.match('test-1-2.a')[2].should == '2'
+      input.should.match 'test-abc-xyz.a'
+      input.match('test-abc-xyz.a')[1].should == 'abc'
+      input.match('test-abc-xyz.a')[2].should == 'xyz'
       input.should.match 'test--.a'
       input.match('test--.a')[1].should == ''
       input.match('test--.a')[2].should == ''
+      input.should.not.match('test-1.a')
+      input.should.not.match('test-1-2.b')
+      input.should.not.match('test-1-2')
+      input.should.not.match('-1-2.a')
     end
 
-    it 'should compile "$(+)" as /.+/' do
-      input = Rule::InputStringCompiler.compile('test-($+).a')
-      input.should.not.match 'test-.a'
+    it 'should handle "?" as /(.)/ (Case 1)' do
+      input = Rule::DataName.regexp('test-?.a')
       input.should.match 'test-1.a'
       input.match('test-1.a')[1].should == '1'
       input.should.match 'test-2.a'
@@ -54,17 +61,30 @@ describe 'Rule' do
       input.match('test-3.a')[1].should == '3'
       input.should.match 'test-A.a'
       input.match('test-A.a')[1].should == 'A'
+      input.should.not.match 'test-abc.a'
+      input.should.not.match 'test-.a'
       input.should.not.match 'test-1_a'
-      input.should.match 'test-abc.a'
-      input.match('test-abc.a')[1].should == 'abc'
     end
 
-    it 'should handle "($+)" that written twice in the name 'do
-      input = Rule::InputStringCompiler.compile('test-($+)-($+).a')
+    it 'should handle "?" as /(.)/ (Case 2)' do
+      input = Rule::DataName.regexp('test-?-?.a')
       input.should.match 'test-1-2.a'
       input.match('test-1-2.a')[1].should == '1'
       input.match('test-1-2.a')[2].should == '2'
       input.should.not.match 'test--.a'
+      input.should.not.match 'test-abc-a.a'
+      input.should.not.match 'test-a-abc.a'
+    end
+
+    it 'should expand variables' do
+      input1 = Rule::DataName.regexp('{$VAR}.a', {'VAR' => '1'})
+      input1.should.match '1.a'
+      input1.should.not.match '1.b'
+      input2 = Rule::DataName.regexp('{$VAR}.a', {'VAR' => '*'})
+      input2.should.match '1.a'
+      input2.should.match '2.a'
+      input2.should.match 'abc.a'
+      input2.should.not.match '1.b'
     end
   end
 
@@ -74,18 +94,20 @@ describe 'Rule' do
       @ts_server = DRbObject.new(nil, @remote_server.uri)
       @gen1 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "a", 11..20)
       @gen2 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "b", 11..20)
-      inputs = ['($*).a', '{$INPUT[1].MATCH[1]}.b']
+      inputs = ['*.a', '{$INPUT[1].MATCH[1]}.b']
       outputs = ['{$INPUT[1].MATCH[1]}.c']
       @rule = Rule::ActionRule.new(inputs, outputs, [], "expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}")
     end
 
-    it 'should find inputs' do
+    it 'should find inputs and outputs' do
       @gen1.wait_till(:terminated)
       @gen2.wait_till(:terminated)
       inputs = @rule.find_inputs(@ts_server, "/")
       inputs.size.should == 10
       10.times do |i|
-        inputs.should.include ["#{i+1}.a", "#{i+1}.b"]
+        a = @ts_server.read(Tuple[:data].new(name: "#{i+1}.a"))
+        b = @ts_server.read(Tuple[:data].new(name: "#{i+1}.b"))
+        inputs.should.include [a, b]
       end
     end
   end
