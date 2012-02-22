@@ -83,8 +83,10 @@ describe 'Rule' do
       @gen1.wait_till(:terminated)
       @gen2.wait_till(:terminated)
       inputs = @rule.find_inputs(@ts_server, "/")
-      p @ts_server.all_tuples
       inputs.size.should == 10
+      10.times do |i|
+        inputs.should.include ["#{i+1}.a", "#{i+1}.b"]
+      end
     end
   end
 

@@ -44,14 +44,18 @@ module InnocentWhite
 
       private
 
-      def _find_inputs(ts_server, domain, inuputs, index, var)
-        return _result if inputs.empty?
+      def _find_inputs(ts_server, domain, _inputs, index, var)
+        return [[]] if _inputs.empty?
 
-        input = inputs.first
+        input = expand_variables(_inputs.first, var)
+        unless input.kind_of?(Regexp)
+          input = InputStringCompiler.compile(input)
+        end
         tuples = _find_input(ts_server, domain, input)
         _var = var.clone
 
-        tuples.map do |tuple|
+        result = []
+        tuples.each do |tuple|
           md = input.match(tuple.name)
           _var["INPUT[#{index}].NAME]"] = tuple.name
           if tuple.value
@@ -60,15 +64,23 @@ module InnocentWhite
             _var["INPUT[#{index}].PATH"] = tuple.path
           end
           md.captures.each_with_index do |s, i|
-            _var["INPUT[#{index}].MATCH[#{i}]"] = s
+            _var["INPUT[#{index}].MATCH[#{i+1}]"] = s
           end
-          _find_inputs(ts_server, domain, inputs[1..-1], index+1, _var)
+          res = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, _var)
+          res.each do |r|
+            result << r.unshift(tuple.name)
+          end
         end
+        return result
       end
 
       def _find_input(ts_server, domain, input)
         req = Tuple[:data].new(name: input, domain: domain)
         ts_server.read_all(req)
+      end
+
+      def expand_variables(str, var)
+        str.gsub(/\{\$(.+?)\}/){var[$1]}
       end
     end
 
@@ -158,9 +170,9 @@ module InnocentWhite
 
       private
 
-      def expand_variables(content)
-        content.gsub(/\{\$(.+?)\}/){@variable[$1]}
-      end
+      #def expand_variables(content)
+      #  content.gsub(/\{\$(.+?)\}/){@variable[$1]}
+      #end
 
       def write_shell_script(&b)
         file = Tempfile.new(Util.uuid)
