@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-# -*- ruby -*-
 
 InnocentWhite::Document.new do
   # Main flow
   define_flow('main') do
-    inputs  all('*.txt')
-    outputs 'result.txt'
+    inputs  all('*.txt').excluding('summary.txt')
+    outputs 'summary.txt'
     content [call "convert_to_utf8",
-             call_with_sync"count_kanji",
-             call "sum_kanji"]
+             call_with_sync "count_kanji",
+             call "make_summary"]
   end
 
   # Convert to UTF-8 by nkf
@@ -22,40 +21,42 @@ InnocentWhite::Document.new do
   define_action('count_kanji') do
     inputs '*.utf8'
     outputs '{$INPUT[1].MATCH[1]}.count'
-    content <<'__SH__'
-#!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
-table = {}
-text = File.open("{$INPUT[1].PATH}").read
-text.split("").each do |c|
-  table[c] =  table.has_key?(c) ? table[c].succ : 1
-end
-table.each do |key, val|
-  puts "#{key.inspect[1..-2]}:#{val}"
-end
-__SH__
+    content ruby(<<-'__CODE__')
+      # -*- coding: utf-8 -*-
+      table = {}
+      text = File.open("{$INPUT[1].PATH}").read
+      text.split("").each do |c|
+        table[c] =  table.has_key?(c) ? table[c].succ : 1
+      end
+      table.each do |key, val|
+        puts "#{key.inspect[1..-2]}:#{val}"
+      end
+    __CODE__
   end
 
   # Summarize kanji characters
-  define_action('sum_kanji') do
+  define_action('make_summary') do
     inputs all('*.count')
-    outputs 'result.txt'
-    content <<'__SH__'
-#!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
-table = {}
-"{$INPUT[1].PATH}".split(",").each do |path|
-  File.read(path).split("\n").map do |line|
-    c, number = line.split(":")
-    table[c] = table.has_key?(c) ? table[c] + number.to_i : number.to_i
+    outputs 'summary.txt'
+    content ruby(<<-'__CODE__')
+      # -*- coding: utf-8 -*-
+      table = {}
+      "{$INPUT[1].PATH}".split(",").each do |path|
+        File.read(path).split("\n").map do |line|
+          c, number = line.split(":")
+          table[c] = (table.has_key?(c) ? table[c] : 0) + number.to_i
+        end
+      end
+
+      File.open("{$OUTPUT[1].PATH}", "w+") do |out|
+        table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
+          puts "#{key.inspect[1..-2]}:#{table[key]}"
+        end
+      end
+    __CODE__
   end
 end
 
-File.open("{$OUTPUT[1].PATH}", "w+") do |out|
-  table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
-    puts "#{key.inspect[1..-2]}:#{table[key]}"
-  end
-end
-__SH__
-  end
-end
+# Local Variables:
+# mode: ruby
+# End:

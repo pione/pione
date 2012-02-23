@@ -1,14 +1,21 @@
 require 'tempfile'
 require 'innocent-white/util'
+require 'innocent-white/innocent-white-object'
 
 module InnocentWhite
   module Rule
     RuleIO = Struct.new(:name, :value)
 
-    class DataName
-      def initialize(name, modifier = nil)
+    # DataNameExp is a class for input and ouput data name of rule.
+    class DataNameExp
+      def initialize(name, modifier = :exist)
         @name = name
         @modifier = modifier
+        @excludings = []
+      end
+
+      def self.exist(name)
+        new(name, :exist)
       end
 
       # Create a name with 'all' modifier.
@@ -16,6 +23,7 @@ module InnocentWhite
         new(name, :all)
       end
 
+      # Convert to proc object for Enumerator methods.
       def self.to_proc
         Proc.new{|name| self.new(name) }
       end
@@ -30,6 +38,15 @@ module InnocentWhite
         @modifier == :all
       end
 
+      # Return true if the name has 'exist' modifier.
+      def exist?
+        @modifier == :exist
+      end
+
+      def excluding(name)
+        @excludings << name
+      end
+
       # Convert the name into regular expression.
       def to_regexp(variables={})
         compile_to_regexp(expand_variables(@name, variables))
@@ -38,7 +55,7 @@ module InnocentWhite
       private
 
       def compile_to_regexp(name)
-        DataNameCompiler.compile(name)
+        DataNameExpCompiler.compile(name)
       end
 
       def expand_variables(name, variables)
@@ -46,17 +63,22 @@ module InnocentWhite
       end
     end
 
-    # Compiler for nput string compiler
-    module DataNameCompiler
+    # DataNameExpCompiler is a compiler for data name string.
+    module DataNameExpCompiler
       TABLE = {}
 
+      # Define a string matcher.
       def self.define_matcher(matcher, replace)
         TABLE[Regexp.escape(matcher)] = replace
       end
 
+      # Asterisk symbol is multi-character matcher(empty string is matched).
       define_matcher('*', '(.*)')
+
+      # Question symbol is single character matcher(empty string is not matched).
       define_matcher('?', '(.)')
 
+      # Compile data name into regular expression.
       def compile(name)
         return name unless name.kind_of?(String)
         s = Regexp.escape(name)
@@ -74,7 +96,6 @@ module InnocentWhite
       attr_reader :outputs
       attr_reader :params
       attr_reader :content
-      attr_reader :variable
 
       #def initialize(rule_path, inputs, outputs, params, content)
       def initialize(inputs, outputs, params, content)
@@ -112,15 +133,20 @@ module InnocentWhite
 
         # find an input from tuple space server
         tuples = _find_input(ts_server, domain, input)
-        _var = var.clone
 
-        # find rest inputs recursively
         result = []
-        tuples.each do |tuple|
-          make_auto_variables(input, index, tuple, _var)
-          rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, _var)
-          rest.each {|r| result << r.unshift(tuple) }
+
+        if input.all?
+          rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, var.clone)
+        else
+          # find rest inputs recursively
+          tuples.each do |tuple|
+            make_auto_variables(input, index, tuple, var)
+            rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, var.clone)
+            rest.each {|r| result << r.unshift(tuple) }
+          end
         end
+
         return result
       end
 
@@ -133,7 +159,7 @@ module InnocentWhite
         str.gsub(/\{\$(.+?)\}/){var[$1]}
       end
 
-      def make_auto_variables(input, index, tuple, var)
+      def make_auto_variables_by_exist(input, index, tuple, var)
         md = input.match(tuple.name)
         var["INPUT[#{index}].NAME]"] = tuple.name
         if tuple.value
@@ -145,10 +171,11 @@ module InnocentWhite
           var["INPUT[#{index}].MATCH[#{i+1}]"] = s
         end
       end
+
     end
 
     class BaseHandler
-      def initialize(inputs, outputs, params, content)
+      def initialize(rule, inputs, outputs, params, contents)
         # check arguments
         inputs.each do |i|
           unless i.respond_to?(:name) and i.respond_to?(:value)
@@ -157,26 +184,29 @@ module InnocentWhite
         end
         raise ArugmentError unless inputs.size == inputs_definition.size
 
-        # FIXME: bad
+        @rule = rule
         @inputs = inputs
-        @outputs = make_outputs
-
-        # variable table
-        @variable = params.clone
+        @outputs = outputs
+        @variable = {}
+        @working_directory = Dir.mktmpdir
+        setup_ouput_path(@outputs)
         make_auto_variables
       end
 
       private
 
-      def inputs_definition
-        @rule.inputs
+      def setup_output_path(outputs)
+        outputs.each do |output|
+          case output
+          when Tuple
+            output.path = File.join(@tmpdir, output.name)
+          when Array
+            setup_output_path(output)
+          end
+        end
       end
 
-      def outputs_definition
-        @rule.outputs
-      end
-
-      def make_outputs
+      def update_outputs
         # FIXME: bad bad
         if not(outputs_definition.empty?)
           input = @inputs.first.name
@@ -189,17 +219,76 @@ module InnocentWhite
         end
       end
 
-      # Make auto-variables.
+      def find_outputs
+        list = Dir.entries(@working_directory)
+        @rule.outputs.each_with_index do |exp, i|
+          if exp.all?
+            names = list.select {|elt| exp.match(elt)}
+            @outputs[i]
+          else
+            list.each {|elt| exp.match(elt)}
+          end
+        end
+      end
+
+      def sysc_outputs
+        
+      end
+
+      # Make input or output auto variables for 'exist' modified data name expression.
+      def make_out_auto_variables_by_exist(type, exp, data, index)
+        prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
+        @variable_table["#{prefix}.NAME]"] = name
+        @variable_table["#{prefix}.VALUE]"] = 
+        @variable_table["#{prefix}.PATH"] = data.path
+        exp.match(data.name).captures.each_with_index do |s, i|
+          @variable_table["#{prefix}.MATCH[#{i+1}]"] = s
+        end
+      end
+
+      # Make auto vairables.
       def make_auto_variables
-        # FIXME: bad bad bad
-        @inputs.each_with_index do |input, i|
-          @variable["INPUT_NAME[#{i}]"] = input.name
-          @variable["INPUT_VALUE[#{i}]"] = input.value if input.value
+        # inputs
+        @rule.inputs.each_with_index do |exp, index|
+          make_io_auto_variables(:input, exp, @inputs[index], index)
         end
-        @outputs.each_with_index do |output, i|
-          @variable["OUTPUT_NAME[#{i}]"] = output.name
-          # @variable["OUTPUT_VALUE"] = output.value
+
+        # outputs
+        @rule.outputs.each_with_index do |exp, index|
+          make_io_auto_variables(:output, exp, @outputs[index], index)
         end
+
+        # others
+        make_other_auto_variables
+      end
+
+      # Make input or output auto variables.
+      def make_io_auto_variables(type, exp, data, index)
+        name = exp.all? ? :make_io_auto_variables_by_all : :make_io_auto_variables_by_exist
+        method(name).call(type, exp, data, index)
+      end
+
+      # Make input or output auto variables for 'exist' modified data name expression.
+      def make_io_auto_variables_by_exist(type, exp, data, index)
+        prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
+        @variable_table["#{prefix}.NAME]"] = data.name
+        @variable_table["#{prefix}.VALUE]"] = data.value
+        @variable_table["#{prefix}.PATH"] = Resource.load(data.uri)
+        exp.match(data.name).to_a.each_with_index do |s, i|
+          @variable_table["#{prefix}.MATCH[#{i+1}]"] = s
+        end
+      end
+
+      # Make input or output auto variables for 'all' modified data name expression.
+      def make_io_auto_variables_by_all(type, exp, tuples, index)
+        prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
+        @variable_table["#{prefix}.NAME"] = tuples.map{|t| t.name}.join(",")
+      end
+
+      # Make other auto variables.
+      def make_other_auto_variables
+        @variable_table["WORKING_DIRECTORY"] = @working_directory
+        @variable_table["PWD"] = @working_directory
       end
     end
 
@@ -210,8 +299,16 @@ module InnocentWhite
     end
 
     module FlowParts
-      class Caller
+      class Base < InnocentWhiteObject
+
+      end
+
+      class Call < Base
         attr_reader :rule_path
+
+        def initialize(rule_path, options)
+          
+        end
       end
 
       class Condition
@@ -229,24 +326,6 @@ module InnocentWhite
     class ActionRule < BaseRule
       def execute
         write_shell_script {|path| shell path}
-      end
-
-      private
-
-      #def expand_variables(content)
-      #  content.gsub(/\{\$(.+?)\}/){@variable[$1]}
-      #end
-
-      def write_shell_script(&b)
-        file = Tempfile.new(Util.uuid)
-        file.print(expand_variables(self.class.content))
-        file.close(false)
-        return b.call(file.path)
-      end
-
-      def shell(path)
-        sh = @variable["SHELL"] || "/bin/sh"
-        `#{sh} #{path}`
       end
     end
 

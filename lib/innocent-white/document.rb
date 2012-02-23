@@ -16,12 +16,12 @@ module InnocentWhite
 
       # Input statement.
       def inputs(items)
-        @inputs = items.map(&Rule::DataName)
+        @inputs = items.map(&Rule::DataNameExp)
       end
 
       # Output statement.
       def outputs(items)
-        @outputs = items.map(&Rule::DataName)
+        @outputs = items.map(&Rule::DataNameExp)
       end
 
       def params(items)

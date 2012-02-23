@@ -7,17 +7,17 @@ include InnocentWhite
 Thread.abort_on_exception = true
 
 describe 'Rule' do
-  describe 'DataName' do
+  describe 'DataNameExp' do
     it 'should compile string as regular expression' do
-      input1 = Rule::DataName.regexp('test-1.a')
+      input1 = Rule::DataNameExp.regexp('test-1.a')
       input1.should.match 'test-1.a'
       input1.should.not.match 'test-1_a'
-      input2 = Rule::DataName.regexp('test-\d.a')
+      input2 = Rule::DataNameExp.regexp('test-\d.a')
       input2.should.not.match 'test-1.a'
     end
 
     it 'should handle wildcard "*" as /(.*)/ (Case 1)' do
-      input = Rule::DataName.regexp('test-*.a')
+      input = Rule::DataNameExp.regexp('test-*.a')
       input.should.match 'test-.a'
       input.match('test-.a')[1].should == ''
       input.should.match 'test-1.a'
@@ -35,7 +35,7 @@ describe 'Rule' do
     end
 
     it 'should handle wildcard "*" as /(.*)/ (Case 2)'do
-      input = Rule::DataName.regexp('test-*-*.a')
+      input = Rule::DataNameExp.regexp('test-*-*.a')
       input.should.match 'test-1-2.a'
       input.match('test-1-2.a')[1].should == '1'
       input.match('test-1-2.a')[2].should == '2'
@@ -52,7 +52,7 @@ describe 'Rule' do
     end
 
     it 'should handle "?" as /(.)/ (Case 1)' do
-      input = Rule::DataName.regexp('test-?.a')
+      input = Rule::DataNameExp.regexp('test-?.a')
       input.should.match 'test-1.a'
       input.match('test-1.a')[1].should == '1'
       input.should.match 'test-2.a'
@@ -67,7 +67,7 @@ describe 'Rule' do
     end
 
     it 'should handle "?" as /(.)/ (Case 2)' do
-      input = Rule::DataName.regexp('test-?-?.a')
+      input = Rule::DataNameExp.regexp('test-?-?.a')
       input.should.match 'test-1-2.a'
       input.match('test-1-2.a')[1].should == '1'
       input.match('test-1-2.a')[2].should == '2'
@@ -77,10 +77,10 @@ describe 'Rule' do
     end
 
     it 'should expand variables' do
-      input1 = Rule::DataName.regexp('{$VAR}.a', {'VAR' => '1'})
+      input1 = Rule::DataNameExp.regexp('{$VAR}.a', {'VAR' => '1'})
       input1.should.match '1.a'
       input1.should.not.match '1.b'
-      input2 = Rule::DataName.regexp('{$VAR}.a', {'VAR' => '*'})
+      input2 = Rule::DataNameExp.regexp('{$VAR}.a', {'VAR' => '*'})
       input2.should.match '1.a'
       input2.should.match '2.a'
       input2.should.match 'abc.a'
@@ -94,8 +94,8 @@ describe 'Rule' do
       @ts_server = DRbObject.new(nil, @remote_server.uri)
       @gen1 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "a", 11..20)
       @gen2 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "b", 11..20)
-      inputs = ['*.a', '{$INPUT[1].MATCH[1]}.b'].map{|name| Rule::DataName.new(name)}
-      outputs = ['{$INPUT[1].MATCH[1]}.c'].map{|name| Rule::DataName.new(name)}
+      inputs = ['*.a', '{$INPUT[1].MATCH[1]}.b'].map{|name| Rule::DataNameExp.new(name)}
+      outputs = ['{$INPUT[1].MATCH[1]}.c'].map{|name| Rule::DataNameExp.new(name)}
       @rule = Rule::ActionRule.new(inputs, outputs, [], "expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}")
     end
 

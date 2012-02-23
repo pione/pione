@@ -29,3 +29,6 @@ end
 class Bacon::Context
   include InnocentWhite::TestUtil
 end
+
+include InnocentWhite
+Thread.abort_on_exception = true

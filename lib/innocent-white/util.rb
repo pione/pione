@@ -1,5 +1,6 @@
 require 'uuidtools'
 require 'socket'
+require 'digest'
 
 module InnocentWhite
   module Util
@@ -21,6 +22,13 @@ module InnocentWhite
     # Return hostname of the machine.
     def self.hostname
       Socket.gethostname
+    end
+
+    # make taskid by input and output data names
+    def make_taskid(inputs, outputs)
+      i = inputs.join("\000")
+      o = outputs.join("\000")
+      Digest::MD5.digest("#{i}\001#{o}\001")
     end
   end
 end

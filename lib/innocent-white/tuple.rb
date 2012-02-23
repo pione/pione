@@ -144,7 +144,7 @@ module InnocentWhite
     #
 
     # data: data representation
-    define_format [:data, :name, :domain, :value, :path]
+    define_format [:data, :name, :domain, :value, :uri]
 
     # task: rule application task with inputs, outpus and parameters
     define_format [:task, :rule_path, :inputs, :outputs, :params, :uuid]
@@ -175,5 +175,8 @@ module InnocentWhite
 
     # exception: exception notifier from agents
     define_format [:exception, :value]
+
+    # base_uri: location information of resource
+    define_format [:base_uri, :uri]
   end
 end
