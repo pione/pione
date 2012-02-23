@@ -1,34 +1,51 @@
 require 'innocent-white/innocent-white-object'
-require 'innocent-white/process-handler'
+require 'innocent-white/rule'
 
 module InnocentWhite
   class Document < InnocentWhiteObject
-    class ActionDefinition
+    class Definition
       def self.eval(&b)
         obj = new
         obj.instance_eval(&b)
         return obj
       end
 
+      def all(name)
+        Rule::DataName.all(name)
+      end
+
+      # Input statement.
       def inputs(items)
-        @inputs = items
+        @inputs = items.map(&Rule::DataName)
       end
 
+      # Output statement.
       def outputs(items)
-        @outputs = items
+        @outputs = items.map(&Rule::DataName)
       end
 
+      def params(items)
+        @params = items
+      end
+
+      # Content definition.
       def content(s)
         @content = s
       end
+    end
 
-      def to_process_handler
-        definition = {
-          inputs: @inputs,
-          outputs: @outputs,
-          content: @content
-        }
-        ProcessHandler::Action.define(definition)
+    # Flow rule definition.
+    class FlowDefinition
+      def to_rule
+        Rule::FlowRule.new(@inputs, @outputs, @params, @content)
+      end
+    end
+
+    # Action rule definition.
+    class ActionDefinition
+      # Convert to a rule handler.
+      def to_rule
+        Rule::ActionRule.new(@inputs, @outputs, @params, @content)
       end
     end
 
@@ -44,9 +61,14 @@ module InnocentWhite
       instance_eval(&b)
     end
 
-    def define_action(path, &b)
-      action = ActionDefinition.eval(&b).to_process_handler
-      @table[path] = action
+    def define_flow(name, &b)
+      flow = FlowDefinition.eval(&b).to_rule
+      @table[name] = flow
+    end
+
+    def define_action(name, &b)
+      action = ActionDefinition.eval(&b).to_rule
+      @table[name] = action
     end
   end
 end

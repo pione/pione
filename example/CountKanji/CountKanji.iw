@@ -4,11 +4,11 @@
 InnocentWhite::Document.new do
   # Main flow
   define_flow('main') do
-    inputs  '*.txt'
+    inputs  all('*.txt')
     outputs 'result.txt'
-    content [Call["convert_to_utf8"],
-             Call["count_kanji", {:sync => true}],
-             Call["sum_kanji"]]
+    content [call "convert_to_utf8",
+             call_with_sync"count_kanji",
+             call "sum_kanji"]
   end
 
   # Convert to UTF-8 by nkf
@@ -38,7 +38,7 @@ __SH__
 
   # Summarize kanji characters
   define_action('sum_kanji') do
-    inputs All['*.count']
+    inputs all('*.count')
     outputs 'result.txt'
     content <<'__SH__'
 #!/usr/bin/env ruby

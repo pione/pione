@@ -94,8 +94,8 @@ describe 'Rule' do
       @ts_server = DRbObject.new(nil, @remote_server.uri)
       @gen1 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "a", 11..20)
       @gen2 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "b", 11..20)
-      inputs = ['*.a', '{$INPUT[1].MATCH[1]}.b']
-      outputs = ['{$INPUT[1].MATCH[1]}.c']
+      inputs = ['*.a', '{$INPUT[1].MATCH[1]}.b'].map{|name| Rule::DataName.new(name)}
+      outputs = ['{$INPUT[1].MATCH[1]}.c'].map{|name| Rule::DataName.new(name)}
       @rule = Rule::ActionRule.new(inputs, outputs, [], "expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}")
     end
 

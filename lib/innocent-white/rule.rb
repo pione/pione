@@ -11,17 +11,31 @@ module InnocentWhite
         @modifier = modifier
       end
 
+      # Create a name with 'all' modifier.
       def self.all(name)
         new(name, :all)
       end
 
+      def self.to_proc
+        Proc.new{|name| self.new(name) }
+      end
+
+      # Create a regular expression of the name.
       def self.regexp(name, variables={})
         new(name).to_regexp(variables)
       end
 
+      # Return true if the name has 'all' modifier.
+      def all?
+        @modifier == :all
+      end
+
+      # Convert the name into regular expression.
       def to_regexp(variables={})
         compile_to_regexp(expand_variables(@name, variables))
       end
+
+      private
 
       def compile_to_regexp(name)
         DataNameCompiler.compile(name)
@@ -40,14 +54,14 @@ module InnocentWhite
         TABLE[Regexp.escape(matcher)] = replace
       end
 
-      define_matcher('\*', '(.*)')
-      define_matcher('\?', '(.)')
+      define_matcher('*', '(.*)')
+      define_matcher('?', '(.)')
 
       def compile(name)
         return name unless name.kind_of?(String)
         s = Regexp.escape(name)
         TABLE.keys.each do |key|
-          s.gsub!(key){p TABLE; TABLE[$1]}
+          s.gsub!(key, TABLE)
         end
         Regexp.new(s)
       end
@@ -62,8 +76,9 @@ module InnocentWhite
       attr_reader :content
       attr_reader :variable
 
-      def initialize(rule_path, inputs, outputs, params, content)
-        @rule_path = rule_path
+      #def initialize(rule_path, inputs, outputs, params, content)
+      def initialize(inputs, outputs, params, content)
+        # @rule_path = rule_path
         @inputs = inputs
         @outputs = outputs
         @params = params
@@ -93,8 +108,7 @@ module InnocentWhite
         return [[]] if _inputs.empty?
 
         # expand variables and compile to regular expression
-        input = expand_variables(_inputs.first, var)
-        input = InputDataNameCompiler.compile(input)
+        input = _inputs.first.to_regexp(var)
 
         # find an input from tuple space server
         tuples = _find_input(ts_server, domain, input)
@@ -103,7 +117,7 @@ module InnocentWhite
         # find rest inputs recursively
         result = []
         tuples.each do |tuple|
-          make_auto_variables(tuple, _var)
+          make_auto_variables(input, index, tuple, _var)
           rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, _var)
           rest.each {|r| result << r.unshift(tuple) }
         end
@@ -119,7 +133,7 @@ module InnocentWhite
         str.gsub(/\{\$(.+?)\}/){var[$1]}
       end
 
-      def make_auto_variables(tuple, var)
+      def make_auto_variables(input, index, tuple, var)
         md = input.match(tuple.name)
         var["INPUT[#{index}].NAME]"] = tuple.name
         if tuple.value
