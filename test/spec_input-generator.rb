@@ -7,9 +7,7 @@ setup_test
 
 describe "InputGenerator" do
   before do
-    uri = "local:#{Dir.mktmpdir('innocent-white-')}/"
-    @remote_server = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3, base_uri: uri))
-    @ts_server = DRbObject.new(nil, @remote_server.uri)
+    @ts_server = create_remote_tuple_space_server
   end
 
   it 'should provide data by simple generator' do

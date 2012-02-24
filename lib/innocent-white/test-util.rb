@@ -23,6 +23,12 @@ module InnocentWhite
       end
       exceptions.should.be.empty
     end
+
+    def create_remote_tuple_space_server
+      uri = "local:#{Dir.mktmpdir('innocent-white-')}/"
+      remote_server = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3, base_uri: uri))
+      DRbObject.new(nil, remote_server.uri)
+    end
   end
 end
 
@@ -35,3 +41,5 @@ def setup_test
   include InnocentWhite
   Thread.abort_on_exception = true
 end
+
+setup_test

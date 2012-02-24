@@ -1,7 +1,7 @@
 require 'socket'
 require 'drb/drb'
 require 'rinda/tuplespace'
-require 'innocent-white/innocent-white-object'
+require 'innocent-white/common'
 
 module InnocentWhite
   class TupleSpaceProvider < InnocentWhiteObject

@@ -7,6 +7,7 @@ module InnocentWhite
 
     # Base rule class for flow rule and action rule.
     class BaseRule
+      attr_reader :rule_path
       attr_reader :inputs
       attr_reader :outputs
       attr_reader :params
@@ -44,7 +45,7 @@ module InnocentWhite
         return [[]] if _inputs.empty?
 
         # expand variables and compile to regular expression
-        input = _inputs.first.to_regexp(var)
+        input = _inputs.first.with_variables(var)
 
         # find an input from tuple space server
         tuples = _find_input(ts_server, domain, input)
@@ -56,7 +57,7 @@ module InnocentWhite
         else
           # find rest inputs recursively
           tuples.each do |tuple|
-            make_auto_variables(input, index, tuple, var)
+            make_auto_variables_by_each(input, index, tuple, var)
             rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, var.clone)
             rest.each {|r| result << r.unshift(tuple) }
           end
@@ -70,16 +71,15 @@ module InnocentWhite
         ts_server.read_all(req)
       end
 
-      def make_auto_variables_by_exist(input, index, tuple, var)
+      def make_auto_variables_by_each(input, index, tuple, var)
         md = input.match(tuple.name)
+        uri = URI(tuple.uri)
+        resource = Resource[uri]
         var["INPUT[#{index}].NAME]"] = tuple.name
-        if tuple.value
-          var["INPUT[#{index}].VALUE]"] = tuple.value
-        else
-          var["INPUT[#{index}].PATH"] = tuple.path
-        end
-        md.captures.each_with_index do |s, i|
-          var["INPUT[#{index}].MATCH[#{i+1}]"] = s
+        var["INPUT[#{index}].VALUE]"] = resource.read
+        var["INPUT[#{index}].PATH"] = URI(tuple.uri)
+        md.to_a.each_with_index do |s, i|
+          var["INPUT[#{index}].MATCH[#{i}]"] = s
         end
       end
 

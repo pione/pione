@@ -130,6 +130,11 @@ module InnocentWhite
       match(other) ? 0 : nil
     end
 
+    # Pattern match.
+    def ===(other)
+      match(other) ? true : false
+    end
+
     private
     
     def compile_to_regexp(name)

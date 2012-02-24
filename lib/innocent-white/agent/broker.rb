@@ -1,6 +1,6 @@
 require 'rinda/tuplespace'
 require 'drb/drb'
-require 'innocent-white'
+require 'innocent-white/common'
 require 'innocent-white/agent'
 require 'innocent-white/agent/task-worker'
 
@@ -9,9 +9,28 @@ module InnocentWhite
     class Broker < Base
       set_agent_type :broker
 
+      class EasyBalancer
+        # Calculate resource ratios of tuple space servers.
+        def calc_resource_ratios(revision={})
+          ratio = {}
+          # make ratio table
+          @tuple_space_servers.each do |ts|
+            rev = revision.has_key?(ts) ? revision[ts] : 0
+            current = ts.current_task_worker_size + rev
+            resource = ts.task_worker_resource.to_f
+            ratio[ts] = current / resource
+          end
+          return ratio
+        end
+      end
+
       attr_reader :task_workers
       attr_reader :tuple_space_servers
       attr_reader :resource
+
+
+      define_state :initialized
+      define_state :terminated
 
       def initialize(data={})
         super(nil)
