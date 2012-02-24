@@ -143,40 +143,61 @@ module InnocentWhite
     # define tuples
     #
 
-    # data: data representation
-    define_format [:data, :name, :domain, :value, :uri]
+    # data representation
+    #   domain : target domain
+    #   name   : data name
+    #   uri    : resource location
+    define_format [:data, :domain, :name, :uri]
 
-    # task: rule application task with inputs, outpus and parameters
-    define_format [:task, :rule_path, :inputs, :outputs, :params, :uuid]
+    # rule application task with inputs, outpus and parameters
+    #   uuid      : uuid of the task
+    #   rule_path : rule location path
+    #   inputs    : input data list
+    #   outputs   : output data list
+    #   params    : parameter list
+    define_format [:task, :uuid, :rule_path, :inputs, :outputs, :params]
 
-    # finished: task finished notifier
+    # task finished notifier
+    #   uuid   : uuid of the task
+    #   status : status of the task processing
     define_format [:finished, :uuid, :status]
 
-    # agent: agent connection notifier in the tuple space server
-    define_format [:agent, :agent_type, :uuid]
+    # agent connection notifier in the tuple space server
+    #   uuid       : uuid of the agent
+    #   agent_type : agent type
+    define_format [:agent, :uuid, :agent_type]
+
+    # bye message from agent
+    #   uuid : uuid of the agent
+    define_format [:bye, :uuid]
 
     # parent_agent: agent tree information
     define_format [:parent_agent, :parent_id, :child_id]
 
-    # log: log message
+    # log a message
+    #   level : info, warn, error
     define_format [:log, :level, :message]
 
-    # task_worker_resource: number of task worker for tuple space server
+    # number of task worker for tuple space server
+    #   number : resource number of task workers.
     define_format [:task_worker_resource, :number]
 
-    # request_rule: request rule for provider
+    # request rule for provider
+    #   rule_path : rule location path
     define_format [:request_rule, :rule_path]
 
-    # rule: represent rule content
+    # represent rule content
+    #   rule_path : rule location path
+    #   content   : rule content
     define_format [:rule, :rule_path, :content, :status]
 
-    # bye: bye message from agents
-    define_format [:bye, :uuid]
+    # exception notifier from agents
+    #   uuid  : uuid of the agent who happened the exception
+    #   value : exception object
+    define_format [:exception, :uuid, :agent_type, :value]
 
-    # exception: exception notifier from agents
-    define_format [:exception, :value]
-
-    # base_uri: location information of resource
+    # location information of resource
+    #   uri : base uri of all resources on the server
     define_format [:base_uri, :uri]
   end
 end

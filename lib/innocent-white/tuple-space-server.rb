@@ -7,7 +7,6 @@ module InnocentWhite
   class TupleSpaceServer < InnocentWhiteObject
     include DRbUndumped
 
-
     # -- class --
 
     def self.tuple_space_interface(name, opt={})
@@ -46,7 +45,17 @@ module InnocentWhite
         raise ArgumentError
       end
 
+      if data.has_key?(:base_uri)
+        uri = data[:base_uri]
+        write(Tuple[:base_uri].new(uri: uri))
+      end
+
       check_agent_life
+    end
+
+    # Return base uri.
+    def base_uri
+      URI(read(Tuple[:base_uri].any).uri)
     end
 
     # Return the worker resource size of the server.

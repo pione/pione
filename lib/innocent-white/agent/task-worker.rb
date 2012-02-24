@@ -1,6 +1,6 @@
 require 'innocent-white'
 require 'innocent-white/agent'
-require 'innocent-white/process-handler'
+require 'innocent-white/rule'
 require 'innocent-white/tuple'
 
 module InnocentWhite
@@ -86,9 +86,9 @@ module InnocentWhite
         case e
         when UnknownTask
           # FIXME
-          Util.ignore_exception { write(Tuple[:exception].new(e)) }
+          notify_exception(e)
         else
-          Util.ignore_exception { write(Tuple[:exception].new(e)) }
+          notify_exception(e)
           terminate
         end
       end

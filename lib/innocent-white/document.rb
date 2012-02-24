@@ -1,4 +1,5 @@
-require 'innocent-white/innocent-white-object'
+require 'innocent-white/common'
+require 'innocent-white/data-name-exp'
 require 'innocent-white/rule'
 
 module InnocentWhite
@@ -15,16 +16,16 @@ module InnocentWhite
       end
 
       # Input statement.
-      def inputs(items)
-        @inputs = items.map(&Rule::DataNameExp)
+      def inputs(*items)
+        @inputs = items.map(&DataNameExp)
       end
 
       # Output statement.
-      def outputs(items)
-        @outputs = items.map(&Rule::DataNameExp)
+      def outputs(*items)
+        @outputs = items.map(&DataNameExp)
       end
 
-      def params(items)
+      def params(*items)
         @params = items
       end
 
@@ -32,17 +33,25 @@ module InnocentWhite
       def content(s)
         @content = s
       end
+
+      def call(rule_path)
+        Rule::FlowParts::Call.new(rule_path)
+      end
+
+      def call_with_sync(rule_path)
+        Rule::FlowParts::CallWithSync.new(rule_path)
+      end
     end
 
     # Flow rule definition.
-    class FlowDefinition
+    class FlowDefinition < Definition
       def to_rule
         Rule::FlowRule.new(@inputs, @outputs, @params, @content)
       end
     end
 
     # Action rule definition.
-    class ActionDefinition
+    class ActionDefinition < Definition
       # Convert to a rule handler.
       def to_rule
         Rule::ActionRule.new(@inputs, @outputs, @params, @content)
@@ -50,7 +59,6 @@ module InnocentWhite
     end
 
     def self.load(file)
-      
       return eval(file.read).table
     end
 
@@ -61,14 +69,18 @@ module InnocentWhite
       instance_eval(&b)
     end
 
-    def define_flow(name, &b)
+    def flow(name, &b)
       flow = FlowDefinition.eval(&b).to_rule
       @table[name] = flow
     end
 
-    def define_action(name, &b)
+    def action(name, &b)
       action = ActionDefinition.eval(&b).to_rule
       @table[name] = action
+    end
+
+    def [](name)
+      @table[name]
     end
   end
 end

@@ -1,11 +1,14 @@
 require 'innocent-white/agent'
+require 'innocent-white/uri'
+require 'innocent-white/resource'
+require 'innocent-white/data-name-exp'
 
 module InnocentWhite
   module Agent
     class InputGenerator < InnocentWhite::Agent::Base
       set_agent_type :input_generator
 
-      InputData = Struct.new(:name, :value, :path)
+      InputData = Struct.new(:name, :uri)
 
       # Base class for generator methods.
       class GeneratorMethod
@@ -16,47 +19,40 @@ module InnocentWhite
 
       # Simple generator based on range and extension.
       class SimpleGeneratorMethod < GeneratorMethod
-        def initialize(name, name_range, value_range)
+        def initialize(base_uri, name, name_range, value_range)
+          @base_uri = base_uri
           @name = name
           @name_range = name_range.to_enum
           @value_range = value_range.to_enum
         end
 
         def generate
-          name = Rule::DataNameExp.new(@name).generate(@name_range.next)
-          value = @value_range.next
-          InputData.new(name, value, nil)
+          name = DataNameExp[@name].generate(@name_range.next)
+          uri = @base_uri + "./input/#{name}"
+          Resource[uri].create(@value_range.next)
+          InputData.new(name, uri.to_s)
         end
       end
 
       # Directory based generator.
       class DirGeneratorMethod < GeneratorMethod
-        def initialize(dir_path, path_mode=true)
+        def initialize(dir_path)
           @dir_path = dir_path
           @gen = Dir.open(dir_path).to_enum
-          @path_mode = path_mode
         end
 
         def generate
           name = @gen.next
           path = File.join(@dir_path, name)
-          if ['.', '..'].include?(name)
-            generate
-          else
-            if @path_mode
-              InputData.new(name, nil, path)
-            else
-              value = File.read(path)
-              InputData.new(name, value, nil)
-            end
-          end
+          uri = "local:#{File.expand_path(path)}"
+          ['.', '..'].include?(name) ? generate : InputData.new(name, uri)
         end
       end
 
       # -- class --
 
       def self.new_by_simple(ts_server, *args)
-        new(ts_server, SimpleGeneratorMethod.new(*args))
+        new(ts_server, SimpleGeneratorMethod.new(ts_server.base_uri, *args))
       end
 
       def self.new_by_dir(ts_server, *args)
@@ -87,22 +83,14 @@ module InnocentWhite
       # State generating.
       def transit_to_generating
         input = @generator.generate
-        tuple = Tuple[:data].new(name: input.name, domain: "/")
-        if input.value
-          tuple.value = input.value
-        else
-          tuple.path = input.path
-        end
-        write(tuple)
+        write(Tuple[:data].new(domain: "/input", name: input.name, uri: input.uri))
         log(:debug, "generated #{input.name}")
       end
 
       # State error.
       # StopIteration exception means the input generation was completed.
       def transit_to_error(e)
-        unless e.kind_of?(StopIteration)
-          Util.ignore_exception { write(Tuple[:exception].new(e)) }
-        end
+        notify_exception(e) unless e.kind_of?(StopIteration)
         terminate
       end
 

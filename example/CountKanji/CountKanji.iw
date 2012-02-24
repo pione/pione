@@ -5,9 +5,9 @@ InnocentWhite::Document.new do
   flow('main') do
     inputs  all('*.txt').except('summary.txt')
     outputs 'summary.txt'
-    content [ call "convert_to_utf8",
-              call_with_sync "count_kanji",
-              call "make_summary" ]
+    content [ call("convert_to_utf8"),
+              call_with_sync("count_kanji"),
+              call("make_summary") ]
   end
 
   # Convert to UTF-8 by nkf

@@ -42,9 +42,7 @@ module InnocentWhite
 
       # State error.
       def transit_to_error(e)
-        if InnocentWhite.debug_mode?
-          p e
-        end
+        notify_exception(e)
         terminate
       end
 

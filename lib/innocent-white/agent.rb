@@ -112,6 +112,12 @@ module InnocentWhite
         write(to_bye_tuple)
       end
 
+      # Notify the agent happened a exception.
+      def notify_exception(e)
+        # ignore exception because the exception caused tuple server is down...
+        Util.ignore_exception { write(Tuple[:exception].new(uuid, agent_type, e)) }
+      end
+
       # Kill current running thread and move to tuple space.
       def move_tuple_space_server(tuple_space_server)
         bye()

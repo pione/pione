@@ -5,106 +5,6 @@ module InnocentWhite
   module Rule
     RuleIO = Struct.new(:name, :value)
 
-    # DataNameExp is a class for input and ouput data name of rule.
-    class DataNameExp
-      attr_reader :name
-      attr_reader :modifier
-      attr_reader :exceptions
-
-      def initialize(name, modifier = :exist)
-        @name = name
-        @modifier = modifier
-        @exceptions = []
-      end
-
-      def self.exist(name)
-        new(name, :exist)
-      end
-
-      # Create a name with 'all' modifier.
-      def self.all(name)
-        new(name, :all)
-      end
-
-      # Convert to proc object for Enumerator methods.
-      def self.to_proc
-        Proc.new{|name| self.new(name) }
-      end
-
-      # Create a regular expression of the name.
-      def self.regexp(name, variables={})
-        new(name).to_regexp(variables)
-      end
-
-      # Return true if the name has 'all' modifier.
-      def all?
-        @modifier == :all
-      end
-
-      # Return true if the name has 'exist' modifier.
-      def exist?
-        @modifier == :exist
-      end
-
-      # Set a exception.
-      def except(name)
-        @exceptions << name
-      end
-
-      # Matcher.
-      def match(str)
-        
-      end
-
-      # Generate concrete name string by arguments.
-      # usage: DataNameExp.new("test-*.rb").generate(1) # => "test-1.rb"
-      def generate(*args)
-        name = @name
-        while @name =~ /(\*|\?)/
-          name.sub!(/(\*|\?)/){$1 == "*" ? args[i] : args[0]}
-        end
-        return name
-      end
-
-      # Convert the name into regular expression.
-      def to_regexp(variables={})
-        compile_to_regexp(Util.expand_variables(@name, variables))
-      end
-
-      private
-
-      def compile_to_regexp(name)
-        DataNameExpCompiler.compile(name)
-      end
-    end
-
-    # DataNameExpCompiler is a compiler for data name string.
-    module DataNameExpCompiler
-      TABLE = {}
-
-      # Define a string matcher.
-      def self.define_matcher(matcher, replace)
-        TABLE[Regexp.escape(matcher)] = replace
-      end
-
-      # Asterisk symbol is multi-character matcher(empty string is matched).
-      define_matcher('*', '(.*)')
-
-      # Question symbol is single character matcher(empty string is not matched).
-      define_matcher('?', '(.)')
-
-      # Compile data name into regular expression.
-      def compile(name)
-        return name unless name.kind_of?(String)
-        s = "^#{Regexp.escape(name)}$"
-        TABLE.keys.each do |key|
-          s.gsub!(key, TABLE)
-        end
-        Regexp.new(s)
-      end
-      module_function :compile
-    end
-
     # Base rule class for flow rule and action rule.
     class BaseRule
       attr_reader :inputs
@@ -114,7 +14,7 @@ module InnocentWhite
 
       #def initialize(rule_path, inputs, outputs, params, content)
       def initialize(inputs, outputs, params, content)
-        # @rule_path = rule_path
+        @rule_path = rule_path
         @inputs = inputs
         @outputs = outputs
         @params = params
@@ -165,8 +65,8 @@ module InnocentWhite
         return result
       end
 
-      def _find_input(ts_server, domain, input)
-        req = Tuple[:data].new(name: input, domain: domain)
+      def _find_input(ts_server, domain, input_name)
+        req = Tuple[:data].new(name: input_name, domain: domain)
         ts_server.read_all(req)
       end
 
@@ -317,10 +217,12 @@ module InnocentWhite
       class Call < Base
         attr_reader :rule_path
 
-        def initialize(rule_path, options)
-          
+        def initialize(rule_path)
+          @rule_path = rule_path
         end
       end
+
+      class CallWithSync < Call; end
 
       class Condition
         attr_reader :condition

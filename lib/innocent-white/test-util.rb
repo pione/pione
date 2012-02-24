@@ -1,4 +1,5 @@
 require 'bacon'
+require 'innocent-white/common'
 require 'innocent-white/tuple'
 
 module InnocentWhite
@@ -30,5 +31,7 @@ class Bacon::Context
   include InnocentWhite::TestUtil
 end
 
-include InnocentWhite
-Thread.abort_on_exception = true
+def setup_test
+  include InnocentWhite
+  Thread.abort_on_exception = true
+end

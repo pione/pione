@@ -1,11 +1,10 @@
-require 'innocent-white/util'
+require 'innocent-white/test-util'
 require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
 require 'innocent-white/agent/task-worker'
-require 'innocent-white/test-util'
+require 'innocent-white/document'
 
 include InnocentWhite
-Thread.abort_on_exception = true
 
 describe "TaskWorker" do
   before do
@@ -15,10 +14,14 @@ describe "TaskWorker" do
     @worker2 = Agent[:task_worker].new(@ts_server)
     @worker3 = Agent[:task_worker].new(@ts_server)
     @task1 = Tuple[:task].new(module_path: "/test1", inputs: ["1.a"], outputs: ["1.b"], uuid: Util.uuid)
-    content = 'echo -n "input: {$INPUT}"'
-    definition = {inputs: [/(\d)\.a/], outputs: ["{$1}.b"], content: content}
-    process = ProcessHandler::Action.define(definition)
-    @ts_server.write(Tuple[:module].new(path: "/test1", content: process, status: :known))
+    doc = InnocentWhite::Document.new do
+      action("test") do
+        inputs  '*.a'
+        outputs '{$INPUT[1].MATCH[1]}.b'
+        content 'echo -n "input: {$INPUT[1].VALUE}"'
+      end
+    end
+    @ts_server.write(Tuple[:rule].new(path: "/test", content: doc["test"], status: :known))
   end
 
   it "should wait tasks" do
