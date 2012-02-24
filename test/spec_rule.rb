@@ -1,5 +1,4 @@
 require 'innocent-white/rule'
-#require 'innocent-white/agent/process-manager'
 require 'innocent-white/agent/input-generator'
 
 include InnocentWhite
@@ -32,6 +31,8 @@ describe 'Rule' do
       input.match('test-abc.a')[1].should == 'abc'
       input.should.not.match 'test-1_a'
       input.should.not.match '-1.a'
+      input.should.not.match 'test-1.ab'
+      input.should.not.match 'ttest-1.a'
     end
 
     it 'should handle wildcard "*" as /(.*)/ (Case 2)'do
@@ -49,6 +50,8 @@ describe 'Rule' do
       input.should.not.match('test-1-2.b')
       input.should.not.match('test-1-2')
       input.should.not.match('-1-2.a')
+      input.should.not.match 'test-1-2.ab'
+      input.should.not.match 'ttest-1-2.a'
     end
 
     it 'should handle "?" as /(.)/ (Case 1)' do
@@ -64,6 +67,8 @@ describe 'Rule' do
       input.should.not.match 'test-abc.a'
       input.should.not.match 'test-.a'
       input.should.not.match 'test-1_a'
+      input.should.not.match 'test-1.ab'
+      input.should.not.match 'ttest-1.a'
     end
 
     it 'should handle "?" as /(.)/ (Case 2)' do
@@ -74,6 +79,8 @@ describe 'Rule' do
       input.should.not.match 'test--.a'
       input.should.not.match 'test-abc-a.a'
       input.should.not.match 'test-a-abc.a'
+      input.should.not.match 'test-1-2.ab'
+      input.should.not.match 'ttest-1-2.a'
     end
 
     it 'should expand variables' do
@@ -92,8 +99,8 @@ describe 'Rule' do
     before do
       @remote_server = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3))
       @ts_server = DRbObject.new(nil, @remote_server.uri)
-      @gen1 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "a", 11..20)
-      @gen2 = Agent[:input_generator].new_by_simple(@ts_server, 1..10, "b", 11..20)
+      @gen1 = Agent[:input_generator].new_by_simple(@ts_server, "*.a", 1..10, 11..20)
+      @gen2 = Agent[:input_generator].new_by_simple(@ts_server, "*.b", 1..10, 11..20)
       inputs = ['*.a', '{$INPUT[1].MATCH[1]}.b'].map{|name| Rule::DataNameExp.new(name)}
       outputs = ['{$INPUT[1].MATCH[1]}.c'].map{|name| Rule::DataNameExp.new(name)}
       @rule = Rule::ActionRule.new(inputs, outputs, [], "expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}")

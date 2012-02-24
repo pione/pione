@@ -1,8 +1,7 @@
 require 'innocent-white'
-require 'innocent-white/util'
+require 'innocent-white/common'
 require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
-require 'innocent-white/innocent-white-object'
 
 module InnocentWhite
   module Agent

@@ -2,24 +2,24 @@
 
 InnocentWhite::Document.new do
   # Main flow
-  define_flow('main') do
-    inputs  all('*.txt').excluding('summary.txt')
+  flow('main') do
+    inputs  all('*.txt').except('summary.txt')
     outputs 'summary.txt'
-    content [call "convert_to_utf8",
-             call_with_sync "count_kanji",
-             call "make_summary"]
+    content [ call "convert_to_utf8",
+              call_with_sync "count_kanji",
+              call "make_summary" ]
   end
 
   # Convert to UTF-8 by nkf
-  define_action('convert_to_utf8') do
+  action('convert_to_utf8') do
     inputs  '*.txt'
     outputs '{$INPUT[1].NAME}.utf8'
     content 'nkf -W {$INPUT[1].PATH} > {$OUTPUT[1].PATH}'
   end
 
   # Count characters
-  define_action('count_kanji') do
-    inputs '*.utf8'
+  action('count_kanji') do
+    inputs  '*.utf8'
     outputs '{$INPUT[1].MATCH[1]}.count'
     content ruby(<<-'__CODE__')
       # -*- coding: utf-8 -*-
@@ -35,8 +35,8 @@ InnocentWhite::Document.new do
   end
 
   # Summarize kanji characters
-  define_action('make_summary') do
-    inputs all('*.count')
+  action('make_summary') do
+    inputs  all('*.count')
     outputs 'summary.txt'
     content ruby(<<-'__CODE__')
       # -*- coding: utf-8 -*-

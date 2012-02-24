@@ -16,14 +16,14 @@ module InnocentWhite
 
       # Simple generator based on range and extension.
       class SimpleGeneratorMethod < GeneratorMethod
-        def initialize(name_range, ext, value_range)
+        def initialize(name, name_range, value_range)
+          @name = name
           @name_range = name_range.to_enum
-          @ext = ext
           @value_range = value_range.to_enum
         end
 
         def generate
-          name = "#{@name_range.next}.#{@ext}"
+          name = Rule::DataNameExp.new(@name).generate(@name_range.next)
           value = @value_range.next
           InputData.new(name, value, nil)
         end

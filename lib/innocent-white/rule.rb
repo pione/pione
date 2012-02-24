@@ -1,6 +1,5 @@
 require 'tempfile'
-require 'innocent-white/util'
-require 'innocent-white/innocent-white-object'
+require 'innocent-white/common'
 
 module InnocentWhite
   module Rule
@@ -8,10 +7,14 @@ module InnocentWhite
 
     # DataNameExp is a class for input and ouput data name of rule.
     class DataNameExp
+      attr_reader :name
+      attr_reader :modifier
+      attr_reader :exceptions
+
       def initialize(name, modifier = :exist)
         @name = name
         @modifier = modifier
-        @excludings = []
+        @exceptions = []
       end
 
       def self.exist(name)
@@ -43,23 +46,35 @@ module InnocentWhite
         @modifier == :exist
       end
 
-      def excluding(name)
-        @excludings << name
+      # Set a exception.
+      def except(name)
+        @exceptions << name
+      end
+
+      # Matcher.
+      def match(str)
+        
+      end
+
+      # Generate concrete name string by arguments.
+      # usage: DataNameExp.new("test-*.rb").generate(1) # => "test-1.rb"
+      def generate(*args)
+        name = @name
+        while @name =~ /(\*|\?)/
+          name.sub!(/(\*|\?)/){$1 == "*" ? args[i] : args[0]}
+        end
+        return name
       end
 
       # Convert the name into regular expression.
       def to_regexp(variables={})
-        compile_to_regexp(expand_variables(@name, variables))
+        compile_to_regexp(Util.expand_variables(@name, variables))
       end
 
       private
 
       def compile_to_regexp(name)
         DataNameExpCompiler.compile(name)
-      end
-
-      def expand_variables(name, variables)
-        name.gsub(/\{\$(.+?)\}/){variables[$1]}
       end
     end
 
@@ -81,7 +96,7 @@ module InnocentWhite
       # Compile data name into regular expression.
       def compile(name)
         return name unless name.kind_of?(String)
-        s = Regexp.escape(name)
+        s = "^#{Regexp.escape(name)}$"
         TABLE.keys.each do |key|
           s.gsub!(key, TABLE)
         end
@@ -153,10 +168,6 @@ module InnocentWhite
       def _find_input(ts_server, domain, input)
         req = Tuple[:data].new(name: input, domain: domain)
         ts_server.read_all(req)
-      end
-
-      def expand_variables(str, var)
-        str.gsub(/\{\$(.+?)\}/){var[$1]}
       end
 
       def make_auto_variables_by_exist(input, index, tuple, var)

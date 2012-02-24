@@ -1,4 +1,4 @@
-require 'innocent-white/innocent-white-object'
+require 'innocent-white/common'
 
 module InnocentWhite
   module Tuple
