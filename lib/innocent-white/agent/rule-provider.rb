@@ -4,8 +4,8 @@ require 'innocent-white/rule'
 
 module InnocentWhite
   module Agent
-    class ModuleProvider < Base
-      set_agent_type :module_provider
+    class RuleProvider < Base
+      set_agent_type :rule_provider
 
       def initialize(ts_server)
         super(ts_server)
@@ -55,11 +55,11 @@ module InnocentWhite
 
       def read(doc)
         doc.rules.each do |rule_path, rule|
-          add_module(rule_path, rule)
+          add_rule(rule_path, rule)
         end
       end
 
-      def add_module(rule_path, content)
+      def add_rule(rule_path, content)
         raise ArgumentError unless content.kind_of?(Rule::BaseRule)
         @table[rule_path] = content
       end
@@ -76,6 +76,6 @@ module InnocentWhite
       end
     end
 
-    set_agent ModuleProvider
+    set_agent RuleProvider
   end
 end

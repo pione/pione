@@ -1,11 +1,11 @@
 require 'innocent-white/test-util'
-require 'innocent-white/agent/module-provider'
+require 'innocent-white/agent/rule-provider'
 require 'innocent-white/document'
 
 describe "ModuleProvider" do
   before do
     ts_server = create_remote_tuple_space_server
-    @provider = Agent[:module_provider].new(ts_server)
+    @provider = Agent[:rule_provider].new(ts_server)
     doc = Document.new do
       action('abc') do
         inputs  '*.a'
@@ -23,7 +23,7 @@ describe "ModuleProvider" do
     @provider.read(doc)
   end
 
-  it "should provide known module information" do
+  it "should provide known rule information" do
     @provider.wait_till(:request_waiting)
     write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: 'abc'))
     check_exceptions
@@ -43,7 +43,7 @@ describe "ModuleProvider" do
     end
   end
 
-  it "should provide unknown module information" do
+  it "should provide unknown rule information" do
     @provider.wait_till(:request_waiting)
     write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: "aaa"))
     check_exceptions
