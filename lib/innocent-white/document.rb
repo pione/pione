@@ -62,25 +62,25 @@ module InnocentWhite
       return eval(file.read).table
     end
 
-    attr_reader :table
+    attr_reader :rules
 
     def initialize(&b)
-      @table = {}
+      @rules = {}
       instance_eval(&b)
     end
 
     def flow(name, &b)
       flow = FlowDefinition.eval(&b).to_rule
-      @table[name] = flow
+      @rules[name] = flow
     end
 
     def action(name, &b)
       action = ActionDefinition.eval(&b).to_rule
-      @table[name] = action
+      @rules[name] = action
     end
 
     def [](name)
-      @table[name]
+      @rules[name]
     end
   end
 end

@@ -105,6 +105,7 @@ module InnocentWhite
     tuple_space_interface :write, :validator => Proc.new {|*args|
       args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
     }
+    tuple_space_interface :notify
 
     private
 
@@ -130,6 +131,7 @@ module InnocentWhite
     tuple_space_operation :take
     tuple_space_operation :write
     tuple_space_operation :count_tuple
+    tuple_space_operation :notify
 
     # Log a message.
     def log(level, msg)
@@ -137,6 +139,10 @@ module InnocentWhite
     end
 
     private
+
+    def get_tuple_space_server
+      @__tuple_space_server__
+    end
 
     def set_tuple_space_server(server)
       @__tuple_space_server__ = server

@@ -1,3 +1,4 @@
+require 'timeout'
 require 'innocent-white'
 require 'innocent-white/common'
 require 'innocent-white/tuple'
@@ -138,9 +139,11 @@ module InnocentWhite
       end
 
       # Sleep till the agent becomes the state.
-      def wait_till(state, timespan=0.1)
-        while not(current_state == state)
-          sleep timespan
+      def wait_till(state, sec=5)
+        timeout(sec) do
+          while not(current_state == state)
+            sleep 0.1
+          end
         end
       end
 
