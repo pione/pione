@@ -48,7 +48,7 @@ describe "ModuleProvider" do
     write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: "aaa"))
     check_exceptions
     should.not.raise(Rinda::RequestExpiredError) do
-      rule = read(Tuple[:rule].new(rule_path: "aaa"), 0.1)
+      rule = read(Tuple[:rule].new(rule_path: "aaa"))
       rule.status.should == :unknown
     end
   end
