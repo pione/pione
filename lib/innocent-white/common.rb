@@ -35,6 +35,8 @@ module InnocentWhite
     end
   end
 
+  class UnknownVariableException < Exception; end
+
   # Utility functions for innocent-white system.
   module Util
     # Set signal trap for the system.
@@ -62,11 +64,11 @@ module InnocentWhite
       Socket.gethostname
     end
 
-    # Make taskid by input and output data names.
-    def self.taskid(inputs, outputs)
-      i = inputs.join("\000")
-      o = outputs.join("\000")
-      Digest::MD5.hexdigest("#{i}\001#{o}\001")
+    # Make task_id by input data names.
+    def self.task_id(inputs, params)
+      is = inputs.join("\000")
+      ps = params.join("\000")
+      Digest::MD5.hexdigest("#{is}\001#{ps}\001")
     end
 
     # Make target domain name by module name, inputs, and outputs.
@@ -75,7 +77,13 @@ module InnocentWhite
     end
 
     def self.expand_variables(str, variables)
-      str.gsub(/\{\$(.+?)\}/){variables[$1]}
+      str.gsub(/\{\$(.+?)\}/) do
+        if variables.has_key?($1)
+          variables[$1]
+        else
+          raise UnknownVariableException.new($1)
+        end
+      end
     end
 
   end

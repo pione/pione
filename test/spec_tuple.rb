@@ -7,7 +7,7 @@ include InnocentWhite
 Tuple.define_format([:test, :attr1, :attr2, :attr3])
 
 describe "Tuple" do
-  describe "common" do
+  describe "Tuple::TupleObject" do
     it "should get a class for tuple object" do
       Tuple[:test].should.not.be.nil
       Tuple[:test].should == Tuple::Test

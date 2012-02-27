@@ -8,11 +8,18 @@ module InnocentWhite
 
       # -- class --
 
-      # Define a tuple data and return its class.
+      # Define a tuple class and return its class.
       def self.define(format)
-        Class.new(self) do
+        klass = Class.new(self) do
           set_format format
         end
+        Tuple.const_set(klass.classname, klass)
+        return klass
+      end
+
+      # Return class name of the tuple format.
+      def self.classname
+        identifier.to_s.capitalize.gsub(/_(.)/){ $1.upcase }
       end
 
       # Set tuple's format.
@@ -54,7 +61,10 @@ module InnocentWhite
         format = self.class.format
         if data.first.kind_of?(Hash)
           _data = data.first
-          @data = _data.delete_if {|key,v| not(format.include?(key))}
+          _data.keys.each do |key|
+            raise ArgumentError.new(key) if not(format.include?(key))
+          end
+          @data = _data
         else
           raise ArgumentError.new(data) unless data.size == format.size - 1
           @data = Hash[format[1..-1].zip(data)]
@@ -121,7 +131,6 @@ module InnocentWhite
 
       # make a class and set it in a table
       klass = TupleObject.define(format)
-      const_set(identifier.capitalize, klass)
       TABLE[identifier] = klass
     end
 
@@ -139,9 +148,7 @@ module InnocentWhite
       TABLE[identifier].new(*args)
     end
 
-    #
-    # define tuples
-    #
+    # -- define tuples --
 
     # data representation
     #   domain : target domain
@@ -150,12 +157,10 @@ module InnocentWhite
     define_format [:data, :domain, :name, :uri]
 
     # rule application task with inputs, outpus and parameters
-    #   uuid      : uuid of the task
     #   rule_path : rule location path
     #   inputs    : input data list
-    #   outputs   : output data list
     #   params    : parameter list
-    define_format [:task, :uuid, :rule_path, :inputs, :outputs, :params]
+    define_format [:task, :rule_path, :inputs, :params]
 
     # task finished notifier
     #   uuid   : uuid of the task
@@ -169,7 +174,7 @@ module InnocentWhite
 
     # bye message from agent
     #   uuid : uuid of the agent
-    define_format [:bye, :uuid]
+    define_format [:bye, :uuid, :agent_type]
 
     # parent_agent: agent tree information
     define_format [:parent_agent, :parent_id, :child_id]
@@ -199,5 +204,11 @@ module InnocentWhite
     # location information of resource
     #   uri : base uri of all resources on the server
     define_format [:base_uri, :uri]
+
+    # process information
+    #   name : process name
+    #   pid  : process id
+    define_format [:process_info, :name, :process_id]
+
   end
 end

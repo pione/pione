@@ -45,16 +45,16 @@ module InnocentWhite
 
     # Flow rule definition.
     class FlowDefinition < Definition
-      def to_rule
-        Rule::FlowRule.new(@inputs, @outputs, @params, @content)
+      def to_rule(path)
+        Rule::FlowRule.new(path, @inputs, @outputs, @params, @content)
       end
     end
 
     # Action rule definition.
     class ActionDefinition < Definition
       # Convert to a rule handler.
-      def to_rule
-        Rule::ActionRule.new(@inputs, @outputs, @params, @content)
+      def to_rule(path)
+        Rule::ActionRule.new(path, @inputs, @outputs, @params, @content)
       end
     end
 
@@ -70,12 +70,12 @@ module InnocentWhite
     end
 
     def flow(name, &b)
-      flow = FlowDefinition.eval(&b).to_rule
+      flow = FlowDefinition.eval(&b).to_rule(name)
       @rules[name] = flow
     end
 
     def action(name, &b)
-      action = ActionDefinition.eval(&b).to_rule
+      action = ActionDefinition.eval(&b).to_rule(name)
       @rules[name] = action
     end
 

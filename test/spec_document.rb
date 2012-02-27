@@ -1,8 +1,6 @@
 require 'innocent-white/test-util'
 require 'innocent-white/document'
 
-setup_test
-
 describe 'Document' do
   it 'should define action rule' do
     action = Document.new do

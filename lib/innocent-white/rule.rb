@@ -3,19 +3,16 @@ require 'innocent-white/common'
 
 module InnocentWhite
   module Rule
-    RuleIO = Struct.new(:name, :value)
-
     # Base rule class for flow rule and action rule.
     class BaseRule
-      attr_reader :rule_path
+      attr_reader :path
       attr_reader :inputs
       attr_reader :outputs
       attr_reader :params
       attr_reader :content
 
-      #def initialize(rule_path, inputs, outputs, params, content)
-      def initialize(inputs, outputs, params, content)
-        @rule_path = rule_path
+      def initialize(path, inputs, outputs, params, content)
+        @path = path
         @inputs = inputs
         @outputs = outputs
         @params = params
@@ -37,6 +34,12 @@ module InnocentWhite
           _outputs = find_outputs(ts_server, @domain)
           Tuple[:task].new(@rule_path, _inputs, outputs, params, content)
         end
+      end
+
+      # Make rule handler from the rule.
+      def make_handler(inputs, params, opts={})
+        klass = self.kind_of?(ActionRule) ? ActionHandler : FlowHandler
+        klass.new(self, inputs, params, opts)
       end
 
       private
@@ -73,11 +76,8 @@ module InnocentWhite
 
       def make_auto_variables_by_each(input, index, tuple, var)
         md = input.match(tuple.name)
-        uri = URI(tuple.uri)
-        resource = Resource[uri]
-        var["INPUT[#{index}].NAME]"] = tuple.name
-        var["INPUT[#{index}].VALUE]"] = resource.read
-        var["INPUT[#{index}].PATH"] = URI(tuple.uri)
+        var["INPUT[#{index}]"] = tuple.name
+        var["INPUT[#{index}].URI"] = tuple.uri
         md.to_a.each_with_index do |s, i|
           var["INPUT[#{index}].MATCH[#{i}]"] = s
         end
@@ -86,74 +86,74 @@ module InnocentWhite
     end
 
     class BaseHandler
-      def initialize(rule, inputs, outputs, params, contents)
+      attr_reader :working_directory
+
+      def initialize(base_uri, rule, inputs, params, opts={})
         # check arguments
-        inputs.each do |i|
-          unless i.respond_to?(:name) and i.respond_to?(:value)
-            raise ArgumentError.new(inputs)
-          end
-        end
-        raise ArugmentError unless inputs.size == inputs_definition.size
+        raise ArugmentError unless inputs.size == rule.inputs.size
 
         @rule = rule
         @inputs = inputs
-        @outputs = outputs
-        @variable = {}
-        @working_directory = Dir.mktmpdir
-        setup_ouput_path(@outputs)
+        @outputs = []
+        @params = params
+        @variable_table = {}
+        @working_directory = make_working_directory(opts)
+        @resource_uri = make_resource_uri
         make_auto_variables
+        sync_inputs
       end
 
       private
 
-      def setup_output_path(outputs)
-        outputs.each do |output|
-          case output
-          when Tuple
-            output.path = File.join(@tmpdir, output.name)
-          when Array
-            setup_output_path(output)
+      def make_working_directory(opts)
+        process_name = opts[:process_name] || "no-process-name"
+        process_id = opts[:process_id] || "no-process-id"
+        process_dirname = "#{process_name}_#{process_id}"
+        task_dirname = "#{@rule.path}_#{Util.task_id(@inputs, @params)}"
+        tmpdir = Dir.tmpdir
+        basename = File.join(tmpdir, process_dirname, task_dirname)
+        FileUtils.makedirs(basename)
+        Dir.mktmpdir(nil, basename)
+      end
+
+      def make_resource_uri
+        domain = "#{@rule.path}_#{Util.task_id(@inputs, @params)}"
+        URI(base_uri) + "#{domain}/"
+      end
+
+      def sync_inputs
+        @inputs.each do |input|
+          filepath = File.join(@working_directory, input.name)
+          File.open(filepath, "w+") do |out|
+            out.write Resource[URI(input.uri)].read
           end
         end
       end
 
-      def update_outputs
-        # FIXME: bad bad
-        if not(outputs_definition.empty?)
-          input = @inputs.first.name
-          input_def = inputs_definition.first
-          md = input_def.match(input)
-          output_def = outputs_definition.first
-          [output_def.gsub(/\{\$(\d)\}/){md[$1.to_i]}] # worst!
-        else
-          []
+      def write_output_resource
+        @outputs.flatten.each do |output|
+          val = File.read(File.join(@working_directory, output.name))
+          Resource[output.uri].write(val)
         end
       end
 
+      def make_output_tuple(name)
+        Tuple[:data].new(domain: @domain,
+                         name: name,
+                         uri: @resource_uri + name)
+      end
+
       def find_outputs
+        outputs = []
         list = Dir.entries(@working_directory)
         @rule.outputs.each_with_index do |exp, i|
           if exp.all?
             names = list.select {|elt| exp.match(elt)}
-            @outputs[i]
+            @outputs[i] = names.map{|name| make_output_tuple(name)}
           else
-            list.each {|elt| exp.match(elt)}
+            name = list.find {|elt| exp.match(elt)}
+            @outputs[i] = make_output_tuple(name)
           end
-        end
-      end
-
-      def sysc_outputs
-        
-      end
-
-      # Make input or output auto variables for 'exist' modified data name expression.
-      def make_out_auto_variables_by_exist(type, exp, data, index)
-        prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-        @variable_table["#{prefix}.NAME]"] = name
-        @variable_table["#{prefix}.VALUE]"] = 
-        @variable_table["#{prefix}.PATH"] = data.path
-        exp.match(data.name).captures.each_with_index do |s, i|
-          @variable_table["#{prefix}.MATCH[#{i+1}]"] = s
         end
       end
 
@@ -161,12 +161,12 @@ module InnocentWhite
       def make_auto_variables
         # inputs
         @rule.inputs.each_with_index do |exp, index|
-          make_io_auto_variables(:input, exp, @inputs[index], index)
+          make_io_auto_variables(:input, exp, @inputs[index], index+1)
         end
 
         # outputs
         @rule.outputs.each_with_index do |exp, index|
-          make_io_auto_variables(:output, exp, @outputs[index], index)
+          # make_io_auto_variables(:output, exp, @outputs[index], index+1)
         end
 
         # others
@@ -182,18 +182,20 @@ module InnocentWhite
       # Make input or output auto variables for 'exist' modified data name expression.
       def make_io_auto_variables_by_exist(type, exp, data, index)
         prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-        @variable_table["#{prefix}.NAME]"] = data.name
-        @variable_table["#{prefix}.VALUE]"] = data.value
-        @variable_table["#{prefix}.PATH"] = Resource.load(data.uri)
+        @variable_table[prefix] = data.name
+        @variable_table["#{prefix}.URI"] = data.uri
+        if type == :input
+          @variable_table["#{prefix}.VALUE"] = Resource[URI(data.uri)].read
+        end
         exp.match(data.name).to_a.each_with_index do |s, i|
-          @variable_table["#{prefix}.MATCH[#{i+1}]"] = s
+          @variable_table["#{prefix}.MATCH[#{i}]"] = s
         end
       end
 
       # Make input or output auto variables for 'all' modified data name expression.
       def make_io_auto_variables_by_all(type, exp, tuples, index)
         prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-        @variable_table["#{prefix}.NAME"] = tuples.map{|t| t.name}.join(",")
+        @variable_table[prefix] = tuples.map{|t| t.name}.join(",")
       end
 
       # Make other auto variables.
@@ -204,9 +206,6 @@ module InnocentWhite
     end
 
     class FlowRule < BaseRule
-      def execute
-        
-      end
     end
 
     module FlowParts
@@ -237,47 +236,32 @@ module InnocentWhite
     end
 
     class ActionRule < BaseRule
-      def execute
-        write_shell_script {|path| shell path}
-      end
     end
 
     class ActionHandler < BaseHandler
-      def initialize(action, inputs, outputs, params)
-        @action = action
-        @inputs = inputs
-        @outputs = outputs
-        @params = params
-        @variable = {}
-        super
-      end
-
       # Execute the action.
       def execute
         write_shell_script {|path| shell path}
+        find_outputs.each
+        write_output_resource
+        return @outputs
       end
 
       private
 
-      # Expand variables in the shell script.
-      # when VAR_NAME := 1,
-      # "__{$VAR_NAME}__" => "__a__"
-      def expand_variables(content)
-        content.gsub(/\{\$(.+?)\}/){@variable[$1]}
-      end
-
       # Write shell script to the tempfile.
       def write_shell_script(&b)
-        file = Tempfile.new(Util.uuid)
-        file.print(expand_variables(self.class.content))
-        file.close(false)
+        file = File.open(File.join(@working_directory,"sh"), "w+")
+        file.print(Util.expand_variables(@rule.content, @variable_table))
+        file.close
+        FileUtils.chmod(0700,file.path)
         return b.call(file.path)
       end
 
       # Call shell script of the path.
       def shell(path)
-        sh = @variable["SHELL"] || "/bin/sh"
-        `#{sh} #{path}`
+        scriptname = File.basename(path)
+        `cd #{@working_directory}; ./#{scriptname}`
       end
     end
 

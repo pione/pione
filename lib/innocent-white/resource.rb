@@ -68,6 +68,75 @@ module InnocentWhite
       end
     end
 
-    @@schemes["local"] = Local
+    @@schemes['local'] = Local
+
+    require 'net/ftp'
+
+    class FTP
+      def initialize(uri)
+        @uri = uri.kind_of?(::URI::Generic) ? uri : ::URI.parse(uri)
+        raise ArgumentError unless @uri.kind_of?(::URI::FTP)
+        @path = uri.path
+      end
+
+      def create(data)
+        Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
+          pathes = @path.split('/')
+          makedirs(ftp, pathes)
+          t = Tempfile.open("aaa")
+          t.write(data)
+          t.close(false)
+          ftp.put(t.path, @path)
+        end
+      end
+
+      def read
+        begin
+          tempfile = Tempfile.new("test")
+          Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
+            ftp.get(@path, tempfile.path)
+          end
+          File.read(tempfile.path)
+        rescue Net::FTPPermErrro
+          raise NotFound.new(@uri)
+        end
+      end
+
+      def update(data)
+        Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
+          begin
+            ftp.dir(File.dirname(@path))
+            t = Tempfile.open("aaa")
+            t.write(data)
+            t.close(false)
+            ftp.put(t.path, @path)
+          rescue Net::FTPPermErrro
+            raise NotFound.new(@uri)
+          end
+        end
+      end
+
+      def delete
+        Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
+          ftp.delete(@path)
+        end
+      end
+
+      private
+
+      def makedirs(ftp, path, size=0)
+        unless path.size == size + 1
+          pa = File.join(*path[0..size])
+          begin
+            ftp.mkdir(pa)
+          rescue Net::FTPPermError
+          ensure
+            makedirs(ftp, path, size+1)
+          end
+        end
+      end
+    end
+
+    @@schemes['ftp'] = FTP
   end
 end

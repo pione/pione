@@ -11,6 +11,7 @@ module InnocentWhite
       class UnknownTask < Exception; end
 
       define_state :initialized
+      define_state :process_info_loading
       define_state :task_waiting
       define_state :task_processing
       define_state :module_loading
@@ -22,7 +23,8 @@ module InnocentWhite
       define_state_transition :initialized => :task_waiting
       define_state_transition :task_waiting => :task_processing
       define_state_transition :task_processing => :module_loading
-      define_state_transition :module_loading => :task_executing
+      define_state_transition :module_loading => :process_info_loading
+      define_state_transition :process_info_loading => :task_executing
       define_state_transition :task_excuteing => :task_outputing
       define_state_transition :task_outputing => :task_finished
       define_state_transition :task_finished => :task_waiting
@@ -51,28 +53,40 @@ module InnocentWhite
 
       # State module_loading.
       def transit_to_module_loading(task)
-        mod = read(Tuple[:module].new(path: task.module_path))
-        if mod.status == :known
-          return task, mod
+        rule =
+          begin
+            read(Tuple[:rule].new(rule_path: task.rule_path), 0)
+          rescue Rinda::RequestExpiredError
+            write(Tuple[:request_rule].new(task.rule_path))
+            read(Tuple[:rule].new(rule_path: task.rule_path))
+          end
+        if rule.status == :known
+          return task, rule
         else
           raise UnkownTask.new(task)
         end
       end
 
+      # State process_info_loading
+      def transit_to_process_info_loading(task, rule)
+        return task, rule, read(Tuple[:process_info].any)
+      end
+
       # State task_executing.
-      def transit_to_task_executing(task, mod)
-        handler = mod.content.new(task.inputs)
+      def transit_to_task_executing(task, rule, process_info)
+        handler = rule.content.create_handler(task.inputs,
+                                              task.params,
+                                              process_info.name,
+                                              process.process_id)
         result = handler.execute
         return task, handler, result
       end
 
       # State data_outputing.
       def transit_to_data_outputing(task, handler, result)
-        # FIXME: handle raw data only now
-        data = Tuple[:data].new(data_type: :raw,
-                                name: handler.outputs.first,
-                                raw: result)
-        write(data)
+        result.each do |domain, name, uri|
+          write(Tuple[:data].new(domain: domain, name: name, uri: uri))
+        end
         return task
       end
 

@@ -2,7 +2,7 @@ require 'innocent-white/test-util'
 require 'innocent-white/agent/rule-provider'
 require 'innocent-white/document'
 
-describe "ModuleProvider" do
+describe "RuleProvider" do
   before do
     ts_server = create_remote_tuple_space_server
     @provider = Agent[:rule_provider].new(ts_server)

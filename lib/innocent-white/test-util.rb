@@ -38,6 +38,15 @@ module InnocentWhite
       exceptions.should.be.empty
     end
 
+    def observe_exceptions(sec=5, &b)
+      @thread = Thread.new { b.call }
+      timeout(sec) do
+        while @thread.alive? do
+          check_exceptions
+        end
+      end
+    end
+
     def create_remote_tuple_space_server
       # base uri
       uri = "local:#{Dir.mktmpdir('innocent-white-')}/"

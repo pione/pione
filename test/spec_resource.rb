@@ -3,8 +3,6 @@ require 'innocent-white/test-util'
 require 'innocent-white/uri'
 require 'innocent-white/resource'
 
-#include InnocentWhite
-
 describe 'Resource' do
   describe 'Local' do
     before do
@@ -40,6 +38,30 @@ describe 'Resource' do
       should.not.raise { @local.delete }
       @local.create("abc")
       @local.delete
+    end
+  end
+
+  describe 'FTP' do
+    before do
+      path = Tempfile.new("spec_resource_").path
+      @uri = URI("ftp://anonymous:test@localhost/innocent-white/test-a.txt")
+      @ftp = Resource[@uri]
+    end
+
+    it 'should create a file and read it' do
+      @ftp.create("abc")
+      @ftp.read.should == "abc"
+      @ftp.delete
+    end
+
+    it 'should update a file' do
+      @ftp.create("abc")
+      @ftp.read.should == "abc"
+      @ftp.update("defg")
+      @ftp.read.should == "defg"
+      @ftp.update("hi")
+      @ftp.read.should == "hi"
+      @ftp.delete
     end
   end
 end
