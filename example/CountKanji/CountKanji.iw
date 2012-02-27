@@ -7,7 +7,7 @@ InnocentWhite::Document.new do
     outputs 'summary.txt'
     content [ call("convert_to_utf8"),
               call_with_sync("count_kanji"),
-              call("make_summary") ]
+              call("summarize") ]
   end
 
   # Convert to UTF-8 by nkf
@@ -20,7 +20,7 @@ InnocentWhite::Document.new do
   # Count characters
   action('count_kanji') do
     inputs  '*.utf8'
-    outputs '{$INPUT[1].MATCH[1]}.count'
+    outputs stdout('{$INPUT[1].MATCH[1]}.count')
     content ruby(<<-'__CODE__')
       # -*- coding: utf-8 -*-
       table = {}
@@ -35,9 +35,9 @@ InnocentWhite::Document.new do
   end
 
   # Summarize kanji characters
-  action('make_summary') do
+  action('summarize') do
     inputs  all('*.count')
-    outputs 'summary.txt'
+    outputs stdout('summary.txt')
     content ruby(<<-'__CODE__')
       # -*- coding: utf-8 -*-
       table = {}

@@ -37,6 +37,7 @@ module InnocentWhite
       new(name)
     end
 
+    # Create a name with 'each' modifier.
     def self.each(name)
       new(name, :each)
     end
@@ -44,6 +45,16 @@ module InnocentWhite
     # Create a name with 'all' modifier.
     def self.all(name)
       new(name, :all)
+    end
+
+    # Create a data name for stdout ouput.
+    def self.stdout(name)
+      new(name, :each, :stdout)
+    end
+
+    # Create a data name for stderr output.
+    def self.stderr(name)
+      new(name, :each, :stderr)
     end
 
     # Convert to proc object for Enumerator methods.
@@ -57,10 +68,11 @@ module InnocentWhite
     attr_reader :modifier
     attr_reader :exceptions
 
-    def initialize(name, modifier = :each)
+    def initialize(name, modifier = :each, mode = nil)
       @name = name
       @modifier = modifier
       @exceptions = []
+      @mode = mode
     end
 
     # Return a new expression expanded with the variables.
@@ -80,6 +92,16 @@ module InnocentWhite
     # Return true if the name has 'exist' modifier.
     def each?
       @modifier == :each
+    end
+
+    # Return true if the data content is in stdout.
+    def stdout?
+      @mode == :stdout
+    end
+
+    # Return true if the data content is in stderr.
+    def stderr?
+      @mode == :stderr
     end
 
     # Set a exception and return self.

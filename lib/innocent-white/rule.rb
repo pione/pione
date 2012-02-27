@@ -19,68 +19,87 @@ module InnocentWhite
         @content = content
       end
 
-      # Find input data from tuple space server.
-      def find_inputs(ts_server, domain)
-        _find_inputs(ts_server, domain, @inputs, 1, {})
+      # Find input data combinations from tuple space server.
+      def find_input_combinations(ts_server, domain)
+        _find_input_combinations(ts_server, domain, @inputs, 1, {})
       end
 
       # Find output data from tuple space server.
-      def find_outputs(ts_server, domain, inputs)
-        # FIXME
+      def find_output(ts_server, domain, inputs, var)
+        names = @outputs.map{|output| output.with_variables(var)}
+        return names.map{|name| find_data_by_name(ts_server, domain, name)}
       end
 
-      def make_task(ts_server)
-        find_inputs(ts_server, domain).each do |_inputs|
-          _outputs = find_outputs(ts_server, @domain)
-          Tuple[:task].new(@rule_path, _inputs, outputs, params, content)
+      # Make task data.
+      def write_task(ts_server, domain)
+        find_input_combinations(ts_server, domain).each do |inputs|
+          ts_server.write(Tuple[:task].new(@path, inputs, params))
         end
       end
 
       # Make rule handler from the rule.
-      def make_handler(inputs, params, opts={})
+      def make_handler(base_uri, inputs, params, opts={})
         klass = self.kind_of?(ActionRule) ? ActionHandler : FlowHandler
-        klass.new(self, inputs, params, opts)
+        klass.new(base_uri, self, inputs, params, opts)
       end
 
       private
 
-      def _find_inputs(ts_server, domain, _inputs, index, var)
-        return [[]] if _inputs.empty?
+      # Find input data combinatioins.
+      def _find_input_combinations(ts_server, domain, inputs, index, var)
+        # return empty when reach the recuirsion end
+        return [[]] if inputs.empty?
 
         # expand variables and compile to regular expression
-        input = _inputs.first.with_variables(var)
+        name = inputs.first.with_variables(var)
 
-        # find an input from tuple space server
-        tuples = _find_input(ts_server, domain, input)
+        # find an input data by name from tuple space server
+        tuples = find_data_by_name(ts_server, domain, name)
 
         result = []
 
-        if input.all?
-          rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, var.clone)
+        # make combinations
+        if name.all?
+          # case all modifier
+          new_var = make_auto_variables_by_all(name, index, tuples, var)
+          _find_input_combination(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c|
+            result << c.unshift(tuples)
+          end
         else
-          # find rest inputs recursively
+          # case each modifier
           tuples.each do |tuple|
-            make_auto_variables_by_each(input, index, tuple, var)
-            rest = _find_inputs(ts_server, domain, _inputs[1..-1], index+1, var.clone)
-            rest.each {|r| result << r.unshift(tuple) }
+            new_var = make_auto_variables_by_each(name, index, tuple, var)
+            _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c|
+              result << c.unshift(tuple)
+            end
           end
         end
 
         return result
       end
 
-      def _find_input(ts_server, domain, input_name)
-        req = Tuple[:data].new(name: input_name, domain: domain)
-        ts_server.read_all(req)
+      # Find input data by the name.
+      def find_data_by_name(ts_server, domain, name)
+        ts_server.read_all(Tuple[:data].new(name: name, domain: domain))
       end
 
-      def make_auto_variables_by_each(input, index, tuple, var)
-        md = input.match(tuple.name)
-        var["INPUT[#{index}]"] = tuple.name
-        var["INPUT[#{index}].URI"] = tuple.uri
+      # Make auto-variables by the name modified 'all'.
+      def make_auto_variables_by_all(name, index, tuples, var)
+        new_var = var.clone
+        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(',')
+        return new_var
+      end
+
+      # Make auto-variables by the name modified 'each'.
+      def make_auto_variables_by_each(name, index, tuple, var)
+        new_var = var.clone
+        md = name.match(tuple.name)
+        new_var["INPUT[#{index}]"] = tuple.name
+        new_var["INPUT[#{index}].URI"] = tuple.uri
         md.to_a.each_with_index do |s, i|
-          var["INPUT[#{index}].MATCH[#{i}]"] = s
+          new_var["INPUT[#{index}].MATCH[#{i}]"] = s
         end
+        return new_var
       end
 
     end
@@ -98,7 +117,7 @@ module InnocentWhite
         @params = params
         @variable_table = {}
         @working_directory = make_working_directory(opts)
-        @resource_uri = make_resource_uri
+        @resource_uri = make_resource_uri(base_uri)
         make_auto_variables
         sync_inputs
       end
@@ -116,7 +135,7 @@ module InnocentWhite
         Dir.mktmpdir(nil, basename)
       end
 
-      def make_resource_uri
+      def make_resource_uri(base_uri)
         domain = "#{@rule.path}_#{Util.task_id(@inputs, @params)}"
         URI(base_uri) + "#{domain}/"
       end
@@ -133,24 +152,34 @@ module InnocentWhite
       def write_output_resource
         @outputs.flatten.each do |output|
           val = File.read(File.join(@working_directory, output.name))
-          Resource[output.uri].write(val)
+          Resource[output.uri].create(val)
         end
       end
 
+      def write_output_data(ts_server)
+        @outputs.flatten.each do |output|
+          ts_server.write(output)
+        end
+      end
+
+      # Make output tuple by name.
       def make_output_tuple(name)
         Tuple[:data].new(domain: @domain,
                          name: name,
-                         uri: @resource_uri + name)
+                         uri: (@resource_uri + name).to_s)
       end
 
       def find_outputs
         outputs = []
         list = Dir.entries(@working_directory)
         @rule.outputs.each_with_index do |exp, i|
+          exp = exp.with_variables(@variable_table)
           if exp.all?
+            # case all modifier
             names = list.select {|elt| exp.match(elt)}
             @outputs[i] = names.map{|name| make_output_tuple(name)}
           else
+            # case each modifier
             name = list.find {|elt| exp.match(elt)}
             @outputs[i] = make_output_tuple(name)
           end
@@ -166,7 +195,8 @@ module InnocentWhite
 
         # outputs
         @rule.outputs.each_with_index do |exp, index|
-          # make_io_auto_variables(:output, exp, @outputs[index], index+1)
+          data = make_output_tuple(exp.with_variables(@variable_table).name)
+          make_io_auto_variables(:output, exp, data, index+1)
         end
 
         # others
@@ -235,15 +265,45 @@ module InnocentWhite
       end
     end
 
-    class ActionRule < BaseRule
+    class FlowHandler < BaseHandler
+      def execute(ts_server)
+        apply_rules(ts_server)
+        find_outputs
+        write_output_resource
+        write_output_data(ts_server)
+        return @output
+      end
+
+      private
+
+      def apply_rules(ts_server)
+        @content.each do |caller|
+          rule =
+            begin
+              read(Tuple[:rule].new(rule_path: caller.rule_path), 0)
+            rescue Rinda::RequestExpiredError
+              write(Tuple[:request_rule].new(caller.rule_path))
+              read(Tuple[:rule].new(rule_path: caller.rule_path))
+            end
+          if rule.status == :known
+            
+          else
+            raise UnkownTask.new(task)
+          end
+          
+        end
+      end
     end
+
+    class ActionRule < BaseRule; end
 
     class ActionHandler < BaseHandler
       # Execute the action.
-      def execute
+      def execute(ts_server)
         write_shell_script {|path| shell path}
-        find_outputs.each
+        find_outputs
         write_output_resource
+        write_output_data(ts_server)
         return @outputs
       end
 

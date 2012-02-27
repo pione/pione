@@ -34,7 +34,7 @@ describe 'Rule' do
       @gen1.wait_till(:terminated)
       @gen2.wait_till(:terminated)
       check_exceptions
-      inputs = @rule.find_inputs(@ts_server, "/input")
+      inputs = @rule.find_input_combinations(@ts_server, "/input")
       inputs.size.should == 10
       10.times do |i|
         a = @ts_server.read(Tuple[:data].new(name: "#{i+1}.a"))
@@ -56,45 +56,52 @@ describe 'Rule' do
           content <<-__SH__
             VAL1=`cat {$INPUT[1]}`;
             VAL2=`cat {$INPUT[2]}`;
-            expr $VAL1 + $VAL2
+            expr $VAL1 + $VAL2 > {$OUTPUT[1]}
           __SH__
         end
       end['test']
+      @tmpdir = Dir.mktmpdir
+      @base_uri = "local:#{@tmpdir}/"
       @gen1.wait_till(:terminated)
       @gen2.wait_till(:terminated)
     end
 
     it 'should make action handler from action rule' do
-      inputs = @rule.find_inputs(@ts_server, '/input').first
-      handler = @rule.make_handler(inputs, [])
+      input_data = @rule.find_input_combinations(@ts_server, '/input').first
+      handler = @rule.make_handler(@base_uri, input_data, [])
       handler.should.kind_of Rule::ActionHandler
     end
 
     it 'should make working directory with no process informations' do
-      inputs = @rule.find_inputs(@ts_server, '/input').first
-      handler = @rule.make_handler(inputs, [])
+      input_data = @rule.find_input_combinations(@ts_server, '/input').first
+      handler = @rule.make_handler(@base_uri, input_data, [])
       path = handler.working_directory
       Dir.exist?(path).should.be.true
     end
 
     it 'should make working directory with process informations' do
-      inputs = @rule.find_inputs(@ts_server, '/input').first
+      input_data = @rule.find_input_combinations(@ts_server, '/input').first
       process_name = "test-process-123"
       process_id = "xyz"
       opts = {:process_name => process_name, :process_id => process_id}
-      handler = @rule.make_handler(inputs, [], opts)
+      handler = @rule.make_handler(@base_uri, input_data, [], opts)
       path = handler.working_directory
       Dir.exist?(path).should.be.true
       path.should.include? "#{process_name}_#{process_id}"
     end
 
     it 'should execute an action' do
-      inputs = @rule.find_inputs(@ts_server, '/input').first
-      handler = @rule.make_handler(inputs, [])
-      result = handler.execute
-      output = result.ouputs.first
-      output.name.should == 'test-1.c'
-      Resource[URI(output.uri)].read.should == "12"
+      inputs = @rule.find_input_combinations(@ts_server, '/input').first
+      handler = @rule.make_handler(@base_uri, inputs, [])
+      result = handler.execute(@ts_server)
+      output_data = result.first
+      output_data.name.should == 'test-1.c'
+      Resource[output_data.uri].read.chomp.should == "12"
+      should.not.raise do
+        tuple = @ts_server.read(output_data)
+        tuple.name.should == output_data.name
+        tuple.uri.should == output_data.uri
+      end
     end
   end
 end

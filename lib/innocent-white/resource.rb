@@ -13,6 +13,7 @@ module InnocentWhite
     @@schemes = {}
 
     def self.[](uri)
+      uri = uri.kind_of?(::URI::Generic) ? uri : ::URI.parse(uri)
       @@schemes[uri.scheme].new(uri)
     end
 

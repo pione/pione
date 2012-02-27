@@ -5,14 +5,31 @@ require 'innocent-white/rule'
 module InnocentWhite
   class Document < InnocentWhiteObject
     class Definition
+      # Evaluate the block in a rule definition context.
       def self.eval(&b)
         obj = new
         obj.instance_eval(&b)
         return obj
       end
 
+      # Create all modified name.
       def all(name)
-        Rule::DataName.all(name)
+        Rule::DataNameExp.all(name)
+      end
+
+      # Create each modified name.
+      def each(name)
+        Rule::DataNameExp.each(name)
+      end
+
+      # Create stdout data name.
+      def stdout(name)
+        Rule::DataNameExp.stdout(name)
+      end
+
+      # Create stderr data name.
+      def stderr(name)
+        Rule::DataNameExp.stderr(name)
       end
 
       # Input statement.
@@ -25,6 +42,7 @@ module InnocentWhite
         @outputs = items.map(&DataNameExp)
       end
 
+      # Parameter statement.
       def params(*items)
         @params = items
       end
@@ -34,10 +52,12 @@ module InnocentWhite
         @content = s
       end
 
+      # Create a rule caller.
       def call(rule_path)
         Rule::FlowParts::Call.new(rule_path)
       end
 
+      # Create a rule caller with sync.
       def call_with_sync(rule_path)
         Rule::FlowParts::CallWithSync.new(rule_path)
       end
@@ -58,6 +78,7 @@ module InnocentWhite
       end
     end
 
+    # Load a document and return rule table.
     def self.load(file)
       return eval(file.read).table
     end
