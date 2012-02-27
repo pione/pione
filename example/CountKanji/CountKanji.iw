@@ -13,8 +13,8 @@ InnocentWhite::Document.new do
   # Convert to UTF-8 by nkf
   action('convert_to_utf8') do
     inputs  '*.txt'
-    outputs '{$INPUT[1].NAME}.utf8'
-    content 'nkf -W {$INPUT[1].PATH} > {$OUTPUT[1].PATH}'
+    outputs '{$INPUT[1]}.utf8'
+    content 'nkf -W {$INPUT[1]} > {$OUTPUT[1]}'
   end
 
   # Count characters
@@ -24,7 +24,7 @@ InnocentWhite::Document.new do
     content ruby(<<-'__CODE__')
       # -*- coding: utf-8 -*-
       table = {}
-      text = File.open("{$INPUT[1].PATH}").read
+      text = File.open("{$INPUT[1]").read
       text.split("").each do |c|
         table[c] =  table.has_key?(c) ? table[c].succ : 1
       end
@@ -41,14 +41,14 @@ InnocentWhite::Document.new do
     content ruby(<<-'__CODE__')
       # -*- coding: utf-8 -*-
       table = {}
-      "{$INPUT[1].PATH}".split(",").each do |path|
+      "{$INPUT[1]}".split(",").each do |path|
         File.read(path).split("\n").map do |line|
           c, number = line.split(":")
           table[c] = (table.has_key?(c) ? table[c] : 0) + number.to_i
         end
       end
 
-      File.open("{$OUTPUT[1].PATH}", "w+") do |out|
+      File.open("{$OUTPUT[1]}", "w+") do |out|
         table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
           puts "#{key.inspect[1..-2]}:#{table[key]}"
         end
