@@ -246,12 +246,21 @@ module InnocentWhite
       class Call < Base
         attr_reader :rule_path
 
-        def initialize(rule_path)
+        def initialize(rule_path, sync_mode=false)
           @rule_path = rule_path
+          @sync_mode = sync_mode
+        end
+
+        # Return sync mode version caller.
+        def with_sync
+          self.class.new(@rule_path, true)
+        end
+
+        # Return true if sync mode.
+        def sync?
+          @sync_mode
         end
       end
-
-      class CallWithSync < Call; end
 
       class Condition
         attr_reader :condition

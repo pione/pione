@@ -56,11 +56,6 @@ module InnocentWhite
       def call(rule_path)
         Rule::FlowParts::Call.new(rule_path)
       end
-
-      # Create a rule caller with sync.
-      def call_with_sync(rule_path)
-        Rule::FlowParts::CallWithSync.new(rule_path)
-      end
     end
 
     # Flow rule definition.

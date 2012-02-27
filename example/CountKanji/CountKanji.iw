@@ -6,7 +6,7 @@ InnocentWhite::Document.new do
     inputs  all('*.txt').except('summary.txt')
     outputs 'summary.txt'
     content [ call("convert_to_utf8"),
-              call_with_sync("count_kanji"),
+              call("count_kanji").with_sync,
               call("summarize") ]
   end
 
