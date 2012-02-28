@@ -101,7 +101,6 @@ module InnocentWhite
         end
         return new_var
       end
-
     end
 
     class BaseHandler
@@ -122,6 +121,11 @@ module InnocentWhite
         sync_inputs
       end
 
+      # Return domain name of the handler.
+      def domain
+        Util.domain(@rule.path, @inputs, @params)
+      end
+
       private
 
       def make_working_directory(opts)
@@ -136,8 +140,7 @@ module InnocentWhite
       end
 
       def make_resource_uri(base_uri)
-        domain = "#{@rule.path}_#{Util.task_id(@inputs, @params)}"
-        URI(base_uri) + "#{domain}/"
+        URI(base_uri) + "#{Util.domain(@rule.path, @inputs, @params)}/"
       end
 
       def sync_inputs
@@ -236,6 +239,7 @@ module InnocentWhite
     end
 
     class FlowRule < BaseRule
+      
     end
 
     module FlowParts
@@ -281,6 +285,12 @@ module InnocentWhite
         write_output_resource
         write_output_data(ts_server)
         return @output
+      end
+
+      # Return true if the handler is waiting finished tuple.
+      def finished_waiting?
+        # FIXME
+        false
       end
 
       private

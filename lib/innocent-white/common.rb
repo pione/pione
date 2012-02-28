@@ -72,8 +72,8 @@ module InnocentWhite
     end
 
     # Make target domain name by module name, inputs, and outputs.
-    def self.target_domain(modname, inputs, outputs)
-      modname + taskid(inputs, outputs)
+    def self.domain(rule_path, inputs, params)
+      "#{rule_path}_#{task_id(inputs, params)}"
     end
 
     def self.expand_variables(str, variables)

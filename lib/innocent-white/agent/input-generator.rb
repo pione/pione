@@ -51,12 +51,12 @@ module InnocentWhite
 
       # -- class --
 
-      def self.new_by_simple(ts_server, *args)
-        new(ts_server, SimpleGeneratorMethod.new(ts_server.base_uri, *args))
+      def self.start_by_simple(ts_server, *args)
+        start(ts_server, SimpleGeneratorMethod.new(ts_server.base_uri, *args))
       end
 
-      def self.new_by_dir(ts_server, *args)
-        new(ts_server, DirGeneratorMethod.new(*args))
+      def self.start_by_dir(ts_server, *args)
+        start(ts_server, DirGeneratorMethod.new(*args))
       end
 
       # -- instance --

@@ -162,10 +162,15 @@ module InnocentWhite
     #   params    : parameter list
     define_format [:task, :rule_path, :inputs, :params]
 
+    # working information
+    #   domain  : caller domain
+    #   task_id : task id
+    define_format [:working, :domain, :task_id]
+
     # task finished notifier
     #   uuid   : uuid of the task
     #   status : status of the task processing
-    define_format [:finished, :uuid, :status]
+    define_format [:finished, :domain, :task_id, :status]
 
     # agent connection notifier in the tuple space server
     #   uuid       : uuid of the agent
@@ -209,6 +214,12 @@ module InnocentWhite
     #   name : process name
     #   pid  : process id
     define_format [:process_info, :name, :process_id]
+
+    # sync target information
+    #   src  : sync source domain
+    #   dest : sync destinaiton domain
+    #   name : data name
+    define_format [:sync_target, :src, :dest, :name]
 
   end
 end

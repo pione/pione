@@ -1,7 +1,10 @@
+require 'tmpdir'
 require 'bacon'
 require 'innocent-white/common'
 require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
+require 'innocent-white/agent'
+require 'innocent-white/agent/input-generator'
 
 module InnocentWhite
   module TestUtil
@@ -15,6 +18,7 @@ module InnocentWhite
         observer.pop
       end
     end
+    module_function :write_and_wait_to_be_taken
 
     def clear_exceptions
       ts_server = get_tuple_space_server
@@ -22,6 +26,7 @@ module InnocentWhite
         ts_server.take(tuple)
       end
     end
+    module_function :clear_exceptions
 
     def check_exceptions
       ts_server = get_tuple_space_server
@@ -37,6 +42,7 @@ module InnocentWhite
       end
       exceptions.should.be.empty
     end
+    module_function :check_exceptions
 
     def observe_exceptions(sec=5, &b)
       @thread = Thread.new { b.call }
@@ -46,6 +52,7 @@ module InnocentWhite
         end
       end
     end
+    module_function :observe_exceptions
 
     def create_remote_tuple_space_server
       # base uri
@@ -58,8 +65,34 @@ module InnocentWhite
       # return the connection
       return server
     end
+    module_function :create_remote_tuple_space_server
+  end
+
+  class Agent::Base
+    include InnocentWhite::TestUtil
+
+    alias :set_current_state_orig :set_current_state
+    def set_current_state(state)
+      set_current_state_orig(state)
+      if @__counter__
+        @__counter__.has_key?(state) ? @__counter__[state] += 1 : @__counter__[state] = 1
+      end
+    end
+
+    def wait_until_count(number, state, sec=5, &b)
+      timeout(sec) do
+        @__counter__ = {}
+        b.call
+        while @__counter__[state].nil? or @__counter__[state] < number do
+          check_exceptions
+          sleep 0.1
+        end
+        @__counter__ = nil
+      end
+    end
   end
 end
+
 
 # Install utilities.
 class Bacon::Context

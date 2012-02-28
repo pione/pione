@@ -14,22 +14,22 @@ module InnocentWhite
 
       # Create all modified name.
       def all(name)
-        Rule::DataNameExp.all(name)
+        DataNameExp.all(name)
       end
 
       # Create each modified name.
       def each(name)
-        Rule::DataNameExp.each(name)
+        DataNameExp.each(name)
       end
 
       # Create stdout data name.
       def stdout(name)
-        Rule::DataNameExp.stdout(name)
+        DataNameExp.stdout(name)
       end
 
       # Create stderr data name.
       def stderr(name)
-        Rule::DataNameExp.stderr(name)
+        DataNameExp.stderr(name)
       end
 
       # Input statement.
@@ -55,6 +55,11 @@ module InnocentWhite
       # Create a rule caller.
       def call(rule_path)
         Rule::FlowParts::Call.new(rule_path)
+      end
+
+      # Add ruby shebang line.
+      def ruby(str)
+        "#!/usr/bin/env ruby\n" << str
       end
     end
 

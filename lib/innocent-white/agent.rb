@@ -64,6 +64,13 @@ module InnocentWhite
         @__exception_handler__ = state
       end
 
+      # Initialize an agent and start it.
+      def self.start(*args)
+        agent = new(*args)
+        agent.start
+        return agent
+      end
+
       # -- instance --
 
       attr_reader :thread
@@ -72,9 +79,12 @@ module InnocentWhite
       # Initialize agent's state.
       def initialize(ts_server)
         set_tuple_space_server(ts_server)
-        # @__next_tuple_space_server__ = nil
+      end
 
+      # Start agent activity.
+      def start
         start_running
+        return self
       end
 
       # Return current state.
@@ -168,7 +178,7 @@ module InnocentWhite
           begin
             while true do
               next_state = state_transition_table[@__current_state__]
-              @__current_state__ = next_state
+              set_current_state(next_state)
               @__result__ = call_transition_method(next_state, *@__result__)
             end
           rescue Object => e
@@ -190,6 +200,10 @@ module InnocentWhite
         method.call(*_args)
       end
 
+      # Set current state.
+      def set_current_state(state)
+        @__current_state__ = state
+      end
     end
   end
 end
