@@ -88,3 +88,7 @@ module InnocentWhite
 
   end
 end
+
+require 'innocent-white/tuple'
+require 'innocent-white/document'
+require 'innocent-white/tuple-space-server'

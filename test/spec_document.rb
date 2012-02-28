@@ -1,5 +1,4 @@
 require 'innocent-white/test-util'
-require 'innocent-white/document'
 
 describe 'Document' do
   it 'should define action rule' do
@@ -21,7 +20,7 @@ describe 'Document' do
         inputs  '*.a'
         outputs '{$INPUT[1].MATCH[1]}.b'
         content [ call('test1'),
-                  call_with_sync('test2')]
+                  call('test2').with_sync]
       end
     end['test']
     flow.should.be.kind_of Rule::FlowRule

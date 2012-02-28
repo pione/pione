@@ -4,6 +4,8 @@ module InnocentWhite
   module Tuple
     TABLE = Hash.new
 
+    class FormatError < ArgumentError; end
+
     class TupleObject < InnocentWhiteObject
 
       # -- class --
@@ -62,11 +64,11 @@ module InnocentWhite
         if data.first.kind_of?(Hash)
           _data = data.first
           _data.keys.each do |key|
-            raise ArgumentError.new(key) if not(format.include?(key))
+            raise FormatError.new(key) if not(format.include?(key))
           end
           @data = _data
         else
-          raise ArgumentError.new(data) unless data.size == format.size - 1
+          raise FormatError.new(data) unless data.size == format.size - 1
           @data = Hash[format[1..-1].zip(data)]
         end
       end
@@ -119,11 +121,11 @@ module InnocentWhite
 
       # check arguments
       # format is a list of symbols
-      format.each {|f| raise ArgumentError.new(f) unless Symbol === f}
+      format.each {|f| raise FormatError.new(f) unless Symbol === f}
       # fobid to define same identifier and different format
       if TABLE.has_key?(identifier)
         if not(TABLE[identifier].format == format)
-          raise ArgumentError.new(identifier)
+          raise FormatError.new(identifier)
         else
           return TABLE[identifier]
         end
@@ -141,9 +143,11 @@ module InnocentWhite
 
     # Return a tuple data object converted from an array.
     def self.from_array(ary)
-      raise ArgumentError.new(ary) unless ary.kind_of?(Enumerable)
+      raise FormatError.new(ary) unless ary.size > 0
+      raise FormatError.new(ary) unless ary.kind_of?(Enumerable)
       _ary = ary.to_a
       identifier = _ary.first
+      raise FormatError.new(identifier) unless TABLE.has_key?(identifier)
       args = _ary[1..-1]
       TABLE[identifier].new(*args)
     end

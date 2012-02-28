@@ -58,14 +58,18 @@ module InnocentWhite
       # base uri
       uri = "local:#{Dir.mktmpdir('innocent-white-')}/"
       # make drb server and it's connection
-      drb_server = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3, base_uri: uri))
-      server = DRbObject.new(nil, drb_server.uri)
+      @__remote_drb_server__ = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3, base_uri: uri))
+      server = DRbObject.new(nil, @__remote_drb_server__.uri)
       # set default tuple space server
       set_tuple_space_server server
       # return the connection
       return server
     end
     module_function :create_remote_tuple_space_server
+
+    def remote_drb_server
+      @__remote_drb_server__
+    end
   end
 
   class Agent::Base

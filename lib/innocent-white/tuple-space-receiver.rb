@@ -1,6 +1,6 @@
 require 'socket'
 require 'drb/drb'
-require 'innocent-white/innocent-white-object'
+require 'innocent-white/common'
 
 module InnocentWhite
   class TupleSpaceReceiver < InnocentWhiteObject
