@@ -39,11 +39,13 @@ module InnocentWhite
 
       # State task_waiting.
       def transit_to_task_waiting
+        puts "----------task_waiting--------"
         return take(Tuple[:task].any)
       end
 
       # State task_processing.
       def transit_to_task_processing(task)
+        puts "-------- task processing -------"
         if InnocentWhite.debug_mode?
           msg = "is processing the task #{task.module_path}(#{task.inputs.join(',')})"
           log(:debug, msg)
@@ -53,10 +55,13 @@ module InnocentWhite
 
       # State module_loading.
       def transit_to_module_loading(task)
+        puts "----- module_loading -------"
         rule =
           begin
-            read(Tuple[:rule].new(rule_path: task.rule_path), 0)
+            puts "------------------------"
+            read(Tuple[:rule].new(rule_path: task.rule_path), true)
           rescue Rinda::RequestExpiredError
+            puts "----------------------"
             write(Tuple[:request_rule].new(task.rule_path))
             read(Tuple[:rule].new(rule_path: task.rule_path))
           end
@@ -74,6 +79,7 @@ module InnocentWhite
 
       # State task_executing.
       def transit_to_task_executing(task, rule, process_info)
+        p task
         handler = rule.content.create_handler(task.inputs,
                                               task.params,
                                               process_info.name,
@@ -92,8 +98,10 @@ module InnocentWhite
 
       # State task_finishing.
       def transit_to_task_finishing(task)
+        p task
         finished = Tuple[:finished].new(uuid: task.uuid, status: :succeeded)
         write(finished)
+        p finished
       end
 
       def transit_to_error(e)
@@ -102,6 +110,7 @@ module InnocentWhite
           # FIXME
           notify_exception(e)
         else
+          p e
           notify_exception(e)
           terminate
         end

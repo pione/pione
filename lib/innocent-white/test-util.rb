@@ -18,7 +18,6 @@ module InnocentWhite
         observer.pop
       end
     end
-    module_function :write_and_wait_to_be_taken
 
     def clear_exceptions
       ts_server = get_tuple_space_server
@@ -26,7 +25,6 @@ module InnocentWhite
         ts_server.take(tuple)
       end
     end
-    module_function :clear_exceptions
 
     def check_exceptions
       ts_server = get_tuple_space_server
@@ -34,25 +32,22 @@ module InnocentWhite
       exceptions.each do |tuple|
         e = tuple.value
         Bacon::ErrorLog << "#{e.class}: #{e.message}\n"
-        e.backtrace.each_with_index { |line, i|
-          Bacon::ErrorLog << "\t#{line}\n"
-        #  Bacon::ErrorLog << "\t#{line}#{i==0 ? ": #@name - #{description}" : ""}\n"
-        }
+        e.backtrace.each_with_index { |line, i| Bacon::ErrorLog << "\t#{line}\n" }
         Bacon::ErrorLog << "\n"
       end
       exceptions.should.be.empty
     end
-    module_function :check_exceptions
 
     def observe_exceptions(sec=5, &b)
       @thread = Thread.new { b.call }
-      timeout(sec) do
-        while @thread.alive? do
-          check_exceptions
+      begin
+        timeout(sec) do
+          while @thread.alive? do; sleep 0.1; end
         end
+      ensure
+        check_exceptions
       end
     end
-    module_function :observe_exceptions
 
     def create_remote_tuple_space_server
       # base uri
@@ -65,7 +60,6 @@ module InnocentWhite
       # return the connection
       return server
     end
-    module_function :create_remote_tuple_space_server
 
     def remote_drb_server
       @__remote_drb_server__
@@ -87,7 +81,11 @@ module InnocentWhite
       timeout(sec) do
         @__counter__ = {}
         b.call
+        p get_tuple_space_server.all_tuples
         while @__counter__[state].nil? or @__counter__[state] < number do
+          p current_state
+          #p self
+          #p get_tuple_space_server.all_tuples
           check_exceptions
           sleep 0.1
         end

@@ -122,6 +122,8 @@ module InnocentWhite
   module TupleSpaceServerInterface
     def self.tuple_space_operation(name)
       define_method(name) do |*args|
+        puts '-------take-----------' if name == :take
+        p caller if name == :take
         @__tuple_space_server__.__send__(name, *args)
       end
     end

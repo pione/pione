@@ -1,13 +1,17 @@
-require 'innocent-white/tuple'
-require 'innocent-white/tuple-space-server'
+require 'innocent-white/test-util'
 
-include InnocentWhite
-
-# test type tuple for this test
-Tuple.define_format([:test, :attr1, :attr2, :attr3])
 
 describe "Tuple" do
   describe "Tuple::TupleObject" do
+    before do
+      # test type tuple for this test
+      Tuple.define_format([:test, :attr1, :attr2, :attr3])
+    end
+
+    after do
+      Tuple.delete_format(:test)
+    end
+
     it "should get a class for tuple object" do
       Tuple[:test].should.not.be.nil
       Tuple[:test].should == Tuple::Test

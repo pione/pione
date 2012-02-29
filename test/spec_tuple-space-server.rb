@@ -15,6 +15,7 @@ describe "TupleSpaceServer" do
     @ts_server.count_tuple([:test, nil]).should == 1
     @ts_server.write([:test, :b])
     @ts_server.count_tuple([:test, nil]).should == 2
+    Tuple.delete_format(:test)
   end
 
   it "should count worker" do

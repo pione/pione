@@ -136,6 +136,15 @@ module InnocentWhite
       TABLE[identifier] = klass
     end
 
+    # Delete a tuple format definition.
+    def self.delete_format(identifier)
+      if TABLE.has_key?(identifier)
+        name = TABLE[identifier].name.split('::').last
+        TABLE.delete(identifier)
+        remove_const(name)
+      end
+    end
+
     # Return a class corresponding to a tuple identifier.
     def self.[](identifier)
       TABLE[identifier]

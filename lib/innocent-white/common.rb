@@ -5,7 +5,7 @@ require 'digest'
 module InnocentWhite
   # Change debug mode true or not.
   def self.debug_mode(mode = true)
-    @debug_mode = true
+    @debug_mode = mode
   end
 
   # Return true if the system is debug mode.

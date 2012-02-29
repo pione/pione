@@ -5,10 +5,13 @@ require 'innocent-white/document'
 describe "TaskWorker" do
   before do
     @ts_server = create_remote_tuple_space_server
-    @worker1 = Agent[:task_worker].new(@ts_server)
-    @worker2 = Agent[:task_worker].new(@ts_server)
-    @worker3 = Agent[:task_worker].new(@ts_server)
-    @task1 = Tuple[:task].new(rule_path: "test", inputs: ["1.a"], outputs: ["1.b"], params: [])
+    # setup workers
+    @worker1 = Agent[:task_worker].start(@ts_server)
+    @worker2 = Agent[:task_worker].start(@ts_server)
+    @worker3 = Agent[:task_worker].start(@ts_server)
+    # make a task
+    @task1 = Tuple[:task].new(rule_path: "test", inputs: ["1.a"], params: [])
+    # make a rule
     doc = InnocentWhite::Document.new do
       action("test") do
         inputs  '*.a'
@@ -16,20 +19,22 @@ describe "TaskWorker" do
         content 'echo -n "input: {$INPUT[1].VALUE}"'
       end
     end
-    @ts_server.write(Tuple[:rule].new(rule_path: "test", content: doc["test"], status: :known))
-  end
-
-  it "should wait tasks" do
+    write(Tuple[:rule].new(rule_path: "test", content: doc["test"], status: :known))
+    # workers are waiting tasks
     @worker1.wait_till(:task_waiting, 1)
     @worker2.wait_till(:task_waiting, 1)
     @worker3.wait_till(:task_waiting, 1)
+  end
+
+  it "should wait tasks" do
+    @worker1.current_state.should == :task_waiting
+    @worker2.current_state.should == :task_waiting
+    @worker3.current_state.should == :task_waiting
     check_exceptions
   end
 
   it "should say hello and bye" do
-    @worker1.wait_till(:task_waiting)
-    @worker2.wait_till(:task_waiting)
-    @worker3.wait_till(:task_waiting)
+    # check hello message
     agents = read_all(Tuple[:agent].any)
     agents.should.include @worker1.to_agent_tuple
     agents.should.include @worker2.to_agent_tuple
@@ -41,6 +46,7 @@ describe "TaskWorker" do
     @worker1.wait_till(:terminated)
     @worker2.wait_till(:terminated)
     @worker3.wait_till(:terminated)
+    # check bye message
     agents = read_all(Tuple[:agent].any)
     agents.should.not.include @worker1.to_agent_tuple
     agents.should.not.include @worker2.to_agent_tuple
@@ -50,15 +56,37 @@ describe "TaskWorker" do
   end
 
   it "should process tasks" do
-    write_and_wait_to_be_taken(@task1)
+    # terminate worker2,3
+    @worker2.terminate
+    @worker3.terminate
+    @worker2.wait_till(:terminated)
+    @worker3.wait_till(:terminated)
+    @worker1.current_state.should == :task_waiting
+    @worker2.current_state.should == :terminated
+    @worker3.current_state.should == :terminated
+
+    nf = get_tuple_space_server.notify(nil, Tuple[:task].any.to_tuple_space_form)
+    Thread.new do
+      nf.each do |event, tuple|
+        puts '---------------event---------------------'
+        p event
+        p tuple
+        p @worker1.current_state
+      end
+    end
+
+    # push task
+    @worker1.wait_until_count(1, :task_finishing, 3) do
+      write(@task1)
+    end
+    p @ts_server.all_tuples
+    # process task
     observe_exceptions do
       sleep 0.3
-      p @worker1
-      p @worker2
-      p @worker3
-      p @ts_server.all_tuples
+      # check finished tuple
       finished = read(Tuple[:finished].any)
       finished.task_id.should == @task1.task_id
+      # check result data
       req_data = Tuple[:data].any
       req_data.name = "1.b"
       data = read(req_data)

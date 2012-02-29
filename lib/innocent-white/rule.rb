@@ -43,6 +43,20 @@ module InnocentWhite
         klass.new(base_uri, self, inputs, params, opts)
       end
 
+      def ==(other)
+        return false unless @inputs == other.inputs
+        return false unless @outputs == other.outputs
+        return false unless @params == other.params
+        return false unless @content == other.content
+        return true
+      end
+
+      alias :eql? :==
+
+      def hash
+        @inputs.hash + @outputs.hash + @params.hash + @content.hash
+      end
+
       private
 
       # Find input data combinatioins.
@@ -104,7 +118,12 @@ module InnocentWhite
     end
 
     class BaseHandler
+      attr_reader :rule
+      attr_reader :inputs
+      attr_reader :outputs
+      attr_reader :params
       attr_reader :working_directory
+      attr_reader :resource_uri
 
       def initialize(base_uri, rule, inputs, params, opts={})
         # check arguments
@@ -126,15 +145,32 @@ module InnocentWhite
         Util.domain(@rule.path, @inputs, @params)
       end
 
+      def ==(other)
+        return false unless @rule == other.rule
+        return false unless @inputs == other.inputs
+        return false unless @outputs == other.outputs
+        return false unless @params == other.params
+        return true
+      end
+
+      alias :eql? :==
+
+      def hash
+        @rule.hash + @inputs.hash + @outputs.hash + @params.hash
+      end
+
       private
 
+      # Make working directory.
       def make_working_directory(opts)
+        # build directory path
         process_name = opts[:process_name] || "no-process-name"
         process_id = opts[:process_id] || "no-process-id"
         process_dirname = "#{process_name}_#{process_id}"
         task_dirname = "#{@rule.path}_#{Util.task_id(@inputs, @params)}"
         tmpdir = Dir.tmpdir
         basename = File.join(tmpdir, process_dirname, task_dirname)
+        # create a directory
         FileUtils.makedirs(basename)
         Dir.mktmpdir(nil, basename)
       end
