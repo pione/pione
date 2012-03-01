@@ -39,7 +39,6 @@ module InnocentWhite
 
       # State task_waiting.
       def transit_to_task_waiting
-        puts "----------task_waiting--------"
         return take(Tuple[:task].any)
       end
 
@@ -110,7 +109,8 @@ module InnocentWhite
           # FIXME
           notify_exception(e)
         else
-          p e
+          puts ">>>ERROR:  #{e}"
+          puts ">>>CALLER: #{caller}"
           notify_exception(e)
           terminate
         end

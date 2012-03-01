@@ -1,3 +1,4 @@
+require 'timeoutx'
 require 'tmpdir'
 require 'bacon'
 require 'innocent-white/common'
@@ -5,6 +6,10 @@ require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
 require 'innocent-white/agent'
 require 'innocent-white/agent/input-generator'
+
+# avoid thread race problem
+# http://bugs.ruby-lang.org/issues/show/4266
+#TimeoutX.replace_timeout
 
 module InnocentWhite
   module TestUtil
@@ -81,7 +86,6 @@ module InnocentWhite
       timeout(sec) do
         @__counter__ = {}
         b.call
-        p get_tuple_space_server.all_tuples
         while @__counter__[state].nil? or @__counter__[state] < number do
           p current_state
           #p self

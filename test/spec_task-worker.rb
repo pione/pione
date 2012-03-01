@@ -21,9 +21,9 @@ describe "TaskWorker" do
     end
     write(Tuple[:rule].new(rule_path: "test", content: doc["test"], status: :known))
     # workers are waiting tasks
-    @worker1.wait_till(:task_waiting, 1)
-    @worker2.wait_till(:task_waiting, 1)
-    @worker3.wait_till(:task_waiting, 1)
+    @worker1.wait_till(:task_waiting)
+    @worker2.wait_till(:task_waiting)
+    @worker3.wait_till(:task_waiting)
   end
 
   it "should wait tasks" do
@@ -61,6 +61,8 @@ describe "TaskWorker" do
     @worker3.terminate
     @worker2.wait_till(:terminated)
     @worker3.wait_till(:terminated)
+
+    # check state
     @worker1.current_state.should == :task_waiting
     @worker2.current_state.should == :terminated
     @worker3.current_state.should == :terminated
@@ -76,10 +78,14 @@ describe "TaskWorker" do
     end
 
     # push task
-    @worker1.wait_until_count(1, :task_finishing, 3) do
+    @worker1.wait_until_count(1, :task_finishing) do
+      puts ">>>write task<<<"
       write(@task1)
+      sleep 1
+      check_exceptions
+      p get_tuple_space_server.all_tuples
     end
-    p @ts_server.all_tuples
+
     # process task
     observe_exceptions do
       sleep 0.3

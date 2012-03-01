@@ -1,4 +1,6 @@
 require 'timeout'
+require 'thread'
+require 'monitor'
 require 'innocent-white'
 require 'innocent-white/common'
 require 'innocent-white/tuple'
@@ -18,7 +20,10 @@ module InnocentWhite
       TABLE[klass.agent_type] = klass
     end
 
+    class Aborting < Exception; end
+
     class Base < InnocentWhiteObject
+      include MonitorMixin
       include TupleSpaceServerInterface
 
       # -- class --
@@ -78,6 +83,9 @@ module InnocentWhite
 
       # Initialize agent's state.
       def initialize(ts_server)
+        super()
+        @running_thread = nil
+        @__aborting__ = false
         set_tuple_space_server(ts_server)
       end
 
@@ -94,10 +102,10 @@ module InnocentWhite
 
       # Terminate the agent.
       def terminate
-        @running_thread.kill unless @running_thread == Thread.current
+        abort unless @running_thread == Thread.current
         res = call_transition_method(:terminated)
         @__current_state__ = :terminated
-        @running_thread.kill
+        abort if @running_thread == Thread.current
         return res
       end
 
@@ -151,7 +159,7 @@ module InnocentWhite
       # Sleep till the agent becomes the state.
       def wait_till(state, sec=5)
         timeout(sec) do
-          while not(current_state == state)
+          while not(current_state == state) do
             sleep 0.1
           end
         end
@@ -171,16 +179,21 @@ module InnocentWhite
 
       # Start to transit agent's state.
       def start_running
+        # Return if the agent is running already.
+        return unless @running_thread.nil?
+
         state_transition_table = self.class.state_transition_table
         exception_handler = self.class.exception_handler
 
         @running_thread = Thread.new do
           begin
-            while true do
+            while not(@__aborting__) do
               next_state = state_transition_table[@__current_state__]
               set_current_state(next_state)
               @__result__ = call_transition_method(next_state, *@__result__)
             end
+          rescue Aborting
+            # do nothing
           rescue Object => e
             call_transition_method(exception_handler, e)
           end
@@ -203,6 +216,14 @@ module InnocentWhite
       # Set current state.
       def set_current_state(state)
         @__current_state__ = state
+      end
+
+      def abort
+        @__aborting__ = true
+        if @running_thread.alive?
+          @running_thread.raise Aborting
+          @running_thread.join
+        end
       end
     end
   end
