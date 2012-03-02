@@ -124,9 +124,10 @@ module InnocentWhite
       attr_reader :params
       attr_reader :working_directory
       attr_reader :resource_uri
+      attr_reader :task_id
+      attr_reader :domain
 
       def initialize(base_uri, rule, inputs, params, opts={})
-        puts "INPUTS: #{inputs}"
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
 
@@ -137,13 +138,10 @@ module InnocentWhite
         @variable_table = {}
         @working_directory = make_working_directory(opts)
         @resource_uri = make_resource_uri(base_uri)
+        @task_id = Util.task_id(@inputs, @params)
+        @domain = Util.domain(@rule.path, @inputs, @params)
         make_auto_variables
         sync_inputs
-      end
-
-      # Return domain name of the handler.
-      def domain
-        Util.domain(@rule.path, @inputs, @params)
       end
 
       def ==(other)
@@ -204,14 +202,7 @@ module InnocentWhite
 
       # Make output tuple by name.
       def make_output_tuple(name)
-        p self
-        puts "RESOURCE: #{@resource_uri}"
-        puts "NAME: #{name}"
-        #puts "URI: #{@resource_uri + name}"
-        puts "CALLER: #{caller}"
-        Tuple[:data].new(domain: @domain,
-                         name: name,
-                         uri: (@resource_uri + name).to_s)
+        Tuple[:data].new(@domain, name, (@resource_uri + name).to_s)
       end
 
       def find_outputs
@@ -226,8 +217,6 @@ module InnocentWhite
           else
             # case each modifier
             name = list.find {|elt| exp.match(elt)}
-            puts "LIST:*** #{list}"
-            puts "NAME:*** #{names}"
             @outputs[i] = make_output_tuple(name)
           end
         end
@@ -363,8 +352,8 @@ module InnocentWhite
     class ActionHandler < BaseHandler
       # Execute the action.
       def execute(ts_server)
-        puts ">>>execute<<<"
-        write_shell_script {|path| shell path}
+        result = write_shell_script {|path| shell path}
+        write_output_from_stdout(result)
         find_outputs
         write_output_resource
         write_output_data(ts_server)
@@ -372,6 +361,19 @@ module InnocentWhite
       end
 
       private
+
+      def write_output_from_stdout(result)
+        @rule.outputs.each do |output|
+          if output.stdout?
+            name = output.with_variables(@variable_table).name
+            filepath = File.join(@working_directory, name)
+            File.open(filepath, "w+") do |out|
+              out.write result
+            end
+            break
+          end
+        end
+      end
 
       # Write shell script to the tempfile.
       def write_shell_script(&b)

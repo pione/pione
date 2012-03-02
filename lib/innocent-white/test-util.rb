@@ -69,6 +69,7 @@ module InnocentWhite
   class Agent::Base
     include InnocentWhite::TestUtil
 
+    # Fake set_current_state for counting state changes.
     alias :set_current_state_orig :set_current_state
     def set_current_state(state)
       set_current_state_orig(state)
@@ -77,16 +78,16 @@ module InnocentWhite
       end
     end
 
+    # Wait until state counter is reached at the number.
     def wait_until_count(number, state, sec=5, &b)
       timeout(sec) do
         @__counter__ = {}
-        b.call
+        first_time = true
         while @__counter__[state].nil? or @__counter__[state] < number do
-          p current_state
-          #p self
-          #p get_tuple_space_server.all_tuples
+          b.call if first_time
+          first_time = false
           check_exceptions
-          sleep 0.1
+          sleep 0.2
         end
         @__counter__ = nil
       end

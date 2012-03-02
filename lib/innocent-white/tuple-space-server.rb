@@ -80,14 +80,6 @@ module InnocentWhite
       write(Tuple[:tuple_server_status].new(status: :stop))
     end
 
-    def report
-      {
-        task_worker_resource: task_worker_resource,
-        current_task_worker_size: current_task_worker_size,
-        tuples: all_tuples
-      }
-    end
-
     # Return all tuples of the tuple space.
     def all_tuples
       tuples = []
@@ -99,6 +91,7 @@ module InnocentWhite
       return _tuples
     end
 
+    # Define tuple space interfaces.
     tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}
     tuple_space_interface :read_all, :result => lambda{|list| list.map{|t| Tuple.from_array(t)}}
     tuple_space_interface :take, :result => lambda{|t| Tuple.from_array(t)}
@@ -120,14 +113,15 @@ module InnocentWhite
   end
 
   module TupleSpaceServerInterface
+
+    # Define tuple space operation.
     def self.tuple_space_operation(name)
       define_method(name) do |*args|
-        puts '-------take-----------' if name == :take
-        p caller if name == :take
         @__tuple_space_server__.__send__(name, *args)
       end
     end
 
+    # define perations
     tuple_space_operation :read
     tuple_space_operation :read_all
     tuple_space_operation :take
@@ -142,10 +136,12 @@ module InnocentWhite
 
     private
 
+    # Return the tuple space server.
     def get_tuple_space_server
       @__tuple_space_server__
     end
 
+    # Set tuple space server which provides operations.
     def set_tuple_space_server(server)
       @__tuple_space_server__ = server
 

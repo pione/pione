@@ -57,9 +57,9 @@ module InnocentWhite
       new(name, :each, :stderr)
     end
 
-    # Convert to proc object for Enumerator methods.
+    # Convert to proc object for Enumerable methods.
     def self.to_proc
-      Proc.new{|name| self.new(name) }
+      Proc.new{|name| name.kind_of?(self) ? name : self.new(name)}
     end
 
     # -- instance --
@@ -69,6 +69,8 @@ module InnocentWhite
     attr_reader :exceptions
 
     def initialize(name, modifier = :each, mode = nil)
+      raise ArgumentError.new(name) unless name.kind_of? String or name.kind_of? Regexp
+
       @name = name
       @modifier = modifier
       @exceptions = []

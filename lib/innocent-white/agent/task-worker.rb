@@ -25,9 +25,9 @@ module InnocentWhite
       define_state_transition :task_processing => :module_loading
       define_state_transition :module_loading => :process_info_loading
       define_state_transition :process_info_loading => :task_executing
-      define_state_transition :task_excuteing => :task_outputing
-      define_state_transition :task_outputing => :task_finished
-      define_state_transition :task_finished => :task_waiting
+      define_state_transition :task_executing => :data_outputing
+      define_state_transition :data_outputing => :task_finishing
+      define_state_transition :task_finishing => :task_waiting
       define_exception_handler :error
 
       private
@@ -39,11 +39,15 @@ module InnocentWhite
 
       # State task_waiting.
       def transit_to_task_waiting
-        return take(Tuple[:task].any)
+        puts "WORKER ==> waiting"
+        task = take(Tuple[:task].any)
+        puts "==> waaaaaaaaaaaaaaaaaaaaaaaaaa"
+        return task
       end
 
       # State task_processing.
       def transit_to_task_processing(task)
+        puts "WORKER ==> task_processing"
         if InnocentWhite.debug_mode?
           msg = "is processing the task #{task.module_path}(#{task.inputs.join(',')})"
           log(:debug, msg)
@@ -53,6 +57,7 @@ module InnocentWhite
 
       # State module_loading.
       def transit_to_module_loading(task)
+        puts "WORKER ==> module_loading"
         rule =
           begin
             read(Tuple[:rule].new(rule_path: task.rule_path), true)
@@ -69,12 +74,13 @@ module InnocentWhite
 
       # State process_info_loading
       def transit_to_process_info_loading(task, rule)
+        puts "WORKER ==> process_info_loading"
         return task, rule, read(Tuple[:process_info].any)
       end
 
       # State task_executing.
       def transit_to_task_executing(task, rule, process_info)
-        puts "TASK: #{task}"
+        puts "WORKER ==> task_executing"
         opts ={process_name: process_info.name, process_id: process_info.process_id}
         base_uri = read(Tuple[:base_uri].any).uri
         handler = rule.content.make_handler(base_uri,
@@ -90,15 +96,13 @@ module InnocentWhite
         result.each do |domain, name, uri|
           write(Tuple[:data].new(domain: domain, name: name, uri: uri))
         end
-        return task
+        return task, handler
       end
 
       # State task_finishing.
-      def transit_to_task_finishing(task)
-        p task
-        finished = Tuple[:finished].new(uuid: task.uuid, status: :succeeded)
+      def transit_to_task_finishing(task, handler)
+        finished = Tuple[:finished].new(handler.domain, handler.task_id, :succeeded)
         write(finished)
-        p finished
       end
 
       def transit_to_error(e)
@@ -107,8 +111,6 @@ module InnocentWhite
           # FIXME
           notify_exception(e)
         else
-          puts ">>>ERROR:  #{e}"
-          puts ">>>CALLER: #{caller}"
           notify_exception(e)
           terminate
         end

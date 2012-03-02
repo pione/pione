@@ -102,16 +102,22 @@ module InnocentWhite
 
       # Terminate the agent.
       def terminate
+        # abort the agent when called by other thread
         abort unless @running_thread == Thread.current
+        # transit to terminated
         res = call_transition_method(:terminated)
+        # set agent state
         @__current_state__ = :terminated
         # abort if @running_thread == Thread.current
         return res
       end
 
-      # Send a bye message to the tuple space servers.
+      # Send a bye message to the tuple space servers and terminate myself.
       def finalize
-        bye
+        unless current_state == :terminated
+          bye
+          terminate
+        end
       end
 
       # Return agent type of the object.
@@ -193,7 +199,7 @@ module InnocentWhite
               @__result__ = call_transition_method(next_state, *@__result__)
             end
           rescue Aborting
-            # do nothing
+            # do nothing, agent will be dead...
           rescue Object => e
             call_transition_method(exception_handler, e)
           end
@@ -218,10 +224,14 @@ module InnocentWhite
         @__current_state__ = state
       end
 
+      # Abort the agent.
       def abort
+        # set variable
         @__aborting__ = true
         if @running_thread.alive?
+          # raise Aborting exception
           @running_thread.raise Aborting
+          # wait to stop the thread
           @running_thread.join
         end
       end
