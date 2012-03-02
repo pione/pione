@@ -1,6 +1,5 @@
 require 'innocent-white/test-util'
 require 'innocent-white/agent/task-worker'
-require 'innocent-white/document'
 
 describe "TaskWorker" do
   before do
@@ -10,12 +9,15 @@ describe "TaskWorker" do
     @worker2 = Agent[:task_worker].start(@ts_server)
     @worker3 = Agent[:task_worker].start(@ts_server)
     # make a task
-    @task1 = Tuple[:task].new(rule_path: "test", inputs: ["1.a"], params: [])
+    @uri = "local:/tmp/1.a"
+    Resource[@uri].create "abc"
+    @data = Tuple[:data].new(domain: 'test', name: "1.a", uri: @uri)
+    @task1 = Tuple[:task].new(rule_path: "test", inputs: [@data], params: [])
     # make a rule
     doc = InnocentWhite::Document.new do
       action("test") do
         inputs  '*.a'
-        outputs '{$INPUT[1].MATCH[1]}.b'
+        outputs stdout('{$INPUT[1].MATCH[1]}.b')
         content 'echo -n "input: {$INPUT[1].VALUE}"'
       end
     end
@@ -66,6 +68,9 @@ describe "TaskWorker" do
     @worker1.current_state.should == :task_waiting
     @worker2.current_state.should == :terminated
     @worker3.current_state.should == :terminated
+
+    # process info
+    write(Tuple[:process_info].new('spec_task-worker', 'testid'))
 
     nf = get_tuple_space_server.notify(nil, Tuple[:task].any.to_tuple_space_form)
     Thread.new do

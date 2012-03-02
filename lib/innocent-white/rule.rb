@@ -126,8 +126,9 @@ module InnocentWhite
       attr_reader :resource_uri
 
       def initialize(base_uri, rule, inputs, params, opts={})
+        puts "INPUTS: #{inputs}"
         # check arguments
-        raise ArugmentError unless inputs.size == rule.inputs.size
+        raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
 
         @rule = rule
         @inputs = inputs
@@ -203,6 +204,11 @@ module InnocentWhite
 
       # Make output tuple by name.
       def make_output_tuple(name)
+        p self
+        puts "RESOURCE: #{@resource_uri}"
+        puts "NAME: #{name}"
+        #puts "URI: #{@resource_uri + name}"
+        puts "CALLER: #{caller}"
         Tuple[:data].new(domain: @domain,
                          name: name,
                          uri: (@resource_uri + name).to_s)
@@ -216,10 +222,12 @@ module InnocentWhite
           if exp.all?
             # case all modifier
             names = list.select {|elt| exp.match(elt)}
-            @outputs[i] = names.map{|name| make_output_tuple(name)}
+            @outputs[i] = names.map{|name| make_output_tuple(name) unless name.empty?}
           else
             # case each modifier
             name = list.find {|elt| exp.match(elt)}
+            puts "LIST:*** #{list}"
+            puts "NAME:*** #{names}"
             @outputs[i] = make_output_tuple(name)
           end
         end
@@ -355,6 +363,7 @@ module InnocentWhite
     class ActionHandler < BaseHandler
       # Execute the action.
       def execute(ts_server)
+        puts ">>>execute<<<"
         write_shell_script {|path| shell path}
         find_outputs
         write_output_resource

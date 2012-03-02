@@ -105,7 +105,7 @@ module InnocentWhite
         abort unless @running_thread == Thread.current
         res = call_transition_method(:terminated)
         @__current_state__ = :terminated
-        abort if @running_thread == Thread.current
+        # abort if @running_thread == Thread.current
         return res
       end
 
