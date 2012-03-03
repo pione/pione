@@ -5,16 +5,12 @@ module InnocentWhite
     class SyncMonitor < Base
       set_agent_type :sync_monitor
 
-      define_state :initialized
       define_state :sync_target_waiting
       define_state :sync_checking
-      define_state :error
-      define_state :terminated
 
       define_state_transition :initialized => :sync_target_waiting
       define_state_transition :sync_target_waiting => :sync_checking
       define_state_transition :sync_checking => :sync_target_waiting
-      define_exception_handler :error
 
       attr_reader :queue
 
@@ -27,11 +23,6 @@ module InnocentWhite
 
       private
 
-      # State initialized.
-      def transit_to_initialized
-        # do nothing
-      end
-
       # State sync_target_waiting
       def transit_to_sync_target_waiting
         @queue.push(take(Tuple[:sync_target].new(dest: @domain)))
@@ -40,15 +31,6 @@ module InnocentWhite
       # State sync_checking
       def transit_to_sync_checking
         sync if check_sync_condition
-      end
-
-      def transit_to_error(e)
-        notify_exception(e)
-        terminate
-      end
-
-      def transit_to_terminated
-        # do nothing
       end
 
       # Check sync conditions:

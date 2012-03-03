@@ -10,7 +10,7 @@ module InnocentWhite
     # -- class --
 
     def self.tuple_space_interface(name, opt={})
-      define_method(name) do |*args|
+      define_method(name) do |*args, &b|
         # convert tuple space form
         _args = args.map do |obj|
           tuple_form = obj.respond_to?(:to_tuple_space_form)
@@ -21,7 +21,7 @@ module InnocentWhite
           opt[:validator].call(args)
         end
         # send a message to the tuple space
-        result = @ts.__send__(name, *_args)
+        result = @ts.__send__(name, *_args, &b)
         # convert the result to tuple object
         if converter = opt[:result]
           converter.call(result)
@@ -34,7 +34,8 @@ module InnocentWhite
     # -- instance --
 
     def initialize(data={})
-      @ts = Rinda::TupleSpace.new
+      @__ts__ = Rinda::TupleSpace.new
+      @ts = Rinda::TupleSpaceProxy.new(@__ts__)
       def @ts.to_s;"#<Rinda::TupleSpace>" end
 
       # check task worker resource
@@ -53,7 +54,7 @@ module InnocentWhite
       check_agent_life
     end
 
-    # Return base uri.
+    # Return common base uri of the space.
     def base_uri
       URI(read(Tuple[:base_uri].any).uri)
     end
@@ -91,6 +92,17 @@ module InnocentWhite
       return _tuples
     end
 
+    # Return take waiting tuples.
+    def take_waiter
+      tuples = []
+      bag = @__ts__.instance_variable_get("@take_waiter")
+      bag.instance_variable_get("@hash").values.each do |bin|
+        tuples += bin.instance_variable_get("@bin")
+      end
+      _tuples = tuples.map{|t| t.value}
+      return _tuples
+    end
+
     # Define tuple space interfaces.
     tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}
     tuple_space_interface :read_all, :result => lambda{|list| list.map{|t| Tuple.from_array(t)}}
@@ -104,7 +116,7 @@ module InnocentWhite
 
     def check_agent_life
       @thread_check_agent_life = Thread.new do
-        loop do
+        while true do
           agent = take(Tuple[:bye].any)
           take(Tuple[:agent].new(uuid: agent.uuid))
         end
@@ -116,8 +128,8 @@ module InnocentWhite
 
     # Define tuple space operation.
     def self.tuple_space_operation(name)
-      define_method(name) do |*args|
-        @__tuple_space_server__.__send__(name, *args)
+      define_method(name) do |*args, &b|
+        @__tuple_space_server__.__send__(name, *args, &b)
       end
     end
 
@@ -145,7 +157,8 @@ module InnocentWhite
     def set_tuple_space_server(server)
       @__tuple_space_server__ = server
 
-      # override #to_s because dead remote objects cause exceptions when you watch the agent
+      # override #to_s as it's uri because dead remote objects cause exceptions
+      # when you try to watch the object
       def @__tuple_space_server__.to_s
         __drburi
       end

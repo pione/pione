@@ -5,6 +5,9 @@ describe "TaskWorker" do
   before do
     @ts_server = create_remote_tuple_space_server
 
+    # process info
+    write(Tuple[:process_info].new('spec_task-worker', 'testid'))
+
     # setup workers
     @worker1 = Agent[:task_worker].start(@ts_server)
     @worker2 = Agent[:task_worker].start(@ts_server)
@@ -33,31 +36,49 @@ describe "TaskWorker" do
   end
 
   it "should wait tasks" do
+    # check agent state
     @worker1.current_state.should == :task_waiting
     @worker2.current_state.should == :task_waiting
     @worker3.current_state.should == :task_waiting
+
+    # check exceptions
     check_exceptions
   end
 
   it "should say hello and bye" do
-    # check hello message
+    ## check hello message
+
+    # check agent tuples
     agents = read_all(Tuple[:agent].any)
     agents.should.include @worker1.to_agent_tuple
     agents.should.include @worker2.to_agent_tuple
     agents.should.include @worker3.to_agent_tuple
+
+    # check worker counter
     @ts_server.current_task_worker_size.should == 3
+
+    # terminate workers
     @worker1.terminate
     @worker2.terminate
     @worker3.terminate
+
+    # wait to terminate
     @worker1.wait_till(:terminated)
     @worker2.wait_till(:terminated)
     @worker3.wait_till(:terminated)
-    # check bye message
+
+    ## check bye message
+
+    # check agent tuples
     agents = read_all(Tuple[:agent].any)
     agents.should.not.include @worker1.to_agent_tuple
     agents.should.not.include @worker2.to_agent_tuple
     agents.should.not.include @worker3.to_agent_tuple
+
+    # check agent counter
     @ts_server.current_task_worker_size.should == 0
+
+    # check exceptions
     check_exceptions
   end
 
@@ -70,27 +91,13 @@ describe "TaskWorker" do
 
     # check state
     @worker1.current_state.should == :task_waiting
-    @worker2.current_state.should == :terminated
-    @worker3.current_state.should == :terminated
-
-    # process info
-    write(Tuple[:process_info].new('spec_task-worker', 'testid'))
-
-    notifier = get_tuple_space_server.notify("take", Tuple[:task].any)
-    Thread.new do
-      notifier.each do |name, tuple|
-        puts "#{name} >>> #{tuple}"
-      end
-    end
+    @worker2.thread.should.not.be.alive
+    @worker3.thread.should.not.be.alive
 
     # push task
     @worker1.wait_until_count(1, :task_finishing) do
-      puts ">>> task waiting <<<"
       @worker1.wait_till(:task_waiting)
-      puts ">>> write task <<<"
       write(@task1)
-      sleep 1
-      p @worker1
       check_exceptions
     end
 
@@ -101,9 +108,7 @@ describe "TaskWorker" do
       finished = read(Tuple[:finished].any)
       #finished.task_id.should == @task1.task_id
       # check result data
-      req_data = Tuple[:data].any
-      req_data.name = "1.b"
-      data = read(req_data)
+      data = read(Tuple[:data].new(name: "1.b"))
       Resource[data.uri].read.should == "input: abc"
     end
   end

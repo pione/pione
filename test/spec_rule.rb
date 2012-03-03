@@ -1,7 +1,6 @@
 require 'innocent-white/test-util'
 require 'innocent-white/data-name-exp'
 require 'innocent-white/rule'
-require 'innocent-white/document'
 require 'innocent-white/agent/input-generator'
 
 describe 'Rule' do

@@ -1,7 +1,6 @@
-require 'innocent-white'
+require 'innocent-white/common'
 require 'innocent-white/agent'
 require 'innocent-white/rule'
-require 'innocent-white/tuple'
 
 module InnocentWhite
   module Agent
@@ -10,7 +9,6 @@ module InnocentWhite
 
       class UnknownTask < Exception; end
 
-      define_state :initialized
       define_state :process_info_loading
       define_state :task_waiting
       define_state :task_processing
@@ -18,7 +16,6 @@ module InnocentWhite
       define_state :task_executing
       define_state :data_outputing
       define_state :task_finishing
-      define_state :terminated
 
       define_state_transition :initialized => :task_waiting
       define_state_transition :task_waiting => :task_processing
@@ -28,26 +25,16 @@ module InnocentWhite
       define_state_transition :task_executing => :data_outputing
       define_state_transition :data_outputing => :task_finishing
       define_state_transition :task_finishing => :task_waiting
-      define_exception_handler :error
 
       private
 
-      # State initialized.
-      def transit_to_initialized
-        hello
-      end
-
       # State task_waiting.
       def transit_to_task_waiting
-        puts "WORKER ==> waiting"
-        task = take(Tuple[:task].any)
-        puts "==> waaaaaaaaaaaaaaaaaaaaaaaaaa"
-        return task
+        return take(Tuple[:task].any)
       end
 
       # State task_processing.
       def transit_to_task_processing(task)
-        puts "WORKER ==> task_processing"
         if InnocentWhite.debug_mode?
           msg = "is processing the task #{task.module_path}(#{task.inputs.join(',')})"
           log(:debug, msg)
@@ -57,7 +44,6 @@ module InnocentWhite
 
       # State module_loading.
       def transit_to_module_loading(task)
-        puts "WORKER ==> module_loading"
         rule =
           begin
             read(Tuple[:rule].new(rule_path: task.rule_path), true)
@@ -74,13 +60,11 @@ module InnocentWhite
 
       # State process_info_loading
       def transit_to_process_info_loading(task, rule)
-        puts "WORKER ==> process_info_loading"
         return task, rule, read(Tuple[:process_info].any)
       end
 
       # State task_executing.
       def transit_to_task_executing(task, rule, process_info)
-        puts "WORKER ==> task_executing"
         opts ={process_name: process_info.name, process_id: process_info.process_id}
         base_uri = read(Tuple[:base_uri].any).uri
         handler = rule.content.make_handler(base_uri,
@@ -105,21 +89,15 @@ module InnocentWhite
         write(finished)
       end
 
+      # State error
       def transit_to_error(e)
         case e
         when UnknownTask
           # FIXME
           notify_exception(e)
         else
-          notify_exception(e)
-          terminate
+          super
         end
-      end
-
-      # State terminated
-      def transit_to_terminated
-        bye
-        puts "task-worker: stop" if InnocentWhite.debug_mode?
       end
     end
 

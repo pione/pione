@@ -1,3 +1,4 @@
+require 'innocent-white/common'
 require 'innocent-white/agent'
 require 'innocent-white/uri'
 require 'innocent-white/resource'
@@ -61,42 +62,33 @@ module InnocentWhite
 
       # -- instance --
 
-      define_state :initialized
       define_state :generating
-      define_state :terminated
 
       define_state_transition :initialized => :generating
       define_state_transition :generating => :generating
-      define_exception_handler :error
+
+      attr_accessor :domain
 
       # State initialized.
       def initialize(ts_server, generator)
         raise ArgumentError unless generator.kind_of?(GeneratorMethod)
         super(ts_server)
         @generator = generator
-      end
-
-      def transit_to_initialized
-        # do nothing
+        @domain = "/input"
       end
 
       # State generating.
       def transit_to_generating
         input = @generator.generate
-        write(Tuple[:data].new(domain: "/input", name: input.name, uri: input.uri))
+        write(Tuple[:data].new(domain: @domain, name: input.name, uri: input.uri))
         log(:debug, "generated #{input.name}")
       end
 
-      # State error.
-      # StopIteration exception means the input generation was completed.
+      # State error. StopIteration exception is ignored because it means the
+      # input generation was completed.
       def transit_to_error(e)
         notify_exception(e) unless e.kind_of?(StopIteration)
         terminate
-      end
-
-      # State terminated.
-      def transit_to_terminated
-        Util.ignore_exception { bye }
       end
     end
 

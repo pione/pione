@@ -53,20 +53,10 @@ module InnocentWhite
         @__state_transition_table__ ||= {nil => :initialized}
       end
 
-      # Return exception handler.
-      def self.exception_handler
-        @__exception_handler__ ||= :terminated
-      end
-
       # Define a state transition.
       def self.define_state_transition(data)
         table = state_transition_table
         table.merge!(data)
-      end
-
-      # Define exception handler.
-      def self.define_exception_handler(state)
-        @__exception_handler__ = state
       end
 
       # Initialize an agent and start it.
@@ -81,10 +71,13 @@ module InnocentWhite
       attr_reader :thread
       attr_reader :agent_type
 
+      define_state :initialized
+      define_state :terminated
+
       # Initialize agent's state.
       def initialize(ts_server)
         super()
-        @running_thread = nil
+        @thread = nil
         @__aborting__ = false
         set_tuple_space_server(ts_server)
       end
@@ -103,12 +96,12 @@ module InnocentWhite
       # Terminate the agent.
       def terminate
         # abort the agent when called by other thread
-        abort unless @running_thread == Thread.current
+        abort unless @thread == Thread.current
         # transit to terminated
         res = call_transition_method(:terminated)
         # set agent state
         @__current_state__ = :terminated
-        # abort if @running_thread == Thread.current
+        # abort if @thread == Thread.current
         return res
       end
 
@@ -145,7 +138,7 @@ module InnocentWhite
 
       # Kill current running thread and move to tuple space.
       def move_tuple_space_server(tuple_space_server)
-        bye()
+        bye
         @__next_tuple_space_server__ = tuple_space_server
         # kill running thread and wait to exit
         @thread.kill
@@ -181,17 +174,21 @@ module InnocentWhite
         Tuple[:bye].new(agent_type: agent_type, uuid: uuid)
       end
 
+      # Turn on/off state trace mode for debugging.
+      def trace_state(mode = true)
+        @__trace_state__ = mode
+      end
+
       private
 
       # Start to transit agent's state.
       def start_running
         # Return if the agent is running already.
-        return unless @running_thread.nil?
+        return unless @thread.nil?
 
         state_transition_table = self.class.state_transition_table
-        exception_handler = self.class.exception_handler
 
-        @running_thread = Thread.new do
+        @thread = Thread.new do
           begin
             while not(@__aborting__) do
               next_state = state_transition_table[@__current_state__]
@@ -201,7 +198,7 @@ module InnocentWhite
           rescue Aborting
             # do nothing, agent will be dead...
           rescue Object => e
-            call_transition_method(exception_handler, e)
+            call_transition_method(:error, e)
           end
         end
       end
@@ -222,19 +219,64 @@ module InnocentWhite
       # Set current state.
       def set_current_state(state)
         @__current_state__ = state
+        if @__trace_state__
+          puts "#{agent_type}(#{uuid}) ==> #{state}"
+        end
       end
 
       # Abort the agent.
       def abort
         # set variable
         @__aborting__ = true
-        if @running_thread.alive?
+        if @thread.alive?
           # raise Aborting exception
-          @running_thread.raise Aborting
+          @thread.raise Aborting
           # wait to stop the thread
-          @running_thread.join
+          @thread.join
         end
       end
+
+      def current_entry
+        @__current_entry__
+      end
+
+      # Set current operating entry.
+      def set_current_entry(entry)
+        @__current_entry__ = entry
+        entry.instance_eval {if @place then def @place.to_s; ""; end; end }
+      end
+
+      # Protected take.
+      def take(*args)
+        tuple = super(*args, &method(:set_current_entry))
+        set_current_entry(nil)
+        return tuple
+      end
+
+      # Protected read.
+      def read(*args)
+        tuple = super(*args, &method(:set_current_entry))
+        set_current_entry(nil)
+        return tuple
+      end
+
+      # State initialized.
+      def transit_to_initialized
+        hello
+      end
+
+      # State terminated
+      def transit_to_terminated
+        Util.ignore_exception { bye }
+        current_entry.cancel if current_entry
+      end
+
+      # State error
+      def transit_to_error(e)
+        notify_exception(e)
+        terminate
+      end
+
     end
   end
 end
