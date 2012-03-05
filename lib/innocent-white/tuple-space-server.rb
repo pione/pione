@@ -37,14 +37,11 @@ module InnocentWhite
       def @ts.to_s;"#<Rinda::TupleSpace>" end
 
       # check task worker resource
-      if data.has_key?(:task_worker_resource)
-        resource = data[:task_worker_resource]
-        write(Tuple[:task_worker_resource].new(number: resource))
-      else
-        raise ArgumentError
-      end
+      resource = data[:task_worker_resource] || 1
+      write(Tuple[:task_worker_resource].new(number: resource))
 
       @terminated = false
+      @provider_options = {} ## FIXME
 
       # base uri
       if data.has_key?(:base_uri)
@@ -117,8 +114,12 @@ module InnocentWhite
     def keep_provider
       @thread_keep_provider = Thread.new do
         while true do
-          provider.add(remote_object_uri)
-          sleep 1
+          begin
+            provider.add(remote_object_uri)
+            sleep 1
+          rescue
+            # do nothing
+          end
         end
       end
     end

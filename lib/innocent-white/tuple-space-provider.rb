@@ -33,7 +33,6 @@ module InnocentWhite
       rescue
         begin
           # create new provider
-          puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
           provider = self.new(data)
           provider.drb_service = DRb::DRbServer.new(uri, provider)
           DRbObject.new_with_uri(uri)
@@ -41,6 +40,16 @@ module InnocentWhite
           # retry
           instance(data)
         end
+      end
+    end
+
+    # Terminate tuple space provider.
+    def self.terminate
+      # terminate message as remote procedure call causes connection error
+      begin
+        instance.terminate
+      rescue
+        # do nothing
       end
     end
 
@@ -83,6 +92,11 @@ module InnocentWhite
       Process.pid
     end
 
+    # Return uri of the drb server.
+    def uri
+      @drb_service.uri
+    end
+
     # Return tuple space servers.
     def tuple_space_servers
       synchronize do
@@ -93,7 +107,18 @@ module InnocentWhite
     # Send empty tuple space server list.
     def finalize
       @terminated = true
-      DRb.remove_server(@drb_service)
+      @drb_service.stop_service
+      # DRbServer#stop_service killed service thread, but sometime it cannot
+      # close the socket because ensure clause isn't called in some cases on MRI
+      # 1.9.x.
+      @drb_service.instance_eval do
+        @thread.kill.join
+        kill_sub_thread.join
+        @protocol.close
+      end
+      if DRb.primary_server == @drb_service
+        DRb.primary_server = nil
+      end
       @thread_keep_connection.kill.join
       @thread_keep_clean.kill.join
       @tuple_space_servers = []
