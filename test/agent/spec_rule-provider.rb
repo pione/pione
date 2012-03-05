@@ -19,7 +19,7 @@ describe "Agent::RuleProvider" do
     end
     @rule_abc = doc['abc']
     @rule_xyz = doc['xyz']
-    @provider.read(doc)
+    @provider.read_document(doc)
   end
 
   it "should provide known rule information" do

@@ -1,5 +1,3 @@
-require 'rinda/tuplespace'
-require 'drb/drb'
 require 'innocent-white/common'
 require 'innocent-white/agent'
 require 'innocent-white/agent/task-worker'
@@ -26,35 +24,22 @@ module InnocentWhite
 
       attr_reader :task_workers
       attr_reader :tuple_space_servers
-      attr_reader :resource
-
-
-      define_state :initialized
-      define_state :terminated
+      attr_reader :task_worker_resource
 
       def initialize(data={})
         super(nil)
         @task_workers = []
         @tuple_space_servers = []
-        @resource = data[:task_worker_resource] || 1
+        @task_worker_resource = data[:task_worker_resource] || 1
         @sleeping_time = data[:sleeping_time] || 1
-        start_running
         check_task_worker_life
       end
 
       # Send bye message to tuple space servers when the broker is destroid.
       def finalize
         @tuple_space_servers.each do |ts_server|
-          bye(ts_server)
-          if InnocentWhite.debug_mode?
-            puts "bye, tuple space server: #{ts_server}"
-          end
+          ts_server.bye
         end
-      end
-
-      # Start service.
-      def start_service
-        DRb.start_service(nil, self)
       end
 
       def add_tuple_space_server(ts_server)
@@ -62,7 +47,7 @@ module InnocentWhite
       end
 
       def excess_workers
-        @resource - @task_workers.size
+        @task_worker_resource - @task_workers.size
       end
 
       # Return task wainting workers.
@@ -105,7 +90,6 @@ module InnocentWhite
           del_targets = @tuple_space_servers - tuple_space_servers
           add_targets = tuple_space_servers - @tuple_space_servers
           #return if del_targets.empty? and add_targets.empty?
-          #puts "broker: tuple space server changed"
 
           # bye
           del_targets.each{|ts_server| bye(ts_server)}
@@ -125,10 +109,18 @@ module InnocentWhite
 
       private
 
+      def transit_to_initialized
+        # start drb service
+        DRb.start_service(nil, self)
+      end
+
+      def transit_to_running
+
+      end
+
       def run
         begin
           if @tuple_space_servers.size > 0
-            puts "broker: worker check..."
             ratios = calc_resource_ratios
             min = ratios.values.min
             max = ratios.values.max

@@ -101,6 +101,32 @@ class Bacon::Context
   include InnocentWhite::TestUtil
 end
 
+class InnocentWhite
+  class TupleSpaceServer
+    # Return all tuples of the tuple space.
+    def all_tuples
+      tuples = []
+      bag = @ts.instance_variable_get("@bag")
+      bag.instance_variable_get("@hash").values.each do |bin|
+        tuples += bin.instance_variable_get("@bin")
+      end
+      _tuples = tuples.map{|t| t.value}
+      return _tuples
+    end
+
+    # Return take waiting tuples.
+    def take_waiter
+      tuples = []
+      bag = @__ts__.instance_variable_get("@take_waiter")
+      bag.instance_variable_get("@hash").values.each do |bin|
+        tuples += bin.instance_variable_get("@bin")
+      end
+      _tuples = tuples.map{|t| t.value}
+      return _tuples
+    end
+  end
+end
+
 def setup_test
   include InnocentWhite
   Thread.abort_on_exception = true

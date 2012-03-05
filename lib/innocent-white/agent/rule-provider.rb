@@ -12,19 +12,12 @@ module InnocentWhite
         @table = {}
       end
 
-      define_state :initialized
       define_state :request_waiting
       define_state :rule_loading
-      define_state :terminated
 
       define_state_transition :initialized => :request_waiting
       define_state_transition :request_waiting => :rule_loading
       define_state_transition :rule_loading => :request_waiting
-      define_exception_handler :error
-
-      def transit_to_initialized
-        # do nothing
-      end
 
       def transit_to_request_waiting
         return take(Tuple[:request_rule].any)
@@ -41,19 +34,7 @@ module InnocentWhite
         write(out)
       end
 
-      # State error.
-      # StopIteration exception means the input generation was completed.
-      def transit_to_error(e)
-        notify_exception(e)
-        terminate
-      end
-
-      # State terminated.
-      def transit_to_terminated
-        Util.ignore_exception { bye }
-      end
-
-      def read(doc)
+      def read_document(doc)
         doc.rules.each do |rule_path, rule|
           add_rule(rule_path, rule)
         end

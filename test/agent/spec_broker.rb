@@ -8,7 +8,7 @@ describe "Broker" do
     @ts_server1 = TupleSpaceServer.new(task_worker_resource: 1)
     @ts_server2 = TupleSpaceServer.new(task_worker_resource: 2)
     @ts_server3 = TupleSpaceServer.new(task_worker_resource: 3)
-    @broker1 = Agent[:broker].new(task_worker_resource: 5, sleeping_time: 0)
+    @broker1 = Agent[:broker].new(task_worker_resource: 5)
   end
 
   it "should run workers" do

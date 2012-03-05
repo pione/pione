@@ -1,10 +1,8 @@
-require 'socket'
-require 'drb/drb'
-require 'rinda/tuplespace'
 require 'innocent-white/common'
 
 module InnocentWhite
   class TupleSpaceProvider < InnocentWhiteObject
+    include DRbUndumped
 
     UDP_PORT = 54321
     PROVIDER_URI = "druby://localhost:10101"
@@ -13,112 +11,149 @@ module InnocentWhite
     # -- class  --
 
     # Return the provider instance.
-    def self.get(data = {})
-      uri = data.has_key?(:provider_port) ? "druby://localhost:#{data[:provider_port]}" : PROVIDER_URI
+    def self.instance(data = {})
+      uri = if data.has_key?(:provider_port)
+              "druby://localhost:#{data[:provider_port]}"
+            else
+              PROVIDER_URI
+            end
+      # check DRb service
       begin
+        DRb.current_server
+      rescue
+        DRb.start_service
+      end
+      # remote object
+      begin
+        # get provider reference
         provider = DRbObject.new_with_uri(uri)
         provider.uuid # check the server exists
         provider
       rescue
-        #Process.fork do
-          DRb.start_service(uri, self.new(data))
-          # Process.daemon
-          #DRb.thread.join
-        #end
-        DRbObject.new_with_uri(uri)
+        begin
+          # create new provider
+          provider = self.new(data)
+          provider.drb_service = DRb.start_service(uri, provider)
+          DRbObject.new_with_uri(uri)
+        rescue Errno::EADDRINUSE
+          # retry
+          instance(data)
+        end
       end
     end
 
     # -- instance --
 
-    attr_reader :thread
     attr_accessor :timeout
     attr_accessor :receiver_port
+    attr_accessor :drb_service
 
     def initialize(data={})
       raise ArgumentError if (data.keys - [:provider_port, :udp_port, :timeout]).size > 0
+      @expiration_time = 5
       @timeout = data.has_key?(:timeout) ? data[:timeout] : TIMEOUT
       @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : UDP_PORT
-      @thread = nil
-      @list = []
-      run
+      @tuple_space_servers = []
+      @remote_object = Marshal.dump(DRbObject.new(self))
+      @terminated = false
+
+      keep_connection
+      keep_clean
     end
 
-    # Return dumped object.
-    def dump
-      Marshal.dump(DRbObject.new(self))
+    def alive?
+      not(@terminated)
     end
+
+    # Add the tuple space server.
+    def add(remote_object_uri)
+      synchronize do
+        obj = DRbObject.new_with_uri(remote_object_uri)
+        @tuple_space_servers[obj] = Time.now
+      end
+    end
+
+    # Return the process provider's current pid
+    def pid
+      Process.pid
+    end
+
+    # Return tuple space servers.
+    def tuple_space_servers
+      synchronize do
+        @tuple_space_servers.keys
+      end
+    end
+
+    # Send empty tuple space server list.
+    def finalize
+      @terminated = true
+      @thread_keep_connection.stop
+      @thread_keep_clean.stop
+      @tuple_space_servers = []
+      send_packet
+    end
+
+    alias :terminate :finalize
+
+    private
 
     # Start to run the provider.
-    def run
-      @thread = Thread.new do
-        loop do
+    def keep_connection
+      @thread_keep_connection = Thread.new do
+        while true do
           send_packet
-          sleep @timeout
+          sleep 3
         end
       end
+    end
 
-      @check_thread = Thread.new do
-        loop do
-          check_tuple_space_server_life
+    # Send UDP packet.
+    def send_packet
+      socket = UDPSocket.open
+      begin
+        puts "sent UDP packet ..." if debug_mode?
+        # send UDP packet
+        socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, true)
+        #socket.send(dump, 0, '<broadcast>', @udp_port)
+        socket.send(@remote_object, 0, Socket::INADDR_BROADCAST, @udp_port)
+      rescue
+        nil
+      ensure
+        socket.close
+      end
+    end
+
+    # Keep clean.
+    def keep_clean
+      @thread_keep_clean = Thread.new do
+        while true do
+          clean
           sleep 1
         end
       end
     end
 
-    # Add the tuple space server.
-    def add(ts_server)
-      server = DRb.start_service(nil, ts_server)
-      @list << DRbObject.new_with_uri(server.uri)
-      send_packet
-    end
-
-    # Return tuple space servers.
-    def tuple_space_servers
-      @list
-    end
-
-    def check_tuple_space_server_life
-      old_list = @list
-      new_list = []
-      @list.each do |server|
-        begin
-          server.uuid
-          new_list << server
-        rescue
-          # none
+    # Delete dead or expired tuple space servers.
+    def clean
+      synchronize do
+        delete = []
+        # find dead or expired servers
+        @tuple_space_servers.each do |ts_server, time|
+          begin
+            if ts_server.alive?
+              if Time.now - time > @expiration_time
+                delete << ts_server
+              end
+            end
+          rescue
+            delete << ts_server
+          end
         end
-      end
-      @list = new_list
-
-      # the list was updated, send a packet again
-      if not((old_list - new_list).empty?) or not((new_list - old_list).empty?)
-        send_packet
-      end
-    end
-
-    def finalize
-      puts "finalize taple space provider #{uuid}"
-      @list = []
-      send_packet
-    end
-
-    private
-
-    def send_packet
-      begin
-        # send UDP packet
-        puts "sent UDP packet ..."
-        p @list
-        socket = UDPSocket.open
-        socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, true)
-        #socket.send(dump, 0, '<broadcast>', @udp_port)
-        #socket.send(dump, 0, Socket::INADDR_BROADCAST, @udp_port)
-        socket.send(dump, 0, '255.255.255.255', @udp_port)
-      rescue
-        nil
-      ensure
-        socket.close
+        # delete target servers
+        delete.each do |ts_server|
+          @tuple_space_servers.delete(ts_server)
+        end
       end
     end
 

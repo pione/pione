@@ -1,6 +1,10 @@
 require 'uuidtools'
 require 'socket'
 require 'digest'
+require 'socket'
+require 'drb/drb'
+require 'rinda/rinda'
+require 'rinda/tuplespace'
 
 module InnocentWhite
   # Change debug mode true or not.

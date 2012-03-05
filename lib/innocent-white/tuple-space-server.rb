@@ -1,7 +1,5 @@
-require 'drb/drb'
-require 'rinda/tuplespace'
 require 'innocent-white/common'
-require 'innocent-white/tuple'
+require 'innocent-white/tuple-space-provider'
 
 module InnocentWhite
   class TupleSpaceServer < InnocentWhiteObject
@@ -46,12 +44,30 @@ module InnocentWhite
         raise ArgumentError
       end
 
+      @terminated = false
+
+      # base uri
       if data.has_key?(:base_uri)
         uri = data[:base_uri]
         write(Tuple[:base_uri].new(uri: uri))
       end
 
+      # DRb server
+      @drb_service = DRb.start_service(nil, self)
+
+      # keep provider
+      keep_provider
+
+      # watch bye message
       check_agent_life
+    end
+
+    def alive?
+      not(@terminated)
+    end
+
+    def pid
+      Process.pid
     end
 
     # Return common base uri of the space.
@@ -77,30 +93,14 @@ module InnocentWhite
     end
 
     # Shutdown the server.
-    def shutdown
-      write(Tuple[:tuple_server_status].new(status: :stop))
+    def finalize
+      @terminated = false
     end
 
-    # Return all tuples of the tuple space.
-    def all_tuples
-      tuples = []
-      bag = @ts.instance_variable_get("@bag")
-      bag.instance_variable_get("@hash").values.each do |bin|
-        tuples += bin.instance_variable_get("@bin")
-      end
-      _tuples = tuples.map{|t| t.value}
-      return _tuples
-    end
+    alias :terminate :finalize
 
-    # Return take waiting tuples.
-    def take_waiter
-      tuples = []
-      bag = @__ts__.instance_variable_get("@take_waiter")
-      bag.instance_variable_get("@hash").values.each do |bin|
-        tuples += bin.instance_variable_get("@bin")
-      end
-      _tuples = tuples.map{|t| t.value}
-      return _tuples
+    def remote_object_uri
+      @drb_service.uri
     end
 
     # Define tuple space interfaces.
@@ -113,6 +113,19 @@ module InnocentWhite
     tuple_space_interface :notify
 
     private
+
+    def keep_provider
+      @thread_keep_provider = Thread.new do
+        white true do
+          provider.add(remote_object_uri)
+          sleep 1
+        end
+      end
+    end
+
+    def provider
+      TupleSpaceProvider.instance(@provider_options)
+    end
 
     def check_agent_life
       @thread_check_agent_life = Thread.new do
