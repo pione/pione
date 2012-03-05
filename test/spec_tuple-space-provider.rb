@@ -2,18 +2,17 @@ require 'innocent-white/test-util'
 require 'innocent-white/tuple-space-server'
 require 'innocent-white/tuple-space-provider'
 
-DRb.stop_service
-#DRb.current_server
+DRb.start_service
 
 describe 'TupleSpaceProvider' do
   before do
-    DRb.start_service
-    @kill_target = []
+    @kill = []
   end
 
   after do
-    TupleSpaceProvider.instance.shutdown
-    @kill_target.each do |pid|
+    TupleSpaceProvider.instance.terminate
+    # kill processes
+    @kill.each do |pid|
       Process.kill('KILL', pid)
     end
   end
@@ -26,14 +25,37 @@ describe 'TupleSpaceProvider' do
     p3.uuid.should == p3.uuid
   end
 
-  it 'should shutdown' do
-    TupleSpaceProvider.instance.shutdown
+  it 'should terminate' do
+    p TupleSpaceProvider.instance
+    puts "PID: #{TupleSpaceProvider.instance.pid}"
+    puts TupleSpaceProvider.instance.uuid
+    TupleSpaceProvider.instance.terminate
+
+    child = Process.fork do
+      DRb.module_eval do
+        p @primary_server
+        p @server
+      end
+      puts "Child PID: #{TupleSpaceProvider.instance.pid}"
+      puts "Child UUID: #{TupleSpaceProvider.instance.uuid}"
+      sleep 10
+      TupleSpaceProvider.instance.terminate
+    end
+    @kill << child
+
+    sleep 1
     remote = DRbObject.new_with_uri(TupleSpaceProvider::PROVIDER_URI)
-    should.raise { remote.uuid }
+
+    p DRb.to_obj(nil)
+    DRb.module_eval do
+      p @primary_server
+    end
+
+    should.raise { puts remote.uuid }
   end
 
   it 'should move provider' do
-    TupleSpaceProvider.instance.shutdown
+    TupleSpaceProvider.instance.terminate
     should.raise(DRb::DRbServerNotFound){DRb.current_server}
 
     # provider in pid1
@@ -54,13 +76,13 @@ describe 'TupleSpaceProvider' do
 
     TupleSpaceProvider.instance.pid.should == pid1
 
-    @kill_target << pid1
+    @kill << pid1
     sleep 2
     # create child pid2 (provider in pid1 still)
-    @kill_target << pid2
+    @kill << pid2
     # kill pid1 and move the provider to pid2
     TupleSpaceProvider.instance.pid.should == pid1
-    @kill_target << pid3
+    @kill << pid3
     TupleSpaceProvider.instance.pid.should == pid1
   end
 

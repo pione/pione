@@ -116,7 +116,7 @@ module InnocentWhite
 
     def keep_provider
       @thread_keep_provider = Thread.new do
-        white true do
+        while true do
           provider.add(remote_object_uri)
           sleep 1
         end

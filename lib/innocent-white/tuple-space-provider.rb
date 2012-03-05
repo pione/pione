@@ -3,6 +3,7 @@ require 'innocent-white/common'
 module InnocentWhite
   class TupleSpaceProvider < InnocentWhiteObject
     include DRbUndumped
+    include MonitorMixin
 
     UDP_PORT = 54321
     PROVIDER_URI = "druby://localhost:10101"
@@ -32,8 +33,9 @@ module InnocentWhite
       rescue
         begin
           # create new provider
+          puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
           provider = self.new(data)
-          provider.drb_service = DRb.start_service(uri, provider)
+          provider.drb_service = DRb::DRbServer.new(uri, provider)
           DRbObject.new_with_uri(uri)
         rescue Errno::EADDRINUSE
           # retry
@@ -50,6 +52,9 @@ module InnocentWhite
 
     def initialize(data={})
       raise ArgumentError if (data.keys - [:provider_port, :udp_port, :timeout]).size > 0
+
+      super()
+
       @expiration_time = 5
       @timeout = data.has_key?(:timeout) ? data[:timeout] : TIMEOUT
       @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : UDP_PORT
@@ -88,8 +93,9 @@ module InnocentWhite
     # Send empty tuple space server list.
     def finalize
       @terminated = true
-      @thread_keep_connection.stop
-      @thread_keep_clean.stop
+      DRb.remove_server(@drb_service)
+      @thread_keep_connection.kill.join
+      @thread_keep_clean.kill.join
       @tuple_space_servers = []
       send_packet
     end

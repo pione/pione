@@ -101,7 +101,7 @@ class Bacon::Context
   include InnocentWhite::TestUtil
 end
 
-class InnocentWhite
+module InnocentWhite
   class TupleSpaceServer
     # Return all tuples of the tuple space.
     def all_tuples
