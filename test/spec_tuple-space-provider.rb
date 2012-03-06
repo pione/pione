@@ -51,22 +51,22 @@ describe 'TupleSpaceProvider' do
 
     @kill << pid1 << pid2 << pid3
 
-    TupleSpaceProvider.instance.pid.should == pid1
+    sleep 0.1
+    [pid1, pid2, pid3].should.include TupleSpaceProvider.instance.pid
     Process.kill('KILL', pid1)
 
-    TupleSpaceProvider.instance.pid.should == pid2
+    sleep 0.1
+    [pid2, pid3].should.include TupleSpaceProvider.instance.pid
     Process.kill('KILL', pid2)
 
+    sleep 0.1
     TupleSpaceProvider.instance.pid.should == pid3
-
-
   end
 
   it "should add tuple space server" do
-    ts_server = TupleSpaceServer.new(task_worker_resource: 4)
+    ts_server = TupleSpaceServer.new
     provider = TupleSpaceProvider.instance
     provider.add(ts_server)
     provider.tuple_space_servers.map{|ts| ts.uuid}.first.should == ts_server.uuid
   end
 end
-

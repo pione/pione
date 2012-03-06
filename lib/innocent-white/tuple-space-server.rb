@@ -49,9 +49,6 @@ module InnocentWhite
         write(Tuple[:base_uri].new(uri: uri))
       end
 
-      # DRb server
-      @drb_service = DRb.start_service(nil, self)
-
       # keep provider
       keep_provider
 
@@ -63,6 +60,7 @@ module InnocentWhite
       not(@terminated)
     end
 
+    # Return pid
     def pid
       Process.pid
     end
@@ -95,10 +93,6 @@ module InnocentWhite
     end
 
     alias :terminate :finalize
-
-    def remote_object_uri
-      @drb_service.uri
-    end
 
     # Define tuple space interfaces.
     tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}

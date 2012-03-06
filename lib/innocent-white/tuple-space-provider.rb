@@ -67,7 +67,7 @@ module InnocentWhite
       @expiration_time = 5
       @timeout = data.has_key?(:timeout) ? data[:timeout] : TIMEOUT
       @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : UDP_PORT
-      @tuple_space_servers = []
+      @tuple_space_servers = {}
       @remote_object = Marshal.dump(DRbObject.new(self))
       @terminated = false
 
@@ -80,10 +80,9 @@ module InnocentWhite
     end
 
     # Add the tuple space server.
-    def add(remote_object_uri)
+    def add(ts_server)
       synchronize do
-        obj = DRbObject.new_with_uri(remote_object_uri)
-        @tuple_space_servers[obj] = Time.now
+        @tuple_space_servers[ts_server] = Time.now
       end
     end
 
