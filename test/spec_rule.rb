@@ -2,6 +2,8 @@ require 'innocent-white/test-util'
 require 'innocent-white/data-name-exp'
 require 'innocent-white/rule'
 require 'innocent-white/agent/input-generator'
+require 'innocent-white/agent/task-worker'
+require 'innocent-white/agent/rule-provider'
 
 describe 'Rule' do
   describe 'ActionRule and FlowRule' do
@@ -193,86 +195,107 @@ describe 'Rule' do
       end
     end
   end
+end
 
-  describe 'Rule::FlowHandler' do
-    before do
-      @ts_server = create_remote_tuple_space_server
-      @doc = Document.new do
-        flow('flow1') do
-          inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
-          outputs '{$INPUT[1].MATCH[1]}.c'
-          content [ call('action_a'),
-                    call('action_b'),
-                    call('action_c')
-                  ]
-        end
+describe 'Rule::FlowHandler' do
+  before do
+    @ts_server = create_remote_tuple_space_server
+    @doc = Document.new do
+      flow('flow1') do
+        inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
+        outputs '{$INPUT[1].MATCH[1]}.c'
+        content [ call('action_a'),
+                  call('action_b'),
+                  call('action_c') ]
+      end
 
-        action('action_a') do
-          inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
-          outputs '{$INPUT[1].MATCH[1]}.c'
-          content <<-__CODE__
+      action('action_a') do
+        inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
+        outputs '{$INPUT[1].MATCH[1]}.x'
+        content <<-__CODE__
             VAL1=`cat {$INPUT[1]}`;
             VAL2=`cat {$INPUT[2]}`;
             expr $VAL1 + $VAL2 > {$OUTPUT[1]}
           __CODE__
-        end
+      end
 
-        action('action_b') do
-          inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
-          outputs '{$INPUT[1].MATCH[1]}.c'
-          content <<-__CODE__
+      action('action_b') do
+        inputs  '*.x'
+        outputs '{$INPUT[1].MATCH[1]}.y'
+        content <<-__CODE__
             VAL1=`cat {$INPUT[1]}`;
-            VAL2=`cat {$INPUT[2]}`;
-            expr $VAL1 + $VAL2 > {$OUTPUT[1]}
+            expr $VAL1 * 2 > {$OUTPUT[1]}
           __CODE__
-        end
+      end
 
-        action('action_c') do
-          inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
-          outputs '{$INPUT[1].MATCH[1]}.c'
-          content <<-__CODE__
+      action('action_c') do
+        inputs  '*.y'
+        outputs '{$INPUT[1].MATCH[1]}.c'
+        content <<-__CODE__
             VAL1=`cat {$INPUT[1]}`;
-            VAL2=`cat {$INPUT[2]}`;
-            expr $VAL1 + $VAL2 > {$OUTPUT[1]}
+            expr $VAL1 - 1  > {$OUTPUT[1]}
           __CODE__
-        end
-      end
-      @rule = @doc['test']
-    end
-
-    it 'should find inputs' do
-      # start input generators
-      gen1 = Agent[:input_generator].start_by_simple(@ts_server, "*.a", 1..10, 1..10)
-      gen2 = Agent[:input_generator].start_by_simple(@ts_server, "*.b", 1..10, 1..10)
-      gen1.wait_till(:terminated)
-      gen2.wait_till(:terminated)
-      check_exceptions
-
-      # find combinations
-      inputs = @rule.find_input_combinations(@ts_server, "/input")
-      inputs.size.should == 10
-      10.times do |i|
-        a = @ts_server.read(Tuple[:data].new(name: "#{i+1}.a"))
-        b = @ts_server.read(Tuple[:data].new(name: "#{i+1}.b"))
-        inputs.should.include [a, b]
       end
     end
+    @rule = @doc['flow1']
+    rule_loader = Agent[:rule_provider].start(tuple_space_server)
+    rule_loader.read_document(@doc)
+  end
 
-    it 'should make a action handler' do
-      # start input generators
-      gen1 = Agent[:input_generator].start_by_simple(@ts_server, "*.a", 1..10, 1..10)
-      gen2 = Agent[:input_generator].start_by_simple(@ts_server, "*.b", 1..10, 1..10)
-      gen1.wait_till(:terminated)
-      gen2.wait_till(:terminated)
-      check_exceptions
+  it 'should find inputs' do
+    # start input generators
+    gen1 = Agent[:input_generator].start_by_simple(@ts_server, "*.a", 1..10, 1..10)
+    gen2 = Agent[:input_generator].start_by_simple(@ts_server, "*.b", 1..10, 1..10)
+    gen1.wait_till(:terminated)
+    gen2.wait_till(:terminated)
+    check_exceptions
 
-      # make a handler
-      input_comb = @rule.find_input_combinations(@ts_server, "/input")
-      base_uri = read(Tuple[:base_uri].any).uri
-      input_comb.each do |inputs|
-        handler = @rule.make_handler(base_uri, inputs, [])
-        handler.should.be.kind_of Rule::ActionHandler
-      end
+    # find input combinations
+    inputs = @rule.find_input_combinations(@ts_server, "/input")
+    inputs.size.should == 10
+    10.times do |i|
+      a = @ts_server.read(Tuple[:data].new(name: "#{i+1}.a"))
+      b = @ts_server.read(Tuple[:data].new(name: "#{i+1}.b"))
+      inputs.should.include [a, b]
     end
+  end
+
+  it 'should make a flow handler' do
+    # start input generators
+    gen1 = Agent[:input_generator].start_by_simple(@ts_server, "*.a", 1..10, 1..10)
+    gen2 = Agent[:input_generator].start_by_simple(@ts_server, "*.b", 1..10, 1..10)
+    gen1.wait_till(:terminated)
+    gen2.wait_till(:terminated)
+    check_exceptions
+
+    # make a handler
+    input_comb = @rule.find_input_combinations(@ts_server, "/input")
+    base_uri = read(Tuple[:base_uri].any).uri
+    input_comb.each do |inputs|
+      handler = @rule.make_handler(base_uri, inputs, [])
+      handler.should.be.kind_of Rule::FlowHandler
+    end
+  end
+
+  it 'should execute a flow rule' do
+    # start input generators
+    gen1 = Agent[:input_generator].start_by_simple(@ts_server, "*.a", 1..10, 1..10)
+    gen2 = Agent[:input_generator].start_by_simple(@ts_server, "*.b", 1..10, 1..10)
+    gen1.wait_till(:terminated)
+    gen2.wait_till(:terminated)
+    check_exceptions
+
+    # copy input
+
+    worker1 = Agent[:task_worker].start(tuple_space_server)
+
+    # execute
+    root = Rule::RootRule.new(@rule)
+    input_combinations = @rule.find_input_combinations(@ts_server, "input")
+    input_combinations.each do |inputs|
+      handler = @rule.make_handler(tuple_space_server, inputs, [])
+      p handler.execute
+    end
+    
   end
 end

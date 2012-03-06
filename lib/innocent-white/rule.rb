@@ -1,5 +1,6 @@
 require 'tempfile'
 require 'innocent-white/common'
+require 'innocent-white/agent/sync-monitor'
 
 module InnocentWhite
   module Rule
@@ -38,9 +39,9 @@ module InnocentWhite
       end
 
       # Make rule handler from the rule.
-      def make_handler(base_uri, inputs, params, opts={})
+      def make_handler(ts_server, inputs, params, opts={})
         klass = self.kind_of?(ActionRule) ? ActionHandler : FlowHandler
-        klass.new(base_uri, self, inputs, params, opts)
+        klass.new(ts_server, self, inputs, params, opts)
       end
 
       def ==(other)
@@ -100,7 +101,7 @@ module InnocentWhite
       # Make auto-variables by the name modified 'all'.
       def make_auto_variables_by_all(name, index, tuples, var)
         new_var = var.clone
-        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(',')
+        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(':')
         return new_var
       end
 
@@ -118,6 +119,8 @@ module InnocentWhite
     end
 
     class BaseHandler
+      include TupleSpaceServerInterface
+
       attr_reader :rule
       attr_reader :inputs
       attr_reader :outputs
@@ -127,17 +130,20 @@ module InnocentWhite
       attr_reader :task_id
       attr_reader :domain
 
-      def initialize(base_uri, rule, inputs, params, opts={})
+      def initialize(ts_server, rule, inputs, params, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
+
+        set_tuple_space_server(ts_server)
 
         @rule = rule
         @inputs = inputs
         @outputs = []
         @params = params
+        @content = rule.content
         @variable_table = {}
         @working_directory = make_working_directory(opts)
-        @resource_uri = make_resource_uri(base_uri)
+        @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
         @task_id = Util.task_id(@inputs, @params)
         @domain = Util.domain(@rule.path, @inputs, @params)
         make_auto_variables
@@ -194,9 +200,9 @@ module InnocentWhite
         end
       end
 
-      def write_output_data(ts_server)
+      def write_output_data
         @outputs.flatten.each do |output|
-          ts_server.write(output)
+          write(output)
         end
       end
 
@@ -271,14 +277,10 @@ module InnocentWhite
       end
     end
 
-    class FlowRule < BaseRule
-      
-    end
+    class FlowRule < BaseRule; end
 
     module FlowParts
-      class Base < InnocentWhiteObject
-
-      end
+      class Base < InnocentWhiteObject; end
 
       class Call < Base
         attr_reader :rule_path
@@ -312,11 +314,11 @@ module InnocentWhite
     end
 
     class FlowHandler < BaseHandler
-      def execute(ts_server)
-        apply_rules(ts_server)
+      def execute
+        apply_rules
         find_outputs
         write_output_resource
-        write_output_data(ts_server)
+        write_output_data
         return @output
       end
 
@@ -328,8 +330,28 @@ module InnocentWhite
 
       private
 
-      def apply_rules(ts_server)
+      # Apply target data to rules.
+      def apply_rules
+        Agent[:sync_monitor].start(tuple_space_server, self) do
+          cont = true
+          while cont do
+            inputs = find_applicable_input_combinations
+            puts "--- #{inputs}"
+            update_targets = find_update_targets(inputs)
+            unless update_targets.nil?
+              handle_task(update_targets)
+            else
+              cont = false
+            end
+          end
+        end
+      end
+
+      # Check application inputs.
+      def find_applicable_input_combinations
+        inputs = []
         @content.each do |caller|
+          # get target rule
           rule =
             begin
               read(Tuple[:rule].new(rule_path: caller.rule_path), 0)
@@ -337,13 +359,65 @@ module InnocentWhite
               write(Tuple[:request_rule].new(caller.rule_path))
               read(Tuple[:rule].new(rule_path: caller.rule_path))
             end
+          # check rule status and find combinations
           if rule.status == :known
-            
+            combinations = rule.content.find_input_combinations(tuple_space_server, @domain)
+            inputs << [rule, combinations] unless combinations.nil?
           else
             raise UnkownTask.new(task)
           end
-          
         end
+        return inputs
+      end
+
+      def find_update_targets(inputs)
+        targets = []
+        # FIXME
+        inputs.each do |rule, combinations|
+          combinations.each do |c|
+            targets << [rule, c]
+          end
+        end
+        return targets
+      end
+
+      def handle_task(targets)
+        thgroup = ThreadGroup.new
+        targets.each do |rule, combination|
+          thgroup << Thread.new do
+            # task domain
+            task_domain = Util.domain(rule.path, combination, [])
+
+            # copy input data from the handler domain to task domain
+            copy_data(combination.flatten, task_domain)
+
+            # FIXME: params is not supportted now
+            write(Tuple[:task].new(rule.path, combination, []))
+
+            # wait to finish the work
+            finished = read(Tuple[:finished].new(rule_path: rule.path, domain: domain))
+            if finished.status == :succeeded
+              # copy output data from task domain to the handler domain
+              copy_data(finished.outputs, @domain)
+            end
+          end
+        end
+
+        # wait to finish threads
+        thgroup.list.each {|th| th.join}
+      end
+
+      def finalize_rule_application(sync_monitor)
+        # stop sync monitor
+        sync_monitor.terminate
+      end
+
+      def copy_data_into_domain(orig_data, new_domain)
+        new_data = orig_data.clone
+        new_data.each do |data|
+          data.domain = new_domain
+        end
+        new_data.each {|data| write(data)}
       end
     end
 
@@ -351,12 +425,12 @@ module InnocentWhite
 
     class ActionHandler < BaseHandler
       # Execute the action.
-      def execute(ts_server)
+      def execute
         result = write_shell_script {|path| shell path}
         write_output_from_stdout(result)
         find_outputs
         write_output_resource
-        write_output_data(ts_server)
+        write_output_data
         return @outputs
       end
 
@@ -388,6 +462,23 @@ module InnocentWhite
       def shell(path)
         scriptname = File.basename(path)
         `cd #{@working_directory}; ./#{scriptname}`
+      end
+    end
+
+    class RootRule < FlowRule
+      def initialize(rule)
+        inputs = [DataNameExp.all("*")]
+        outputs = [DataNameExp.all("*").except("{$INPUT[1]}")]
+        super(nil, inputs, outputs, [], [Caller.new(rule)])
+        @domain = '/root'
+      end
+    end
+
+    class RootHandler < FlowHandler
+      def execute
+        copy_data_into_domain(@inputs, @domain)
+        super
+        copy_data_into_domain(@outputs, '/output')
       end
     end
 

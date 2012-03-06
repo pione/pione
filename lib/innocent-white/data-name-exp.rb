@@ -117,7 +117,11 @@ module InnocentWhite
       # check exceptions
       return false if match_exceptions(name)
       # match test
-      compile_to_regexp(@name).match(name)
+      md = nil
+      @name.split(':').each do |n|
+        break if md = compile_to_regexp(n).match(name)
+      end
+      return md
     end
 
     # Select from name list matched with the expression.

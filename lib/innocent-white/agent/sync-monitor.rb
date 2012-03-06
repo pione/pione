@@ -1,4 +1,5 @@
 require 'innocent-white/common'
+require 'innocent-white/agent'
 
 module InnocentWhite
   module Agent

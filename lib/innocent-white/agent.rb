@@ -1,9 +1,7 @@
 require 'timeout'
 require 'thread'
 require 'monitor'
-require 'innocent-white'
 require 'innocent-white/common'
-require 'innocent-white/tuple'
 require 'innocent-white/tuple-space-server'
 
 module InnocentWhite
@@ -60,9 +58,16 @@ module InnocentWhite
       end
 
       # Initialize an agent and start it.
-      def self.start(*args)
+      def self.start(*args, &b)
         agent = new(*args)
         agent.start
+        if block_given?
+          begin
+            b.call
+          ensure
+            agent.terminate
+          end
+        end
         return agent
       end
 

@@ -12,15 +12,15 @@ module InnocentWhite
       define_state :process_info_loading
       define_state :task_waiting
       define_state :task_processing
-      define_state :module_loading
+      define_state :rule_loading
       define_state :task_executing
       define_state :data_outputing
       define_state :task_finishing
 
       define_state_transition :initialized => :task_waiting
       define_state_transition :task_waiting => :task_processing
-      define_state_transition :task_processing => :module_loading
-      define_state_transition :module_loading => :process_info_loading
+      define_state_transition :task_processing => :rule_loading
+      define_state_transition :rule_loading => :process_info_loading
       define_state_transition :process_info_loading => :task_executing
       define_state_transition :task_executing => :data_outputing
       define_state_transition :data_outputing => :task_finishing
@@ -42,8 +42,8 @@ module InnocentWhite
         return task
       end
 
-      # State module_loading.
-      def transit_to_module_loading(task)
+      # State rule_loading.
+      def transit_to_rule_loading(task)
         rule =
           begin
             read(Tuple[:rule].new(rule_path: task.rule_path), true)

@@ -182,9 +182,9 @@ module InnocentWhite
 
     # task finished notifier
     #   domain  : uuid of the task
-    #   task_id : task id
     #   status  : status of the task processing
-    define_format [:finished, :domain, :task_id, :status]
+    #   outputs : outputs
+    define_format [:finished, :domain, :status, :outputs]
 
     # agent connection notifier in the tuple space server
     #   uuid       : uuid of the agent

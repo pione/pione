@@ -157,7 +157,7 @@ module InnocentWhite
     private
 
     # Return the tuple space server.
-    def get_tuple_space_server
+    def tuple_space_server
       @__tuple_space_server__
     end
 

@@ -1,8 +1,6 @@
 require 'tmpdir'
 require 'bacon'
 require 'innocent-white/common'
-require 'innocent-white/tuple'
-require 'innocent-white/tuple-space-server'
 require 'innocent-white/agent'
 require 'innocent-white/agent/input-generator'
 
@@ -11,7 +9,6 @@ module InnocentWhite
     include InnocentWhite::TupleSpaceServerInterface
 
     def write_and_wait_to_be_taken(tuple, sec=5)
-      ts_server = get_tuple_space_server
       observer = notify('take', tuple)
       write(tuple)
       timeout(sec) do
@@ -27,8 +24,7 @@ module InnocentWhite
     end
 
     def check_exceptions
-      ts_server = get_tuple_space_server
-      exceptions = ts_server.read_all(Tuple[:exception].any)
+      exceptions = tuple_space_server.read_all(Tuple[:exception].any)
       exceptions.each do |tuple|
         e = tuple.value
         Bacon::ErrorLog << "#{e.class}: #{e.message}\n"
@@ -106,7 +102,7 @@ module InnocentWhite
     # Return all tuples of the tuple space.
     def all_tuples
       tuples = []
-      bag = @ts.instance_variable_get("@bag")
+      bag = @__ts__.instance_variable_get("@bag")
       bag.instance_variable_get("@hash").values.each do |bin|
         tuples += bin.instance_variable_get("@bin")
       end
