@@ -46,7 +46,7 @@ module InnocentWhite
       def transit_to_rule_loading(task)
         rule =
           begin
-            read(Tuple[:rule].new(rule_path: task.rule_path), true)
+            read(Tuple[:rule].new(rule_path: task.rule_path), 0)
           rescue Rinda::RequestExpiredError
             write(Tuple[:request_rule].new(task.rule_path))
             read(Tuple[:rule].new(rule_path: task.rule_path))
@@ -66,12 +66,11 @@ module InnocentWhite
       # State task_executing.
       def transit_to_task_executing(task, rule, process_info)
         opts ={process_name: process_info.name, process_id: process_info.process_id}
-        base_uri = read(Tuple[:base_uri].any).uri
-        handler = rule.content.make_handler(base_uri,
+        handler = rule.content.make_handler(tuple_space_server,
                                             task.inputs,
                                             task.params,
                                             opts)
-        result = handler.execute(get_tuple_space_server)
+        result = handler.execute
         return task, handler, result
       end
 

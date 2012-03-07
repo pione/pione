@@ -71,9 +71,8 @@ describe 'Rule' do
       # make a handler
       @rules.each do |rule|
         input_comb = rule.find_input_combinations(@ts_server, "/input")
-        base_uri = read(Tuple[:base_uri].any).uri
         input_comb.each do |inputs|
-          handler = rule.make_handler(base_uri, inputs, [])
+          handler = rule.make_handler(tuple_space_server, inputs, [])
           if rule.kind_of?(Rule::ActionRule)
             handler.should.be.kind_of Rule::ActionHandler
           else
@@ -131,7 +130,7 @@ describe 'Rule' do
 
     it 'should make working directory with no process informations' do
       inputs = @rule.find_input_combinations(@ts_server, '/input').first
-      handler = Rule::ActionHandler.new(@base_uri, @rule, inputs, [])
+      handler = Rule::ActionHandler.new(tuple_space_server, @rule, inputs, [])
       path = handler.working_directory
       Dir.exist?(path).should.be.true
     end
@@ -141,7 +140,7 @@ describe 'Rule' do
       process_name = "test-process-123"
       process_id = "xyz"
       opts = {:process_name => process_name, :process_id => process_id}
-      handler = Rule::ActionHandler.new(@base_uri, @rule, inputs, [], opts)
+      handler = Rule::ActionHandler.new(tuple_space_server, @rule, inputs, [], opts)
       path = handler.working_directory
       Dir.exist?(path).should.be.true
       path.should.include? "#{process_name}_#{process_id}"
@@ -150,10 +149,10 @@ describe 'Rule' do
     it 'should execute an action' do
       input_comb = @rule.find_input_combinations(@ts_server, '/input')
       10.times do |i|
-        handler = Rule::ActionHandler.new(@base_uri, @rule, input_comb[i], [])
+        handler = Rule::ActionHandler.new(tuple_space_server, @rule, input_comb[i], [])
 
         # execute and get result
-        result = handler.execute(@ts_server)
+        result = handler.execute
         output_data = result.first
         output_data.name.should == "test-#{i+1}.c"
 
@@ -168,10 +167,10 @@ describe 'Rule' do
     it 'should handle output in stdout' do
       input_comb = @rule_sh_2.find_input_combinations(@ts_server, '/input')
       10.times do |i|
-        handler = Rule::ActionHandler.new(@base_uri, @rule, input_comb[i], [])
+        handler = Rule::ActionHandler.new(tuple_space_server, @rule, input_comb[i], [])
 
         # execute and get result
-        result = handler.execute(@ts_server)
+        result = handler.execute
         output_data = result.first
         output_data.name.should == "test-#{i+1}.c"
 
@@ -183,10 +182,10 @@ describe 'Rule' do
     it 'should execute ruby script' do
       input_comb = @rule_ruby.find_input_combinations(@ts_server, '/input')
       10.times do |i|
-        handler = Rule::ActionHandler.new(@base_uri, @rule, input_comb[i], [])
+        handler = Rule::ActionHandler.new(tuple_space_server, @rule, input_comb[i], [])
 
         # execute and get result
-        result = handler.execute(@ts_server)
+        result = handler.execute
         output_data = result.first
         output_data.name.should == "test-#{i+1}.c"
 
@@ -202,8 +201,8 @@ describe 'Rule::FlowHandler' do
     @ts_server = create_remote_tuple_space_server
     @doc = Document.new do
       flow('flow1') do
-        inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
-        outputs '{$INPUT[1].MATCH[1]}.c'
+        inputs  all('*.a'), all('*.b')
+        outputs all('*.c')
         content [ call('action_a'),
                   call('action_b'),
                   call('action_c') ]
@@ -240,6 +239,7 @@ describe 'Rule::FlowHandler' do
     @rule = @doc['flow1']
     rule_loader = Agent[:rule_provider].start(tuple_space_server)
     rule_loader.read_document(@doc)
+    write(Tuple[:process_info].new('spec_rule', 'Rule::FlowHandler'))
   end
 
   it 'should find inputs' do
@@ -272,7 +272,7 @@ describe 'Rule::FlowHandler' do
     input_comb = @rule.find_input_combinations(@ts_server, "/input")
     base_uri = read(Tuple[:base_uri].any).uri
     input_comb.each do |inputs|
-      handler = @rule.make_handler(base_uri, inputs, [])
+      handler = @rule.make_handler(tuple_space_server, inputs, [])
       handler.should.be.kind_of Rule::FlowHandler
     end
   end
@@ -290,12 +290,10 @@ describe 'Rule::FlowHandler' do
     worker1 = Agent[:task_worker].start(tuple_space_server)
 
     # execute
-    root = Rule::RootRule.new(@rule)
-    input_combinations = @rule.find_input_combinations(@ts_server, "input")
-    input_combinations.each do |inputs|
-      handler = @rule.make_handler(tuple_space_server, inputs, [])
+    root = Rule::RootRule.new(@rule.path)
+    handler = root.make_handler(tuple_space_server)
+    observe_exceptions(15) do
       p handler.execute
     end
-    
   end
 end

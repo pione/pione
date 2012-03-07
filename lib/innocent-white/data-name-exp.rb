@@ -80,7 +80,7 @@ module InnocentWhite
     # Return a new expression expanded with the variables.
     def with_variables(variables)
       new_exp = self.class.new(Util.expand_variables(name, variables), @modifier)
-      @exceptions.map{|exc| exc.with_variable(variable)}.each do |new_exc|
+      @exceptions.map{|exc| Util.expand_variables(exc.name, variables)}.each do |new_exc|
         new_exp.except(new_exc)
       end
       return new_exp

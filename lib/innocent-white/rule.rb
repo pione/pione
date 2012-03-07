@@ -4,6 +4,8 @@ require 'innocent-white/agent/sync-monitor'
 
 module InnocentWhite
   module Rule
+    class ExecutionError < Exception; end
+
     # Base rule class for flow rule and action rule.
     class BaseRule
       attr_reader :path
@@ -77,7 +79,7 @@ module InnocentWhite
         if name.all?
           # case all modifier
           new_var = make_auto_variables_by_all(name, index, tuples, var)
-          _find_input_combination(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c|
+          _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c|
             result << c.unshift(tuples)
           end
         else
@@ -185,7 +187,7 @@ module InnocentWhite
       end
 
       def sync_inputs
-        @inputs.each do |input|
+        @inputs.flatten.each do |input|
           filepath = File.join(@working_directory, input.name)
           File.open(filepath, "w+") do |out|
             out.write Resource[URI(input.uri)].read
@@ -219,11 +221,15 @@ module InnocentWhite
           if exp.all?
             # case all modifier
             names = list.select {|elt| exp.match(elt)}
-            @outputs[i] = names.map{|name| make_output_tuple(name) unless name.empty?}
+            unless names.empty?
+              @outputs[i] = names.map{|name| make_output_tuple(name) unless name.empty?}
+            end
           else
             # case each modifier
             name = list.find {|elt| exp.match(elt)}
-            @outputs[i] = make_output_tuple(name)
+            if name
+              @outputs[i] = make_output_tuple(name)
+            end
           end
         end
       end
@@ -235,7 +241,7 @@ module InnocentWhite
           make_io_auto_variables(:input, exp, @inputs[index], index+1)
         end
 
-        # outputs
+        # outputs: FIXME
         @rule.outputs.each_with_index do |exp, index|
           data = make_output_tuple(exp.with_variables(@variable_table).name)
           make_io_auto_variables(:output, exp, data, index+1)
@@ -266,8 +272,10 @@ module InnocentWhite
 
       # Make input or output auto variables for 'all' modified data name expression.
       def make_io_auto_variables_by_all(type, exp, tuples, index)
+        # FIXME: output
+        return if type == :output
         prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-        @variable_table[prefix] = tuples.map{|t| t.name}.join(",")
+        @variable_table[prefix] = tuples.map{|t| t.name}.join(':')
       end
 
       # Make other auto variables.
@@ -315,8 +323,13 @@ module InnocentWhite
 
     class FlowHandler < BaseHandler
       def execute
+        p self
         apply_rules
         find_outputs
+        # check output
+        if @rule.outputs.size > 0 and not(@rule.outputs == @outputs.size)
+          raise ExecutionError.new(self)
+        end
         write_output_resource
         write_output_data
         return @output
@@ -336,9 +349,8 @@ module InnocentWhite
           cont = true
           while cont do
             inputs = find_applicable_input_combinations
-            puts "--- #{inputs}"
             update_targets = find_update_targets(inputs)
-            unless update_targets.nil?
+            unless update_targets.empty?
               handle_task(update_targets)
             else
               cont = false
@@ -384,23 +396,24 @@ module InnocentWhite
       def handle_task(targets)
         thgroup = ThreadGroup.new
         targets.each do |rule, combination|
-          thgroup << Thread.new do
+          thread = Thread.new do
             # task domain
-            task_domain = Util.domain(rule.path, combination, [])
+            task_domain = Util.domain(rule.rule_path, combination, [])
 
             # copy input data from the handler domain to task domain
-            copy_data(combination.flatten, task_domain)
+            copy_data_into_domain(combination.flatten, task_domain)
 
             # FIXME: params is not supportted now
-            write(Tuple[:task].new(rule.path, combination, []))
+            write(Tuple[:task].new(rule.rule_path, combination, []))
 
             # wait to finish the work
-            finished = read(Tuple[:finished].new(rule_path: rule.path, domain: domain))
+            finished = read(Tuple[:finished].new(domain: task_domain))
             if finished.status == :succeeded
               # copy output data from task domain to the handler domain
               copy_data(finished.outputs, @domain)
             end
           end
+          thgroup.add(thread)
         end
 
         # wait to finish threads
@@ -426,6 +439,7 @@ module InnocentWhite
     class ActionHandler < BaseHandler
       # Execute the action.
       def execute
+        p self
         result = write_shell_script {|path| shell path}
         write_output_from_stdout(result)
         find_outputs
@@ -466,19 +480,27 @@ module InnocentWhite
     end
 
     class RootRule < FlowRule
-      def initialize(rule)
+      def initialize(rule_path)
         inputs = [DataNameExp.all("*")]
         outputs = [DataNameExp.all("*").except("{$INPUT[1]}")]
-        super(nil, inputs, outputs, [], [Caller.new(rule)])
+        content = [FlowParts::Call.new(rule_path)]
+        super(nil, inputs, outputs, [], content)
         @domain = '/root'
+      end
+
+      # Make rule handler from the rule.
+      def make_handler(ts_server)
+        input_combinations = find_input_combinations(ts_server, "/input")
+        inputs = input_combinations.first
+        RootHandler.new(ts_server, self, inputs, [], {})
       end
     end
 
     class RootHandler < FlowHandler
       def execute
-        copy_data_into_domain(@inputs, @domain)
+        copy_data_into_domain(@inputs.flatten, @domain)
         super
-        copy_data_into_domain(@outputs, '/output')
+        copy_data_into_domain(@outputs.flatten, '/output')
       end
     end
 

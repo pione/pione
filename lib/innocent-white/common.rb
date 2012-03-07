@@ -70,7 +70,9 @@ module InnocentWhite
 
     # Make task_id by input data names.
     def self.task_id(inputs, params)
-      is = inputs.join("\000")
+      # FIXME: inputs.flatten?
+      input_names = inputs.flatten.map{|t| t.name}
+      is = input_names.join("\000")
       ps = params.join("\000")
       Digest::MD5.hexdigest("#{is}\001#{ps}\001")
     end
