@@ -58,8 +58,10 @@ module InnocentWhite
       end
 
       # Add ruby shebang line.
-      def ruby(str)
-        "#!/usr/bin/env ruby\n" << str
+      def ruby(str, charset=nil)
+        res = "#!/usr/bin/env ruby\n"
+        res << "# -*- coding: #{charset} -*-\n" if charset
+        return res + str
       end
     end
 
@@ -80,7 +82,7 @@ module InnocentWhite
 
     # Load a document and return rule table.
     def self.load(file)
-      return eval(file.read).table
+      return eval(file.read)
     end
 
     attr_reader :rules

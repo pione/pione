@@ -150,7 +150,7 @@ module InnocentWhite
 
     # Return hash value.
     def hash
-      "#{@name}\000#{@modifier}\000#{@exceptions}".hash 
+      "#{@name}\000#{@modifier}\000#{@exceptions}".hash
     end
 
     # Same as Regexp#=~ but return 0 if it matched.

@@ -67,6 +67,8 @@ module InnocentWhite
 
       # State task_executing.
       def transit_to_task_executing(task, rule, process_info)
+        puts ">>> Start Task Execution by worker(#{@uuid})" if debug_mode?
+
         opts ={process_name: process_info.name, process_id: process_info.process_id}
         handler = rule.content.make_handler(tuple_space_server,
                                             task.inputs,
@@ -76,7 +78,6 @@ module InnocentWhite
 
         th = Thread.new do
           @__result_task_execution__ = handler.execute
-          puts "!!!!!!!!! #{rule.content.path}"
         end
 
         # make sub workers if flow rule
@@ -84,6 +85,7 @@ module InnocentWhite
           child = nil
           while th.alive? do
             if child.nil? or not(child.thread.alive?)
+              puts "+++ Create Sub Task worker +++" if debug_mode?
               child = self.class.new(tuple_space_server)
               child.once = true
               child.start
@@ -93,8 +95,11 @@ module InnocentWhite
           end
         end
 
+        # Sleep unless execution thread will be terminated
         th.join
-        puts "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+
+        puts ">>> End Task Execution by worker(#{@uuid})" if debug_mode?
+
         return task, handler, @__result_task_execution__
       end
 

@@ -7,18 +7,28 @@ require 'rinda/rinda'
 require 'rinda/tuplespace'
 
 module InnocentWhite
-  # Change debug mode true or not.
-  def self.debug_mode=(mode = true)
-    @debug_mode = mode
+  def debug_mode
+    orig = @@debug_mode
+    @@debug_mode = true
+    yield
+    @@debug_mode = orig
   end
+  module_function :debug_mode
+
+  # Change debug mode true or not.
+  def debug_mode=(mode)
+    @@debug_mode = mode
+  end
+  module_function :debug_mode=
 
   # Return true if the system is debug mode.
-  def self.debug_mode?
-    @debug_mode ||= false
+  def debug_mode?
+    @@debug_mode ||= false
   end
+  module_function :debug_mode?
 
   # Start finalization process for InnocentWhite world.
-  def self.finalize
+  def finalize
     # finalize all innocent white objects
     ObjectSpace.each_object(InnocentWhiteObject) do |obj|
       obj.finalize
@@ -26,6 +36,7 @@ module InnocentWhite
     # system exit
     exit
   end
+  module_function :finalize
 
   # Basic object class of innocent-white system.
   class InnocentWhiteObject
@@ -35,7 +46,7 @@ module InnocentWhite
 
     # Finalize the object.
     def finalize
-      # none
+      # do nothing
     end
   end
 

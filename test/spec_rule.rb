@@ -223,7 +223,7 @@ describe 'Rule::FlowHandler' do
         outputs '{$INPUT[1].MATCH[1]}.y'
         content <<-__CODE__
             VAL1=`cat {$INPUT[1]}`;
-            expr $VAL1 \\* 2 > {$OUTPUT[1]}
+            expr $VAL1 \\* 3 > {$OUTPUT[1]}
           __CODE__
       end
 
@@ -237,35 +237,39 @@ describe 'Rule::FlowHandler' do
       end
     end
     @rule = @doc['flow1']
+
     rule_loader = Agent[:rule_provider].start(tuple_space_server)
     rule_loader.read_document(@doc)
     write(Tuple[:process_info].new('spec_rule', 'FlowHandler'))
-  end
 
-  it 'should find inputs' do
     # start input generators
     gen1 = Agent[:input_generator].start_by_simple(@ts_server, "*.a", 1..10, 1..10)
     gen2 = Agent[:input_generator].start_by_simple(@ts_server, "*.b", 1..10, 1..10)
     gen1.wait_till(:terminated)
     gen2.wait_till(:terminated)
+  end
+
+  it 'should find inputs' do
     check_exceptions
 
-    # find input combinations
-    inputs = @rule.find_input_combinations(@ts_server, "/input")
+    # find input combinations of flow1
+    inputs = @doc['flow1'].find_input_combinations(tuple_space_server, "/input")
+    inputs.size.should == 1
+    a = (1..10).map {|i| read(Tuple[:data].new(name: "#{i}.a"))}
+    b = (1..10).map {|i| read(Tuple[:data].new(name: "#{i}.b"))}
+    inputs.should.include [a, b]
+
+    # find input combinations of action_a
+    inputs = @doc['action_a'].find_input_combinations(tuple_space_server, "/input")
     inputs.size.should == 10
     10.times do |i|
-      a = @ts_server.read(Tuple[:data].new(name: "#{i+1}.a"))
-      b = @ts_server.read(Tuple[:data].new(name: "#{i+1}.b"))
+      a = read(Tuple[:data].new(name: "#{i+1}.a"))
+      b = read(Tuple[:data].new(name: "#{i+1}.b"))
       inputs.should.include [a, b]
     end
   end
 
   it 'should make a flow handler' do
-    # start input generators
-    gen1 = Agent[:input_generator].start_by_simple(@ts_server, "*.a", 1..10, 1..10)
-    gen2 = Agent[:input_generator].start_by_simple(@ts_server, "*.b", 1..10, 1..10)
-    gen1.wait_till(:terminated)
-    gen2.wait_till(:terminated)
     check_exceptions
 
     # make a handler
@@ -285,18 +289,54 @@ describe 'Rule::FlowHandler' do
     gen2.wait_till(:terminated)
     check_exceptions
 
-    # copy input
-
+    # workers
     worker1 = Agent[:task_worker].start(tuple_space_server)
 
     # execute
     root = Rule::RootRule.new(@rule.path)
     handler = root.make_handler(tuple_space_server)
 
-    InnocentWhite.debug_mode = true
+    InnocentWhite.debug_mode do
+      outputs = handler.execute
+      outputs.first.each {|output| puts output }
+      outputs.first.size.should == 10
+      outputs.fist.each do |output|
+        n = File.basename(output.name).to_i
+        result = Resource[output.uri].read.to_i
+        result.should == n*2*3-1
+      end
+    end
+  end
+end
 
-    #observe_exceptions(100) do
-      p handler.execute
-    #end
+describe 'CountKanji' do
+  before do
+    @ts_server = create_remote_tuple_space_server
+    @doc = Document.load(File.open('example/CountKanji/CountKanji.iw'))
+    @rule = @doc['main']
+
+    rule_loader = Agent[:rule_provider].start(tuple_space_server)
+    rule_loader.read_document(@doc)
+    write(Tuple[:process_info].new('spec_rule', 'CountKanji'))
+
+    # start input generators
+    gen = Agent[:input_generator].start_by_dir(tuple_space_server, "example/CountKanji/text")
+    gen.wait_till(:terminated)
+  end
+
+  it 'should make summary' do
+    check_exceptions
+
+    # workers
+    worker1 = Agent[:task_worker].start(tuple_space_server)
+
+    # execute
+    root = Rule::RootRule.new(@rule.path)
+    handler = root.make_handler(tuple_space_server)
+
+    InnocentWhite.debug_mode do
+      outputs = handler.execute
+      outputs.first.size.should == 1
+    end
   end
 end

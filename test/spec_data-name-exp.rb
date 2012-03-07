@@ -153,4 +153,9 @@ describe 'DataNameExp' do
     exp.select('test-.a','test-1.a','test-a.a','test-a.b').should == ['test-1.a', 'test-a.a']
     exp.select.should.empty
   end
+
+  it 'should except' do
+    exp = DataNameExp.all('*.txt').except('summary.txt')
+    exp.should.not.match 'summary.txt'
+  end
 end

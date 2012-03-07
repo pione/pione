@@ -1,14 +1,13 @@
 #!/usr/bin/env ruby
 # -*- ruby -*-
 
-require 'innocent-white'
+require 'innocent-white/common'
 require 'innocent-white/tuple-space-receiver'
 require 'innocent-white/agent/broker'
 
 Thread.abort_on_exception = true
-DRb.start_service
 
-InnocentWhite.debug_mode
+InnocentWhite.debug_mode = true
 InnocentWhite.set_signal_trap
 
 # tuple space receiver

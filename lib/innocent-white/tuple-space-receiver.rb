@@ -12,19 +12,42 @@ module InnocentWhite
     # -- class --
 
     # Return the receiver instance.
-    def self.get(data={})
+    def self.instance(data={})
       uri = if data.has_key?(:receiver_port) then
               "druby://localhost:#{data[:receiver_port]}"
             else RECEIVER_URI end
+      # check DRb service
       begin
-        obj = DRbObject.new_with_uri(uri)
-        obj.uuid # check the receiver exists
-        return obj
+        DRb.current_server
       rescue
-        # receiver not exists
-        receiver = self.new(data)
-        DRb.start_service(uri, receiver)
-        return receiver
+        DRb.start_service
+      end
+      # remote object
+      begin
+        # get receiver reference
+        receiver = DRbObject.new_with_uri(uri)
+        receiver.uuid # check the server exists
+        receiver
+      rescue
+        begin
+          # create new receiver
+          receiver = self.new(data)
+          receiver.drb_service = DRb::DRbServer.new(uri, receiver)
+          DRbObject.new_with_uri(uri)
+        rescue Errno::EADDRINUSE
+          # retry
+          instance(data)
+        end
+      end
+    end
+
+    # Terminate tuple space provider.
+    def self.terminate
+      # terminate message as remote procedure call causes connection error
+      begin
+        instance.terminate
+      rescue
+        # do nothing
       end
     end
 
@@ -34,6 +57,8 @@ module InnocentWhite
     attr_reader :updater_thread
     attr_reader :agents
     attr_reader :udp_port
+
+    attr_accessor :drb_service
 
     def initialize(data={})
       # check argument
@@ -70,10 +95,33 @@ module InnocentWhite
       @tuple_space_servers.keys
     end
 
+    # Send empty tuple space server list.
+    def finalize
+      @terminated = true
+      @drb_service.stop_service
+      # DRbServer#stop_service killed service thread, but sometime it cannot
+      # close the socket because ensure clause isn't called in some cases on MRI
+      # 1.9.x.
+      @drb_service.instance_eval do
+        @thread.kill.join
+        kill_sub_thread.join
+        @protocol.close
+      end
+      if DRb.primary_server == @drb_service
+        DRb.primary_server = nil
+      end
+      @thread_receive_packet.kill.join
+      @thread_update_list.kill.join
+      @thread_check_agent_life.kill.join
+      @tuple_space_servers = []
+    end
+
+    alias :terminate :finalize
+
     private
 
     def receive_tuple_space_servers
-      @receiver_thread = Thread.new do
+      @thread_receive_packet = Thread.new do
         loop do
           begin
             msg = @socket.recv(1024)
@@ -97,7 +145,7 @@ module InnocentWhite
     end
 
     def update_tuple_space_servers
-      @updater_thread = Thread.new do
+      @thread_update_list = Thread.new do
         loop do
           puts "check for updating tuple space servers"
 
@@ -141,8 +189,8 @@ module InnocentWhite
     end
 
     def check_agent_life
-      @check_agent_life_thread = Thread.new do
-        loop do
+      @thread_check_agent_life = Thread.new do
+        while true do
           list = []
           @agents.each do |agent|
             begin

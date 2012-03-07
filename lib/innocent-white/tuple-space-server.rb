@@ -167,8 +167,10 @@ module InnocentWhite
 
       # override #to_s as it's uri because dead remote objects cause exceptions
       # when you try to watch the object
-      def @__tuple_space_server__.to_s
-        __drburi
+      if server.methods.include?(:__drburi)
+        def @__tuple_space_server__.to_s
+          __drburi
+        end
       end
     end
   end

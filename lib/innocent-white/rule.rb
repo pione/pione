@@ -5,6 +5,7 @@ require 'innocent-white/agent/sync-monitor'
 module InnocentWhite
   module Rule
     class ExecutionError < Exception; end
+    class UnknownRule < Exception; end
 
     # Base rule class for flow rule and action rule.
     class BaseRule
@@ -85,8 +86,10 @@ module InnocentWhite
         if name.all?
           # case all modifier
           new_var = make_auto_variables_by_all(name, index, tuples, var)
-          _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
-            result << [c.unshift(tuples), v]
+          unless tuples.empty?
+            _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
+              result << [c.unshift(tuples), v]
+            end
           end
         else
           # case each modifier
@@ -195,8 +198,6 @@ module InnocentWhite
       def sync_inputs
         @inputs.flatten.each do |input|
           filepath = File.join(@working_directory, input.name)
-          puts "input: #{input}"
-          puts "filepath: #{filepath}"
           File.open(filepath, "w+") do |out|
             out.write Resource[URI(input.uri)].read
           end
@@ -318,13 +319,23 @@ module InnocentWhite
 
     class FlowHandler < BaseHandler
       def execute
+        puts ">>> Start Flow Rule #{@rule.path}" if debug_mode?
+
         apply_rules
         find_outputs
+
         # check output
         if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
           raise ExecutionError.new(self)
         end
-        puts "FLOW OUTPUT RESULT: #{@outputs}" if InnocentWhite.debug_mode?
+
+        if debug_mode?
+          puts "Flow Rule #{@rule.path} Result:"
+          @outputs.each {|output| puts "  #{output}"}
+        end
+
+        puts ">>> End Flow Rule #{@rule.path}" if debug_mode?
+
         return @outputs
       end
 
@@ -352,7 +363,7 @@ module InnocentWhite
             # case each modifier
             name = list.find {|elt| exp.match(elt.name)}
             if name
-              @outputs[i] = make_output_tuple(name)
+              @outputs[i] = name
             end
           end
         end
@@ -360,19 +371,24 @@ module InnocentWhite
 
       # Apply target data to rules.
       def apply_rules
+        puts ">>> Start Rule Application: #{@rule.path}" if debug_mode?
+
         Agent[:sync_monitor].start(tuple_space_server, self) do
           cont = true
           while cont do
             inputs = find_applicable_input_combinations
             update_targets = find_update_targets(inputs)
-            puts "update_targets: #{update_targets}"
             unless update_targets.empty?
+              # distribute task
               handle_task(update_targets)
             else
+              # finish application
               cont = false
             end
           end
         end
+
+        puts ">>> End Rule Application: #{@rule.path}" if debug_mode?
       end
 
       # Check application inputs.
@@ -392,7 +408,7 @@ module InnocentWhite
             combinations = rule.content.find_input_combinations_and_variables(tuple_space_server, @domain)
             inputs << [rule, combinations] unless combinations.nil?
           else
-            raise UnkownTask.new(task)
+            raise UnknownRule.new(caller.rule_path)
           end
         end
         return inputs
@@ -400,10 +416,6 @@ module InnocentWhite
 
       def find_update_targets(inputs)
         targets = []
-        # FIXME
-        tuple_space_server.all_tuples.each do |t|
-          puts "data: #{t.inspect}" if t.first == :data
-        end
         inputs.each do |rule, combinations|
           combinations.each do |combination, var|
             current_outputs = rule.content.find_outputs(tuple_space_server, @domain, combination, var)
@@ -418,7 +430,7 @@ module InnocentWhite
       def handle_task(targets)
         thgroup = ThreadGroup.new
 
-        puts "--- task distribution start: #{@rule.path} ---"
+        puts ">>> Start Task Distribution: #{@rule.path}" if debug_mode?
 
         targets.each do |rule, combination|
           thread = Thread.new do
@@ -433,10 +445,10 @@ module InnocentWhite
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))
-            puts "finished: #{finished}"
+            puts "task finished: #{finished}" if debug_mode?
+
             if finished.status == :succeeded
               # copy output data from task domain to the handler domain
-              puts ">>>>>>>>>>>>>>>>>>>>>>>>>>"
               copy_data_into_domain(finished.outputs, @domain)
             end
           end
@@ -445,7 +457,8 @@ module InnocentWhite
 
         # wait to finish threads
         thgroup.list.each {|th| th.join}
-        puts "--- task distribution stop: #{@rule.path} ---"
+
+        puts ">>> End Task Distribution: #{@rule.path}" if debug_mode?
       end
 
       def finalize_rule_application(sync_monitor)
@@ -453,9 +466,9 @@ module InnocentWhite
         sync_monitor.terminate
       end
 
+      # Copy data into specified domain
       def copy_data_into_domain(orig_data, new_domain)
         new_data = orig_data.flatten
-        p new_data
         new_data.each do |data|
           data.domain = new_domain
         end
@@ -476,8 +489,8 @@ module InnocentWhite
     class ActionHandler < BaseHandler
       # Execute the action.
       def execute
-        result = write_shell_script {|path| shell path}
-        write_output_from_stdout(result)
+        stdout = write_shell_script {|path| shell path}
+        write_output_from_stdout(stdout)
         find_outputs
         write_output_resource
         write_output_data
@@ -486,13 +499,13 @@ module InnocentWhite
 
       private
 
-      def write_output_from_stdout(result)
+      def write_output_from_stdout(stdout)
         @rule.outputs.each do |output|
           if output.stdout?
             name = output.with_variables(@variable_table).name
             filepath = File.join(@working_directory, name)
             File.open(filepath, "w+") do |out|
-              out.write result
+              out.write stdout
             end
             break
           end
@@ -503,7 +516,12 @@ module InnocentWhite
       def write_shell_script(&b)
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(Util.expand_variables(@rule.content, @variable_table))
-        puts(Util.expand_variables(@rule.content, @variable_table))
+        if debug_mode?
+          puts "[#{file.path}]"
+          puts "SH-------------------------------------------------------"
+          puts Util.expand_variables(@rule.content, @variable_table)
+          puts "-------------------------------------------------------SH"
+        end
         file.close
         FileUtils.chmod(0700,file.path)
         return b.call(file.path)
@@ -536,15 +554,15 @@ module InnocentWhite
           end
         end
       end
-
     end
 
     class RootRule < FlowRule
       def initialize(rule_path)
-        inputs = [DataNameExp.all("*")]
+        inputs  = [DataNameExp.all("*")]
         outputs = [DataNameExp.all("*").except("{$INPUT[1]}")]
         content = [FlowParts::Call.new(rule_path)]
         super(nil, inputs, outputs, [], content)
+        @path = 'root'
         @domain = '/root'
       end
 
@@ -558,11 +576,12 @@ module InnocentWhite
 
     class RootHandler < FlowHandler
       def execute
-        puts "ROOT START"
+        puts ">>> Start Root Rule Execution" if debug_mode?
         copy_data_into_domain(@inputs.flatten, @domain)
         result = super
         copy_data_into_domain(@outputs.flatten, '/output')
-        puts "ROOT END"
+        sync_output
+        puts ">>> End Root Rule Execution" if debug_mode?
         return result
       end
     end
