@@ -8,7 +8,7 @@ require 'rinda/tuplespace'
 
 module InnocentWhite
   # Change debug mode true or not.
-  def self.debug_mode(mode = true)
+  def self.debug_mode=(mode = true)
     @debug_mode = mode
   end
 

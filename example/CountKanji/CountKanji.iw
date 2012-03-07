@@ -24,7 +24,7 @@ InnocentWhite::Document.new do
     content ruby(<<-'__CODE__')
       # -*- coding: utf-8 -*-
       table = {}
-      text = File.open("{$INPUT[1]").read
+      text = File.open("{$INPUT[1]}").read
       text.split("").each do |c|
         table[c] =  table.has_key?(c) ? table[c].succ : 1
       end

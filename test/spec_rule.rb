@@ -223,7 +223,7 @@ describe 'Rule::FlowHandler' do
         outputs '{$INPUT[1].MATCH[1]}.y'
         content <<-__CODE__
             VAL1=`cat {$INPUT[1]}`;
-            expr $VAL1 * 2 > {$OUTPUT[1]}
+            expr $VAL1 \\* 2 > {$OUTPUT[1]}
           __CODE__
       end
 
@@ -239,7 +239,7 @@ describe 'Rule::FlowHandler' do
     @rule = @doc['flow1']
     rule_loader = Agent[:rule_provider].start(tuple_space_server)
     rule_loader.read_document(@doc)
-    write(Tuple[:process_info].new('spec_rule', 'Rule::FlowHandler'))
+    write(Tuple[:process_info].new('spec_rule', 'FlowHandler'))
   end
 
   it 'should find inputs' do
@@ -292,8 +292,11 @@ describe 'Rule::FlowHandler' do
     # execute
     root = Rule::RootRule.new(@rule.path)
     handler = root.make_handler(tuple_space_server)
-    observe_exceptions(15) do
+
+    InnocentWhite.debug_mode = true
+
+    #observe_exceptions(100) do
       p handler.execute
-    end
+    #end
   end
 end

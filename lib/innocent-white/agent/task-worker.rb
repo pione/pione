@@ -26,6 +26,8 @@ module InnocentWhite
       define_state_transition :data_outputing => :task_finishing
       define_state_transition :task_finishing => :task_waiting
 
+      attr_accessor :once
+
       private
 
       # State task_waiting.
@@ -36,7 +38,7 @@ module InnocentWhite
       # State task_processing.
       def transit_to_task_processing(task)
         if InnocentWhite.debug_mode?
-          msg = "is processing the task #{task.module_path}(#{task.inputs.join(',')})"
+          msg = "is processing the task #{task.rule_path}(#{task.inputs.join(',')})"
           log(:debug, msg)
         end
         return task
@@ -70,8 +72,30 @@ module InnocentWhite
                                             task.inputs,
                                             task.params,
                                             opts)
-        result = handler.execute
-        return task, handler, result
+        @__result_task_execution__ = nil
+
+        th = Thread.new do
+          @__result_task_execution__ = handler.execute
+          puts "!!!!!!!!! #{rule.content.path}"
+        end
+
+        # make sub workers if flow rule
+        if rule.content.flow?
+          child = nil
+          while th.alive? do
+            if child.nil? or not(child.thread.alive?)
+              child = self.class.new(tuple_space_server)
+              child.once = true
+              child.start
+            else
+              sleep 1
+            end
+          end
+        end
+
+        th.join
+        puts "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+        return task, handler, @__result_task_execution__
       end
 
       # State data_outputing.
@@ -84,8 +108,9 @@ module InnocentWhite
 
       # State task_finishing.
       def transit_to_task_finishing(task, handler)
-        finished = Tuple[:finished].new(handler.domain, handler.task_id, :succeeded)
+        finished = Tuple[:finished].new(handler.domain, :succeeded, handler.outputs)
         write(finished)
+        terminate if @once
       end
 
       # State error

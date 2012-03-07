@@ -24,11 +24,17 @@ module InnocentWhite
 
       # Find input data combinations from tuple space server.
       def find_input_combinations(ts_server, domain)
+        combinations = _find_input_combinations(ts_server, domain, @inputs, 1, {})
+        combinations.map{|c,v| c}
+      end
+
+      # Find input data combinations from tuple space server.
+      def find_input_combinations_and_variables(ts_server, domain)
         _find_input_combinations(ts_server, domain, @inputs, 1, {})
       end
 
       # Find output data from tuple space server.
-      def find_output(ts_server, domain, inputs, var)
+      def find_outputs(ts_server, domain, inputs, var)
         names = @outputs.map{|output| output.with_variables(var)}
         return names.map{|name| find_data_by_name(ts_server, domain, name)}
       end
@@ -65,7 +71,7 @@ module InnocentWhite
       # Find input data combinatioins.
       def _find_input_combinations(ts_server, domain, inputs, index, var)
         # return empty when reach the recuirsion end
-        return [[]] if inputs.empty?
+        return [[[],var]] if inputs.empty?
 
         # expand variables and compile to regular expression
         name = inputs.first.with_variables(var)
@@ -79,15 +85,15 @@ module InnocentWhite
         if name.all?
           # case all modifier
           new_var = make_auto_variables_by_all(name, index, tuples, var)
-          _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c|
-            result << c.unshift(tuples)
+          _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
+            result << [c.unshift(tuples), v]
           end
         else
           # case each modifier
           tuples.each do |tuple|
             new_var = make_auto_variables_by_each(name, index, tuple, var)
-            _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c|
-              result << c.unshift(tuple)
+            _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
+              result << [c.unshift(tuple), v]
             end
           end
         end
@@ -189,6 +195,8 @@ module InnocentWhite
       def sync_inputs
         @inputs.flatten.each do |input|
           filepath = File.join(@working_directory, input.name)
+          puts "input: #{input}"
+          puts "filepath: #{filepath}"
           File.open(filepath, "w+") do |out|
             out.write Resource[URI(input.uri)].read
           end
@@ -211,27 +219,6 @@ module InnocentWhite
       # Make output tuple by name.
       def make_output_tuple(name)
         Tuple[:data].new(@domain, name, (@resource_uri + name).to_s)
-      end
-
-      def find_outputs
-        outputs = []
-        list = Dir.entries(@working_directory)
-        @rule.outputs.each_with_index do |exp, i|
-          exp = exp.with_variables(@variable_table)
-          if exp.all?
-            # case all modifier
-            names = list.select {|elt| exp.match(elt)}
-            unless names.empty?
-              @outputs[i] = names.map{|name| make_output_tuple(name) unless name.empty?}
-            end
-          else
-            # case each modifier
-            name = list.find {|elt| exp.match(elt)}
-            if name
-              @outputs[i] = make_output_tuple(name)
-            end
-          end
-        end
       end
 
       # Make auto vairables.
@@ -285,7 +272,15 @@ module InnocentWhite
       end
     end
 
-    class FlowRule < BaseRule; end
+    class FlowRule < BaseRule
+      def action?
+        false
+      end
+
+      def flow?
+        true
+      end
+    end
 
     module FlowParts
       class Base < InnocentWhiteObject; end
@@ -323,16 +318,14 @@ module InnocentWhite
 
     class FlowHandler < BaseHandler
       def execute
-        p self
         apply_rules
         find_outputs
         # check output
-        if @rule.outputs.size > 0 and not(@rule.outputs == @outputs.size)
+        if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
           raise ExecutionError.new(self)
         end
-        write_output_resource
-        write_output_data
-        return @output
+        puts "FLOW OUTPUT RESULT: #{@outputs}" if InnocentWhite.debug_mode?
+        return @outputs
       end
 
       # Return true if the handler is waiting finished tuple.
@@ -343,6 +336,28 @@ module InnocentWhite
 
       private
 
+      # Find outputs from the domain of tuple space.
+      def find_outputs
+        outputs = []
+        @rule.outputs.each_with_index do |exp, i|
+          exp = exp.with_variables(@variable_table)
+          list = read_all(Tuple[:data].new(domain: @domain))
+          if exp.all?
+            # case all modifier
+            names = list.select {|elt| exp.match(elt.name)}
+            unless names.empty?
+              @outputs[i] = names
+            end
+          else
+            # case each modifier
+            name = list.find {|elt| exp.match(elt.name)}
+            if name
+              @outputs[i] = make_output_tuple(name)
+            end
+          end
+        end
+      end
+
       # Apply target data to rules.
       def apply_rules
         Agent[:sync_monitor].start(tuple_space_server, self) do
@@ -350,6 +365,7 @@ module InnocentWhite
           while cont do
             inputs = find_applicable_input_combinations
             update_targets = find_update_targets(inputs)
+            puts "update_targets: #{update_targets}"
             unless update_targets.empty?
               handle_task(update_targets)
             else
@@ -373,7 +389,7 @@ module InnocentWhite
             end
           # check rule status and find combinations
           if rule.status == :known
-            combinations = rule.content.find_input_combinations(tuple_space_server, @domain)
+            combinations = rule.content.find_input_combinations_and_variables(tuple_space_server, @domain)
             inputs << [rule, combinations] unless combinations.nil?
           else
             raise UnkownTask.new(task)
@@ -385,9 +401,15 @@ module InnocentWhite
       def find_update_targets(inputs)
         targets = []
         # FIXME
+        tuple_space_server.all_tuples.each do |t|
+          puts "data: #{t.inspect}" if t.first == :data
+        end
         inputs.each do |rule, combinations|
-          combinations.each do |c|
-            targets << [rule, c]
+          combinations.each do |combination, var|
+            current_outputs = rule.content.find_outputs(tuple_space_server, @domain, combination, var)
+            if current_outputs.include?([])
+              targets << [rule, combination]
+            end
           end
         end
         return targets
@@ -395,6 +417,9 @@ module InnocentWhite
 
       def handle_task(targets)
         thgroup = ThreadGroup.new
+
+        puts "--- task distribution start: #{@rule.path} ---"
+
         targets.each do |rule, combination|
           thread = Thread.new do
             # task domain
@@ -408,9 +433,11 @@ module InnocentWhite
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))
+            puts "finished: #{finished}"
             if finished.status == :succeeded
               # copy output data from task domain to the handler domain
-              copy_data(finished.outputs, @domain)
+              puts ">>>>>>>>>>>>>>>>>>>>>>>>>>"
+              copy_data_into_domain(finished.outputs, @domain)
             end
           end
           thgroup.add(thread)
@@ -418,6 +445,7 @@ module InnocentWhite
 
         # wait to finish threads
         thgroup.list.each {|th| th.join}
+        puts "--- task distribution stop: #{@rule.path} ---"
       end
 
       def finalize_rule_application(sync_monitor)
@@ -426,7 +454,8 @@ module InnocentWhite
       end
 
       def copy_data_into_domain(orig_data, new_domain)
-        new_data = orig_data.clone
+        new_data = orig_data.flatten
+        p new_data
         new_data.each do |data|
           data.domain = new_domain
         end
@@ -434,12 +463,19 @@ module InnocentWhite
       end
     end
 
-    class ActionRule < BaseRule; end
+    class ActionRule < BaseRule
+      def action?
+        true
+      end
+
+      def flow?
+        false
+      end
+    end
 
     class ActionHandler < BaseHandler
       # Execute the action.
       def execute
-        p self
         result = write_shell_script {|path| shell path}
         write_output_from_stdout(result)
         find_outputs
@@ -467,6 +503,7 @@ module InnocentWhite
       def write_shell_script(&b)
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(Util.expand_variables(@rule.content, @variable_table))
+        puts(Util.expand_variables(@rule.content, @variable_table))
         file.close
         FileUtils.chmod(0700,file.path)
         return b.call(file.path)
@@ -477,6 +514,29 @@ module InnocentWhite
         scriptname = File.basename(path)
         `cd #{@working_directory}; ./#{scriptname}`
       end
+
+      # Find outputs from working directory.
+      def find_outputs
+        outputs = []
+        list = Dir.entries(@working_directory)
+        @rule.outputs.each_with_index do |exp, i|
+          exp = exp.with_variables(@variable_table)
+          if exp.all?
+            # case all modifier
+            names = list.select {|elt| exp.match(elt)}
+            unless names.empty?
+              @outputs[i] = names.map{|name| make_output_tuple(name) unless name.empty?}
+            end
+          else
+            # case each modifier
+            name = list.find {|elt| exp.match(elt)}
+            if name
+              @outputs[i] = make_output_tuple(name)
+            end
+          end
+        end
+      end
+
     end
 
     class RootRule < FlowRule
@@ -498,9 +558,12 @@ module InnocentWhite
 
     class RootHandler < FlowHandler
       def execute
+        puts "ROOT START"
         copy_data_into_domain(@inputs.flatten, @domain)
-        super
+        result = super
         copy_data_into_domain(@outputs.flatten, '/output')
+        puts "ROOT END"
+        return result
       end
     end
 
