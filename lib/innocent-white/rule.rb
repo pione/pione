@@ -47,6 +47,10 @@ module InnocentWhite
         end
       end
 
+      def expanded_outputs(var)
+        @outputs.map{|output| output.with_variables(var)}
+      end
+
       # Make rule handler from the rule.
       def make_handler(ts_server, inputs, params, opts={})
         klass = self.kind_of?(ActionRule) ? ActionHandler : FlowHandler
@@ -300,7 +304,7 @@ module InnocentWhite
         end
 
         # Return true if sync mode.
-        def sync?
+        def sync_mode?
           @sync_mode
         end
       end
@@ -373,6 +377,7 @@ module InnocentWhite
       def apply_rules
         puts ">>> Start Rule Application: #{@rule.path}" if debug_mode?
 
+        # SyncMonitor
         Agent[:sync_monitor].start(tuple_space_server, self) do
           cont = true
           while cont do
@@ -420,7 +425,7 @@ module InnocentWhite
           combinations.each do |combination, var|
             current_outputs = rule.content.find_outputs(tuple_space_server, @domain, combination, var)
             if current_outputs.include?([])
-              targets << [rule, combination]
+              targets << [rule, combination, var]
             end
           end
         end
@@ -428,14 +433,21 @@ module InnocentWhite
       end
 
       def handle_task(targets)
+        # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
 
         puts ">>> Start Task Distribution: #{@rule.path}" if debug_mode?
 
-        targets.each do |rule, combination|
+        targets.each do |rule, combination, var|
           thread = Thread.new do
             # task domain
             task_domain = Util.domain(rule.rule_path, combination, [])
+
+            # sync monitor
+            #if rule.sync?
+            #  names = rule.expanded_outputs(var)
+            #  write(Tuple[:sync_target].new(src: task_domain, dest: @domain, names: names))
+            #end
 
             # copy input data from the handler domain to task domain
             copy_data_into_domain(combination.flatten, task_domain)
@@ -447,9 +459,12 @@ module InnocentWhite
             finished = read(Tuple[:finished].new(domain: task_domain))
             puts "task finished: #{finished}" if debug_mode?
 
+            # copy data from task domain to this domain
             if finished.status == :succeeded
-              # copy output data from task domain to the handler domain
-              copy_data_into_domain(finished.outputs, @domain)
+              #unless sync_mode?
+                # copy output data from task domain to the handler domain
+                copy_data_into_domain(finished.outputs, @domain)
+              #end
             end
           end
           thgroup.add(thread)
@@ -580,7 +595,7 @@ module InnocentWhite
         copy_data_into_domain(@inputs.flatten, @domain)
         result = super
         copy_data_into_domain(@outputs.flatten, '/output')
-        sync_output
+        # sync_output
         puts ">>> End Root Rule Execution" if debug_mode?
         return result
       end
