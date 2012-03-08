@@ -6,7 +6,7 @@ InnocentWhite::Document.new do
     inputs  all('*.txt').except('summary.txt')
     outputs 'summary.txt'
     content [ call("convert_to_utf8"),
-              call("count_kanji").with_sync,
+              call("count_char").with_sync,
               call("summarize") ]
   end
 
@@ -18,7 +18,7 @@ InnocentWhite::Document.new do
   end
 
   # Count characters
-  action('count_kanji') do
+  action('count_char') do
     inputs  '*.utf8'
     outputs stdout('{$INPUT[1].MATCH[1]}.count')
     content ruby(<<-'__CODE__', 'utf-8')
@@ -33,7 +33,7 @@ InnocentWhite::Document.new do
     __CODE__
   end
 
-  # Summarize kanji characters
+  # Summarize characters
   action('summarize') do
     inputs  all('*.count')
     outputs stdout('summary.txt')

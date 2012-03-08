@@ -309,22 +309,22 @@ describe 'Rule::FlowHandler' do
   end
 end
 
-describe 'CountKanji' do
+describe 'CountChar' do
   before do
     @ts_server = create_remote_tuple_space_server
-    @doc = Document.load(File.open('example/CountKanji/CountKanji.iw'))
+    @doc = Document.load(File.open('example/CountChar/CountChar.iw'))
     @rule = @doc['main']
 
     rule_loader = Agent[:rule_provider].start(tuple_space_server)
     rule_loader.read_document(@doc)
-    write(Tuple[:process_info].new('spec_rule', 'CountKanji'))
+    write(Tuple[:process_info].new('spec_rule', 'CountChar'))
 
     # start input generators
-    gen = Agent[:input_generator].start_by_dir(tuple_space_server, "example/CountKanji/text")
+    gen = Agent[:input_generator].start_by_dir(tuple_space_server, "example/CountChar/text")
     gen.wait_till(:terminated)
   end
 
-  it 'should make summary' do
+  it 'should make a summary of character counter' do
     check_exceptions
 
     # workers
