@@ -1,5 +1,4 @@
 require 'innocent-white/common'
-require 'innocent-white/data-name-exp'
 require 'innocent-white/rule'
 
 module InnocentWhite
@@ -14,32 +13,22 @@ module InnocentWhite
 
       # Create all modified name.
       def all(name)
-        DataNameExp.all(name)
+        DataExp.all(name)
       end
 
       # Create each modified name.
       def each(name)
-        DataNameExp.each(name)
-      end
-
-      # Create stdout data name.
-      def stdout(name)
-        DataNameExp.stdout(name)
-      end
-
-      # Create stderr data name.
-      def stderr(name)
-        DataNameExp.stderr(name)
+        DataExp.each(name)
       end
 
       # Input statement.
       def inputs(*items)
-        @inputs = items.map(&DataNameExp)
+        @inputs = items.map(&DataExp)
       end
 
       # Output statement.
       def outputs(*items)
-        @outputs = items.map(&DataNameExp)
+        @outputs = items.map(&DataExp)
       end
 
       # Parameter statement.

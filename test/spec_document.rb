@@ -10,8 +10,8 @@ describe 'Document' do
       end
     end['test']
     action.should.be.kind_of Rule::ActionRule
-    action.inputs.should  == [ DataNameExp['*.a'] ]
-    action.outputs.should == [ DataNameExp['{$INPUT[1].MATCH[1]}.b'] ]
+    action.inputs.should  == [ DataExp['*.a'] ]
+    action.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
   end
 
   it 'should define flow rule' do
@@ -24,7 +24,7 @@ describe 'Document' do
       end
     end['test']
     flow.should.be.kind_of Rule::FlowRule
-    flow.inputs.should  == [ DataNameExp['*.a'] ]
-    flow.outputs.should == [ DataNameExp['{$INPUT[1].MATCH[1]}.b'] ]
+    flow.inputs.should  == [ DataExp['*.a'] ]
+    flow.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
   end
 end

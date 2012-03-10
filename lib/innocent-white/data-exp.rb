@@ -1,10 +1,13 @@
 require 'innocent-white/common'
 
 module InnocentWhite
-  # DataNameExp is a class for input and ouput data name of rule.
-  class DataNameExp
 
-    # InnocentWhite::DataNameExp::Compiler is a compiler for data name string.
+  # DataExp is a class for data name expression of rule input and output.
+  class DataExp
+
+    SEPARATOR = ':'
+
+    # DataExp::Compiler is a regexp compiler for data expression.
     module Compiler
       TABLE = {}
 
@@ -13,7 +16,7 @@ module InnocentWhite
         TABLE[Regexp.escape(matcher)] = replace
       end
 
-      # Asterisk symbol is multi-character matcher(empty string is matched).
+      # Asterisk symbol is multi-characters matcher(empty string is matched).
       define_matcher('*', '(.*)')
 
       # Question symbol is single character matcher(empty string is not matched).
@@ -22,10 +25,11 @@ module InnocentWhite
       # Compile data name into regular expression.
       def compile(name)
         return name unless name.kind_of?(String)
+
         s = "^#{Regexp.escape(name)}$"
-        TABLE.keys.each do |key|
-          s.gsub!(key, TABLE)
-        end
+        TABLE.keys.each {|key| s.gsub!(key, TABLE)}
+        s.gsub!(/\\\[(!|\\\^)?(.*)\\\]/){"[#{'^' if $1}#{$2.gsub('\-','-')}]"}
+        s.gsub!(/\\{(.*)\\}/){"(#{$1.split(',').join('|')})"}
         Regexp.new(s)
       end
       module_function :compile
@@ -33,16 +37,17 @@ module InnocentWhite
 
     # -- class --
 
+    # Creates a name expression.
     def self.[](name)
       new(name)
     end
 
-    # Create a name with 'each' modifier.
+    # Creates a name expression with 'each' modifier.
     def self.each(name)
       new(name, :each)
     end
 
-    # Create a name with 'all' modifier.
+    # Create a name expression with 'all' modifier.
     def self.all(name)
       new(name, :all)
     end
@@ -57,7 +62,7 @@ module InnocentWhite
       new(name, :each, :stderr)
     end
 
-    # Convert to proc object for Enumerable methods.
+    # Returns convertion prcedure for enumerable.
     def self.to_proc
       Proc.new{|name| name.kind_of?(self) ? name : self.new(name)}
     end
@@ -66,6 +71,7 @@ module InnocentWhite
 
     attr_reader :name
     attr_reader :modifier
+    attr_reader :mode
     attr_reader :exceptions
 
     def initialize(name, modifier = :each, mode = nil)
@@ -73,8 +79,32 @@ module InnocentWhite
 
       @name = name
       @modifier = modifier
-      @exceptions = []
       @mode = mode
+      @exceptions = []
+    end
+
+    # Set it each modifier.
+    def each
+      @modifier = :each
+      return self
+    end
+
+    # Set it all modifier.
+    def all
+      @modifier = :all
+      return self
+    end
+
+    # Set it stdout mode.
+    def stdout
+      @mode = :stdout
+      return self
+    end
+
+    # Set it stderr mode.
+    def stderr
+      @mode = :stderr
+      return self
     end
 
     # Return a new expression expanded with the variables.
@@ -108,18 +138,18 @@ module InnocentWhite
 
     # Set a exception and return self.
     def except(*names)
-      @exceptions += names.map{|name| DataNameExp[name]}
+      @exceptions += names.map{|name| DataExp.new(name)}
       return self
     end
 
     # Return matched data if the name is matched with the expression.
-    def match(name)
+    def match(other)
       # check exceptions
-      return false if match_exceptions(name)
+      return false if match_exceptions(other)
       # match test
       md = nil
-      @name.split(':').each do |n|
-        break if md = compile_to_regexp(n).match(name)
+      @name.split(SEPARATOR).each do |name|
+        break if md = compile_to_regexp(name).match(other)
       end
       return md
     end
@@ -130,7 +160,7 @@ module InnocentWhite
     end
 
     # Generate concrete name string by arguments.
-    # usage: DataNameExp["test-*.rb"].generate(1) # => "test-1.rb"
+    # usage: DataExp["test-*.rb"].generate(1) # => "test-1.rb"
     def generate(*args)
       name = @name.clone
       while name =~ /(\*|\?)/ and not(args.empty?)
@@ -140,17 +170,21 @@ module InnocentWhite
       return name
     end
 
-    # Return true if name, modifier, and exceptions are same.
+    # Return true if name, modifier, mode, and exceptions are the same.
     def ==(other)
       return false unless other.kind_of?(self.class)
-      @name == other.name && @modifier == other.modifier && @exceptions.sort == other.exceptions.sort
+      return false unless @name == other.name
+      return false unless @modifier == other.modifier
+      return false unless @mode == other.mode
+      return false unless @exceptions.sort == other.exceptions.sort
+      return true
     end
 
     alias eql? ==
 
     # Return hash value.
     def hash
-      "#{@name}\000#{@modifier}\000#{@exceptions}".hash
+      [@name, @modifier, @mode, @exceptions].join("\000").hash
     end
 
     # Same as Regexp#=~ but return 0 if it matched.
@@ -164,7 +198,7 @@ module InnocentWhite
     end
 
     private
-    
+
     def compile_to_regexp(name)
       Compiler.compile(name)
     end

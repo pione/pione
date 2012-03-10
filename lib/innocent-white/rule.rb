@@ -245,12 +245,13 @@ module InnocentWhite
 
       # Make input or output auto variables.
       def make_io_auto_variables(type, exp, data, index)
-        name = exp.all? ? :make_io_auto_variables_by_all : :make_io_auto_variables_by_exist
+        name = :make_io_auto_variables_by_all if exp.all?
+        name = :make_io_auto_variables_by_each if exp.each?
         method(name).call(type, exp, data, index)
       end
 
       # Make input or output auto variables for 'exist' modified data name expression.
-      def make_io_auto_variables_by_exist(type, exp, data, index)
+      def make_io_auto_variables_by_each(type, exp, data, index)
         prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
         @variable_table[prefix] = data.name
         @variable_table["#{prefix}.URI"] = data.uri
@@ -573,8 +574,8 @@ module InnocentWhite
 
     class RootRule < FlowRule
       def initialize(rule_path)
-        inputs  = [DataNameExp.all("*")]
-        outputs = [DataNameExp.all("*").except("{$INPUT[1]}")]
+        inputs  = [DataExp.all("*")]
+        outputs = [DataExp.all("*").except("{$INPUT[1]}")]
         content = [FlowParts::Call.new(rule_path)]
         super(nil, inputs, outputs, [], content)
         @path = 'root'

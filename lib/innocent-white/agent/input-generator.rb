@@ -2,7 +2,6 @@ require 'innocent-white/common'
 require 'innocent-white/agent'
 require 'innocent-white/uri'
 require 'innocent-white/resource'
-require 'innocent-white/data-name-exp'
 
 module InnocentWhite
   module Agent
@@ -28,7 +27,7 @@ module InnocentWhite
         end
 
         def generate
-          name = DataNameExp[@name].generate(@name_range.next)
+          name = DataExp.new(@name).generate(@name_range.next)
           uri = @base_uri + "./input/#{name}"
           Resource[uri].create(@value_range.next)
           InputData.new(name, uri.to_s)
