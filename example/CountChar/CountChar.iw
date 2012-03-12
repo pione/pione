@@ -1,60 +1,47 @@
-# -*- coding: utf-8 -*-
+Flow 'main'
+  input-all '*.txt'.except('summary.txt')
+  output 'summary.txt'
+Define--------------------------------------------------------------------------
+rule 'convert_to_utf8'
+rule 'count_char'.sync
+rule 'summarize'
+-----------------------------------------------------------------------------End
 
-InnocentWhite::Document.new do
-  # Main flow
-  flow('main') do
-    inputs  all('*.txt').except('summary.txt')
-    outputs 'summary.txt'
-    content [ call("convert_to_utf8"),
-              call("count_char").with_sync,
-              call("summarize") ]
-  end
+Action 'convert_to_utf8'
+  input '*.txt'.except('summary.txt')
+  output '{$INPUT[1]}.utf8'
+Shell---------------------------------------------------------------------------
+nkf -w {$INPUT[1]} > {$OUTPUT[1]}
+-----------------------------------------------------------------------------End
 
-  # Convert to UTF-8 by nkf
-  action('convert_to_utf8') do
-    inputs  each('*.txt').except('summary.txt')
-    outputs '{$INPUT[1]}.utf8'
-    content 'nkf -w {$INPUT[1]} > {$OUTPUT[1]}'
-  end
+Action 'count_char'
+  input '*.utf8'
+  output '{$INPUT[1].*}.count'.stdout
+Ruby----------------------------------------------------------------------------
+table = {}
+text = File.open("{$INPUT[1]}").read
+text.split("").each do |c|
+  table[c] =  table.has_key?(c) ? table[c].succ : 1
+end
+table.each do |key, val|
+  puts "#{key.inspect[1..-2]}:#{val}"
+end
+-----------------------------------------------------------------------------End
 
-  # Count characters
-  action('count_char') do
-    inputs  '*.utf8'
-    outputs stdout('{$INPUT[1].MATCH[1]}.count')
-    content ruby(<<-'__CODE__', 'utf-8')
-      table = {}
-      text = File.open("{$INPUT[1]}").read
-      text.split("").each do |c|
-        table[c] =  table.has_key?(c) ? table[c].succ : 1
-      end
-      table.each do |key, val|
-        puts "#{key.inspect[1..-2]}:#{val}"
-      end
-    __CODE__
-  end
-
-  # Summarize characters
-  action('summarize') do
-    inputs  all('*.count')
-    outputs stdout('summary.txt')
-    content ruby(<<-'__CODE__', 'utf-8')
-      table = {}
-      "{$INPUT[1]}".split(":").each do |path|
-        File.read(path).split("\n").map do |line|
-          c, number = line.split(":")
-          table[c] = (table.has_key?(c) ? table[c] : 0) + number.to_i
-        end
-      end
-
-      File.open("{$OUTPUT[1]}", "w+") do |out|
-        table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
-          puts "#{key.inspect[1..-2]}:#{table[key]}"
-        end
-      end
-    __CODE__
+Action 'summarize'
+  input-all '*.count'
+  output 'summary.txt'.stdout
+Ruby----------------------------------------------------------------------------
+table = {}
+"{$INPUT[1]}".split(":").each do |path|
+  File.read(path).split("\n").map do |line|
+    c, number = line.split(":")
+    table[c] = (table.has_key?(c) ? table[c] : 0) + number.to_i
   end
 end
-
-# Local Variables:
-# mode: ruby
-# End:
+File.open("{$OUTPUT[1]}", "w+") do |out|
+  table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
+    puts "#{key.inspect[1..-2]}:#{table[key]}"
+  end
+end
+-----------------------------------------------------------------------------End

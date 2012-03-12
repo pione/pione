@@ -97,8 +97,8 @@ describe 'Rule' do
         end
 
         action('rule_sh_2') do
-          inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
-          outputs stdout('{$INPUT[1].MATCH[1]}.c')
+          inputs  '*.a', '{$INPUT[1].*}.b'
+          outputs '{$INPUT[1].*}.c'.stdout
           content <<-__CODE__
             VAL1=`cat {$INPUT[1]}`;
             VAL2=`cat {$INPUT[2]}`;
@@ -107,8 +107,8 @@ describe 'Rule' do
         end
 
         action('rule_ruby') do
-          inputs  '*.a', '{$INPUT[1].MATCH[1]}.b'
-          outputs stdout('{$INPUT[1].MATCH[1]}.c')
+          inputs  '*.a', '{$INPUT[1].*}.b'
+          outputs '{$INPUT[1].*}.c'.stdout
           content ruby(<<-'__CODE__')
             val1 = File.read('{$INPUT[1]}').to_i
             val2 = File.read('{$INPUT[2]}').to_i

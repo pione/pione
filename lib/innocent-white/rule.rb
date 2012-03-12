@@ -116,7 +116,7 @@ module InnocentWhite
       # Make auto-variables by the name modified 'all'.
       def make_auto_variables_by_all(name, index, tuples, var)
         new_var = var.clone
-        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(':')
+        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(DataExp::SEPARATOR)
         return new_var
       end
 
@@ -127,6 +127,7 @@ module InnocentWhite
         new_var["INPUT[#{index}]"] = tuple.name
         new_var["INPUT[#{index}].URI"] = tuple.uri
         md.to_a.each_with_index do |s, i|
+          new_var["INPUT[#{index}].*"] = s if i==1
           new_var["INPUT[#{index}].MATCH[#{i}]"] = s
         end
         return new_var
@@ -288,10 +289,10 @@ module InnocentWhite
       end
     end
 
-    module FlowParts
+    module FlowElement
       class Base < InnocentWhiteObject; end
 
-      class Call < Base
+      class CallRule < Base
         attr_reader :rule_path
 
         def initialize(rule_path, sync_mode=false)
@@ -301,7 +302,8 @@ module InnocentWhite
 
         # Return sync mode version caller.
         def with_sync
-          self.class.new(@rule_path, true)
+          @sync_mode = true
+          return self
         end
 
         # Return true if sync mode.
@@ -576,7 +578,7 @@ module InnocentWhite
       def initialize(rule_path)
         inputs  = [DataExp.all("*")]
         outputs = [DataExp.all("*").except("{$INPUT[1]}")]
-        content = [FlowParts::Call.new(rule_path)]
+        content = [FlowElement::CallRule.new(rule_path)]
         super(nil, inputs, outputs, [], content)
         @path = 'root'
         @domain = '/root'

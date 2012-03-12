@@ -27,4 +27,25 @@ describe 'Document' do
     flow.inputs.should  == [ DataExp['*.a'] ]
     flow.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
   end
+
+  it 'should read document' do
+    document = <<CODE
+Flow Main
+  input-all '*.txt'.except('summary.txt')
+  output 'summary.txt'
+  param $ConvertCharSet
+Define--------------------------------------------------------------------------
+if({$ConvertCharset}) {
+  rule NKF.params("-w")
+}
+rule CountChar.sync
+rule Summarize
+-----------------------------------------------------------------------------End
+CODE
+    tree = DocumentParser.new.parse(document)
+    result = SyntaxTreeTransform.new.apply(tree)
+    p tree
+    p result
+    p SyntaxTreeTransform.new.apply({:name => 213, :x => 33})
+  end
 end
