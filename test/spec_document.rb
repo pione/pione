@@ -1,4 +1,5 @@
 require 'innocent-white/test-util'
+require 'parslet/convenience'
 
 describe 'Document' do
   it 'should define action rule' do
@@ -30,11 +31,11 @@ describe 'Document' do
 
   it 'should read document' do
     document = <<CODE
-Flow Main
+Rule Main
   input-all '*.txt'.except('summary.txt')
   output 'summary.txt'
   param $ConvertCharSet
-Define--------------------------------------------------------------------------
+Flow---------------------------------------------------------------------------
 if({$ConvertCharset}) {
   rule NKF.params("-w")
 }
@@ -42,10 +43,14 @@ rule CountChar.sync
 rule Summarize
 -----------------------------------------------------------------------------End
 CODE
-    tree = DocumentParser.new.parse(document)
-    result = SyntaxTreeTransform.new.apply(tree)
-    p tree
-    p result
-    p SyntaxTreeTransform.new.apply({:name => 213, :x => 33})
+    parser = DocumentParser.new
+    parsed = begin
+               parser.parse(document)
+             rescue Parslet::ParseFailed => error
+               puts error, parser.root.error_tree
+             end
+    result = SyntaxTreeTransform.new.apply(parsed)
+    #p result
+    #p SyntaxTreeTransform.new.apply({:name => 213, :x => 33})
   end
 end

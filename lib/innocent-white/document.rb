@@ -117,41 +117,31 @@ module InnocentWhite
     }
 
     rule(:rule_definition) {
-      (flow_rule | action_rule)
-    }
-
-    rule(:flow_rule) {
-      flow_rule_header.as(:flow_rule) >>
+      rule_header.as(:rule_header) >>
       input_line.repeat(1).as(:inputs) >>
       output_line.repeat(1).as(:outputs) >>
       param_line.repeat.as(:params) >>
-      flow_block.as(:flow_block) >>
+      block.as(:block) >>
       any.repeat.as(:rest)
-    }
-
-    rule(:action_rule) {
-      action_rule_header >>
-      input_line.repeat(1) >>
-      output_line.repeat(1) >>
-      param_line.repeat >>
-      action_block
     }
 
     rule(:line_end) {
       space? >> str("\n") | any.absent?
     }
 
-    rule(:flow_rule_header) {
-      str('Flow') >> space >> name >> line_end
+    rule(:rule_header) {
+      str('Rule') >> space >> rule_name >> line_end
     }
 
-    rule(:action_rule_header) {
-      str('Action') >> space >> name >> line_end
+    rule(:rule_name) {
+      (match("[A-Z\u4E00-\u9FFF]") >>
+       match("[_a-zA-Z\u4E00-\u9FFF]").repeat
+       ).as(:rule_name)
     }
 
-    rule(:name) {
+    rule(:data_name) {
       str('\'') >>
-      (str('\\') >> any | (str('\'').absent? >> any)).repeat.as(:name) >>
+      (str('\\') >> any | (str('\'').absent? >> any)).repeat.as(:data_name) >>
       str('\'')
     }
 
@@ -172,7 +162,15 @@ module InnocentWhite
     }
 
     rule(:expr) {
-      (name >> attribution.repeat.as(:attribution)).as(:expr)
+      data_expr | rule_expr
+    }
+
+    rule(:data_expr) {
+      (data_name >> attribution.repeat.as(:attribution)).as(:data_expr)
+    }
+
+    rule(:rule_expr) {
+      (rule_name >> attribution.repeat.as(:attribution)).as(:rule_expr)
     }
 
     rule(:attribution) {
@@ -218,23 +216,31 @@ module InnocentWhite
     }
 
     rule(:param_line) {
-      str('param') >> space >> param_name >> line_end
+      space? >> str('param') >> space >> param_name >> line_end
     }
 
     rule(:param_name) {
-      match('[A-Z_]').repeat(1)
+      str('$') >> match('[a-zA-Z_\u4E00-\u9FFF]').repeat(1).as(:param_name)
     }
 
-    rule(:block_begin_line) {
-      match('[A-Z]') >> match('[A-Za-z]').repeat >> str('-').repeat(2) >> line_end
+    rule(:flow_block_begin_line) {
+      str('Flow') >> str('-').repeat(3) >> line_end
+    }
+
+    rule(:action_block_begin_line) {
+      str('Action') >> str('-').repeat(3) >> line_end
     }
 
     rule(:block_end_line) {
-      str('-').repeat(2) >> match('[A-Z]') >> match('[A-Za-z]').repeat >> line_end
+      str('-').repeat(3) >> str('End') >> line_end
+    }
+
+    rule(:block) {
+      flow_block | action_block
     }
 
     rule(:flow_block) {
-      block_begin_line >>
+      flow_block_begin_line >>
       flow_element.repeat >>
       block_end_line
     }
@@ -244,11 +250,13 @@ module InnocentWhite
     }
 
     rule(:call_rule_line) {
-      space? >> str('rule') >> space? >> expr >> line_end
+      space? >> str('rule') >> space? >> rule_expr >> line_end
     }
 
     rule(:action_block) {
-      block_begin_line >> any_chars >> block_end_line
+      action_block_begin_line >>
+      any_chars >>
+      block_end_line
     }
 
     rule(:space) {
