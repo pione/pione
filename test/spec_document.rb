@@ -1,7 +1,97 @@
+# -*- coding: utf-8 -*-
 require 'innocent-white/test-util'
 require 'parslet/convenience'
 
 describe 'Document' do
+  before do
+    @parser = DocumentParser.new
+    @transform = SyntaxTreeTransform.new
+  end
+
+  it 'should get input line' do
+    line = "input 'test.a'"
+    input = @transform.apply(@parser.input_line.parse(line))
+    input.name.should == "test.a"
+    input.should.each
+    input.exceptions.should.empty
+  end
+
+  it 'should get input line with an exception' do
+    line = "input '*.a'.except('test.a')"
+    input = @transform.apply(@parser.input_line.parse(line))
+    input.name.should == "*.a"
+    input.should.each
+    input.exceptions.should == [DataExp.new("test.a")]
+  end
+
+  it 'should get input line with exceptions' do
+    line = "input '*.a'.except('test.a', 'test.b')"
+    input = @transform.apply(@parser.input_line.parse(line))
+    input.exceptions.should == [DataExp.new("test.a"), DataExp.new("test.b")]
+  end
+
+  it 'should get input line with all modifier' do
+    line = "input-all '*.a'"
+    input = @transform.apply(@parser.input_line.parse(line))
+    input.name.should == "*.a"
+    input.should.all
+    input.exceptions.should.empty
+  end
+
+  it 'should get output line' do
+    line = "output 'test.a'"
+    output = @transform.apply(@parser.output_line.parse(line))
+    output.name.should == "test.a"
+    output.should.each
+    output.exceptions.should.empty
+  end
+
+  it 'should get output line with an exception' do
+    line = "output '*.a'.except('test.a')"
+    output = @transform.apply(@parser.output_line.parse(line))
+    output.name.should == "*.a"
+    output.should.each
+    output.exceptions.should == [DataExp.new("test.a")]
+  end
+
+  it 'should get output line with exceptions' do
+    line = "output '*.a'.except('test.a', 'test.b')"
+    output = @transform.apply(@parser.output_line.parse(line))
+    output.exceptions.should == [DataExp.new("test.a"), DataExp.new("test.b")]
+  end
+
+  it 'should get output line with all modifier' do
+    line = "output-all '*.a'"
+    output = @transform.apply(@parser.output_line.parse(line))
+    output.name.should == "*.a"
+    output.should.all
+    output.exceptions.should.empty
+  end
+
+  it 'should get param line' do
+    line = "param $ABC"
+    param = @transform.apply(@parser.param_line.parse(line))
+    param.should == "ABC"
+  end
+
+  it 'should get param line with Japanese' do
+    line = "param $あいうえお"
+    param = @transform.apply(@parser.param_line.parse(line))
+    param.should == "あいうえお"
+  end
+
+  it 'should get flow block' do
+    lines = <<-BLOCK
+Flow---
+rule TestA
+---End
+BLOCK
+    block = @transform.apply(@parser.flow_block.parse(lines))
+    block.first.should.kind_of(Rule::FlowElement::CallRule)
+    block.first.rule_path == "TestA"
+    block.first.should.not.sync_mode
+  end
+
   it 'should define action rule' do
     action = Document.new do
       action('test') do
@@ -36,9 +126,9 @@ Rule Main
   output 'summary.txt'
   param $ConvertCharSet
 Flow---------------------------------------------------------------------------
-if({$ConvertCharset}) {
+if ({$ConvertCharset})
   rule NKF.params("-w")
-}
+end
 rule CountChar.sync
 rule Summarize
 -----------------------------------------------------------------------------End

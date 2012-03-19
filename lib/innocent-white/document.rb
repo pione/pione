@@ -112,26 +112,44 @@ module InnocentWhite
   class DocumentParser < Parslet::Parser
     root(:rule_definitions)
 
-    rule(:rule_definitions) {
-      (space? >> rule_definition.as(:rule) >> space?).repeat
-    }
+    #
+    # common
+    #
 
-    rule(:rule_definition) {
-      rule_header.as(:rule_header) >>
-      input_line.repeat(1).as(:inputs) >>
-      output_line.repeat(1).as(:outputs) >>
-      param_line.repeat.as(:params) >>
-      block.as(:block) >>
-      any.repeat.as(:rest)
-    }
+    rule(:line_end) { space? >> str("\n") | any.absent? }
+    rule(:dot) { str('.') }
+    rule(:comma) { str(',') }
+    rule(:lparen) { str('(') }
+    rule(:rparen) { str(')') }
+    rule(:lbrace) { str('{') }
+    rule(:rbrace) { str('}') }
+    rule(:space) { match("[ \t]").repeat(1) }
+    rule(:space?) { space.maybe }
 
-    rule(:line_end) {
-      space? >> str("\n") | any.absent?
-    }
+    #
+    # keyword
+    #
 
-    rule(:rule_header) {
-      str('Rule') >> space >> rule_name >> line_end
+    rule(:keyword_rule_header) { str('Rule') }
+    rule(:keyword_input) {
+      (str('input-all') | str('input')).as(:keyword_input)
     }
+    rule(:keyword_output) {
+      (str('output-all') | str('output')).as(:keyword_output)
+    }
+    rule(:keyword_param) { str('param') }
+    rule(:keyword_flow_block_begin) { str('Flow') }
+    rule(:keyword_action_block_begin) { str('Action') }
+    rule(:keyword_block_end) { str('End') }
+    rule(:keyword_call_rule) { str('rule') }
+    rule(:keyword_if) { str('if') }
+    rule(:keyword_case) { str('case') }
+    rule(:keyword_when) { str('when') }
+    rule(:keyword_end) { str('end') }
+
+    #
+    # literal
+    #
 
     rule(:rule_name) {
       (match("[A-Z\u4E00-\u9FFF]") >>
@@ -149,28 +167,65 @@ module InnocentWhite
       match("[a-z_]").repeat(1).as(:identifier)
     }
 
+    rule(:variable) {
+      str('$') >> ((space | line_end).absent? >> any).repeat(1).as(:variable)
+    }
+
+    #
+    # rule
+    #
+
+    rule(:rule_definitions) {
+      (space? >> rule_definition.as(:rule) >> space?).repeat
+    }
+
+    rule(:rule_definition) {
+      rule_header.as(:rule_header) >>
+      input_line.repeat(1).as(:inputs) >>
+      output_line.repeat(1).as(:outputs) >>
+      param_line.repeat.as(:params) >>
+      block.as(:block) >>
+      any.repeat.as(:rest)
+    }
+
+    rule(:rule_header) {
+      keyword_rule_header >> space >> rule_name >> line_end
+    }
+
+    #
+    # input / output
+    #
+
     rule(:input_line) {
       (space? >>
-       (str('input-all') | str('input')).as(:type) >>
+       keyword_input >>
        space >>
-       expr.as(:data_exp) >>
+       data_expr.as(:data_expr) >>
        line_end).as(:input_line)
     }
 
     rule(:output_line) {
-      space? >> str('output') >> space >> expr >> line_end
+      (space? >>
+       keyword_output >>
+       space >>
+       data_expr.as(:data_expr) >>
+       line_end).as(:output_line)
     }
+
+    #
+    # data_expr
+    #
 
     rule(:expr) {
       data_expr | rule_expr
     }
 
     rule(:data_expr) {
-      (data_name >> attribution.repeat.as(:attribution)).as(:data_expr)
+      data_name >> attribution.repeat.as(:attributions)
     }
 
     rule(:rule_expr) {
-      (rule_name >> attribution.repeat.as(:attribution)).as(:rule_expr)
+      rule_name >> attribution.repeat.as(:attributions)
     }
 
     rule(:attribution) {
@@ -179,61 +234,34 @@ module InnocentWhite
       attribution_arguments.maybe
     }
 
-    rule(:dot) {
-      str('.')
-    }
-
-    rule(:comma) {
-      str(',')
-    }
-
     rule(:attribution_arguments) {
-      begin_arguments >>
+      lparen >>
       space? >>
-      attribution_argument_elements.repeat.as(:arguments) >>
+      attribution_argument_element.repeat.as(:arguments) >>
       space? >>
-      end_arguments
+      rparen
     }
 
-    rule(:begin_arguments) {
-      str('(')
-    }
-
-    rule(:attribution_argument_elements) {
-      attribution_argument_element >> attribution_argument_element_rest.repeat
-    }
 
     rule(:attribution_argument_element) {
-      expr
+      expr >> attribution_argument_element_rest.repeat
     }
 
     rule(:attribution_argument_element_rest) {
       space? >> comma >> space? >> expr
     }
 
-    rule(:end_arguments) {
-      str(')')
-    }
+    #
+    # param
+    #
 
     rule(:param_line) {
-      space? >> str('param') >> space >> param_name >> line_end
+      (space? >> keyword_param >> space >> variable >> line_end).as(:param_line)
     }
 
-    rule(:param_name) {
-      str('$') >> match('[a-zA-Z_\u4E00-\u9FFF]').repeat(1).as(:param_name)
-    }
-
-    rule(:flow_block_begin_line) {
-      str('Flow') >> str('-').repeat(3) >> line_end
-    }
-
-    rule(:action_block_begin_line) {
-      str('Action') >> str('-').repeat(3) >> line_end
-    }
-
-    rule(:block_end_line) {
-      str('-').repeat(3) >> str('End') >> line_end
-    }
+    #
+    # block
+    #
 
     rule(:block) {
       flow_block | action_block
@@ -245,27 +273,66 @@ module InnocentWhite
       block_end_line
     }
 
-    rule(:flow_element) {
-      call_rule_line.as(:call_rule)
-    }
-
-    rule(:call_rule_line) {
-      space? >> str('rule') >> space? >> rule_expr >> line_end
-    }
-
     rule(:action_block) {
       action_block_begin_line >>
-      any_chars >>
+      any.repeat >>
       block_end_line
     }
 
-    rule(:space) {
-      match("[ \t]").repeat(1)
+    rule(:flow_block_begin_line) {
+      keyword_flow_block_begin >> str('-').repeat(3) >> line_end
     }
 
-    rule(:space?) {
-      space.maybe
+    rule(:action_block_begin_line) {
+      keyword_action_block_begin >> str('-').repeat(3) >> line_end
     }
+
+    rule(:block_end_line) {
+      str('-').repeat(3) >> keyword_block_end >> line_end
+    }
+
+    #
+    # flow element
+    #
+
+    rule(:flow_element) {
+      call_rule_line.as(:call_rule) |
+      if_lines
+    }
+
+    rule(:call_rule_line) {
+      space? >> keyword_call_rule >> space? >> rule_expr >> line_end
+    }
+
+    rule(:if_lines) {
+      space? >>
+      keyword_if >>
+      if_condition >>
+      lbrace >>
+      flow_element.repeat(1) >>
+      if_line_end
+    }
+
+    rule(:if_block_begin) {
+      space? >>
+      keyword_if >>
+      if_condition >>
+      lbrace >>
+      line_end
+    }
+
+    rule(:if_condition) {
+      lparen >> ref_variable >> rparen
+    }
+
+    rule(:ref_variable) {
+      lbrace >> variable >> rbrace
+    }
+
+    rule(:if_line_end) {
+      space? >> keyword_end >> line_end
+    }
+
   end
 
   class SyntaxTreeTransform < Parslet::Transform
@@ -279,16 +346,43 @@ module InnocentWhite
       end
     end
 
-    rule(:name => simple(:s)) { s.to_s }
+    #
+    # input / output
+    #
 
-    rule(:name => simple(:s), :x => simple(:x)) { s + x }
+    rule(:input_line => subtree(:input)) {
+      data_expr = input[:data_expr]
+      if input[:keyword_input] == "input-all"
+        data_expr.all
+      else
+        data_expr
+      end
+    }
 
-    rule(:expr => subtree(:x)) { x }
+    rule(:output_line => subtree(:output)) {
+      data_expr = output[:data_expr]
+      if output[:keyword_output] == "output-all"
+        data_expr.all
+      else
+        data_expr
+      end
+    }
 
-    rule(:data_exp => subtree(:x)) {
-      puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-      elt = DataExp.new(expr[:name].to_s, @modifier)
-      expr[:attribution].each do |attr|
+    #
+    # param
+    #
+
+    rule(:param_line => subtree(:param)) {
+      param[:variable].to_s
+    }
+
+    #
+    # data_expr
+    #
+
+    rule(:data_name => simple(:name), :attributions => subtree(:attributions)) {
+      elt = DataExp.new(name.to_s)
+      attributions.each do |attr|
         identifier = attr[:identifier]
         arguments = attr[:arguments]
         case identifier.to_s
@@ -301,27 +395,14 @@ module InnocentWhite
       elt
     }
 
-    rule(:input_line => {:type => simple(:input), :data_exp => simple(:data)}) {
-      @modifier = input.to_s == "input-all" ? :all : :each
-      p data
-      # expr = input[:expr]
-      # elt = DataExp.new(expr[:name].to_s, @modifier)
-      # expr[:attribution].each do |attr|
-      #   identifier = attr[:identifier]
-      #   arguments = attr[:arguments]
-      #   case identifier.to_s
-      #   when "except"
-      #     elt.except(*arguments)
-      #   else
-      #     raise UnknownAttribution.new('input', identifier)
-      #   end
-      # end
-      # elt
-    }
+    #
+    # flow block
+    #
 
     rule(:call_rule => subtree(:expr)) {
-      elt = Rule::FlowElement::CallRule.new(expr[:name].to_s)
-      expr[:attribution].each do |attr|
+      rule_name = expr[:rule_name].to_s
+      elt = Rule::FlowElement::CallRule.new(rule_name)
+      expr[:attributions].each do |attr|
         identifier = attr[:identifier]
         case identifier.to_s
         when "sync"

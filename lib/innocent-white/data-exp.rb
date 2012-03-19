@@ -138,7 +138,9 @@ module InnocentWhite
 
     # Set a exception and return self.
     def except(*names)
-      @exceptions += names.map{|name| DataExp.new(name)}
+      @exceptions += names.map do |name|
+        name.kind_of?(DataExp) ? name : DataExp.new(name)
+      end
       return self
     end
 
