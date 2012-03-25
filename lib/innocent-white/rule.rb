@@ -294,10 +294,12 @@ module InnocentWhite
 
       class CallRule < Base
         attr_reader :rule_path
+        attr_accessor :params
 
         def initialize(rule_path, sync_mode=false)
           @rule_path = rule_path
           @sync_mode = sync_mode
+          @params = nil
         end
 
         # Return sync mode version caller.
@@ -314,8 +316,21 @@ module InnocentWhite
 
       class Condition
         attr_reader :condition
-        attr_reader :true_expr
-        attr_reader :false_expr
+        attr_reader :if_true
+        attr_reader :if_false
+
+        def initialize(variable, blocks)
+          @variable = variable
+          @blocks = blocks
+        end
+
+        def block(value)
+          block = @blocks.find {|key, val| key === value}
+          block = block[1] unless block.nil?
+          block = @blocks[:default] if block.nil?
+          block = [] if block.nil?
+          return block
+        end
       end
 
       class Assignment

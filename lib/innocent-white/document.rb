@@ -126,6 +126,15 @@ module InnocentWhite
     rule(:space) { match("[ \t]").repeat(1) }
     rule(:space?) { space.maybe }
 
+    rule(:symbols) {
+      dot |
+      comma |
+      lparen |
+      rparen |
+      lbrace |
+      rbrace
+    }
+
     #
     # keyword
     #
@@ -143,6 +152,7 @@ module InnocentWhite
     rule(:keyword_block_end) { str('End') }
     rule(:keyword_call_rule) { str('rule') }
     rule(:keyword_if) { str('if') }
+    rule(:keyword_else) { str('else') }
     rule(:keyword_case) { str('case') }
     rule(:keyword_when) { str('when') }
     rule(:keyword_end) { str('end') }
@@ -152,8 +162,8 @@ module InnocentWhite
     #
 
     rule(:rule_name) {
-      (match("[A-Z\u4E00-\u9FFF]") >>
-       match("[_a-zA-Z\u4E00-\u9FFF]").repeat
+      (match("[A-Z_]") >>
+       ((space | dot | line_end).absent? >> any).repeat
        ).as(:rule_name)
     }
 
@@ -163,12 +173,18 @@ module InnocentWhite
       str('\'')
     }
 
+    rule(:string) {
+      str('"') >>
+      (str('\\') >> any | (str('"').absent? >> any)).repeat.as(:string) >>
+      str('"')
+    }
+
     rule(:identifier) {
       match("[a-z_]").repeat(1).as(:identifier)
     }
 
     rule(:variable) {
-      str('$') >> ((space | line_end).absent? >> any).repeat(1).as(:variable)
+      str('$') >> ((space | symbols | line_end).absent? >> any).repeat(1).as(:variable)
     }
 
     #
@@ -176,16 +192,17 @@ module InnocentWhite
     #
 
     rule(:rule_definitions) {
-      (space? >> rule_definition.as(:rule) >> space?).repeat
+      (space? >> rule_definition >> space?).repeat
     }
 
     rule(:rule_definition) {
-      rule_header.as(:rule_header) >>
-      input_line.repeat(1).as(:inputs) >>
-      output_line.repeat(1).as(:outputs) >>
-      param_line.repeat.as(:params) >>
-      block.as(:block) >>
-      any.repeat.as(:rest)
+      (rule_header.as(:rule_header) >>
+       input_line.repeat(1).as(:inputs) >>
+       output_line.repeat(1).as(:outputs) >>
+       param_line.repeat.as(:params) >>
+       block >>
+       any.repeat.as(:rest)
+       ).as(:rule)
     }
 
     rule(:rule_header) {
@@ -217,7 +234,7 @@ module InnocentWhite
     #
 
     rule(:expr) {
-      data_expr | rule_expr
+      data_expr | rule_expr | string
     }
 
     rule(:data_expr) {
@@ -268,15 +285,17 @@ module InnocentWhite
     }
 
     rule(:flow_block) {
-      flow_block_begin_line >>
-      flow_element.repeat >>
-      block_end_line
+      (flow_block_begin_line >>
+       flow_element.repeat >>
+       block_end_line
+       ).as(:flow_block)
     }
 
     rule(:action_block) {
-      action_block_begin_line >>
-      any.repeat >>
-      block_end_line
+      (action_block_begin_line >>
+       any.repeat >>
+       block_end_line
+       ).as(:action_block)
     }
 
     rule(:flow_block_begin_line) {
@@ -296,40 +315,52 @@ module InnocentWhite
     #
 
     rule(:flow_element) {
-      call_rule_line.as(:call_rule) |
-      if_lines
+      call_rule_line |
+      condition_block
     }
 
     rule(:call_rule_line) {
-      space? >> keyword_call_rule >> space? >> rule_expr >> line_end
+      (space? >>
+       keyword_call_rule >>
+       space? >>
+       rule_expr >>
+       line_end
+       ).as(:call_rule)
     }
 
-    rule(:if_lines) {
-      space? >>
-      keyword_if >>
-      if_condition >>
-      lbrace >>
-      flow_element.repeat(1) >>
-      if_line_end
+    rule(:condition_block) {
+      if_block
+    }
+
+    rule(:if_block) {
+      (if_block_begin >>
+       flow_element.repeat.as(:true_exprs) >>
+       if_block_else.maybe >>
+       if_block_end).as(:if_block)
     }
 
     rule(:if_block_begin) {
       space? >>
       keyword_if >>
+      space? >>
       if_condition >>
-      lbrace >>
       line_end
     }
 
     rule(:if_condition) {
-      lparen >> ref_variable >> rparen
+      lparen >> space? >> ref_variable >> space? >> rparen
     }
 
     rule(:ref_variable) {
       lbrace >> variable >> rbrace
     }
 
-    rule(:if_line_end) {
+    rule(:if_block_else) {
+      space? >> keyword_else >> line_end >>
+      flow_element.repeat.as(:false_exprs)
+    }
+
+    rule(:if_block_end) {
       space? >> keyword_end >> line_end
     }
 
@@ -345,6 +376,28 @@ module InnocentWhite
         "Unknown identifier '#{@identifier}' in the context of #{@t}"
       end
     end
+
+    #
+    # common
+    #
+    rule(:string => simple(:s)) { s }
+
+    #
+    # rule
+    #
+    rule(:rule => subtree(:ruledef)) {
+      name = ruledef[:rule_header][:rule_name]
+      inputs = ruledef[:inputs]
+      outputs = ruledef[:outputs]
+      params = ruledef[:params]
+      flow_block = ruledef[:flow_block]
+      action_block = ruledef[:action_block]
+      if flow_block
+        Rule::FlowRule.new(name, inputs, outputs, params, flow_block)
+      else
+        Rule::ActionRule.new(name, inputs, outputs, params, action_block)
+      end
+    }
 
     #
     # input / output
@@ -404,14 +457,29 @@ module InnocentWhite
       elt = Rule::FlowElement::CallRule.new(rule_name)
       expr[:attributions].each do |attr|
         identifier = attr[:identifier]
+        arguments = attr[:arguments]
         case identifier.to_s
         when "sync"
           elt.with_sync
+        when "params"
+          elt.params = arguments.map{|t| t.to_s}
         else
           raise UnknownAttribution.new('rule', identifier)
         end
       end
       elt
     }
+
+    #
+    # condition
+    #
+    rule(:if_block => subtree(:block)) {
+      variable = block[:variable].to_s
+      true_exprs = block[:true_exprs]
+      false_exprs = block[:false_exprs]
+      block = {true => true_exprs, false => false_exprs}
+      Rule::FlowElement::Condition.new(variable, block)
+    }
+
   end
 end

@@ -80,16 +80,95 @@ describe 'Document' do
     param.should == "あいうえお"
   end
 
-  it 'should get flow block' do
+  it 'should get a call rule element' do
+    line = "rule TestA"
+    elt = @transform.apply(@parser.call_rule_line.parse(line))
+    elt.should.kind_of(Rule::FlowElement::CallRule)
+    elt.rule_path.should == "TestA"
+    elt.should.not.sync_mode
+  end
+
+  it 'should get a call rule element with sync mode' do
+    line = "rule TestA.sync"
+    elt = @transform.apply(@parser.call_rule_line.parse(line))
+    elt.should.sync_mode
+  end
+
+  it 'should get flow elements' do
     lines = <<-BLOCK
 Flow---
 rule TestA
+rule TestB
 ---End
 BLOCK
-    block = @transform.apply(@parser.flow_block.parse(lines))
-    block.first.should.kind_of(Rule::FlowElement::CallRule)
-    block.first.rule_path == "TestA"
-    block.first.should.not.sync_mode
+    block = @transform.apply(@parser.flow_block.parse(lines))[:flow_block]
+    elt1 = block[0]
+    elt1.should.kind_of(Rule::FlowElement::CallRule)
+    elt1.rule_path.should == "TestA"
+    elt2 = block[1]
+    elt2.should.kind_of(Rule::FlowElement::CallRule)
+    elt2.rule_path.should == "TestB"
+  end
+
+  it 'should get a condition element' do
+    lines = <<BLOCK
+if ({$TEST})
+  rule TestA
+end
+BLOCK
+    elt = @transform.apply(@parser.if_block.parse(lines))
+    elt.should.kind_of(Rule::FlowElement::Condition)
+    elt.block(true).size.should == 1
+    elt.block(true).first.should.kind_of(Rule::FlowElement::CallRule)
+    elt.block(true).first.rule_path.should == "TestA"
+    elt.block(false).size.should == 0
+  end
+
+  it 'should get a condition element with an else block' do
+    lines = <<BLOCK
+if ({$TEST})
+  rule TestA
+else
+  rule TestB
+end
+BLOCK
+    elt = @transform.apply(@parser.if_block.parse(lines))
+    elt.should.kind_of(Rule::FlowElement::Condition)
+    elt.block(true).size.should == 1
+    elt.block(true).first.should.kind_of(Rule::FlowElement::CallRule)
+    elt.block(true).first.rule_path.should == "TestA"
+    elt.block(false).size.should == 1
+    elt.block(false).first.should.kind_of(Rule::FlowElement::CallRule)
+    elt.block(false).first.rule_path.should == "TestB"
+  end
+
+  it 'should get flow elements with condition' do
+    lines = <<BLOCK
+Flow---
+if ({$TEST})
+  rule TestA
+end
+rule TestB
+---End
+BLOCK
+    block = @transform.apply(@parser.flow_block.parse(lines))[:flow_block]
+    elt = block[0]
+    elt.should.kind_of(Rule::FlowElement::Condition)
+    elt.block(true).size.should == 1
+    elt.block(true).first.should.kind_of(Rule::FlowElement::CallRule)
+    elt.block(true).first.rule_path.should == "TestA"
+    elt.block(false).size.should == 0
+    elt = block[1]
+    elt.should.kind_of(Rule::FlowElement::CallRule)
+    elt.rule_path.should == "TestB"
+  end
+
+  it 'should get a call rule element with parameters' do
+    line = 'rule Test.params("a", "b", "c")'
+    elt = @transform.apply(@parser.call_rule_line.parse(line))
+    elt.should.kind_of(Rule::FlowElement::CallRule)
+    elt.rule_path.should == "Test"
+    elt.params.should == ["a", "b", "c"]
   end
 
   it 'should define action rule' do
@@ -133,14 +212,11 @@ rule CountChar.sync
 rule Summarize
 -----------------------------------------------------------------------------End
 CODE
-    parser = DocumentParser.new
-    parsed = begin
-               parser.parse(document)
-             rescue Parslet::ParseFailed => error
-               puts error, parser.root.error_tree
-             end
-    result = SyntaxTreeTransform.new.apply(parsed)
-    #p result
-    #p SyntaxTreeTransform.new.apply({:name => 213, :x => 33})
+    result = @transform.apply(@parser.parse(document)).first
+    result.should.kind_of(Rule::FlowRule)
+    result.inputs.size.should == 1
+    result.outputs.size.should == 1
+    result.params.should == ["ConvertCharSet"]
+    result.content.size.should == 3
   end
 end
