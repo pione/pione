@@ -316,8 +316,6 @@ module InnocentWhite
 
       class Condition
         attr_reader :condition
-        attr_reader :if_true
-        attr_reader :if_false
 
         def initialize(variable, blocks)
           @variable = variable
@@ -327,7 +325,7 @@ module InnocentWhite
         def block(value)
           block = @blocks.find {|key, val| key === value}
           block = block[1] unless block.nil?
-          block = @blocks[:default] if block.nil?
+          block = @blocks[:else] if block.nil?
           block = [] if block.nil?
           return block
         end

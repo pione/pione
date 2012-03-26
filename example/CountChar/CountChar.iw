@@ -1,23 +1,26 @@
-Flow 'main'
+Rule Main
   input-all '*.txt'.except('summary.txt')
   output 'summary.txt'
-Define--------------------------------------------------------------------------
-rule 'convert_to_utf8'
-rule 'count_char'.sync
-rule 'summarize'
+Flow----------------------------------------------------------------------------
+rule ConvertToUtf8.params("-w")
+rule CountChar.sync
+rule Summarize
 -----------------------------------------------------------------------------End
 
-Action 'convert_to_utf8'
+Rule ConvertToUtf8
   input '*.txt'.except('summary.txt')
   output '{$INPUT[1]}.utf8'
-Shell---------------------------------------------------------------------------
-nkf -w {$INPUT[1]} > {$OUTPUT[1]}
+  params $OPTIONS
+Action--------------------------------------------------------------------------
+nkf {$OPTIONS} {$INPUT[1]} > {$OUTPUT[1]}
 -----------------------------------------------------------------------------End
 
-Action 'count_char'
+Rule CountChar
   input '*.utf8'
   output '{$INPUT[1].*}.count'.stdout
-Ruby----------------------------------------------------------------------------
+Action---------------------------------------------------------------------------
+#!/usr/bin/env ruby
+# coding: utf-8
 table = {}
 text = File.open("{$INPUT[1]}").read
 text.split("").each do |c|
@@ -28,10 +31,12 @@ table.each do |key, val|
 end
 -----------------------------------------------------------------------------End
 
-Action 'summarize'
+Rule Summarize
   input-all '*.count'
   output 'summary.txt'.stdout
-Ruby----------------------------------------------------------------------------
+Action---------------------------------------------------------------------------
+#!/usr/bin/env ruby
+# coding: utf-8
 table = {}
 "{$INPUT[1]}".split(":").each do |path|
   File.read(path).split("\n").map do |line|

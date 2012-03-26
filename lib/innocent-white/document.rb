@@ -329,12 +329,13 @@ module InnocentWhite
     }
 
     rule(:condition_block) {
-      if_block
+      if_block |
+      case_block
     }
 
     rule(:if_block) {
       (if_block_begin >>
-       flow_element.repeat.as(:true_exprs) >>
+       flow_element.repeat.as(:true_elements) >>
        if_block_else.maybe >>
        if_block_end).as(:if_block)
     }
@@ -357,11 +358,40 @@ module InnocentWhite
 
     rule(:if_block_else) {
       space? >> keyword_else >> line_end >>
-      flow_element.repeat.as(:false_exprs)
+      flow_element.repeat.as(:else_elements)
     }
 
     rule(:if_block_end) {
       space? >> keyword_end >> line_end
+    }
+
+    rule(:case_block) {
+      (case_block_begin >>
+       when_block.repeat.as(:when_block) >>
+       if_block_else.maybe >>
+       if_block_end
+       ).as(:case_block)
+    }
+
+    rule(:case_block_begin) {
+      space? >>
+      keyword_case >>
+      space? >>
+      if_condition >>
+      line_end
+    }
+
+    rule(:when_block) {
+      when_block_begin >>
+      flow_element.repeat.as(:elements)
+    }
+
+    rule(:when_block_begin){
+      space? >>
+      keyword_when >>
+      space? >>
+      expr.as(:when) >>
+      line_end
     }
 
   end
@@ -475,11 +505,20 @@ module InnocentWhite
     #
     rule(:if_block => subtree(:block)) {
       variable = block[:variable].to_s
-      true_exprs = block[:true_exprs]
-      false_exprs = block[:false_exprs]
-      block = {true => true_exprs, false => false_exprs}
+      true_elements = block[:true_elements]
+      else_elements = block[:else_elements]
+      block = {true => true_elements, :else => else_elements}
       Rule::FlowElement::Condition.new(variable, block)
     }
 
+    rule(:case_block => subtree(:case_block)) {
+      variable = case_block[:variable].to_s
+      block = {}
+      case_block[:when_block].each do |t|
+        block[t[:when].to_s] = t[:elements]
+      end
+      block[:else] = case_block[:else_elements]
+      Rule::FlowElement::Condition.new(variable, block)
+    }
   end
 end

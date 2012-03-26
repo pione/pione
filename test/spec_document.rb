@@ -163,6 +163,30 @@ BLOCK
     elt.rule_path.should == "TestB"
   end
 
+  it 'should get a condition element from case block' do
+    lines = <<BLOCK
+case ({$TEST})
+when "a"
+  rule TestA
+when "b"
+  rule TestB
+else
+  rule TestOthers
+end
+BLOCK
+    elt = @transform.apply(@parser.case_block.parse(lines))
+    elt.should.kind_of(Rule::FlowElement::Condition)
+    elt.block("a").size.should == 1
+    elt.block("a").first.should.kind_of(Rule::FlowElement::CallRule)
+    elt.block("a").first.rule_path.should == "TestA"
+    elt.block("b").size.should == 1
+    elt.block("b").first.should.kind_of(Rule::FlowElement::CallRule)
+    elt.block("b").first.rule_path.should == "TestB"
+    elt.block("c").size.should == 1
+    elt.block("c").first.should.kind_of(Rule::FlowElement::CallRule)
+    elt.block("c").first.rule_path.should == "TestOthers"
+  end
+
   it 'should get a call rule element with parameters' do
     line = 'rule Test.params("a", "b", "c")'
     elt = @transform.apply(@parser.call_rule_line.parse(line))
