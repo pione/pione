@@ -72,14 +72,22 @@ module InnocentWhite
 
     # Load a document and return rule table.
     def self.load(file)
-      return eval(file.read)
+      parser = DocumentParser.new
+      transform = SyntaxTreeTransform.new
+      rules = transform.apply(parser.parse(file.read))
+      p rules
+      table = {}
+      rules.each do |rule|
+        table[rule.path] = rule
+      end
+      return new(table)
     end
 
     attr_reader :rules
 
-    def initialize(&b)
-      @rules = {}
-      instance_eval(&b)
+    def initialize(rules = {})
+      @rules = rules
+      instance_eval(&b) if block_given?
     end
 
     def flow(name, &b)
@@ -117,6 +125,8 @@ module InnocentWhite
     #
 
     rule(:line_end) { space? >> str("\n") | any.absent? }
+    rule(:empty_lines) { (space? >> str("\n")).repeat }
+    rule(:empty_lines?) { empty_lines.maybe }
     rule(:dot) { str('.') }
     rule(:comma) { str(',') }
     rule(:lparen) { str('(') }
@@ -192,7 +202,7 @@ module InnocentWhite
     #
 
     rule(:rule_definitions) {
-      (space? >> rule_definition >> space?).repeat
+      (space? >> rule_definition >> empty_lines?).repeat
     }
 
     rule(:rule_definition) {
@@ -200,8 +210,7 @@ module InnocentWhite
        input_line.repeat(1).as(:inputs) >>
        output_line.repeat(1).as(:outputs) >>
        param_line.repeat.as(:params) >>
-       block >>
-       any.repeat.as(:rest)
+       block
        ).as(:rule)
     }
 
@@ -293,7 +302,7 @@ module InnocentWhite
 
     rule(:action_block) {
       (action_block_begin_line >>
-       any.repeat >>
+       (block_end_line.absent? >> any).repeat.as(:body) >>
        block_end_line
        ).as(:action_block)
     }
@@ -416,7 +425,7 @@ module InnocentWhite
     # rule
     #
     rule(:rule => subtree(:ruledef)) {
-      name = ruledef[:rule_header][:rule_name]
+      name = ruledef[:rule_header][:rule_name].to_s
       inputs = ruledef[:inputs]
       outputs = ruledef[:outputs]
       params = ruledef[:params]
@@ -425,7 +434,8 @@ module InnocentWhite
       if flow_block
         Rule::FlowRule.new(name, inputs, outputs, params, flow_block)
       else
-        Rule::ActionRule.new(name, inputs, outputs, params, action_block)
+        body = action_block[:body].to_s
+        Rule::ActionRule.new(name, inputs, outputs, params, body)
       end
     }
 
@@ -493,6 +503,8 @@ module InnocentWhite
           elt.with_sync
         when "params"
           elt.params = arguments.map{|t| t.to_s}
+        when "stdout"
+          elt.stdout
         else
           raise UnknownAttribution.new('rule', identifier)
         end

@@ -312,7 +312,8 @@ describe 'CountChar' do
   before do
     @ts_server = create_remote_tuple_space_server
     @doc = Document.load(File.open('example/CountChar/CountChar.iw'))
-    @rule = @doc['main']
+    p @doc
+    @rule = @doc['Main']
 
     rule_loader = Agent[:rule_provider].start(tuple_space_server)
     rule_loader.read_document(@doc)

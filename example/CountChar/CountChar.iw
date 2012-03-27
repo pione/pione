@@ -10,7 +10,7 @@ rule Summarize
 Rule ConvertToUtf8
   input '*.txt'.except('summary.txt')
   output '{$INPUT[1]}.utf8'
-  params $OPTIONS
+  param $OPTIONS
 Action--------------------------------------------------------------------------
 nkf {$OPTIONS} {$INPUT[1]} > {$OUTPUT[1]}
 -----------------------------------------------------------------------------End

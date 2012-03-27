@@ -196,30 +196,59 @@ BLOCK
   end
 
   it 'should define action rule' do
-    action = Document.new do
-      action('test') do
-        inputs  '*.a'
-        outputs '{$INPUT[1].MATCH[1]}.b'
-        content 'echo "test" > {$OUTPUT[1].NAME}'
-      end
-    end['test']
+    document = <<CODE
+Rule Test
+  input  '*.a'
+  output '{$INPUT[1].MATCH[1]}.b'
+Action---
+echo "test" > {$OUTPUT[1].NAME}
+---End
+CODE
+    action = @transform.apply(@parser.parse(document)).first
     action.should.be.kind_of Rule::ActionRule
     action.inputs.should  == [ DataExp['*.a'] ]
     action.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
+    action.content.should == "echo \"test\" > {$OUTPUT[1].NAME}\n"
   end
 
   it 'should define flow rule' do
-    flow = Document.new do
-      flow('test') do
-        inputs  '*.a'
-        outputs '{$INPUT[1].MATCH[1]}.b'
-        content [ call('test1'),
-                  call('test2').with_sync]
-      end
-    end['test']
-    flow.should.be.kind_of Rule::FlowRule
-    flow.inputs.should  == [ DataExp['*.a'] ]
-    flow.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
+    document = <<CODE
+Rule Test
+  input '*.a'
+  output '{$INPUT[1].MATCH[1]}.b'
+Flow----
+rule TestA
+rule TestB.sync
+----End
+CODE
+    result = @transform.apply(@parser.parse(document)).first
+    result.should.kind_of(Rule::FlowRule)
+    result.inputs.should  == [ DataExp['*.a'] ]
+    result.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
+  end
+
+  it 'should get two action rules' do
+    document = <<CODE
+Rule TestA
+  input  '*.a'
+  output '{$INPUT[1].MATCH[1]}.b'
+Action---
+cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
+---End
+
+Rule TestB
+  input  '*.b'
+  output '{$INPUT[1].MATCH[1]}.c'
+Action---
+cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
+---End
+CODE
+    actions = @transform.apply(@parser.parse(document))
+    actions.size.should == 2
+    actions[0].should.be.kind_of Rule::ActionRule
+    actions[0].path.should == "TestA"
+    actions[1].should.be.kind_of Rule::ActionRule
+    actions[1].path.should == "TestB"
   end
 
   it 'should read document' do
