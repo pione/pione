@@ -481,6 +481,8 @@ module InnocentWhite
         case identifier.to_s
         when "except"
           elt.except(*arguments)
+        when "stdout"
+          elt.stdout
         else
           raise UnknownAttribution.new('data', identifier)
         end
@@ -503,8 +505,6 @@ module InnocentWhite
           elt.with_sync
         when "params"
           elt.params = arguments.map{|t| t.to_s}
-        when "stdout"
-          elt.stdout
         else
           raise UnknownAttribution.new('rule', identifier)
         end
