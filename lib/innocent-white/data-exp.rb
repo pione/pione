@@ -67,6 +67,10 @@ module InnocentWhite
       Proc.new{|name| name.kind_of?(self) ? name : self.new(name)}
     end
 
+    def self.attribution(name, &b)
+      Attribution.new(name, &b)
+    end
+
     # -- instance --
 
     attr_reader :name

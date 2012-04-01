@@ -8,6 +8,18 @@ describe 'Document' do
     @transform = SyntaxTreeTransform.new
   end
 
+  it 'should get a data name' do
+    text = "'test.a'"
+    data = @transform.apply(@parser.expr.parse(text))
+    data.name.should == "test.a"
+  end
+
+  it 'should get a data name include a single quote' do
+    text = "'test\\'.a'"
+    data = @transform.apply(@parser.expr.parse(text))
+    data.name.should == "test\'.a"
+  end
+
   it 'should get input line' do
     line = "input 'test.a'"
     input = @transform.apply(@parser.input_line.parse(line))
@@ -82,7 +94,7 @@ describe 'Document' do
 
   it 'should get a call rule element' do
     line = "rule TestA"
-    elt = @transform.apply(@parser.call_rule_line.parse(line))
+    elt = @transform.new.apply(@parser.call_rule_line.parse(line))
     elt.should.kind_of(Rule::FlowElement::CallRule)
     elt.rule_path.should == "TestA"
     elt.should.not.sync_mode

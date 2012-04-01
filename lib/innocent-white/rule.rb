@@ -293,24 +293,10 @@ module InnocentWhite
       class Base < InnocentWhiteObject; end
 
       class CallRule < Base
-        attr_reader :rule_path
-        attr_accessor :params
+        attr_reader :rule_expr
 
-        def initialize(rule_path, sync_mode=false)
-          @rule_path = rule_path
-          @sync_mode = sync_mode
-          @params = nil
-        end
-
-        # Return sync mode version caller.
-        def with_sync
-          @sync_mode = true
-          return self
-        end
-
-        # Return true if sync mode.
-        def sync_mode?
-          @sync_mode
+        def initialize(rule_expr)
+          @rule_expr = rule_expr
         end
       end
 

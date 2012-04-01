@@ -127,6 +127,9 @@ module InnocentWhite
     rule(:line_end) { space? >> str("\n") | any.absent? }
     rule(:empty_lines) { (space? >> str("\n")).repeat }
     rule(:empty_lines?) { empty_lines.maybe }
+    rule(:squote) { str('\'') }
+    rule(:dquote) { str('"') }
+    rule(:backslash) { str("\\") }
     rule(:dot) { str('.') }
     rule(:comma) { str(',') }
     rule(:lparen) { str('(') }
@@ -137,6 +140,10 @@ module InnocentWhite
     rule(:space?) { space.maybe }
 
     rule(:symbols) {
+      dot |
+      squote |
+      dquote |
+      backslash |
       dot |
       comma |
       lparen |
@@ -166,6 +173,8 @@ module InnocentWhite
     rule(:keyword_case) { str('case') }
     rule(:keyword_when) { str('when') }
     rule(:keyword_end) { str('end') }
+    rule(:keyword_package) { str('package') }
+    rule(:keyword_require) { str('require') }
 
     #
     # literal
@@ -178,23 +187,55 @@ module InnocentWhite
     }
 
     rule(:data_name) {
-      str('\'') >>
-      (str('\\') >> any | (str('\'').absent? >> any)).repeat.as(:data_name) >>
-      str('\'')
+      squote >>
+      (backslash >> any | squote.absent? >> any).repeat.as(:data_name) >>
+      squote
     }
 
     rule(:string) {
-      str('"') >>
-      (str('\\') >> any | (str('"').absent? >> any)).repeat.as(:string) >>
-      str('"')
+      dquote >>
+      (backslash >> any | dquote.absent? >> any).repeat.as(:string) >>
+      dquote
     }
 
-    rule(:identifier) {
-      match("[a-z_]").repeat(1).as(:identifier)
+    rule(:attribution_name) {
+      match("[a-z_]").repeat(1).as(:attribution_name)
     }
 
     rule(:variable) {
       str('$') >> ((space | symbols | line_end).absent? >> any).repeat(1).as(:variable)
+    }
+
+    rule(:package_name) {
+      ((space | symbols | line_end).absent? >> any).repeat(1).as(:package_name)
+    }
+
+    #
+    # document statement
+    #
+    rule(:document_statements) {
+      document_statement.repeat.as(:document_statements)
+    }
+
+    rule(:document_statement) {
+      package_line |
+      require_line
+    }
+
+    rule(:package_line) {
+      (space? >>
+       keyword_package >>
+       package_name >>
+       line_end
+       ).as(:package)
+    }
+
+    rule(:require_line) {
+      (space? >>
+       keyword_require >>
+       package_name >>
+       line_end
+       ).as(:require)
     }
 
     #
@@ -211,7 +252,7 @@ module InnocentWhite
        output_line.repeat(1).as(:outputs) >>
        param_line.repeat.as(:params) >>
        block
-       ).as(:rule)
+       ).as(:rule_definition)
     }
 
     rule(:rule_header) {
@@ -219,27 +260,41 @@ module InnocentWhite
     }
 
     #
-    # input / output
+    # rule conditions
     #
 
+    # input_line
     rule(:input_line) {
       (space? >>
        keyword_input >>
        space >>
-       data_expr.as(:data_expr) >>
-       line_end).as(:input_line)
+       data_expr.as(:data) >>
+       line_end
+       ).as(:input_line)
     }
 
+    # output_line
     rule(:output_line) {
       (space? >>
        keyword_output >>
        space >>
-       data_expr.as(:data_expr) >>
-       line_end).as(:output_line)
+       data_expr.as(:data) >>
+       line_end
+       ).as(:output_line)
+    }
+
+    # param_line
+    rule(:param_line) {
+      (space? >>
+       keyword_param >>
+       space >>
+       variable >>
+       line_end
+       ).as(:param_line)
     }
 
     #
-    # data_expr
+    # expression
     #
 
     rule(:expr) {
@@ -247,16 +302,20 @@ module InnocentWhite
     }
 
     rule(:data_expr) {
-      data_name >> attribution.repeat.as(:attributions)
+      (data_name >> attributions?).as(:data_expr)
     }
 
     rule(:rule_expr) {
-      rule_name >> attribution.repeat.as(:attributions)
+      (rule_name >> attributions?).as(:rule_expr)
+    }
+
+    rule(:attributions?) {
+      attribution.repeat.as(:attributions)
     }
 
     rule(:attribution) {
       dot >>
-      identifier >>
+      attribution_name >>
       attribution_arguments.maybe
     }
 
@@ -275,14 +334,6 @@ module InnocentWhite
 
     rule(:attribution_argument_element_rest) {
       space? >> comma >> space? >> expr
-    }
-
-    #
-    # param
-    #
-
-    rule(:param_line) {
-      (space? >> keyword_param >> space >> variable >> line_end).as(:param_line)
     }
 
     #
@@ -332,7 +383,7 @@ module InnocentWhite
       (space? >>
        keyword_call_rule >>
        space? >>
-       rule_expr >>
+       rule_expr.as(:rule) >>
        line_end
        ).as(:call_rule)
     }
@@ -416,35 +467,48 @@ module InnocentWhite
       end
     end
 
+    def initialize(data={})
+      super()
+      @package = data[:package]
+    end
+
     #
     # common
     #
+
+    # data_name
+    rule(:data_name => simple(:name)) {
+      name.to_s.gsub(/\\(.)/) {$1}
+    }
+
+    # string
     rule(:string => simple(:s)) { s }
 
     #
     # rule
     #
-    rule(:rule => subtree(:ruledef)) {
-      name = ruledef[:rule_header][:rule_name].to_s
-      inputs = ruledef[:inputs]
-      outputs = ruledef[:outputs]
-      params = ruledef[:params]
-      flow_block = ruledef[:flow_block]
-      action_block = ruledef[:action_block]
+    rule(:rule_definition => subtree(:tree)) {
+      name = tree[:rule_header][:rule_name].to_s
+      inputs = tree[:inputs]
+      outputs = tree[:outputs]
+      params = tree[:params]
+      flow_block = tree[:flow_block]
+      action_block = tree[:action_block]
       if flow_block
-        Rule::FlowRule.new(name, inputs, outputs, params, flow_block)
+        Rule::FlowRule.new(@package, name, inputs, outputs, params, flow_block)
       else
         body = action_block[:body].to_s
-        Rule::ActionRule.new(name, inputs, outputs, params, body)
+        Rule::ActionRule.new(@package, name, inputs, outputs, params, body)
       end
     }
 
     #
-    # input / output
+    # rule conditions
     #
 
+    # input_line
     rule(:input_line => subtree(:input)) {
-      data_expr = input[:data_expr]
+      data_expr = input[:data]
       if input[:keyword_input] == "input-all"
         data_expr.all
       else
@@ -452,8 +516,9 @@ module InnocentWhite
       end
     }
 
+    # output_line
     rule(:output_line => subtree(:output)) {
-      data_expr = output[:data_expr]
+      data_expr = output[:data]
       if output[:keyword_output] == "output-all"
         data_expr.all
       else
@@ -461,24 +526,23 @@ module InnocentWhite
       end
     }
 
-    #
-    # param
-    #
-
+    # param_line
     rule(:param_line => subtree(:param)) {
       param[:variable].to_s
     }
 
     #
-    # data_expr
+    # expression
     #
 
-    rule(:data_name => simple(:name), :attributions => subtree(:attributions)) {
-      elt = DataExp.new(name.to_s)
-      attributions.each do |attr|
-        identifier = attr[:identifier]
+    # data_expr
+    rule(:data_expr => subtree(:tree)) {
+      data_name = tree[:data_name].to_s.gsub(/\\(.)/) {$1}
+      elt = DataExp.new(data_name)
+      tree[:attributions].each do |attr|
+        attribution_name = attr[:attribution_name]
         arguments = attr[:arguments]
-        case identifier.to_s
+        case attribution_name.to_s
         when "except"
           elt.except(*arguments)
         when "stdout"
@@ -490,26 +554,29 @@ module InnocentWhite
       elt
     }
 
-    #
-    # flow block
-    #
-
-    rule(:call_rule => subtree(:expr)) {
-      rule_name = expr[:rule_name].to_s
-      elt = Rule::FlowElement::CallRule.new(rule_name)
-      expr[:attributions].each do |attr|
-        identifier = attr[:identifier]
+    # rule_expr
+    rule(:rule_expr => subtree(:tree)) {
+      rule_name = tree[:rule_name].to_s
+      elt = RuleExpr.new(@package, rule_name)
+      tree[:attributions].each do |attr|
+        attribution_name = attr[:attribution_name]
         arguments = attr[:arguments]
-        case identifier.to_s
-        when "sync"
-          elt.with_sync
-        when "params"
-          elt.params = arguments.map{|t| t.to_s}
-        else
-          raise UnknownAttribution.new('rule', identifier)
+        begin
+          elt.set_attribution(attribution_name.to_s, arguments)
+        rescue UnknownRuleExprAttribution
+          raise UnknownAttribution.new('rule', attribution_name)
         end
       end
       elt
+    }
+
+    #
+    # flow element
+    #
+
+    rule(:call_rule => subtree(:tree)) {
+      rule_expr = tree[:rule_expr]
+      Rule::FlowElement::CallRule.new(rule_expr)
     }
 
     #
