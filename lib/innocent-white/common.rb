@@ -107,7 +107,7 @@ module InnocentWhite
 end
 
 require 'innocent-white/tuple'
-require 'innocent-white/data-exp'
+require 'innocent-white/data-expr'
 require 'innocent-white/rule-expr'
 require 'innocent-white/document'
 require 'innocent-white/tuple-space-server'

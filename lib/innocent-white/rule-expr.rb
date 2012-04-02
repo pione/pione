@@ -12,6 +12,7 @@ module InnocentWhite
     end
   end
 
+  # Rule representation in the flow element context.
   class RuleExpr
     def initialize(name)
       @name = name
