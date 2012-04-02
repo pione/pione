@@ -26,15 +26,15 @@ describe 'Rule' do
 
     it 'should get inputs' do
       @rules.each do |rule|
-        input_a = DataExp.new('*.a')
-        input_b = DataExp.new('{$INPUT[1].MATCH[1]}.b')
+        input_a = DataExpr.new('*.a')
+        input_b = DataExpr.new('{$INPUT[1].MATCH[1]}.b')
         rule.inputs.should == [input_a, input_b]
       end
     end
 
     it 'should get outputs' do
       @rules.each do |rule|
-        output_c = DataExp.new('{$INPUT[1].MATCH[1]}.c')
+        output_c = DataExpr.new('{$INPUT[1].MATCH[1]}.c')
         rule.outputs.should == [output_c]
       end
     end

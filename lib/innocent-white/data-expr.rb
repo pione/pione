@@ -2,12 +2,12 @@ require 'innocent-white/common'
 
 module InnocentWhite
 
-  # DataExp is a class for data name expression of rule input and output.
-  class DataExp
+  # DataExpr is a class for data name expression of rule input and output.
+  class DataExpr
 
     SEPARATOR = ':'
 
-    # DataExp::Compiler is a regexp compiler for data expression.
+    # DataExpr::Compiler is a regexp compiler for data expression.
     module Compiler
       TABLE = {}
 
@@ -143,7 +143,7 @@ module InnocentWhite
     # Set a exception and return self.
     def except(*names)
       @exceptions += names.map do |name|
-        name.kind_of?(DataExp) ? name : DataExp.new(name)
+        name.kind_of?(DataExpr) ? name : DataExpr.new(name)
       end
       return self
     end
@@ -166,7 +166,7 @@ module InnocentWhite
     end
 
     # Generate concrete name string by arguments.
-    # usage: DataExp["test-*.rb"].generate(1) # => "test-1.rb"
+    # usage: DataExpr["test-*.rb"].generate(1) # => "test-1.rb"
     def generate(*args)
       name = @name.clone
       while name =~ /(\*|\?)/ and not(args.empty?)

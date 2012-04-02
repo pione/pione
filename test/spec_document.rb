@@ -33,13 +33,13 @@ describe 'Document' do
     input = @transform.apply(@parser.input_line.parse(line))
     input.name.should == "*.a"
     input.should.each
-    input.exceptions.should == [DataExp.new("test.a")]
+    input.exceptions.should == [DataExpr.new("test.a")]
   end
 
   it 'should get input line with exceptions' do
     line = "input '*.a'.except('test.a', 'test.b')"
     input = @transform.apply(@parser.input_line.parse(line))
-    input.exceptions.should == [DataExp.new("test.a"), DataExp.new("test.b")]
+    input.exceptions.should == [DataExpr.new("test.a"), DataExpr.new("test.b")]
   end
 
   it 'should get input line with all modifier' do
@@ -63,13 +63,13 @@ describe 'Document' do
     output = @transform.apply(@parser.output_line.parse(line))
     output.name.should == "*.a"
     output.should.each
-    output.exceptions.should == [DataExp.new("test.a")]
+    output.exceptions.should == [DataExpr.new("test.a")]
   end
 
   it 'should get output line with exceptions' do
     line = "output '*.a'.except('test.a', 'test.b')"
     output = @transform.apply(@parser.output_line.parse(line))
-    output.exceptions.should == [DataExp.new("test.a"), DataExp.new("test.b")]
+    output.exceptions.should == [DataExpr.new("test.a"), DataExpr.new("test.b")]
   end
 
   it 'should get output line with all modifier' do
@@ -218,8 +218,8 @@ echo "test" > {$OUTPUT[1].NAME}
 CODE
     action = @transform.apply(@parser.parse(document)).first
     action.should.be.kind_of Rule::ActionRule
-    action.inputs.should  == [ DataExp['*.a'] ]
-    action.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
+    action.inputs.should  == [ DataExpr['*.a'] ]
+    action.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
     action.content.should == "echo \"test\" > {$OUTPUT[1].NAME}\n"
   end
 
@@ -235,8 +235,8 @@ rule TestB.sync
 CODE
     result = @transform.apply(@parser.parse(document)).first
     result.should.kind_of(Rule::FlowRule)
-    result.inputs.should  == [ DataExp['*.a'] ]
-    result.outputs.should == [ DataExp['{$INPUT[1].MATCH[1]}.b'] ]
+    result.inputs.should  == [ DataExpr['*.a'] ]
+    result.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
   end
 
   it 'should get two action rules' do

@@ -14,22 +14,22 @@ module InnocentWhite
 
       # Create all modified name.
       def all(name)
-        DataExp.all(name)
+        DataExpr.all(name)
       end
 
       # Create each modified name.
       def each(name)
-        DataExp.each(name)
+        DataExpr.each(name)
       end
 
       # Input statement.
       def inputs(*items)
-        @inputs = items.map(&DataExp)
+        @inputs = items.map(&DataExpr)
       end
 
       # Output statement.
       def outputs(*items)
-        @outputs = items.map(&DataExp)
+        @outputs = items.map(&DataExpr)
       end
 
       # Parameter statement.
@@ -108,11 +108,11 @@ end
 
 class String
   def stdout
-    DataExp.new(self).stdout
+    DataExpr.new(self).stdout
   end
 
   def stderr
-    DataExp.new(self).stderr
+    DataExpr.new(self).stderr
   end
 end
 
@@ -538,7 +538,7 @@ module InnocentWhite
     # data_expr
     rule(:data_expr => subtree(:tree)) {
       data_name = tree[:data_name].to_s.gsub(/\\(.)/) {$1}
-      elt = DataExp.new(data_name)
+      elt = DataExpr.new(data_name)
       tree[:attributions].each do |attr|
         attribution_name = attr[:attribution_name]
         arguments = attr[:arguments]

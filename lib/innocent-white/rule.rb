@@ -116,7 +116,7 @@ module InnocentWhite
       # Make auto-variables by the name modified 'all'.
       def make_auto_variables_by_all(name, index, tuples, var)
         new_var = var.clone
-        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(DataExp::SEPARATOR)
+        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)
         return new_var
       end
 
@@ -575,8 +575,8 @@ module InnocentWhite
 
     class RootRule < FlowRule
       def initialize(rule_path)
-        inputs  = [DataExp.all("*")]
-        outputs = [DataExp.all("*").except("{$INPUT[1]}")]
+        inputs  = [DataExpr.all("*")]
+        outputs = [DataExpr.all("*").except("{$INPUT[1]}")]
         content = [FlowElement::CallRule.new(rule_path)]
         super(nil, inputs, outputs, [], content)
         @path = 'root'

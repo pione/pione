@@ -27,7 +27,7 @@ module InnocentWhite
         end
 
         def generate
-          name = DataExp.new(@name).generate(@name_range.next)
+          name = DataExpr.new(@name).generate(@name_range.next)
           uri = @base_uri + "./input/#{name}"
           Resource[uri].create(@value_range.next)
           InputData.new(name, uri.to_s)
