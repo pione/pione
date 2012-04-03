@@ -8,6 +8,12 @@ describe 'Document' do
     @transform = SyntaxTreeTransform.new
   end
 
+  it 'should get a package line' do
+    line = 'package abc'
+    package = @transform.apply(@parser.expr.parse(line))
+    package.name == 'abc'
+  end
+
   it 'should get a data name' do
     text = "'test.a'"
     data = @transform.apply(@parser.expr.parse(text))

@@ -180,32 +180,39 @@ module InnocentWhite
     # literal
     #
 
+    # rule_name
     rule(:rule_name) {
       (match("[A-Z_]") >>
        ((space | dot | line_end).absent? >> any).repeat
        ).as(:rule_name)
     }
 
+    # data_name
     rule(:data_name) {
       squote >>
       (backslash >> any | squote.absent? >> any).repeat.as(:data_name) >>
       squote
     }
 
+    # string
     rule(:string) {
       dquote >>
       (backslash >> any | dquote.absent? >> any).repeat.as(:string) >>
       dquote
     }
 
+    # attribution_name
     rule(:attribution_name) {
       match("[a-z_]").repeat(1).as(:attribution_name)
     }
 
+    # variable
     rule(:variable) {
-      str('$') >> ((space | symbols | line_end).absent? >> any).repeat(1).as(:variable)
+      str('$') >>
+      ((space | symbols | line_end).absent? >> any).repeat(1).as(:variable)
     }
 
+    # package_name
     rule(:package_name) {
       ((space | symbols | line_end).absent? >> any).repeat(1).as(:package_name)
     }
@@ -213,15 +220,18 @@ module InnocentWhite
     #
     # document statement
     #
+
     rule(:document_statements) {
       document_statement.repeat.as(:document_statements)
     }
 
+    # document_statement
     rule(:document_statement) {
       package_line |
       require_line
     }
 
+    # package_line
     rule(:package_line) {
       (space? >>
        keyword_package >>
@@ -230,6 +240,7 @@ module InnocentWhite
        ).as(:package)
     }
 
+    # require_line
     rule(:require_line) {
       (space? >>
        keyword_require >>
