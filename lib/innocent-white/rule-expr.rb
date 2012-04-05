@@ -14,7 +14,14 @@ module InnocentWhite
 
   # Rule representation in the flow element context.
   class RuleExpr
-    def initialize(name)
+    attr_reader :package
+    attr_reader :name
+
+    # Create a rule expression.
+    # package:: package name of the rule
+    # name:: the rule name
+    def initialize(package, name)
+      @package = package
       @name = name
       @sync_mode = false
       @params = []
