@@ -23,12 +23,12 @@ describe 'Common' do
 
     it 'should get task_id' do
       id1 = Util.task_id([],[])
-      id2 = Util.task_id(["1.a"], [])
-      id3 = Util.task_id(["2.a"], [])
+      id2 = Util.task_id([DataExpr["1.a"]], [])
+      id3 = Util.task_id([DataExpr["2.a"]], [])
       id4 = Util.task_id([],["1.a"])
       id5 = Util.task_id([],["2.a"])
-      id6 = Util.task_id(["1.a"], ["1.a"])
-      id7 = Util.task_id(["2.a"], ["2.a"])
+      id6 = Util.task_id([DataExpr["1.a"]], ["1.a"])
+      id7 = Util.task_id([DataExpr["2.a"]], ["2.a"])
       7.times do |i|
         eval "id#{i+1}.size.should == 32"
         7.times do |ii|
@@ -36,12 +36,12 @@ describe 'Common' do
         end
       end
       id1.should == Util.task_id([],[])
-      id2.should == Util.task_id(["1.a"], [])
-      id3.should == Util.task_id(["2.a"], [])
+      id2.should == Util.task_id([DataExpr["1.a"]], [])
+      id3.should == Util.task_id([DataExpr["2.a"]], [])
       id4.should == Util.task_id([],["1.a"])
       id5.should == Util.task_id([],["2.a"])
-      id6.should == Util.task_id(["1.a"], ["1.a"])
-      id7.should == Util.task_id(["2.a"], ["2.a"])
+      id6.should == Util.task_id([DataExpr["1.a"]], ["1.a"])
+      id7.should == Util.task_id([DataExpr["2.a"]], ["2.a"])
     end
   end
 end
