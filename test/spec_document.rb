@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
+
 require 'innocent-white/test-util'
 require 'parslet/convenience'
 
 describe 'Document' do
   before do
-    @parser = DocumentParser.new
-    @transform = SyntaxTreeTransform.new
+    @parser = Document::Parser.new
+    @transform = Document::Transformer.new
   end
 
   it 'should get a package line' do
     line = 'package abc'
-    package = @transform.apply(@parser.expr.parse(line))
-    package.name == 'abc'
+    package = @transform.apply(@parser.package_line.parse(line))
+    package.name.should == 'abc'
   end
 
   it 'should get a data name' do
@@ -100,7 +101,7 @@ describe 'Document' do
 
   it 'should get a call rule element' do
     line = "rule TestA"
-    elt = @transform.new.apply(@parser.call_rule_line.parse(line))
+    elt = @transform.apply(@parser.call_rule_line.parse(line))
     elt.should.kind_of(Rule::FlowElement::CallRule)
     elt.rule_path.should == "TestA"
     elt.should.not.sync_mode

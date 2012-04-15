@@ -1,6 +1,7 @@
 require 'tempfile'
 require 'innocent-white/common'
 require 'innocent-white/agent/sync-monitor'
+require 'innocent-white/flow-element'
 
 module InnocentWhite
   module Rule
@@ -289,39 +290,6 @@ module InnocentWhite
       end
     end
 
-    module FlowElement
-      class Base < InnocentWhiteObject; end
-
-      class CallRule < Base
-        attr_reader :rule_expr
-
-        def initialize(rule_expr)
-          @rule_expr = rule_expr
-        end
-      end
-
-      class Condition
-        attr_reader :condition
-
-        def initialize(variable, blocks)
-          @variable = variable
-          @blocks = blocks
-        end
-
-        def block(value)
-          block = @blocks.find {|key, val| key === value}
-          block = block[1] unless block.nil?
-          block = @blocks[:else] if block.nil?
-          block = [] if block.nil?
-          return block
-        end
-      end
-
-      class Assignment
-        attr_reader :variable
-        attr_reader :content
-      end
-    end
 
     class FlowHandler < BaseHandler
       def execute
