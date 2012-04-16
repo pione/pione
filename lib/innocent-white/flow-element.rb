@@ -7,17 +7,17 @@ module InnocentWhite
     # CallRule represents the application of a rule.
     # For example of simple rule calling:
     #   rule r1
-    #   => CallRule.new('r1')
+    #   => CallRule.new(RuleExpr.new('r1'))
     #
     # For example with absolute path:
     #   rule /abc/a
-    #   => CallRule.new(RulePath.new('/abc/a'))
+    #   => CallRule.new(RuleExpr.new('/abc/a'))
     #
     # For example with variable:
     #   rule $X
     #   => CallRule.new(Variable.new('X'))
     class CallRule < Base
-      attr_reader :rule_expr
+      attr_reader :expr
       attr_accessor :package
 
       def initialize(expr)
@@ -55,7 +55,8 @@ module InnocentWhite
     #                      :else => [CallRule.new('r3')] })
     #
     class Condition
-      attr_reader :condition
+      attr_reader :expr
+      attr_reader :blocks
 
       def initialize(expr, blocks)
         @expr = expr

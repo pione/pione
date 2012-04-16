@@ -41,5 +41,10 @@ describe 'Document::Parser' do
       tree = @parser.rule_name.parse('/abc/def/ghi')
       tree[:rule_name].should == '/abc/def/ghi'
     end
+
+    it 'should get a relative rule path name' do
+      tree = @parser.rule_name.parse('abc/def/ghi')
+      tree[:rule_name].should == 'abc/def/ghi'
+    end
   end
 end

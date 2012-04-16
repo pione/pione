@@ -43,8 +43,8 @@ module InnocentWhite
       rule(:keyword_rule_header) { str('Rule') }
       rule(:keyword_input) { str('input') }
       rule(:keyword_input_all) { str('input-all') }
-      rule(:keyword_output) { str('output-all') }
-      rule(:keyword_output_all) { str('output') }
+      rule(:keyword_output) { str('output') }
+      rule(:keyword_output_all) { str('output-all') }
       rule(:keyword_param) { str('param') }
       rule(:keyword_flow_block_begin) { str('Flow') }
       rule(:keyword_action_block_begin) { str('Action') }
@@ -89,8 +89,9 @@ module InnocentWhite
 
       # rule_name
       rule(:rule_name) {
-        ( (slash.maybe >> identifier).repeat(0) >>
-          identifier >> any.absent?.maybe
+        ( slash.maybe >>
+          identifier >>
+          (slash >> identifier).repeat(0)
           ).as(:rule_name)
       }
 
@@ -175,13 +176,13 @@ module InnocentWhite
 
       # input_header
       rule(:input_header) {
-        (keyword_input | keyword_input_all).as(:input_header)
+        (keyword_input_all | keyword_input).as(:input_header)
       }
 
       # output_line
       rule(:output_line) {
         ( space? >>
-          keyword_output >>
+          output_header >>
           space >>
           data_expr.as(:data) >>
           line_end
@@ -285,17 +286,17 @@ module InnocentWhite
       #
 
       rule(:flow_element) {
-        call_rule_line |
+        rule_call_line |
         condition_block
       }
 
-      rule(:call_rule_line) {
+      rule(:rule_call_line) {
         (space? >>
          keyword_call_rule >>
          space? >>
-         rule_expr.as(:rule) >>
+         rule_expr >>
          line_end
-         ).as(:call_rule)
+         ).as(:rule_call)
       }
 
       rule(:condition_block) {
@@ -314,7 +315,7 @@ module InnocentWhite
         space? >>
         keyword_if >>
         space? >>
-        if_condition >>
+        expr >>
         line_end
       }
 

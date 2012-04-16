@@ -2,16 +2,18 @@ require 'innocent-white/common'
 
 module InnocentWhite
   class Document
-    class Transformer < Parslet::Transform
-      class UnknownAttribution < Exception
-        def initialize(t, identifier)
-          @t = t
-          @identifier = identifier
-        end
-        def message
-          "Unknown identifier '#{@identifier}' in the context of #{@t}"
-        end
+    class UnknownAttribution < StandardError
+      def initialize(t, identifier)
+        @t = t
+        @identifier = identifier
       end
+
+      def message
+        "Unknown attribution name '#{@identifier}' for #{@t}"
+      end
+    end
+
+    class Transformer < Parslet::Transform
 
       def initialize(data={})
         super()
@@ -104,7 +106,7 @@ module InnocentWhite
           when "stdout"
             elt.stdout
           else
-            raise UnknownAttribution.new('data', identifier)
+            raise UnknownAttribution.new('data', attribution_name)
           end
         end
         elt
@@ -113,7 +115,7 @@ module InnocentWhite
       # rule_expr
       rule(:rule_expr => subtree(:tree)) {
         rule_name = tree[:rule_name].to_s
-        elt = RuleExpr.new(@package, rule_name)
+        elt = RuleExpr.new(rule_name)
         tree[:attributions].each do |attr|
           attribution_name = attr[:attribution_name]
           arguments = attr[:arguments]
@@ -130,20 +132,16 @@ module InnocentWhite
       # flow element
       #
 
-      rule(:call_rule => subtree(:tree)) {
-        rule_expr = tree[:rule_expr]
-        Rule::FlowElement::CallRule.new(rule_expr)
+      rule(:rule_call => subtree(:rule_expr)) {
+        FlowElement::CallRule.new(rule_expr)
       }
 
-      #
-      # condition
-      #
       rule(:if_block => subtree(:block)) {
         variable = block[:variable].to_s
         true_elements = block[:true_elements]
         else_elements = block[:else_elements]
         block = {true => true_elements, :else => else_elements}
-        Rule::FlowElement::Condition.new(variable, block)
+        FlowElement::Condition.new(variable, block)
       }
 
       rule(:case_block => subtree(:case_block)) {
@@ -153,7 +151,7 @@ module InnocentWhite
           block[t[:when].to_s] = t[:elements]
         end
         block[:else] = case_block[:else_elements]
-        Rule::FlowElement::Condition.new(variable, block)
+        FlowElement::Condition.new(variable, block)
       }
     end
   end
