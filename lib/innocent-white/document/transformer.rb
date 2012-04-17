@@ -30,8 +30,18 @@ module InnocentWhite
         name.to_s.gsub(/\\(.)/) {$1}
       }
 
+      #
+      # literal
+      #
+
       # string
       rule(:string => simple(:s)) { s }
+
+      # integer
+      rule(:integer => simple(:i)) { i.to_i }
+
+      # float
+      rule(:float => simple(:f)) { f.to_f }
 
       #
       # statement

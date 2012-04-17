@@ -36,6 +36,8 @@ module InnocentWhite
         lparen | rparen | lbrace | rbrace | slash
       }
 
+      rule(:digit) { match('[0-9]') }
+
       #
       # keyword
       #
@@ -103,6 +105,22 @@ module InnocentWhite
       # package_name
       rule(:package_name) {
         identifier.as(:package_name)
+      }
+
+      # integer
+      rule(:integer) {
+        ( match('[+-]').maybe >>
+          digit.repeat(1)
+          ).as(:integer)
+      }
+
+      # float
+      rule(:float) {
+        ( match('[+-]').maybe >>
+          digit.repeat(1) >>
+          dot >>
+          digit.repeat(1)
+          ).as(:float)
       }
 
       #
@@ -209,7 +227,16 @@ module InnocentWhite
       #
 
       rule(:expr) {
-        data_expr | rule_expr | string
+        float |
+        integer |
+        data_expr |
+        rule_expr |
+        string |
+        paren_expr
+      }
+
+      rule(:paren_expr) {
+        lparen >> expr >> rparen
       }
 
       rule(:data_expr) {
@@ -319,14 +346,6 @@ module InnocentWhite
         line_end
       }
 
-      rule(:if_condition) {
-        lparen >> space? >> ref_variable >> space? >> rparen
-      }
-
-      rule(:ref_variable) {
-        lbrace >> variable >> rbrace
-      }
-
       rule(:if_block_else) {
         space? >> keyword_else >> line_end >>
         flow_element.repeat.as(:else_elements)
@@ -348,7 +367,7 @@ module InnocentWhite
         space? >>
         keyword_case >>
         space? >>
-        if_condition >>
+        expr >>
         line_end
       }
 

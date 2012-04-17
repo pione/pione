@@ -128,7 +128,7 @@ describe 'Document::Transformer' do
 
     it 'should get a condition element with an else block' do
       lines = <<-BLOCK
-        if ({$TEST})
+        if ($TEST)
           rule TestA
         else
           rule TestB
