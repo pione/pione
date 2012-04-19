@@ -109,6 +109,14 @@ describe 'Document::Transformer' do
         @transformer.apply(@parser.rule_call_line.parse(line))
       end
     end
+
+    it 'should get a call rule element with parameters' do
+      line = 'rule Test.params("a", "b", "c")'
+      elt = @transformer.apply(@parser.rule_call_line.parse(line))
+      elt.should.kind_of(FlowElement::CallRule)
+      elt.expr.name.should == "Test"
+      elt.expr.params.should == ["a", "b", "c"]
+    end
   end
 
   describe 'if_block' do
@@ -139,158 +147,156 @@ describe 'Document::Transformer' do
       elt.blocks[true].size.should == 1
       elt.blocks[true].first.should.kind_of(FlowElement::CallRule)
       elt.blocks[true].first.expr.name.should == "TestA"
-      elt.blocks[false].size.should == 1
-      elt.blocks[false].first.should.kind_of(FlowElement::CallRule)
-      elt.blocks[false].first.expr.name.should == "TestB"
+      elt.blocks[:else].size.should == 1
+      elt.blocks[:else].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks[:else].first.expr.name.should == "TestB"
     end
   end
 
-  it 'should get flow elements' do
-    lines = <<-BLOCK
-Flow---
-rule TestA
-rule TestB
----End
-BLOCK
-    block = @transformer.apply(@parser.flow_block.parse(lines))[:flow_block]
-    elt1 = block[0]
-    elt1.should.kind_of(Rule::FlowElement::CallRule)
-    elt1.rule_path.should == "TestA"
-    elt2 = block[1]
-    elt2.should.kind_of(Rule::FlowElement::CallRule)
-    elt2.rule_path.should == "TestB"
+  describe 'case_block' do
+    it 'should get a condition element from case block' do
+      lines = <<-BLOCK
+        case $TEST
+        when "a"
+          rule TestA
+        when "b"
+          rule TestB
+        else
+          rule TestOthers
+        end
+      BLOCK
+      elt = @transformer.apply(@parser.case_block.parse(lines))
+      elt.should.kind_of(FlowElement::Condition)
+      elt.blocks["a"].size.should == 1
+      elt.blocks["a"].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks["a"].first.expr.name.should == "TestA"
+      elt.blocks["b"].size.should == 1
+      elt.blocks["b"].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks["b"].first.expr.name.should == "TestB"
+      elt.blocks[:else].size.should == 1
+      elt.blocks[:else].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks[:else].first.expr.name.should == "TestOthers"
+    end
   end
 
+  describe 'flow_block' do
+    it 'should get flow elements' do
+      lines = <<-BLOCK
+        Flow---
+        rule TestA
+        rule TestB
+        ---End
+      BLOCK
+      block = @transformer.apply(@parser.flow_block.parse(lines))[:flow_block]
+      elt1 = block[0]
+      elt1.should.kind_of(FlowElement::CallRule)
+      elt1.expr.name.should == "TestA"
+      elt2 = block[1]
+      elt2.should.kind_of(FlowElement::CallRule)
+      elt2.expr.name.should == "TestB"
+    end
 
-  it 'should get flow elements with condition' do
-    lines = <<BLOCK
-Flow---
-if ({$TEST})
-  rule TestA
-end
-rule TestB
----End
-BLOCK
-    block = @transformer.apply(@parser.flow_block.parse(lines))[:flow_block]
-    elt = block[0]
-    elt.should.kind_of(Rule::FlowElement::Condition)
-    elt.block(true).size.should == 1
-    elt.block(true).first.should.kind_of(Rule::FlowElement::CallRule)
-    elt.block(true).first.rule_path.should == "TestA"
-    elt.block(false).size.should == 0
-    elt = block[1]
-    elt.should.kind_of(Rule::FlowElement::CallRule)
-    elt.rule_path.should == "TestB"
+    it 'should get flow elements with condition' do
+      lines = <<-BLOCK
+        Flow---
+        if ($TEST)
+          rule TestA
+        end
+        rule TestB
+        ---End
+      BLOCK
+      block = @transformer.apply(@parser.flow_block.parse(lines))[:flow_block]
+      elt = block[0]
+      elt.should.kind_of(FlowElement::Condition)
+      elt.blocks[true].size.should == 1
+      elt.blocks[true].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks[true].first.expr.name.should == "TestA"
+      elt.blocks[:else].size.should == 0
+      elt = block[1]
+      elt.should.kind_of(FlowElement::CallRule)
+      elt.expr.name.should == "TestB"
+    end
   end
 
-  it 'should get a condition element from case block' do
-    lines = <<BLOCK
-case ({$TEST})
-when "a"
-  rule TestA
-when "b"
-  rule TestB
-else
-  rule TestOthers
-end
-BLOCK
-    elt = @transformer.apply(@parser.case_block.parse(lines))
-    elt.should.kind_of(Rule::FlowElement::Condition)
-    elt.block("a").size.should == 1
-    elt.block("a").first.should.kind_of(Rule::FlowElement::CallRule)
-    elt.block("a").first.rule_path.should == "TestA"
-    elt.block("b").size.should == 1
-    elt.block("b").first.should.kind_of(Rule::FlowElement::CallRule)
-    elt.block("b").first.rule_path.should == "TestB"
-    elt.block("c").size.should == 1
-    elt.block("c").first.should.kind_of(Rule::FlowElement::CallRule)
-    elt.block("c").first.rule_path.should == "TestOthers"
+  describe 'rule' do
+    it 'should define action rule' do
+      document = <<-CODE
+        Rule Test
+          input  '*.a'
+          output '{$INPUT[1].MATCH[1]}.b'
+        Action---
+        echo "test" > {$OUTPUT[1].NAME}
+        ---End
+      CODE
+      action = @transformer.apply(@parser.parse(document)).first
+      action.should.be.kind_of Rule::ActionRule
+      action.inputs.should  == [ DataExpr['*.a'] ]
+      action.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
+      action.content.should == "      echo \"test\" > {$OUTPUT[1].NAME}\n"
+    end
+
+    it 'should define flow rule' do
+      document = <<-CODE
+        Rule Test
+          input '*.a'
+          output '{$INPUT[1].MATCH[1]}.b'
+        Flow----
+        rule TestA
+        rule TestB.sync
+        ----End
+      CODE
+      result = @transformer.apply(@parser.parse(document)).first
+      result.should.kind_of(Rule::FlowRule)
+      result.inputs.should  == [ DataExpr['*.a'] ]
+      result.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
+    end
+
+    it 'should get two action rules' do
+      document = <<-CODE
+        Rule TestA
+          input  '*.a'
+          output '{$INPUT[1].MATCH[1]}.b'
+        Action---
+        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
+        ---End
+
+        Rule TestB
+          input  '*.b'
+          output '{$INPUT[1].MATCH[1]}.c'
+        Action---
+        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
+        ---End
+      CODE
+      actions = @transformer.apply(@parser.parse(document))
+      actions.size.should == 2
+      actions[0].should.be.kind_of Rule::ActionRule
+      actions[0].path.should == "TestA"
+      actions[1].should.be.kind_of Rule::ActionRule
+      actions[1].path.should == "TestB"
+    end
   end
 
-  it 'should get a call rule element with parameters' do
-    line = 'rule Test.params("a", "b", "c")'
-    elt = @transformer.apply(@parser.call_rule_line.parse(line))
-    elt.should.kind_of(Rule::FlowElement::CallRule)
-    elt.rule_path.should == "Test"
-    elt.params.should == ["a", "b", "c"]
+  describe 'document' do
+    it 'should read document' do
+      document = <<-CODE
+        Rule Main
+          input-all '*.txt'.except('summary.txt')
+          output 'summary.txt'
+          param $ConvertCharSet
+        Flow---------------------------------------------------------------------------
+        if $ConvertCharset
+          rule NKF.params("-w")
+        end
+        rule CountChar.sync
+        rule Summarize
+        -----------------------------------------------------------------------------End
+      CODE
+      result = @transformer.apply(@parser.parse(document)).first
+      result.should.kind_of(Rule::FlowRule)
+      result.inputs.size.should == 1
+      result.outputs.size.should == 1
+      result.params.should == ["ConvertCharSet"]
+      result.content.size.should == 3
+    end
   end
-
-  it 'should define action rule' do
-    document = <<CODE
-Rule Test
-  input  '*.a'
-  output '{$INPUT[1].MATCH[1]}.b'
-Action---
-echo "test" > {$OUTPUT[1].NAME}
----End
-CODE
-    action = @transformer.apply(@parser.parse(document)).first
-    action.should.be.kind_of Rule::ActionRule
-    action.inputs.should  == [ DataExpr['*.a'] ]
-    action.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
-    action.content.should == "echo \"test\" > {$OUTPUT[1].NAME}\n"
-  end
-
-  it 'should define flow rule' do
-    document = <<CODE
-Rule Test
-  input '*.a'
-  output '{$INPUT[1].MATCH[1]}.b'
-Flow----
-rule TestA
-rule TestB.sync
-----End
-CODE
-    result = @transformer.apply(@parser.parse(document)).first
-    result.should.kind_of(Rule::FlowRule)
-    result.inputs.should  == [ DataExpr['*.a'] ]
-    result.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
-  end
-
-  it 'should get two action rules' do
-    document = <<CODE
-Rule TestA
-  input  '*.a'
-  output '{$INPUT[1].MATCH[1]}.b'
-Action---
-cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
----End
-
-Rule TestB
-  input  '*.b'
-  output '{$INPUT[1].MATCH[1]}.c'
-Action---
-cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
----End
-CODE
-    actions = @transformer.apply(@parser.parse(document))
-    actions.size.should == 2
-    actions[0].should.be.kind_of Rule::ActionRule
-    actions[0].path.should == "TestA"
-    actions[1].should.be.kind_of Rule::ActionRule
-    actions[1].path.should == "TestB"
-  end
-
-  it 'should read document' do
-    document = <<CODE
-Rule Main
-  input-all '*.txt'.except('summary.txt')
-  output 'summary.txt'
-  param $ConvertCharSet
-Flow---------------------------------------------------------------------------
-if ({$ConvertCharset})
-  rule NKF.params("-w")
-end
-rule CountChar.sync
-rule Summarize
------------------------------------------------------------------------------End
-CODE
-    result = @transformer.apply(@parser.parse(document)).first
-    result.should.kind_of(Rule::FlowRule)
-    result.inputs.size.should == 1
-    result.outputs.size.should == 1
-    result.params.should == ["ConvertCharSet"]
-    result.content.size.should == 3
-  end
-
 end

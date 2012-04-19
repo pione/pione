@@ -297,15 +297,15 @@ module InnocentWhite
       }
 
       rule(:flow_block_begin_line) {
-        keyword_flow_block_begin >> str('-').repeat(3) >> line_end
+        space? >> keyword_flow_block_begin >> str('-').repeat(3) >> line_end
       }
 
       rule(:action_block_begin_line) {
-        keyword_action_block_begin >> str('-').repeat(3) >> line_end
+        space? >> keyword_action_block_begin >> str('-').repeat(3) >> line_end
       }
 
       rule(:block_end_line) {
-        str('-').repeat(3) >> keyword_block_end >> line_end
+        space? >> str('-').repeat(3) >> keyword_block_end >> line_end
       }
 
       #
@@ -347,7 +347,9 @@ module InnocentWhite
       }
 
       rule(:if_block_else) {
-        space? >> keyword_else >> line_end >>
+        space? >>
+        keyword_else >>
+        line_end >>
         flow_element.repeat.as(:else_elements)
       }
 

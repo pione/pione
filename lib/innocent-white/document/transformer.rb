@@ -63,10 +63,10 @@ module InnocentWhite
         flow_block = tree[:flow_block]
         action_block = tree[:action_block]
         if flow_block
-          Rule::FlowRule.new(@package, name, inputs, outputs, params, flow_block)
+          Rule::FlowRule.new(name, inputs, outputs, params, flow_block)
         else
           body = action_block[:body].to_s
-          Rule::ActionRule.new(@package, name, inputs, outputs, params, body)
+          Rule::ActionRule.new(name, inputs, outputs, params, body)
         end
       }
 
@@ -149,7 +149,7 @@ module InnocentWhite
       rule(:if_block => subtree(:block)) {
         variable = block[:variable].to_s
         true_elements = block[:true_elements]
-        else_elements = block[:else_elements]
+        else_elements = block[:else_elements] || []
         block = {true => true_elements, :else => else_elements}
         FlowElement::Condition.new(variable, block)
       }

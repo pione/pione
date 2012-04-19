@@ -21,7 +21,7 @@ describe "TupleSpaceReceiver" do
   end
 
   it "should receive tuple space servers" do
-    ts_server = TupleSpaceServer.new(task_worker_resource: 4)
+    ts_server = TupleSpaceServer.new
     provider = TupleSpaceProvider.instance
     receiver = TupleSpaceReceiver.instance
     provider.add(ts_server)

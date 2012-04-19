@@ -3,6 +3,7 @@ require 'innocent-white/test-util'
 describe "TupleSpaceServer" do
   before do
     @server = TupleSpaceServer.new
+    sleep 1
   end
 
   it "should create be alive" do
@@ -18,7 +19,7 @@ describe "TupleSpaceServer" do
     Tuple.delete_format(:test)
   end
 
-  it "should count worker" do
+  it "should count workers" do
     @server.current_task_worker_size.should == 0
     t1 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util.uuid)
     @server.write(t1)
@@ -38,6 +39,6 @@ describe "TupleSpaceServer" do
   end
 
   it "should know worker resource" do
-    @server.task_worker_resource.should.== 4
+    @server.task_worker_resource.should == 1
   end
 end

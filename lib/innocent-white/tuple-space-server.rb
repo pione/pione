@@ -125,8 +125,12 @@ module InnocentWhite
     def check_agent_life
       @thread_check_agent_life = Thread.new do
         while true do
-          agent = take(Tuple[:bye].any)
-          take(Tuple[:agent].new(uuid: agent.uuid))
+          begin
+            agent = take(Tuple[:bye].any)
+            take(Tuple[:agent].new(uuid: agent.uuid))
+          rescue
+            # do nothing
+          end
         end
       end
     end

@@ -15,6 +15,7 @@ module InnocentWhite
   # Rule representation in the flow element context.
   class RuleExpr
     attr_reader :name
+    attr_reader :params
 
     # Create a rule expression.
     # name:: the rule name
@@ -30,7 +31,7 @@ module InnocentWhite
       when "sync"
         sync(true)
       when "params"
-        params = arguments.map{|t| t.to_s}
+        @params = arguments.map{|t| t.to_s}
       else
         raise UnknownRuleExprAttribution.new(attribution_name)
       end
@@ -43,11 +44,6 @@ module InnocentWhite
 
     def sync(truth)
       @sync_mode = truth
-      return self
-    end
-
-    def params(*values)
-      @params = values
       return self
     end
   end

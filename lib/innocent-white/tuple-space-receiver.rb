@@ -6,13 +6,19 @@ module InnocentWhite
   class TupleSpaceReceiver < InnocentWhiteObject
 
     UDP_PORT = 54321
-    RECEIVER_URI = "druby://localhost:10102"
+    RECEIVER_URI = "druby://localhost:10107"
     DISCONNECT_TIME = 180
+    MAX_RETRY_NUMBER = 50
+
+    class InstanceError < StandardError; end
 
     # -- class --
 
     # Return the receiver instance.
-    def self.instance(data={})
+    def self.instance(data={}, i=0)
+      if i >= MAX_RETRY_NUMBER
+        raise InstanceError
+      end
       uri = if data.has_key?(:receiver_port) then
               "druby://localhost:#{data[:receiver_port]}"
             else RECEIVER_URI end
@@ -36,7 +42,8 @@ module InnocentWhite
           DRbObject.new_with_uri(uri)
         rescue Errno::EADDRINUSE
           # retry
-          instance(data)
+          sleep 0.1
+          instance(data, i+1)
         end
       end
     end
