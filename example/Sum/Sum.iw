@@ -1,7 +1,39 @@
 Rule Main
-  input 'test-($*).a'
+  input 'list.txt'
   input 'test-{$INPUT[1].MATCH[1]}.b'
   output 'test-{$INPUT[1].MATCH[1]}.c'.stdout
 Action--------------------------------------------------------------------------
 expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}
 -----------------------------------------------------------------------------End
+
+Rule MakeHeadTail
+  input 'list.txt'
+  output 'head1.txt'
+  output 'head2.txt'
+  output 'head3.txt'
+  output 'head4.txt'
+  output 'head5.txt'
+  output 'tail1.txt'
+  output 'tail2.txt'
+  output 'tail3.txt'
+  output 'tail4.txt'
+  output 'tail5.txt'
+Action--------------------------------------------------------------------------
+#!/usr/bin/env ruby
+i = 1
+File.readlines('list.txt').each do |line|
+  head, tail = line.split(',')
+  File.open("head#{i}.txt"){|f| f.print head}
+  File.open("tail#{i}.txt"){|f| f.print head}
+  i += 1
+end
+-----------------------------------------------------------------------------End
+
+Rule Sum
+  input 'head*.txt'
+  input 'tail{$INPUT[1].MATCH[1]}.txt'
+  output 'sum{$INPUT[1].MATCH[1]}.txt'
+Action--------------------------------------------------------------------------
+expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}
+-----------------------------------------------------------------------------End
+
