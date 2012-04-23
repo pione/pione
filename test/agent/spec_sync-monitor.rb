@@ -4,23 +4,24 @@ require 'innocent-white/agent/sync-monitor'
 
 describe 'Agent::SyncMonitor' do
   before do
-    @ts_server = create_remote_tuple_space_server
+    create_remote_tuple_space_server
     @base_uri = read(Tuple[:base_uri].any).uri
-    @doc = Document.new do
-      flow('test') do
-        inputs 'test.a'
-        outputs 'test.b'
-      end
-    end
+    @doc = Document.parse(<<-DOCUMENT)
+      Rule test
+        input 'test.a'
+        output 'test.b'
+      Flow---
+      ---End
+    DOCUMENT
     @flow = @doc['test']
-    generator = Agent[:input_generator].start_by_simple(@ts_server, "test-*.a", 1..3, 1..3)
+    generator = Agent[:input_generator].start_by_simple(tuple_space_server, "test-*.a", 1..3, 1..3)
     generator.wait_till(:terminated)
   end
 
   it 'should take sync_target type tuple' do
     # make handler
     test1 = read(Tuple[:data].new(name: 'test-1.a'))
-    handler = @flow.make_handler(@base_uri, [test1], [])
+    handler = @flow.make_handler(tuple_space_server, [test1], [])
 
     # make sync_target
     tuple1 = Tuple[:sync_target].new(src: 'test_src', dest: handler.domain, name: 'test-1.b')
@@ -29,7 +30,7 @@ describe 'Agent::SyncMonitor' do
     [tuple1, tuple2, tuple3].each {|t| write(t) }
 
     # monitor
-    monitor = Agent[:sync_monitor].start(@ts_server, handler)
+    monitor = Agent[:sync_monitor].start(tuple_space_server, handler)
     monitor.wait_until_count(4, :sync_target_waiting) do
       monitor.start
     end
@@ -39,7 +40,7 @@ describe 'Agent::SyncMonitor' do
     monitor.queue.should.include tuple3
   end
 
-  it 'should write finished and data tuples' do
-    
-  end
+  #it 'should write finished and data tuples' do
+  #  
+  #end
 end

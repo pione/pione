@@ -20,10 +20,13 @@ module InnocentWhite
 
     # Load a document and return rule table.
     def self.load(file)
+      parse(file.read)
+    end
+
+    def self.parse(src)
       parser = Parser.new
       transformer = Transformer.new
-      rules = transformer.apply(parser.parse(file.read))
-      p rules
+      rules = transformer.apply(parser.parse(src))
       table = {}
       rules.each do |rule|
         table[rule.path] = rule

@@ -4,19 +4,22 @@ require 'innocent-white/agent/rule-provider'
 describe "Agent::RuleProvider" do
   before do
     create_remote_tuple_space_server
-    @provider = Agent[:rule_provider].start(get_tuple_space_server)
-    doc = Document.new do
-      action('abc') do
-        inputs  '*.a'
-        outputs '{$INPUT[1].MATCH[1]}.b'
+    @provider = Agent[:rule_provider].start(tuple_space_server)
+    doc = Document.parse(<<-DOCUMENT)
+      Rule abc
+        input  '*.a'
+        output '{$INPUT[1].MATCH[1]}.b'
+      Action---
         content "echo 'abc' > {$OUTPUT[1]}"
-      end
-      action('xyz') do
-        inputs  '*.a'
-        outputs '{$INPUT[1].MATCH[1]}.b'
+      ---End
+
+      Rule xyz
+        input  '*.a'
+        output '{$INPUT[1].MATCH[1]}.b'
+      Action---
         content "echo 'xyz' > {$OUTPUT[1]}"
-      end
-    end
+      ---End
+    DOCUMENT
     @rule_abc = doc['abc']
     @rule_xyz = doc['xyz']
     @provider.read_document(doc)

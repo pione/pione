@@ -10,7 +10,7 @@ describe "Agent::InputGenerator" do
 
   it 'should provide data by simple generator' do
     # create generator and wait to finish it's job
-    ts_server = get_tuple_space_server
+    ts_server = tuple_space_server
     generator =
       Agent[:input_generator].start_by_simple(ts_server, "*.a", 1..10, 11..20)
     generator.wait_till(:terminated)
@@ -36,7 +36,7 @@ describe "Agent::InputGenerator" do
       File.open(File.join(dir, "2.b"), "w+"){|out| out.write("22") }
       File.open(File.join(dir, "3.c"), "w+"){|out| out.write("33") }
       # make generator and wait to finish it's job
-      generator = Agent[:input_generator].start_by_dir(get_tuple_space_server, dir)
+      generator = Agent[:input_generator].start_by_dir(tuple_space_server, dir)
       generator.wait_till(:terminated)
       # check exceptions
       check_exceptions

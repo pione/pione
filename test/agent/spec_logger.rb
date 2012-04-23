@@ -9,7 +9,7 @@ describe "Agent::Logger" do
   before do
     create_remote_tuple_space_server
     @buf = StringIO.new("", "w+")
-    @logger = Agent[:logger].start(get_tuple_space_server, @buf)
+    @logger = Agent[:logger].start(tuple_space_server, @buf)
     @msg1 = "e07860f6-18f0-4c1a-8a5a-7d9f3353c83f"
     @msg2 = "c8fa705d-fc30-42fa-a05f-a2493717dc39"
   end
