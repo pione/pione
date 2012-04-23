@@ -1,9 +1,7 @@
-# -*- ruby -*-
-
-InnocentWhite::Document.new do
-  define_action("/main") do
-    inputs  'test-($*).a', 'test-{$INPUT[1].MATCH[1]}.b'
-    outputs 'test-{$INPUT[1].MATCH[1]}.c'
-    content 'expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}'
-  end
-end
+Rule Main
+  input 'test-($*).a'
+  input 'test-{$INPUT[1].MATCH[1]}.b'
+  output 'test-{$INPUT[1].MATCH[1]}.c'.stdout
+Action--------------------------------------------------------------------------
+expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}
+-----------------------------------------------------------------------------End

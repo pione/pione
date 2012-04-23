@@ -186,7 +186,5 @@ module InnocentWhite
         end
       end
     end
-
   end
-
 end

@@ -31,4 +31,3 @@ describe "TupleSpaceReceiver" do
     servers.first.uuid.should == ts_server.uuid
   end
 end
-

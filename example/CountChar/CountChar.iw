@@ -18,7 +18,7 @@ nkf {$OPTIONS} {$INPUT[1]} > {$OUTPUT[1]}
 Rule CountChar
   input '*.utf8'
   output '{$INPUT[1].*}.count'.stdout
-Action---------------------------------------------------------------------------
+Action--------------------------------------------------------------------------
 #!/usr/bin/env ruby
 # coding: utf-8
 table = {}
@@ -34,7 +34,7 @@ end
 Rule Summarize
   input-all '*.count'
   output 'summary.txt'.stdout
-Action---------------------------------------------------------------------------
+Action--------------------------------------------------------------------------
 #!/usr/bin/env ruby
 # coding: utf-8
 table = {}
