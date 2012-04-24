@@ -20,10 +20,12 @@ module InnocentWhite
       define_state_transition :rule_loading => :request_waiting
 
       def transit_to_request_waiting
+        puts "test"
         return take(Tuple[:request_rule].any)
       end
 
       def transit_to_rule_loading(request)
+        puts "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         out = Tuple[:rule].new(rule_path: request.rule_path)
         if known_rule?(request.rule_path)
           out.status = :known

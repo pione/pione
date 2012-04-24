@@ -43,7 +43,7 @@ Rule Aggregation
   output 'sum.txt'.stdout
 Action--------------------------------------------------------------------------
 #!/usr/bin/env ruby
-'{$INPUT[1].LIST}'.split(':').each do |filename|
+'{$INPUT[1]}'.split(':').sort.each do |filename|
   puts File.read(filename)
 end
 -----------------------------------------------------------------------------End

@@ -379,6 +379,7 @@ module InnocentWhite
             begin
               read(Tuple[:rule].new(rule_path: caller.rule_path), 0)
             rescue Rinda::RequestExpiredError
+              puts "Request loading a rule #{caller.rule_path}" if debug_mode?
               write(Tuple[:request_rule].new(caller.rule_path))
               read(Tuple[:rule].new(rule_path: caller.rule_path))
             end

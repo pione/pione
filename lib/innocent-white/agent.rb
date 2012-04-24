@@ -218,6 +218,7 @@ module InnocentWhite
         method = transition_method(state)
         arity = method.arity
         _args = args[0...arity]
+        log(:debug, "InnocentWhite.#{agent_type}.state: #{state}")
         method.call(*_args)
       end
 

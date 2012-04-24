@@ -3,7 +3,7 @@ require 'innocent-white/rule'
 require 'innocent-white/agent/input-generator'
 require 'innocent-white/agent/task-worker'
 require 'innocent-white/agent/rule-provider'
-
+require 'innocent-white/agent/logger'
 
 include InnocentWhite
 
@@ -15,6 +15,11 @@ uri = "local:#{Dir.mktmpdir('innocent-white-')}/"
 
 # make drb server and it's connection
 $tuple_space_server = TupleSpaceServer.new(task_worker_resource: 1, base_uri: uri)
+provider = InnocentWhite::TupleSpaceProvider.instance
+provider.add($tuple_space_server)
+
+# make logger
+Agent[:logger].start($tuple_space_server, File.open("log.txt", "w+"))
 
 # read process document
 $doc = Document.load(File.join($dir,'Sum.iw'))
@@ -22,6 +27,7 @@ $doc = Document.load(File.join($dir,'Sum.iw'))
 # start rule provider
 rule_loader = Agent[:rule_provider].start($tuple_space_server)
 rule_loader.read_document($doc)
+rule_loader.wait_till(:request_waiting)
 $tuple_space_server.write(Tuple[:process_info].new('sum', 'Sum'))
 
 # start input generators

@@ -3,14 +3,13 @@
 
 require 'innocent-white/tuple'
 require 'innocent-white/agent'
-require 'innocent-white/process-handler'
 require 'innocent-white/tuple-space-provider'
 
 # start druby environment
 DRb.start_service
 
 # tuple space provider
-provider = InnocentWhite::TupleSpaceProvider.get
+provider = InnocentWhite::TupleSpaceProvider.instance
 
 # tuple space servers are not found
 if provider.tuple_space_servers.empty?
