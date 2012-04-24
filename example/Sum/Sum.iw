@@ -1,9 +1,10 @@
 Rule Main
   input 'list.txt'
-  input 'test-{$INPUT[1].MATCH[1]}.b'
-  output 'test-{$INPUT[1].MATCH[1]}.c'.stdout
-Action--------------------------------------------------------------------------
-expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}
+  output 'sum.txt'
+Flow----------------------------------------------------------------------------
+rule MakeHeadTail
+rule Sum.sync
+rule Aggregation
 -----------------------------------------------------------------------------End
 
 Rule MakeHeadTail
@@ -23,8 +24,8 @@ Action--------------------------------------------------------------------------
 i = 1
 File.readlines('list.txt').each do |line|
   head, tail = line.split(',')
-  File.open("head#{i}.txt"){|f| f.print head}
-  File.open("tail#{i}.txt"){|f| f.print head}
+  File.open("head#{i}.txt", "w+"){|f| f.print head}
+  File.open("tail#{i}.txt", "w+"){|f| f.print tail}
   i += 1
 end
 -----------------------------------------------------------------------------End
@@ -32,8 +33,17 @@ end
 Rule Sum
   input 'head*.txt'
   input 'tail{$INPUT[1].MATCH[1]}.txt'
-  output 'sum{$INPUT[1].MATCH[1]}.txt'
+  output 'sum{$INPUT[1].MATCH[1]}.txt'.stdout
 Action--------------------------------------------------------------------------
 expr {$INPUT[1].VALUE} + {$INPUT[2].VALUE}
 -----------------------------------------------------------------------------End
 
+Rule Aggregation
+  input-all 'sum*.txt'
+  output 'sum.txt'.stdout
+Action--------------------------------------------------------------------------
+#!/usr/bin/env ruby
+'{$INPUT[1].LIST}'.split(':').each do |filename|
+  puts File.read(filename)
+end
+-----------------------------------------------------------------------------End

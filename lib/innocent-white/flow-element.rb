@@ -25,6 +25,7 @@ module InnocentWhite
       end
 
       def rule_path
+        p @expr
         @expr.eval
       end
     end

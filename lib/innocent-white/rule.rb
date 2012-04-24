@@ -58,6 +58,10 @@ module InnocentWhite
         klass.new(ts_server, self, inputs, params, opts)
       end
 
+      def rule_path
+        return @path
+      end
+
       def ==(other)
         return false unless @inputs == other.inputs
         return false unless @outputs == other.outputs
@@ -461,6 +465,7 @@ module InnocentWhite
       end
     end
 
+    # ActionRule is a rule writing action.
     class ActionRule < BaseRule
       def action?
         true
@@ -471,6 +476,8 @@ module InnocentWhite
       end
     end
 
+
+    # ActionHandler handles ActionRule.
     class ActionHandler < BaseHandler
       # Execute the action.
       def execute
@@ -497,7 +504,7 @@ module InnocentWhite
         end
       end
 
-      # Write shell script to the tempfile.
+      # Write the data to the tempfile as shell script.
       def write_shell_script(&b)
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(Util.expand_variables(@rule.content, @variable_table))
@@ -518,9 +525,8 @@ module InnocentWhite
         `cd #{@working_directory}; ./#{scriptname}`
       end
 
-      # Find outputs from working directory.
+      # Find outputs data by those names from working directory.
       def find_outputs
-        outputs = []
         list = Dir.entries(@working_directory)
         @rule.outputs.each_with_index do |exp, i|
           exp = exp.with_variables(@variable_table)
@@ -541,7 +547,16 @@ module InnocentWhite
       end
     end
 
+    # RootRule is a hidden toplevel rule like this:
+    #   Rule Root
+    #     input-all  '*'
+    #     output-all '*'.except('{$INPUT[1]}')
+    #   Flow
+    #     rule /Main
+    #   End
     class RootRule < FlowRule
+
+      # Make new rule.
       def initialize(rule_path)
         inputs  = [DataExpr.all("*")]
         outputs = [DataExpr.all("*").except("{$INPUT[1]}")]
@@ -551,7 +566,7 @@ module InnocentWhite
         @domain = '/root'
       end
 
-      # Make rule handler from the rule.
+      # Make new handler object of this rule.
       def make_handler(ts_server)
         input_combinations = find_input_combinations(ts_server, "/input")
         inputs = input_combinations.first
@@ -559,7 +574,9 @@ module InnocentWhite
       end
     end
 
+    # RootHandler is a special handler for RootRule.
     class RootHandler < FlowHandler
+
       def execute
         puts ">>> Start Root Rule Execution" if debug_mode?
         copy_data_into_domain(@inputs.flatten, @domain)

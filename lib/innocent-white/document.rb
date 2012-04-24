@@ -19,8 +19,8 @@ module InnocentWhite
     end
 
     # Load a document and return rule table.
-    def self.load(file)
-      parse(file.read)
+    def self.load(filepath)
+      parse(File.read(filepath))
     end
 
     def self.parse(src)

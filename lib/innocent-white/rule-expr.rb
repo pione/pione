@@ -46,5 +46,9 @@ module InnocentWhite
       @sync_mode = truth
       return self
     end
+
+    def eval
+      @name
+    end
   end
 end
