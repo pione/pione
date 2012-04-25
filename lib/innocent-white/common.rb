@@ -5,6 +5,7 @@ require 'socket'
 require 'drb/drb'
 require 'rinda/rinda'
 require 'rinda/tuplespace'
+require 'json'
 
 module InnocentWhite
   def debug_mode
@@ -106,6 +107,7 @@ module InnocentWhite
   end
 end
 
+require 'innocent-white/log'
 require 'innocent-white/tuple'
 require 'innocent-white/data-expr'
 require 'innocent-white/rule-expr'

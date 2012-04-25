@@ -125,13 +125,21 @@ module InnocentWhite
 
       # Hello, tuple space server.
       def hello
-        log(:debug, "hello, I am #{uuid}") if InnocentWhite.debug_mode?
+        message = Log.new do |log|
+          log.add_record(agent_type, "action", "hello")
+          log.add_record(agent_type, "uuid", uuid)
+        end
+        log(message)
         write(to_agent_tuple)
       end
 
       # Bye, tuple space server.
       def bye
-        # log(:debug, "bye, I am #{uuid}") if InnocentWhite.debug_mode?
+        message = Log.new do |log|
+          log.add_record(agent_type, "action", "bye")
+          log.add_record(agent_type, "uuid", uuid)
+        end
+        log(message)
         write(to_bye_tuple)
       end
 
@@ -153,11 +161,6 @@ module InnocentWhite
         while not(@__next_tuple_space_server__.nil?) do
           sleep 0.01
         end
-      end
-
-      # Send a log message.
-      def log(level, msg)
-        super(level, "#{agent_type} on #{Util.hostname}: #{msg}")
       end
 
       # Sleep till the agent becomes the state.
@@ -187,6 +190,7 @@ module InnocentWhite
       private
 
       # Start to transit agent's state.
+      # For example, logger should transit initialized, logging, logging, ...
       def start_running
         # Return if the agent is running already.
         return unless @thread.nil?
@@ -215,10 +219,19 @@ module InnocentWhite
 
       # Call a transition method.
       def call_transition_method(state, *args)
+        # log the state
+        unless self.agent_type == :logger
+          message = Log.new do |log|
+            log.add_record(agent_type, "action", "transit")
+            log.add_record(agent_type, "object", state)
+          end
+          log(message)
+        end
+
+        puts "#{agent_type} #{state}"
         method = transition_method(state)
         arity = method.arity
         _args = args[0...arity]
-        log(:debug, "InnocentWhite.#{agent_type}.state: #{state}")
         method.call(*_args)
       end
 
@@ -279,6 +292,8 @@ module InnocentWhite
 
       # State error
       def transit_to_error(e)
+        puts e
+        puts e.backtrace
         notify_exception(e)
         terminate
       end

@@ -28,8 +28,9 @@ module InnocentWhite
       # State logging.
       def transit_to_logging
         log = take(Tuple[:log].any)
-        @out.puts "#{log.level}: #{log.message}"
+        @out.puts log.message.format
         @out.flush
+        @out.sync
       end
 
       # State terminated.

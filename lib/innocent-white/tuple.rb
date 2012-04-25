@@ -103,6 +103,10 @@ module InnocentWhite
         self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
       end
 
+      def to_log_value
+        @data.merge({"tuple" => self.class.identifier}).to_json
+      end
+
       # Return the value of the specified position.
       def value(i = 0)
         @data[i]
@@ -199,8 +203,8 @@ module InnocentWhite
     define_format [:parent_agent, :parent_id, :child_id]
 
     # log a message
-    #   level : info, warn, error
-    define_format [:log, :level, :message]
+    #   obj : Log's instance
+    define_format [:log, :message]
 
     # number of task worker for tuple space server
     #   number : resource number of task workers.

@@ -38,8 +38,11 @@ module InnocentWhite
       # State task_processing.
       def transit_to_task_processing(task)
         if InnocentWhite.debug_mode?
-          msg = "is processing the task #{task.rule_path}(#{task.inputs.join(',')})"
-          log(:debug, msg)
+          message = Log.new do |l|
+            l.add_record(agent_type, "action", "task_processing")
+            l.add_record(agent_type, "object", task.to_log_value)
+          end
+          log(message)
         end
         return task
       end

@@ -154,8 +154,8 @@ module InnocentWhite
     tuple_space_operation :notify
 
     # Log a message.
-    def log(level, msg)
-      write(Tuple[:log].new(level, msg))
+    def log(msg)
+      write(Tuple[:log].new(msg))
     end
 
     private

@@ -7,6 +7,8 @@ require 'innocent-white/agent/logger'
 
 include InnocentWhite
 
+Thread.abort_on_exception = true
+
 # get script dirname
 $dir = File.dirname(File.expand_path(__FILE__))
 
