@@ -37,12 +37,9 @@ module InnocentWhite
 
       # State task_processing.
       def transit_to_task_processing(task)
-        if InnocentWhite.debug_mode?
-          message = Log.new do |l|
-            l.add_record(agent_type, "action", "task_processing")
-            l.add_record(agent_type, "object", task.to_log_value)
-          end
-          log(message)
+        log do |msg|
+          msg.add_record(agent_type, "action", "process_rule")
+          msg.add_record(agent_type, "object", task)
         end
         return task
       end
@@ -53,6 +50,10 @@ module InnocentWhite
           begin
             read(Tuple[:rule].new(rule_path: task.rule_path), 0)
           rescue Rinda::RequestExpiredError
+            log do |msg|
+              msg.add_record(agent_type, "action", "request_rule")
+              msg.add_record(agent_type, "object", task.rule_path)
+            end
             write(Tuple[:request_rule].new(task.rule_path))
             read(Tuple[:rule].new(rule_path: task.rule_path))
           end
@@ -91,6 +92,11 @@ module InnocentWhite
               puts "+++ Create Sub Task worker +++" if debug_mode?
               child = self.class.new(tuple_space_server)
               child.once = true
+              log do |msg|
+                msg.add_record(agent_type, "action", "create_sub_task_worker")
+                msg.add_record(agent_type, "uuid", uuid)
+                msg.add_record(agent_type, "object", child.uuid)
+              end
               child.start
             else
               sleep 1
@@ -118,6 +124,11 @@ module InnocentWhite
       def transit_to_task_finishing(task, handler)
         finished = Tuple[:finished].new(handler.domain, :succeeded, handler.outputs)
         write(finished)
+        log do |msg|
+          msg.add_record(agent_type, "action", "finished_task")
+          msg.add_record(agent_type, "uuid", uuid)
+          msg.add_record(agent_type, "object", task)
+        end
         terminate if @once
       end
 

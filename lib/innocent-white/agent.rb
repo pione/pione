@@ -125,21 +125,19 @@ module InnocentWhite
 
       # Hello, tuple space server.
       def hello
-        message = Log.new do |log|
-          log.add_record(agent_type, "action", "hello")
-          log.add_record(agent_type, "uuid", uuid)
+        log do |msg|
+          msg.add_record(agent_type, "action", "hello")
+          msg.add_record(agent_type, "uuid", uuid)
         end
-        log(message)
         write(to_agent_tuple)
       end
 
       # Bye, tuple space server.
       def bye
-        message = Log.new do |log|
-          log.add_record(agent_type, "action", "bye")
-          log.add_record(agent_type, "uuid", uuid)
+        log do |msg|
+          msg.add_record(agent_type, "action", "bye")
+          msg.add_record(agent_type, "uuid", uuid)
         end
-        log(message)
         write(to_bye_tuple)
       end
 
@@ -221,14 +219,13 @@ module InnocentWhite
       def call_transition_method(state, *args)
         # log the state
         unless self.agent_type == :logger
-          message = Log.new do |log|
-            log.add_record(agent_type, "action", "transit")
-            log.add_record(agent_type, "object", state)
+          log do |msg|
+            msg.add_record(agent_type, "action", "transit")
+            msg.add_record(agent_type, "state", state)
+            msg.add_record(agent_type, "uuid", uuid)
           end
-          log(message)
         end
 
-        puts "#{agent_type} #{state}"
         method = transition_method(state)
         arity = method.arity
         _args = args[0...arity]
@@ -292,6 +289,7 @@ module InnocentWhite
 
       # State error
       def transit_to_error(e)
+        # print error
         puts e
         puts e.backtrace
         notify_exception(e)

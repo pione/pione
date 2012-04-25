@@ -154,7 +154,9 @@ module InnocentWhite
     tuple_space_operation :notify
 
     # Log a message.
-    def log(msg)
+    def log
+      msg = Log.new
+      yield msg
       write(Tuple[:log].new(msg))
     end
 

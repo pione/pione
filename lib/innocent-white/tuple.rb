@@ -103,8 +103,8 @@ module InnocentWhite
         self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
       end
 
-      def to_log_value
-        @data.merge({"tuple" => self.class.identifier}).to_json
+      def to_json(*a)
+        @data.merge({"tuple" => self.class.identifier}).to_json(*a)
       end
 
       # Return the value of the specified position.
