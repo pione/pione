@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+
+require 'innocent-white/common'
+require 'optparse'
+require 'json'
+
+option = OptionParser.new
+option.on('-a') {|val| $application = val}
+option.on('-c') {|val| $component = val}
+option.on('-k') {|val| $key = val}
+option.on('-v') {|val| $value = val}
+
+argv = option.parse(ARGV)
+
+lines = ARGF.read.split("\n")
+lines.each do |line|
+  pos_left_qparen = line.index("[")
+  pos_right_qparen = line.index("]")
+  pos_start_resource = line.index(/\S/, pos_right_qparen+1)
+  pos_end_resource = line.index(":", pos_start_resource)
+  id = line[0..(pos_left_qparen-1)]
+  time = line[(pos_left_qparen+1)..(pos_right_qparen-1)]
+  resource = line[pos_start_resource..pos_end_resource]
+  value = JSON.parse("[" + line[(pos_end_resource+1)..-1] + "]")
+  puts id
+  puts time
+  puts resource
+  puts value
+end

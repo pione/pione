@@ -25,7 +25,6 @@ module InnocentWhite
       end
 
       def transit_to_rule_loading(request)
-        puts "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         out = Tuple[:rule].new(rule_path: request.rule_path)
         if known_rule?(request.rule_path)
           out.status = :known

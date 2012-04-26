@@ -80,7 +80,11 @@ module InnocentWhite
       def transit_to_generating
         input = @generator.generate
         write(Tuple[:data].new(domain: @domain, name: input.name, uri: input.uri))
-        log(:debug, "generated #{input.name}")
+        log do |l|
+          l.add_record(agent_type, "action", "generate_input_data")
+          l.add_record(agent_type, "uuid", uuid)
+          l.add_record(agent_type, "object", input.name)
+        end
       end
 
       # State error. StopIteration exception is ignored because it means the

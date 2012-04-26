@@ -285,6 +285,7 @@ module InnocentWhite
       def transit_to_terminated
         Util.ignore_exception { bye }
         current_entry.cancel if current_entry
+        @__aborting__ = true
       end
 
       # State error
