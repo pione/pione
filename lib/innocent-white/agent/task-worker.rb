@@ -88,7 +88,7 @@ module InnocentWhite
         if rule.content.flow?
           child = nil
           while th.alive? do
-            if child.nil? or not(child.thread.alive?)
+            if child.nil? or not(child.running_thread.alive?)
               puts "+++ Create Sub Task worker +++" if debug_mode?
               child = self.class.new(tuple_space_server)
               child.once = true

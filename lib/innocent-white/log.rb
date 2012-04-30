@@ -21,7 +21,7 @@ module InnocentWhite
       end
 
       def application
-        "innocent-white"
+        "" # "innocent-white"
       end
 
       # Format as a string.
@@ -29,7 +29,7 @@ module InnocentWhite
       #   A35D[2012-04-25T14:48:57.791+09:00] innocent-white.rule-provider.status: initialized
       def format(logid, time)
         resource = [application, components, key].flatten.compact.join(".")
-        "%s[%s] %s: %s" % [logid, time, resource, value.to_json]
+        "%s %s %s: %s" % [time, logid, resource, value.to_json]
       end
     end
 

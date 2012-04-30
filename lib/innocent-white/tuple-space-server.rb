@@ -145,7 +145,7 @@ module InnocentWhite
       end
     end
 
-    # define perations
+    # define tuple space operations
     tuple_space_operation :read
     tuple_space_operation :read_all
     tuple_space_operation :take
