@@ -49,7 +49,8 @@ module InnocentWhite
       # base uri
       uri = "local:#{Dir.mktmpdir('innocent-white-')}/"
       # make drb server and it's connection
-      @__remote_drb_server__ = DRb::DRbServer.new(nil, TupleSpaceServer.new(task_worker_resource: 3, base_uri: uri))
+      ts_server = TupleSpaceServer.new(task_worker_resource: 3, base_uri: uri)
+      @__remote_drb_server__ = DRb::DRbServer.new(nil, ts_server)
       server = DRbObject.new(nil, @__remote_drb_server__.uri)
       # set default tuple space server
       set_tuple_space_server server
@@ -68,6 +69,7 @@ module InnocentWhite
     # Fake set_current_state for counting state changes.
     alias :set_current_state_orig :set_current_state
     def set_current_state(state)
+      @__counter__ ||= nil
       set_current_state_orig(state)
       if @__counter__
         @__counter__.has_key?(state) ? @__counter__[state] += 1 : @__counter__[state] = 1

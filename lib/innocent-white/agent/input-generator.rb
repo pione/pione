@@ -5,7 +5,7 @@ require 'innocent-white/resource'
 
 module InnocentWhite
   module Agent
-    class InputGenerator < InnocentWhite::Agent::Base
+    class InputGenerator < TupleSpaceClient
       set_agent_type :input_generator
 
       InputData = Struct.new(:name, :uri)
@@ -39,10 +39,11 @@ module InnocentWhite
       class DirGeneratorMethod < GeneratorMethod
         def initialize(dir_path)
           @dir_path = dir_path
-          @gen = Dir.open(dir_path).to_enum
         end
 
         def generate
+          puts "AAAAAAAAAAAAA"
+          @gen ||= Dir.open(@dir_path).to_enum
           name = @gen.next
           path = File.join(@dir_path, name)
           uri = "local:#{File.expand_path(path)}"
@@ -50,6 +51,7 @@ module InnocentWhite
         end
       end
 
+      # StreamGeneratorMethod handles stream inputs.
       class StreamGeneratorMethod < GeneratorMethod
         def initialize(dir_path)
           @dir_path = dir_path
@@ -102,15 +104,19 @@ module InnocentWhite
       # State generating generates a data from generator and puts it into tuple
       # space.
       def transit_to_generating
-        input = @generator.generate
-        write(Tuple[:data].new(domain: DOMAIN, name: input.name, uri: input.uri))
-        return input
+        puts "Thread: #{Thread.current}"
+        @thread ||= Thread.current
+        if @thread == Thread.current
+          input = @generator.generate
+          puts input
+          write(Tuple[:data].new(domain: DOMAIN, name: input.name, uri: input.uri))
+          return input
+        end
       end
 
       # State stop_iteration. StopIteration exception is ignored because it
       # means the input generation was completed.
       def transit_to_stop_iteration(e)
-        puts e
         # do nothing
       end
 
@@ -119,12 +125,14 @@ module InnocentWhite
         :method => :transit_to_generating,
         :method_options => [:private]
       } do |jp, agent, *args|
-        input = jp.proceed
-        agent.log do |l|
-          l.add_record(agent.agent_type, "action", "generate_input_data")
-          l.add_record(agent.agent_type, "uuid", agent.uuid)
-          l.add_record(agent.agent_type, "object", input.name)
+        if input = jp.proceed
+          agent.log do |l|
+            l.add_record(agent.agent_type, "action", "generate_input_data")
+            l.add_record(agent.agent_type, "uuid", agent.uuid)
+            l.add_record(agent.agent_type, "object", input.name)
+          end
         end
+        nil
       end
     end
 

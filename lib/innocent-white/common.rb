@@ -110,10 +110,15 @@ module InnocentWhite
   end
 end
 
+require 'innocent-white/agent'
+require 'innocent-white/tuple-space-server-interface'
+require 'innocent-white/agent/tuple-space-client'
+require 'innocent-white/tuple-space-server'
 require 'innocent-white/log'
 require 'innocent-white/tuple'
 require 'innocent-white/data-expr'
 require 'innocent-white/rule-expr'
 require 'innocent-white/variable'
 require 'innocent-white/document'
-require 'innocent-white/tuple-space-server'
+require 'innocent-white/rule'
+

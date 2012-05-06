@@ -8,11 +8,16 @@ module InnocentWhite
     UDP_PORT = 54321
     PROVIDER_URI = "druby://localhost:10101"
     TIMEOUT = 5
+    MAX_RETRY_NUMBER = 5
 
-    # -- class  --
+    class InstanceError < StandardError; end
 
     # Return the provider instance.
-    def self.instance(data = {})
+    def self.instance(data = {}, i=0)
+      if i >= MAX_RETRY_NUMBER
+        raise InstanceError
+      end
+      data = {} unless data.kind_of?(Hash)
       uri = if data.has_key?(:provider_port)
               "druby://localhost:#{data[:provider_port]}"
             else
@@ -38,7 +43,7 @@ module InnocentWhite
           DRbObject.new_with_uri(uri)
         rescue Errno::EADDRINUSE
           # retry
-          instance(data)
+          instance(data, i+1)
         end
       end
     end

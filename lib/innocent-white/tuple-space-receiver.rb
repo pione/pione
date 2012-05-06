@@ -12,8 +12,6 @@ module InnocentWhite
 
     class InstanceError < StandardError; end
 
-    # -- class --
-
     # Return the receiver instance.
     def self.instance(data={}, i=0)
       if i >= MAX_RETRY_NUMBER

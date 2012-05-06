@@ -167,6 +167,9 @@ module InnocentWhite
 
     # -- define tuples --
 
+    # signal
+    define_format [:command, :type]
+
     # data representation
     #   domain : target domain
     #   name   : data name

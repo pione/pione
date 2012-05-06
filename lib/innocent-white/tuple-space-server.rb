@@ -2,11 +2,7 @@ require 'innocent-white/common'
 require 'innocent-white/tuple-space-provider'
 
 module InnocentWhite
-  class TupleSpaceServer < InnocentWhiteObject
-    include DRbUndumped
-
-    # -- class --
-
+  module TupleSpaceServerMethod
     def self.tuple_space_interface(name, opt={})
       define_method(name) do |*args, &b|
         # convert tuple space form
@@ -29,7 +25,19 @@ module InnocentWhite
       end
     end
 
-    # -- instance --
+    # Define tuple space interfaces.
+    tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}
+    tuple_space_interface :read_all, :result => lambda{|list| list.map{|t| Tuple.from_array(t)}}
+    tuple_space_interface :take, :result => lambda{|t| Tuple.from_array(t)}
+    tuple_space_interface :write, :validator => Proc.new {|*args|
+      args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
+    }
+    tuple_space_interface :notify
+  end
+
+  class TupleSpaceServer < InnocentWhiteObject
+    include DRbUndumped
+    include TupleSpaceServerMethod
 
     def initialize(data={})
       @__ts__ = Rinda::TupleSpace.new
@@ -49,11 +57,10 @@ module InnocentWhite
         write(Tuple[:base_uri].new(uri: uri))
       end
 
-      # keep provider
-      keep_provider
-
-      # watch bye message
-      check_agent_life
+      # agents
+      @life_keeper = Agent::TupleSpaceServerLifeKeeper.start(self)
+      @life_keeper.wait_till(:sleeping)
+      @client_life_checker = Agent::TupleSpaceServerClientLifeChecker.start(self)
     end
 
     def alive?
@@ -90,94 +97,16 @@ module InnocentWhite
     # Shutdown the server.
     def finalize
       @terminated = false
+      @life_keeper.terminate
+      @life_keeper.running_thread.join
+      @client_life_checker.terminate
+      @client_life_checker.running_thread.join
     end
 
     alias :terminate :finalize
-
-    # Define tuple space interfaces.
-    tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}
-    tuple_space_interface :read_all, :result => lambda{|list| list.map{|t| Tuple.from_array(t)}}
-    tuple_space_interface :take, :result => lambda{|t| Tuple.from_array(t)}
-    tuple_space_interface :write, :validator => Proc.new {|*args|
-      args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
-    }
-    tuple_space_interface :notify
-
-    private
-
-    def keep_provider
-      @thread_keep_provider = Thread.new do
-        while true do
-          begin
-            provider.add(remote_object_uri)
-            sleep 1
-          rescue
-            # do nothing
-          end
-        end
-      end
-    end
-
-    def provider
-      TupleSpaceProvider.instance(@provider_options)
-    end
-
-    def check_agent_life
-      @thread_check_agent_life = Thread.new do
-        while true do
-          begin
-            agent = take(Tuple[:bye].any)
-            take(Tuple[:agent].new(uuid: agent.uuid))
-          rescue
-            # do nothing
-          end
-        end
-      end
-    end
-  end
-
-  module TupleSpaceServerInterface
-
-    # Define tuple space operation.
-    def self.tuple_space_operation(name)
-      define_method(name) do |*args, &b|
-        @__tuple_space_server__.__send__(name, *args, &b)
-      end
-    end
-
-    # define tuple space operations
-    tuple_space_operation :read
-    tuple_space_operation :read_all
-    tuple_space_operation :take
-    tuple_space_operation :write
-    tuple_space_operation :count_tuple
-    tuple_space_operation :notify
-
-    # Log a message.
-    def log
-      msg = Log.new
-      yield msg
-      write(Tuple[:log].new(msg))
-    end
-
-    private
-
-    # Return the tuple space server.
-    def tuple_space_server
-      @__tuple_space_server__
-    end
-
-    # Set tuple space server which provides operations.
-    def set_tuple_space_server(server)
-      @__tuple_space_server__ = server
-
-      # override #to_s as it's uri because dead remote objects cause exceptions
-      # when you try to watch the object
-      if server.methods.include?(:__drburi)
-        def @__tuple_space_server__.to_s
-          __drburi
-        end
-      end
-    end
   end
 end
+
+require 'innocent-white/agent'
+require 'innocent-white/agent/tuple-space-server-life-keeper'
+require 'innocent-white/agent/tuple-space-server-client-life-checker'

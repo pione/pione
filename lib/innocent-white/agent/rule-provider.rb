@@ -5,6 +5,7 @@ require 'innocent-white/rule'
 module InnocentWhite
   module Agent
     class RuleProvider < Base
+
       set_agent_type :rule_provider
 
       def initialize(ts_server)

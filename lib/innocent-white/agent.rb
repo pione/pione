@@ -2,7 +2,6 @@ require 'timeout'
 require 'thread'
 require 'monitor'
 require 'innocent-white/common'
-require 'innocent-white/tuple-space-server'
 
 module InnocentWhite
   module Agent
@@ -20,37 +19,38 @@ module InnocentWhite
 
     class Aborting < Exception; end
 
-    # AgentTypeSingletonMethod provides agent type singleton methods.
-    module AgentTypeSingletonMethod
-      # Set the agent type.
-      def set_agent_type(agent_type)
-        @agent_type = agent_type
-      end
-
-      # Return the agent type.
-      def agent_type
-        @agent_type
-      end
-    end
-
-    # AgentTypeMethod provides agent type methods.
-    module AgentTypeMethod
-      # Return agent type of the object.
-      def agent_type
-        self.class.agent_type
-      end
-    end
-
     # StateTransitionSingleMethod provides state transition singleton methods.
     module StateTransitionSingletonMethod
-      # Define a agent state.
+      # Set pre-defined states when the module is extended by others.
+      def self.extended(mod)
+        mod.define_state :initialized
+        mod.define_state :terminated
+        mod.define_state :error
+
+        mod.define_state_transition :error => :terminated
+      end
+
+      # Define new agent state.
       def define_state(name)
         @states ||= []
-        @states << name
+        unless @states.include?(name)
+          @states << name
 
-        define_method("#{name}?") do
-          @__current_state__ == name
+          # define an instance method for checking current state
+          define_method("#{name}?") do
+            @__current_state__ == name
+          end
+
+          # define an instance method for transition
+          unless method_defined?("transit_to_#{name}")
+            define_method("transit_to_#{name}"){}
+          end
         end
+      end
+
+      # Return all states.
+      def states
+        @states
       end
 
       # Return state transition table.
@@ -74,15 +74,99 @@ module InnocentWhite
         table = exception_handler_table
         table.merge!(data)
       end
+
+      # Create a agent and start it.
+      def start(*args, &b)
+        agent = new(*args)
+        b.call(self) if block_given?
+        agent.start
+        return agent
+      end
+
+      def known_exceptions
+        exception_handler_table.keys
+      end
+    end
+
+    class TransitionError < RuntimeError
+    end
+
+    class TimeoutStateWaiting < RuntimeError
     end
 
     # StateTransitionMethod provides state transition methods.
     module StateTransitionMethod
-      include Aquarium::DSL
+      # State transition thread.
+      attr_reader :running_thread
+
+      # Start agent activity.
+      def start
+        raise TransitionError.new(current_state) if current_state == :terminated
+
+        @__result__ = nil
+        @running_thread = Thread.new { start_running }
+        return self
+      end
 
       # Return the current agent's state.
       def current_state
-        @__current_state__
+        @__current_state__ ||= nil
+      end
+
+      def transit
+        raise TransitionError.new(current_state) if current_state == :terminated
+        exit unless @running_thread == Thread.current
+
+        state_transition_table = self.class.state_transition_table
+
+        begin
+          next_state = get_next_state(state_transition_table[current_state])
+          if next_state == :doing_command
+              puts "current: #{current_state}"
+              puts "@__result__: #{agent_type} #{next_state} >>> #{@__result__}"
+            if @__result__.nil? # || @__result__.empty?
+              puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+              puts "current: #{current_state}"
+              puts "@__result__: #{agent_type} #{next_state} >>> #{@__result__}"
+              puts caller
+              exit
+            end
+          end
+          set_current_state(next_state)
+          @__result__ = call_transition_method(next_state, *@__result__)
+        rescue Aborting => e
+          raise e
+        rescue StandardError => e
+          if self.class.known_exceptions.include?(e.class)
+            next_state = get_next_state(exception_handler(e))
+            set_current_state(next_state)
+            @__result__ = call_transition_method(next_state, e)
+          else
+            raise e
+          end
+        end
+      end
+
+      # Sleep till the agent becomes the state.
+      def wait_till(state, sec=5)
+        begin
+          timeout(sec) do
+            sleep 0.1 while not(current_state == state)
+          end
+        rescue Timeout::Error
+          raise TimeoutStateWaiting.new(current_state)
+        end
+      end
+
+      # Terminate to transit.
+      def terminate
+        # abort the agent when called by other thread
+        abort unless @running_thread == Thread.current
+        # transit to terminated
+        res = call_transition_method(:terminated)
+        # set agent state
+        set_current_state(:terminated)
+        return res
       end
 
       private
@@ -90,9 +174,6 @@ module InnocentWhite
       # Set new agent's state.
       def set_current_state(state)
         @__current_state__ = state
-        if @__trace_state__
-          puts "#{agent_type}(#{uuid}) ==> #{state}"
-        end
       end
 
       # Return a transition method of the state.
@@ -105,21 +186,13 @@ module InnocentWhite
         method = transition_method(state)
         arity = method.arity
         _args = args[0...arity]
-        method.call(*_args)
-      end
-
-      # Log the state transition.
-      advise :before, {
-        :methods => :call_transition_method,
-        :method_options => [:private]
-      } do |jp, obj, *args|
-        unless obj.agent_type == :logger
-          obj.log do |msg|
-            msg.add_record(obj.agent_type, "action", "transit")
-            msg.add_record(obj.agent_type, "state", args.first)
-            msg.add_record(obj.agent_type, "uuid", obj.uuid)
-          end
+        if state == :doing_command and _args == []
+          puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+          puts arity
+          p args
+          puts caller
         end
+        method.call(*_args)
       end
 
       # Return the handling state for the exception.
@@ -134,223 +207,67 @@ module InnocentWhite
         end
         return handler || :error
       end
-    end
-
-    module AgentRunnerInterface
-      # Initialize an agent and start it.
-      def start(*args, &b)
-        agent = new(*args)
-        agent.start
-        if block_given?
-          begin
-            b.call
-          ensure
-            agent.terminate
-          end
-        end
-        return agent
-      end
-    end
-
-    # AgentRunnerMethod provides agent's running thread.
-    module AgentRunnerMethod
-      # State transition thread.
-      attr_reader :running_thread
-
-      # Start agent activity.
-      def start
-        @running_thread = Thread.new { start_running }
-        return self
-      end
-
-      private
 
       # Start to transit agent's state.
       # For example, logger should transit initialized, logging, logging, ...
       def start_running
-        state_transition_table = self.class.state_transition_table
-
         begin
-          while not(@__aborting__) do
-            next_state = state_transition_table[@__current_state__]
-            set_current_state(next_state)
-            @__result__ = call_transition_method(next_state, *@__result__)
+          while not(terminated?)
+            transit
+            puts "### #{self}, result > #{@__result__}\n"
           end
         rescue Aborting
           # do nothing, agent will be dead...
-        rescue Object => e
-          next_state = exception_handler(e)
-          set_current_state(next_state)
-          @__result__ = call_transition_method(next_state, e)
-          Thread.new { start_running }
         end
       end
-    end
 
-    module CommonAgentOperation
-      # Terminate the agent.
-      def terminate
-        # abort the agent when called by other thread
-        abort unless @thread == Thread.current
-        # transit to terminated
-        res = call_transition_method(:terminated)
-        # set agent state
-        @__current_state__ = :terminated
-        # abort if @thread == Thread.current
-        return res
-      end
-
-      # Send a bye message to the tuple space servers and terminate myself.
-      def finalize
-        unless current_state == :terminated
-          bye
-          terminate
+      def get_next_state(state)
+        next_state = state.kind_of?(Proc) ? state.call(self) : state
+        unless next_state
+          msg = "unknown state transition: #{current_state} -> #{state} at #{self}"
+          raise ScriptError.new(msg)
         end
+        return next_state
       end
 
       # Abort the agent.
       def abort
-        # set variable
-        @__aborting__ = true
-        if @running_thread
-          if @running_thread.alive?
-            # raise Aborting exception
-            # @running_thread.raise Aborting
-            # wait to stop the thread
-            @running_thread.join
-          end
-        end
-      end
-
-      # Send a hello message to the tuple space server.
-      def hello
-        log do |msg|
-          msg.add_record(agent_type, "action", "hello")
-          msg.add_record(agent_type, "uuid", uuid)
-        end
-        write(to_agent_tuple)
-      end
-
-      # Send a bye message to the tuple space server.
-      def bye
-        log do |msg|
-          msg.add_record(agent_type, "action", "bye")
-          msg.add_record(agent_type, "uuid", uuid)
-        end
-        write(to_bye_tuple)
-      end
-
-      # Convert a agent tuple.
-      def to_agent_tuple
-        Tuple[:agent].new(agent_type: agent_type, uuid: uuid)
-      end
-
-      # Convert a bye tuple
-      def to_bye_tuple
-        Tuple[:bye].new(agent_type: agent_type, uuid: uuid)
-      end
-
-      # Notify the agent happened a exception.
-      def notify_exception(e)
-        # ignore exception because the exception caused tuple server is down...
-        Util.ignore_exception do
-          write(Tuple[:exception].new(uuid, agent_type, e))
-        end
-      end
-
-      # Protected take.
-      def take(*args)
-        tuple = super(*args, &method(:set_current_tuple_entry))
-        set_current_tuple_entry(nil)
-        return tuple
-      end
-
-      # Protected read.
-      def read(*args)
-        tuple = super(*args, &method(:set_current_tuple_entry))
-        set_current_tuple_entry(nil)
-        return tuple
-      end
-
-      private
-
-      # Return current tuple's entry.
-      def current_tuple_entry
-        @__current_tuple_entry__
-      end
-
-      # Set current operating tuple entry.
-      def set_current_tuple_entry(entry)
-        @__current_tuple_entry__ = entry
-        entry.instance_eval {if @place then def @place.to_s; ""; end; end }
-      end
-
-      # Cancel current tuple's entry.
-      def cancel_current_tuple_entry
-        current_tuple_entry.cancel if current_tuple_entry
+        if @running_thread.alive?
+          # raise Aborting exception
+          @running_thread.raise Aborting
+          # wait to stop the thread
+          @running_thread.join
+        end if @running_thread
       end
     end
 
-    # AgentUtil has various utility methods for agents.
-    module AgentUtil
-      # Sleep till the agent becomes the state.
-      def wait_till(state, sec=5)
-        timeout(sec) do
-          while not(current_state == state) do
-            sleep 0.1
-          end
-        end
-      end
-
-      # Turn on/off state trace mode for debugging.
-      def trace_state(mode = true)
-        @__trace_state__ = mode
-      end
-    end
-
+    # Base represents innocent-white system agent excluding function for tuple
+    # space client.
     class Base < InnocentWhiteObject
-      include MonitorMixin
-      include TupleSpaceServerInterface
-      extend AgentTypeSingletonMethod
-      include AgentTypeMethod
       extend StateTransitionSingletonMethod
       include StateTransitionMethod
-      extend AgentRunnerInterface
-      include AgentRunnerMethod
-      include CommonAgentOperation
-      include AgentUtil
 
-      # Default states.
-      define_state :initialized
-      define_state :terminated
-      define_state :error
-
-      # Initialize agent's state.
-      def initialize(ts_server)
-        super()
-        @__aborting__ = false
-        set_tuple_space_server(ts_server)
+      def self.inherited(subclass)
+        states.each {|st| subclass.define_state st }
+        define_state_transition(state_transition_table)
       end
 
-      # State initialized.
-      def transit_to_initialized
-        hello
+      # Set the agent type.
+      def self.set_agent_type(agent_type)
+        @agent_type = agent_type
       end
 
-      # State terminated
-      def transit_to_terminated
-        Util.ignore_exception { bye }
-        cancel_current_tuple_entry
-        @__aborting__ = true
+      # Return the agent type.
+      def self.agent_type
+        @agent_type
       end
 
-      # State error
+      # Return agent type of the object.
+      def agent_type
+        self.class.agent_type
+      end
+
       def transit_to_error(e)
-        # print error
-        $stderr.puts e
-        $stderr.puts e.backtrace
-        # exception handling
-        notify_exception(e)
         terminate
       end
     end

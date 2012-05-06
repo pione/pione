@@ -24,7 +24,9 @@ module InnocentWhite
       define_state_transition :process_info_loading => :task_executing
       define_state_transition :task_executing => :data_outputing
       define_state_transition :data_outputing => :task_finishing
-      define_state_transition :task_finishing => :task_waiting
+      define_state_transition :task_finishing => lambda {|agent|
+        agent.once ? :terminated : :task_waiting
+      }
 
       attr_accessor :once
 
@@ -124,11 +126,6 @@ module InnocentWhite
       def transit_to_task_finishing(task, handler)
         finished = Tuple[:finished].new(handler.domain, :succeeded, handler.outputs)
         write(finished)
-        log do |msg|
-          msg.add_record(agent_type, "action", "finished_task")
-          msg.add_record(agent_type, "uuid", uuid)
-          msg.add_record(agent_type, "object", task)
-        end
         terminate if @once
       end
 
@@ -140,6 +137,18 @@ module InnocentWhite
           notify_exception(e)
         else
           super
+        end
+      end
+
+      advise :after, {
+        :method => :transit_to_task_finishing,
+        :method_options => [:private]
+      } do |jp, agent, *args|
+        task = args.first
+        agent.log do |msg|
+          msg.add_record(agent.agent_type, "action", "finished_task")
+          msg.add_record(agent.agent_type, "uuid", agent.uuid)
+          msg.add_record(agent.agent_type, "object", task)
         end
       end
     end
