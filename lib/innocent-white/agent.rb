@@ -121,17 +121,6 @@ module InnocentWhite
 
         begin
           next_state = get_next_state(state_transition_table[current_state])
-          if next_state == :doing_command
-              puts "current: #{current_state}"
-              puts "@__result__: #{agent_type} #{next_state} >>> #{@__result__}"
-            if @__result__.nil? # || @__result__.empty?
-              puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-              puts "current: #{current_state}"
-              puts "@__result__: #{agent_type} #{next_state} >>> #{@__result__}"
-              puts caller
-              exit
-            end
-          end
           set_current_state(next_state)
           @__result__ = call_transition_method(next_state, *@__result__)
         rescue Aborting => e
@@ -214,7 +203,6 @@ module InnocentWhite
         begin
           while not(terminated?)
             transit
-            puts "### #{self}, result > #{@__result__}\n"
           end
         rescue Aborting
           # do nothing, agent will be dead...

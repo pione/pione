@@ -4,7 +4,7 @@ require 'innocent-white/rule'
 
 module InnocentWhite
   module Agent
-    class TaskWorker < Base
+    class TaskWorker < TupleSpaceClient
       set_agent_type :task_worker
 
       class UnknownTask < Exception; end
@@ -124,6 +124,11 @@ module InnocentWhite
 
       # State task_finishing.
       def transit_to_task_finishing(task, handler)
+        log do |msg|
+          msg.add_record(agent_type, "action", "finished_task")
+          msg.add_record(agent_type, "uuid", uuid)
+          msg.add_record(agent_type, "object", task)
+        end
         finished = Tuple[:finished].new(handler.domain, :succeeded, handler.outputs)
         write(finished)
         terminate if @once
@@ -137,18 +142,6 @@ module InnocentWhite
           notify_exception(e)
         else
           super
-        end
-      end
-
-      advise :after, {
-        :method => :transit_to_task_finishing,
-        :method_options => [:private]
-      } do |jp, agent, *args|
-        task = args.first
-        agent.log do |msg|
-          msg.add_record(agent.agent_type, "action", "finished_task")
-          msg.add_record(agent.agent_type, "uuid", agent.uuid)
-          msg.add_record(agent.agent_type, "object", task)
         end
       end
     end

@@ -20,13 +20,14 @@ describe "TaskWorker" do
     @task1 = Tuple[:task].new(rule_path: "test", inputs: [@data], params: [])
 
     # make a rule
-    doc = InnocentWhite::Document.new do
-      action("test") do
-        inputs  '*.a'
-        outputs stdout('{$INPUT[1].MATCH[1]}.b')
-        content 'echo -n "input: `cat {$INPUT[1]}`"'
-      end
-    end
+    doc = InnocentWhite::Document.parse <<-DOCUMENT
+      Rule test
+        input  '*.a'
+        output '{$INPUT[1].MATCH[1]}.b'.stdout
+      Action---
+        echo -n "input: `cat {$INPUT[1]}`"
+      ---End
+    DOCUMENT
     write(Tuple[:rule].new(rule_path: "test", content: doc["test"], status: :known))
 
     # workers are waiting tasks
@@ -91,8 +92,8 @@ describe "TaskWorker" do
 
     # check state
     @worker1.current_state.should == :task_waiting
-    @worker2.thread.should.not.be.alive
-    @worker3.thread.should.not.be.alive
+    @worker2.running_thread.should.not.be.alive
+    @worker3.running_thread.should.not.be.alive
 
     # push task
     @worker1.wait_until_count(1, :task_finishing) do

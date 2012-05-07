@@ -105,52 +105,42 @@ module InnocentWhite
 
       # State error
       def transit_to_error(e)
+        if e
+          $stderr.puts e
+          $stderr.puts e.backtrace
+        end
         notify_exception(e)
         terminate
       end
 
-      advise :before, {
-        :method => :hello
-      } do |jp, agent, *args|
-        agent.log do |msg|
-          msg.add_record(agent.agent_type, "action", "hello")
-          msg.add_record(agent.agent_type, "uuid", agent.uuid)
+      # Redefine hello method with logging.
+      def hello
+        log do |msg|
+          msg.add_record(agent_type, "action", "hello")
+          msg.add_record(agent_type, "uuid", uuid)
         end
+        super
       end
 
-      advise :before, {
-        :method => :bye
-      } do |jp, agent, *args|
-        agent.log do |msg|
+      # Redefine bye method with logging.
+      def bye
+        log do |msg|
           msg.add_record(agent_type, "action", "bye")
-          msg.add_record(agent_type, "uuid", agent.uuid)
+          msg.add_record(agent_type, "uuid", uuid)
         end
+        super
       end
 
-      # Log the state transition.
-      # advise :before, {
-      #   :method => :call_transition_method,
-      #   :method_options => [:private]
-      # } do |jp, obj, *args|
-      #   puts "advise----------------------------------------"
-      #   puts "obj #{obj}"
-      #   puts "args #{args}"
-      #   unless obj.agent_type == :logger
-      #     obj.log do |msg|
-      #       msg.add_record(obj.agent_type, "action", "transit")
-      #       msg.add_record(obj.agent_type, "state", args.first)
-      #       msg.add_record(obj.agent_type, "uuid", obj.uuid)
-      #     end
-      #   end
-      # end
-
-      advise :before, {
-        :method => :transit_to_error
-      } do |jp, agent, *args|
-        err = args.first
-        # print error
-        $stderr.puts err if err
-        $stderr.puts err.backtrace if err
+      # Redefine call transition method with logging.
+      def call_transition_method(*args)
+        unless agent_type == :logger
+          log do |msg|
+            msg.add_record(agent_type, "action", "transit")
+            msg.add_record(agent_type, "state", args.first)
+            msg.add_record(agent_type, "uuid", uuid)
+          end
+        end
+        super
       end
     end
   end

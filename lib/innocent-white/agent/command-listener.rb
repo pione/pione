@@ -18,10 +18,7 @@ module InnocentWhite
       end
 
       def transit_to_waiting_command
-        tuple = read(Tuple[:command].any)
-        puts "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-        p tuple
-        return tuple
+        return read(Tuple[:command].any)
       end
 
       def transit_to_doing_command(cmd)

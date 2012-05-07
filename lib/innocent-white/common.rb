@@ -6,7 +6,6 @@ require 'drb/drb'
 require 'rinda/rinda'
 require 'rinda/tuplespace'
 require 'json'
-require 'aquarium'
 
 module InnocentWhite
   def debug_mode
@@ -42,8 +41,6 @@ module InnocentWhite
 
   # Basic object class of innocent-white system.
   class InnocentWhiteObject
-    include Aquarium::DSL
-
     def uuid
       @__uuid__ ||= Util.uuid
     end

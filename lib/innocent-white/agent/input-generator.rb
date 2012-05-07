@@ -1,5 +1,4 @@
 require 'innocent-white/common'
-require 'innocent-white/agent'
 require 'innocent-white/uri'
 require 'innocent-white/resource'
 
@@ -42,7 +41,6 @@ module InnocentWhite
         end
 
         def generate
-          puts "AAAAAAAAAAAAA"
           @gen ||= Dir.open(@dir_path).to_enum
           name = @gen.next
           path = File.join(@dir_path, name)
@@ -104,35 +102,20 @@ module InnocentWhite
       # State generating generates a data from generator and puts it into tuple
       # space.
       def transit_to_generating
-        puts "Thread: #{Thread.current}"
-        @thread ||= Thread.current
-        if @thread == Thread.current
-          input = @generator.generate
-          puts input
-          write(Tuple[:data].new(domain: DOMAIN, name: input.name, uri: input.uri))
-          return input
+        input = @generator.generate
+        log do |msg|
+          msg.add_record(agent_type, "action", "generate_input_data")
+          msg.add_record(agent_type, "uuid", uuid)
+          msg.add_record(agent_type, "object", input.name)
         end
+        write(Tuple[:data].new(domain: DOMAIN, name: input.name, uri: input.uri))
+        return input
       end
 
       # State stop_iteration. StopIteration exception is ignored because it
       # means the input generation was completed.
       def transit_to_stop_iteration(e)
         # do nothing
-      end
-
-      # Log for generating a input data.
-      advise :around, {
-        :method => :transit_to_generating,
-        :method_options => [:private]
-      } do |jp, agent, *args|
-        if input = jp.proceed
-          agent.log do |l|
-            l.add_record(agent.agent_type, "action", "generate_input_data")
-            l.add_record(agent.agent_type, "uuid", agent.uuid)
-            l.add_record(agent.agent_type, "object", input.name)
-          end
-        end
-        nil
       end
     end
 

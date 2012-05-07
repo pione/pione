@@ -8,7 +8,6 @@ class TestCommandListener < Agent::TupleSpaceClient
 
   def transit_to_test
     sleep 0.1
-    "abcdefg"
   end
 end
 
