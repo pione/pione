@@ -3,7 +3,7 @@ require 'innocent-white/agent'
 
 module InnocentWhite
   module Agent
-    class SyncMonitor < Base
+    class SyncMonitor < TupleSpaceClient
       set_agent_type :sync_monitor
 
       define_state :sync_target_waiting

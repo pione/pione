@@ -11,8 +11,7 @@ module InnocentWhite
 
       define_state_transition :initialized => :checking_bye
       define_state_transition :checking_bye => :cleaning_agent
-      define_state_transition :cleaning_agent => :sleeping
-      define_state_transition :sleeping => :checking_bye
+      define_state_transition :cleaning_agent => :checking_bye
 
       def initialize(ts_server)
         super()
@@ -25,11 +24,6 @@ module InnocentWhite
 
       def transit_to_cleaning_agent(bye)
         take(Tuple[:agent].new(uuid: bye.uuid))
-        return nil
-      end
-
-      def transit_to_sleeping
-        sleep 1
         return nil
       end
     end

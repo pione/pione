@@ -3,7 +3,7 @@ require 'innocent-white/agent'
 
 module InnocentWhite
   module Agent
-    class Logger < Base
+    class Logger < TupleSpaceClient
       set_agent_type :logger
 
       def initialize(ts_server, out=$stdout)

@@ -14,6 +14,10 @@ describe "Agent::Logger" do
     @msg2 = "c8fa705d-fc30-42fa-a05f-a2493717dc39"
   end
 
+  after do
+    tuple_space_server.terminate
+  end
+
   it "should say hello and bye" do
     # say hello
     @logger.wait_till(:logging)
@@ -28,13 +32,13 @@ describe "Agent::Logger" do
 
   it "should log messages" do
     # send log messages
-    write(Tuple[:log].new(:debug, @msg1))
-    write(Tuple[:log].new(:info, @msg2))
+    write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg1)}))
+    write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg2)}))
     @logger.wait_till(:logging)
     @logger.wait_to_clear_logs
     # check messages
-    @buf.string.split("\n").should.include "debug: #{@msg1}"
-    @buf.string.split("\n").should.include "info: #{@msg2}"
+    @buf.string.should.include @msg1
+    @buf.string.should.include @msg2
   end
 
   it "should terminate logging by terminate message" do
@@ -44,26 +48,26 @@ describe "Agent::Logger" do
     @logger.terminate
     @logger.wait_till(:terminated)
     # write a message after logger was terminated
-    write(Tuple[:log].new(:debug, @msg1))
+    write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg1)}))
     sleep 0.1 # wait a little...
-    @buf.string.split("\n").should.not.include "debug: #{@msg1}"
+    @buf.string.should.not.include @msg1
   end
 
   it "should terminate logging by exception" do
     # write a message
-    write(Tuple[:log].new(:warn, @msg1))
+    write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg1)}))
     @logger.wait_to_clear_logs
     # remote server is shoutdown
     remote_drb_server.stop_service
     @logger.wait_till(:terminated)
     # write a message after remote server was down
     Util.ignore_exception do
-      write(Tuple[:log].new(:warn, @msg2))
+      write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg2)}))
     end
     # logger is terminated
     @logger.should.be.terminated
     # check log content
-    @buf.string.split("\n").should.include "warn: #{@msg1}"
-    @buf.string.split("\n").should.not.include "warn: #{@msg2}"
+    @buf.string.should.include @msg1
+    @buf.string.should.not.include @msg2
   end
 end

@@ -113,9 +113,12 @@ module InnocentWhite
         @__current_state__ ||= nil
       end
 
+      # Transit to next state.
       def transit
-        raise TransitionError.new(current_state) if current_state == :terminated
-        exit unless @running_thread == Thread.current
+        # raise error if the current state is terminated
+        if current_state == :terminated
+          raise TransitionError.new(current_state)
+        end
 
         state_transition_table = self.class.state_transition_table
 
@@ -125,12 +128,14 @@ module InnocentWhite
           @__result__ = call_transition_method(next_state, *@__result__)
         rescue Aborting => e
           raise e
-        rescue StandardError => e
+        rescue Object => e
           if self.class.known_exceptions.include?(e.class)
+            # known exception
             next_state = get_next_state(exception_handler(e))
             set_current_state(next_state)
             @__result__ = call_transition_method(next_state, e)
           else
+            # unknown exception
             raise e
           end
         end

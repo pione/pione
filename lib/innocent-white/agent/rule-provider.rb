@@ -4,7 +4,7 @@ require 'innocent-white/rule'
 
 module InnocentWhite
   module Agent
-    class RuleProvider < Base
+    class RuleProvider < TupleSpaceClient
 
       set_agent_type :rule_provider
 
@@ -21,7 +21,6 @@ module InnocentWhite
       define_state_transition :rule_loading => :request_waiting
 
       def transit_to_request_waiting
-        puts "test"
         return take(Tuple[:request_rule].any)
       end
 
