@@ -111,16 +111,7 @@ module InnocentWhite
           @task_workers << Agent[:task_worker].start(ts)
         end
 
-        def terminate_task_worker(worker)
-        end
-
-        def stop_task_worker(worker)
-        end
-
-        def change_taple_space(worker)
-
-        end
-
+        # Delete unavilable tuple space servers.
         def check_tuple_space_servers
           @tuple_space_servers.select! do |ts|
             begin
@@ -231,7 +222,7 @@ module InnocentWhite
 
       # State sleeping.
       def transit_to_sleeping
-        sleep 1
+        sleep 0.3
       end
     end
 
