@@ -24,7 +24,7 @@ module InnocentWhite
       define_state_transition :process_info_loading => :task_executing
       define_state_transition :task_executing => :data_outputing
       define_state_transition :data_outputing => :task_finishing
-      define_state_transition :task_finishing => lambda {|agent|
+      define_state_transition :task_finishing => lambda {|agent, result|
         agent.once ? :terminated : :task_waiting
       }
 

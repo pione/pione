@@ -28,7 +28,7 @@ class TestConditionalStateTransition < Agent::Base
   define_state :testB
 
   define_state_transition :initialized => :test
-  define_state_transition :test => lambda{|t| t.next_state }
+  define_state_transition :test => lambda{|agent,result| agent.next_state }
   define_state_transition :testA => :test
   define_state_transition :testB => :test
 

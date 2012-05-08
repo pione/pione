@@ -180,12 +180,6 @@ module InnocentWhite
         method = transition_method(state)
         arity = method.arity
         _args = args[0...arity]
-        if state == :doing_command and _args == []
-          puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-          puts arity
-          p args
-          puts caller
-        end
         method.call(*_args)
       end
 
@@ -215,7 +209,7 @@ module InnocentWhite
       end
 
       def get_next_state(state)
-        next_state = state.kind_of?(Proc) ? state.call(self) : state
+        next_state = state.kind_of?(Proc) ? state.call(self, @__result__) : state
         unless next_state
           msg = "unknown state transition: #{current_state} -> #{state} at #{self}"
           raise ScriptError.new(msg)

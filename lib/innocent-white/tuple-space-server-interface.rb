@@ -25,12 +25,12 @@ module InnocentWhite
       write(Tuple[:log].new(msg))
     end
 
-    private
-
     # Return the tuple space server.
     def tuple_space_server
       @__tuple_space_server__
     end
+
+    private
 
     # Set tuple space server which provides operations.
     def set_tuple_space_server(server)
