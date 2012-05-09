@@ -15,6 +15,10 @@ module InnocentWhite
         def generate
           raise RuntimeError
         end
+
+        def stream?
+          return false
+        end
       end
 
       # Simple generator based on range and extension.
@@ -38,10 +42,10 @@ module InnocentWhite
       class DirGeneratorMethod < GeneratorMethod
         def initialize(dir_path)
           @dir_path = dir_path
+          @gen = Dir.open(@dir_path).to_enum
         end
 
         def generate
-          @gen ||= Dir.open(@dir_path).to_enum
           name = @gen.next
           path = File.join(@dir_path, name)
           uri = "local:#{File.expand_path(path)}"
@@ -53,14 +57,38 @@ module InnocentWhite
       class StreamGeneratorMethod < GeneratorMethod
         def initialize(dir_path)
           @dir_path = dir_path
-          @gen = Dir.open(dir_path).to_enum
+          @table = Hash.new
+          init
         end
 
         def generate
           name = @gen.next
           path = File.join(@dir_path, name)
-          uri = "local:#{File.expand_path(path)}"
-          ['.', '..'].include?(name) ? generate : InputData.new(name, uri)
+          mtime = File.open(path).mtime
+          if generate_new_file?(name, mtime)
+            @table[name] = mtime
+            uri = "local:#{File.expand_path(path)}"
+            return InputData.new(name, uri)
+          else
+            return nil
+          end
+        end
+
+        # Initialize generator.
+        def init
+          @gen = Dir.open(@dir_path).to_enum
+        end
+
+        def stream?
+          return true
+        end
+
+        private
+
+        def generate_new_file?(name, mtime)
+          return false if ['.', '..'].include?(name)
+          return true unless @table.has_key?(name)
+          mtime > @table[name]
         end
       end
 
@@ -80,21 +108,32 @@ module InnocentWhite
       end
 
       define_state :generating
+      define_state :sleeping
       define_state :stop_iteration
 
       define_state_transition :initialized => :generating
       define_state_transition :generating => :generating
-      define_state_transition :stop_iteration => :terminated
+      define_state_transition :stop_iteration => lambda{|agent, res|
+        agent.stream? ? :sleeping : :terminated
+      }
+      define_state_transition :sleeping => :generating
 
       define_exception_handler StopIteration => :stop_iteration
 
+      attr_reader :counter
       attr_reader :generator
 
       # Initialize the agent.
       def initialize(ts_server, generator)
         raise ArgumentError unless generator.kind_of?(GeneratorMethod)
         super(ts_server)
+        @counter = 0
         @generator = generator
+      end
+
+      # Return true if generator of the agent is stream type.
+      def stream?
+        @generator.stream?
       end
 
       private
@@ -102,20 +141,28 @@ module InnocentWhite
       # State generating generates a data from generator and puts it into tuple
       # space.
       def transit_to_generating
-        input = @generator.generate
-        log do |msg|
-          msg.add_record(agent_type, "action", "generate_input_data")
-          msg.add_record(agent_type, "uuid", uuid)
-          msg.add_record(agent_type, "object", input.name)
+        if input = @generator.generate
+          log do |msg|
+            msg.add_record(agent_type, "action", "generate_input_data")
+            msg.add_record(agent_type, "uuid", uuid)
+            msg.add_record(agent_type, "object", input.name)
+          end
+          write(Tuple[:data].new(domain: DOMAIN, name: input.name, uri: input.uri))
+          return input
         end
-        write(Tuple[:data].new(domain: DOMAIN, name: input.name, uri: input.uri))
-        return input
       end
 
       # State stop_iteration. StopIteration exception is ignored because it
       # means the input generation was completed.
       def transit_to_stop_iteration(e)
-        # do nothing
+        @counter += 1
+        if stream?
+          @generator.init
+        end
+      end
+
+      def transit_to_sleeping
+        sleep 1
       end
     end
 

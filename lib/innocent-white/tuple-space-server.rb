@@ -96,11 +96,13 @@ module InnocentWhite
 
     # Shutdown the server.
     def finalize
-      @terminated = false
+      @terminated = true
+      write(Tuple[:command].new("terminate"))
       @life_keeper.terminate
       @life_keeper.running_thread.join
       @client_life_checker.terminate
       @client_life_checker.running_thread.join
+      sleep 1
     end
 
     alias :terminate :finalize

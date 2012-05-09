@@ -3,12 +3,6 @@ require 'innocent-white/agent'
 module InnocentWhite
   module Agent
     class ProcessManager < Base
-      class ProcessManagerStatus < AgentStatus
-        #define_sub_state :initialized, :module_loading
-        #define_sub_state :initialized, :
-      end
-
-      set_status_class ProcessManagerStatus
       set_agent_type :process_manager
 
       attr_reader :document

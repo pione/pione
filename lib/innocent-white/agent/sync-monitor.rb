@@ -22,6 +22,17 @@ module InnocentWhite
         @queue = []
       end
 
+      # Write finished tuples for doing synchronization.
+      def sync
+        @queue.size.times do
+          target = @queue.pop
+          new_data = read(Tuple[:data].new(domain: target.src, name: target.name))
+          new_data.domain = target.dest
+          write(new_data)
+        end
+        write(Tuple[:finished].new(domain: @domain, status: true))
+      end
+
       private
 
       # State sync_target_waiting
@@ -45,17 +56,6 @@ module InnocentWhite
         else
           return false
         end
-      end
-
-      # Do synchronization.
-      def sync
-        @queue.size.times do
-          target = @queue.pop
-          new_data = read(Tuple[:data].new(domain: target.src, name: target.name))
-          new_data.domain = target.dest
-          write(new_data)
-        end
-        write(Tuple[:finished].new(domain: @domain, status: true))
       end
     end
 

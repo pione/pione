@@ -2,7 +2,7 @@ Rule Main
   input-all '*.txt'.except('summary.txt')
   output 'summary.txt'
 Flow----------------------------------------------------------------------------
-rule ConvertToUtf8.params("-w")
+rule ConvertToUtf8
 rule CountChar.sync
 rule Summarize
 -----------------------------------------------------------------------------End
@@ -12,12 +12,12 @@ Rule ConvertToUtf8
   output '{$INPUT[1]}.utf8'
   param $OPTIONS
 Action--------------------------------------------------------------------------
-nkf {$OPTIONS} {$INPUT[1]} > {$OUTPUT[1]}
+nkf -w {$INPUT[1]} > {$OUTPUT[1]}
 -----------------------------------------------------------------------------End
 
 Rule CountChar
   input '*.utf8'
-  output '{$INPUT[1].*}.count'.stdout
+  output '{$INPUT[1].MATCH[1]}.count'.stdout
 Action--------------------------------------------------------------------------
 #!/usr/bin/env ruby
 # coding: utf-8

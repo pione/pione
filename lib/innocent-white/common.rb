@@ -28,6 +28,10 @@ module InnocentWhite
   end
   module_function :debug_mode?
 
+  def user_message(msg)
+    puts msg
+  end
+
   # Start finalization process for InnocentWhite world.
   def finalize
     # finalize all innocent white objects

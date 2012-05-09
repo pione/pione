@@ -92,6 +92,18 @@ module InnocentWhite
     end
 
     class TimeoutStateWaiting < RuntimeError
+      attr_reader :expected_state
+      attr_reader :current_state
+
+      def initialize(expected_state, current_state)
+        @expected_state = expected_state
+        @current_state = current_state
+      end
+
+      def message
+        f = "expected state is '%s' but current state is '%s'"
+        f % [@expected_state, @current_state]
+      end
     end
 
     # StateTransitionMethod provides state transition methods.
@@ -148,7 +160,7 @@ module InnocentWhite
             sleep 0.1 while not(current_state == state)
           end
         rescue Timeout::Error
-          raise TimeoutStateWaiting.new(current_state)
+          raise TimeoutStateWaiting.new(state, current_state)
         end
       end
 
