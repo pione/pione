@@ -1,4 +1,5 @@
 require 'innocent-white/common'
+require 'innocent-white/update-criteria'
 
 module InnocentWhite
   module Rule
@@ -20,7 +21,7 @@ module InnocentWhite
     # FlowHandler represents a handler for a flow action.
     class FlowHandler < BaseHandler
       def execute
-        puts ">>> Start Flow Rule #{@rule.path}" if debug_mode?
+        user_message ">>> Start Flow Rule #{@rule.path}"
 
         # 1. apply flow elements
         apply_rules
@@ -38,7 +39,7 @@ module InnocentWhite
           @outputs.each {|output| puts "  #{output}"}
         end
 
-        puts ">>> End Flow Rule #{@rule.path}" if debug_mode?
+        user_message ">>> End Flow Rule #{@rule.path}"
 
         return @outputs
       end
@@ -81,11 +82,11 @@ module InnocentWhite
         sync_monitor = Agent[:sync_monitor].start(tuple_space_server, self)
 
         while true do
-          # find inputs
+          # find applicable input combinations
           inputs = find_applicable_input_combinations
 
-          # find update targets
-          update_targets = find_update_targets(inputs)
+          # find update targets which satisfies update criteria
+          update_targets = find_updatable_targets(inputs)
 
           unless update_targets.empty?
             # distribute task
@@ -107,7 +108,7 @@ module InnocentWhite
       def find_applicable_input_combinations
         inputs = []
         @content.each do |caller|
-          # get target rule
+          # find element rule
           rule = find_rule(caller)
           # check rule status and find combinations
           if rule.status == :known
@@ -132,13 +133,13 @@ module InnocentWhite
       end
 
       # Find input combinations and variables for element rules.
-      def find_update_targets(inputs)
+      def find_updatable_targets(inputs)
         targets = []
         inputs.each do |rule, combinations|
-          combinations.each do |combination, var|
-            current_outputs = rule.content.find_outputs(tuple_space_server, @domain, combination, var)
-            if current_outputs.include?([])
-              targets << [rule, combination, var]
+          combinations.each do |inputs, var|
+            outputs = rule.content.find_outputs(tuple_space_server, @domain, inputs, var)
+            if UpdateCriteria.satisfy?(inputs, outputs)
+              targets << [rule, inputs, var]
             end
           end
         end
@@ -149,7 +150,7 @@ module InnocentWhite
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
 
-        puts ">>> Start Task Distribution: #{@rule.path}" if debug_mode?
+        user_message ">>> Start Task Distribution: #{@rule.path}"
 
         targets.each do |rule, combination, var|
           thread = Thread.new do
@@ -186,7 +187,7 @@ module InnocentWhite
         # wait to finish threads
         thgroup.list.each {|th| th.join}
 
-        puts ">>> End Task Distribution: #{@rule.path}" if debug_mode?
+        user_message ">>> End Task Distribution: #{@rule.path}"
       end
 
       def finalize_rule_application(sync_monitor)

@@ -167,7 +167,8 @@ module InnocentWhite
 
     # -- define tuples --
 
-    # signal
+    # signal representation
+    #   type : command string, currently "terminate" only
     define_format [:command, :type]
 
     # data representation

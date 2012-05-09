@@ -40,7 +40,7 @@ module InnocentWhite
         _find_input_combinations(ts_server, domain, @inputs, 1, {})
       end
 
-      # Find output data from tuple space server.
+      # Find output data as tuple form from tuple space server.
       def find_outputs(ts_server, domain, inputs, var)
         names = @outputs.map{|output| output.with_variables(var)}
         return names.map{|name| find_data_by_name(ts_server, domain, name)}
@@ -85,7 +85,7 @@ module InnocentWhite
 
       # Find input data combinatioins.
       def _find_input_combinations(ts_server, domain, inputs, index, var)
-        # return empty when reach the recuirsion end
+        # return empty when we reach the recuirsion end
         return [[[],var]] if inputs.empty?
 
         # expand variables and compile to regular expression
@@ -118,7 +118,7 @@ module InnocentWhite
         return result
       end
 
-      # Find input data by the name.
+      # Find data from tuple space server by the name.
       def find_data_by_name(ts_server, domain, name)
         ts_server.read_all(Tuple[:data].new(name: name, domain: domain))
       end
