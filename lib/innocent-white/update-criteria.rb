@@ -10,7 +10,7 @@ module InnocentWhite
 
       # get output oldest time
       output_oldest_time = nil
-      outputs.each do |output|
+      outputs.flatten.each do |output|
         if output.time < output_oldest_time
           output_oldest_time = output.time
         end
@@ -18,7 +18,7 @@ module InnocentWhite
 
       # get input last time
       input_last_time = nil
-      inputs.each do |input|
+      inputs.flatten.each do |input|
         if input.time > input_last_time
           input_last_time = input.time
         end
