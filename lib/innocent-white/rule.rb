@@ -171,7 +171,7 @@ module InnocentWhite
         @working_directory = make_working_directory(opts)
         @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
         @task_id = Util.task_id(@inputs, @params)
-        @domain = Util.domain(@rule.path, @inputs, @params)
+        @domain = opts[:domain] || Util.domain(@rule.path, @inputs, @params)
         make_auto_variables
         sync_inputs
       end

@@ -110,10 +110,12 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 #
 # start rule handling
 #
+$domain = nil
 $thread = Thread.start do
   InnocentWhite.debug_mode do
     while true do
-      handler = root.make_handler($tuple_space_server)
+      handler = root.make_handler($tuple_space_server, $domain)
+      $domain = handler.domain unless $domain
       outputs = handler.execute
       Dir.mkdir($output_dir) unless File.exist?($output_dir)
       outputs.first.each do |output|

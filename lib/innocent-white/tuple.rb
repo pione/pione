@@ -175,7 +175,9 @@ module InnocentWhite
     #   domain : target domain
     #   name   : data name
     #   uri    : resource location
+    #   time   : data created time
     define_format [:data, :domain, :name, :uri]
+    #define_format [:data, :domain, :name, :uri, :time]
 
     # rule application task with inputs, outpus and parameters
     #   rule_path : rule location path
