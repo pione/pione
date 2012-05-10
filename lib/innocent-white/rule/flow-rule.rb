@@ -31,6 +31,10 @@ module InnocentWhite
 
         # 3. check output
         if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
+          p self.class
+          puts @rule.rule_path
+          p @rule.outputs
+          p @output
           raise ExecutionError.new(self)
         end
 

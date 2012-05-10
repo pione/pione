@@ -294,3 +294,4 @@ end
 require 'innocent-white/rule/flow-rule'
 require 'innocent-white/rule/action-rule'
 require 'innocent-white/rule/root-rule'
+require 'innocent-white/rule/command-rule'

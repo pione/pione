@@ -29,5 +29,7 @@ module InnocentWhite
         end
       end
     end
+
+    set_agent CommandListener
   end
 end

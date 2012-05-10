@@ -67,16 +67,29 @@ Agent[:task_worker].start($tuple_space_server)
 # execute
 root = Rule::RootRule.new(RuleExpr.new('Main'))
 
-InnocentWhite.debug_mode do
-  while true do
-    handler = root.make_handler($tuple_space_server)
-    outputs = handler.execute
-    Dir.mkdir($output_dir) unless File.exist?($output_dir)
-    outputs.first.each do |output|
-      path = File.join($output_dir, output.name)
-      File.open(path, "w+"){|out| out.write(Resource[output.uri].read)}
-    end
-    sleep 5
-    break unless $stream
+class CommandExecuter
+  def terminate
+    puts ">>> system terminate"
+    $tuple_space_server.terminate
+    $thread.terminate
   end
 end
+
+Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
+
+$thread = Thread.start do
+  InnocentWhite.debug_mode do
+    while true do
+      handler = root.make_handler($tuple_space_server)
+      outputs = handler.execute
+      Dir.mkdir($output_dir) unless File.exist?($output_dir)
+      outputs.first.each do |output|
+        path = File.join($output_dir, output.name)
+        File.open(path, "w+"){|out| out.write(Resource[output.uri].read)}
+      end
+      sleep 5
+      break unless $stream
+    end
+  end
+end
+$thread.join

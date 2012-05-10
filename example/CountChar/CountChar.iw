@@ -1,10 +1,12 @@
 Rule Main
   input-all '*.txt'.except('summary.txt')
+  input-all '*.cmd'
   output 'summary.txt'
 Flow----------------------------------------------------------------------------
 rule ConvertToUtf8
 rule CountChar.sync
 rule Summarize
+rule Terminate
 -----------------------------------------------------------------------------End
 
 Rule ConvertToUtf8
@@ -49,4 +51,11 @@ File.open("{$OUTPUT[1]}", "w+") do |out|
     puts "#{key.inspect[1..-2]}:#{table[key]}"
   end
 end
+-----------------------------------------------------------------------------End
+
+Rule Terminate
+  input 'terminate.cmd'
+  output 'terminate.cmd.done'
+Flow----------------------------------------------------------------------------
+rule /Command/Terminate
 -----------------------------------------------------------------------------End

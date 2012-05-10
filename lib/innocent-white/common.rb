@@ -122,4 +122,4 @@ require 'innocent-white/rule-expr'
 require 'innocent-white/variable'
 require 'innocent-white/document'
 require 'innocent-white/rule'
-
+require 'innocent-white/agent/command-listener'

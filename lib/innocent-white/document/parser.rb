@@ -378,7 +378,7 @@ module InnocentWhite
         flow_element.repeat.as(:elements)
       }
 
-      rule(:when_block_begin){
+      rule(:when_block_begin) {
         space? >>
         keyword_when >>
         space? >>

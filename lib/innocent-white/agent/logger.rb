@@ -16,6 +16,8 @@ module InnocentWhite
       define_state_transition :initialized => :logging
       define_state_transition :logging => :logging
 
+      define_exception_handler ThreadError => :terminated
+
       # Sleep till the logger clears logs.
       def wait_to_clear_logs(timespan=0.1)
         while count_tuple(Tuple[:log].any) > 0

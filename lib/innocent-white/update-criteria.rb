@@ -1,5 +1,10 @@
 module InnocentWhite
   module UpdateCriteria
+    # Update if no output rule
+    def self.no_output_rule?(inputs, outputs)
+      outputs.empty?
+    end
+
     # Update if not exist some ouputs.
     def self.not_exist_output?(inputs, outputs)
       outputs.any?{|output| output.empty? }
@@ -32,7 +37,8 @@ module InnocentWhite
       CRITERIAS.any?{|name| self.send(name, inputs, outputs)}
     end
 
-    CRITERIAS = [ :not_exist_output?,
+    CRITERIAS = [ :no_output_rule?,
+                  :not_exist_output?,
                   :exist_newer_input? ]
   end
 end
