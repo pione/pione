@@ -2,7 +2,7 @@ require 'innocent-white/common'
 
 module InnocentWhite
   module Rule
-    class CommandRule < ActionRule
+    class SystemRule < ActionRule
       def initialize(path, &b)
         inputs = [DataExpr.new('*')]
         outputs = []
@@ -12,23 +12,23 @@ module InnocentWhite
 
       # Make rule handler from the rule.
       def make_handler(ts_server, inputs, params, opts={})
-        CommandHandler.new(ts_server, self, inputs, params, opts)
+        SystemHandler.new(ts_server, self, inputs, params, opts)
       end
     end
 
-    class CommandHandler < BaseHandler
+    class SystemHandler < BaseHandler
       def execute
         @rule.content.call(tuple_space_server)
       end
     end
 
-    COMMAND_TERMINATE = CommandRule.new('/Command/Terminate') do |tuple_space_server|
+    SYSTEM_TERMINATE = SystemRule.new('/System/Terminate') do |tuple_space_server|
       user_message "!!!!!!!!!!!!!!!!!"
       user_message "!!! Terminate !!!"
       user_message "!!!!!!!!!!!!!!!!!"
       tuple_space_server.write(Tuple[:command].new("terminate"))
     end
 
-    COMMAND_RULES = [ COMMAND_TERMINATE ]
+    SYSTEM_RULES = [ SYSTEM_TERMINATE ]
   end
 end

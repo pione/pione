@@ -57,5 +57,5 @@ Rule Terminate
   input 'terminate.cmd'
   output 'terminate.cmd.done'
 Flow----------------------------------------------------------------------------
-rule /Command/Terminate
+rule /System/Terminate
 -----------------------------------------------------------------------------End
