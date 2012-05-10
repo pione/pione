@@ -1,6 +1,5 @@
 Rule Main
-  input-all '*.txt'.except('summary.txt')
-  input-all '*.cmd'
+  input-all '*'.except('summary.txt')
   output 'summary.txt'
 Flow----------------------------------------------------------------------------
 rule ConvertToUtf8
