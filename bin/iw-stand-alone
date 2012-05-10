@@ -21,13 +21,34 @@ $output_dir = "output"
 $log_path = "log.txt"
 $stream = false
 
+OPTS = {}
+OPTS[:resource] = 1
+
 option_parser = OptionParser.new do |opt|
   opt.on('-i dir', '--input-dir=dir') {|dir| $input_dir = dir }
   opt.on('-o dir', '--output-dir=dir') {|dir| $output_dir = dir}
   opt.on('-l log', '--log=file') {|path| $log_path = path }
   opt.on('-s', '--stream') { $stream = true }
+  opt.on('-r n''--resource=n') {|n|
+    OPTS[:resource] = n.to_i
+    unless OPTS[:resource] > 0
+      puts "invalid resource size: #{OPTS[:resource]}"
+      exit
+    end
+  }
 end
-option_parser.parse!(ARGV)
+
+begin
+  option_parser.parse!(ARGV)
+rescue OptionParser::InvalidOption => e
+  e.args.each {|arg| puts "unknown option: #{arg}" }
+  exit
+end
+
+if ARGF.filename == "-"
+  puts "no process definition document"
+  exit
+end
 
 #
 # start process
@@ -43,6 +64,8 @@ uri = "local:#{Dir.mktmpdir('innocent-white-')}/"
 $tuple_space_server = TupleSpaceServer.new(task_worker_resource: 1, base_uri: uri)
 provider = InnocentWhite::TupleSpaceProvider.instance
 provider.add($tuple_space_server)
+# $remote_drb_server = DRb::DRbServer.new(nil, $tuple_space_server)
+# $remote_server = DRbObject.new(nil, $remote_drb_server.uri)
 
 # make logger
 Agent[:logger].start($tuple_space_server, File.open($log_path, "w+"))
@@ -62,7 +85,9 @@ gen = Agent[:input_generator].send(generator_method, $tuple_space_server, $input
 sleep 0.1 while not(gen.counter > 0)
 
 # add workers
-Agent[:task_worker].start($tuple_space_server)
+OPTS[:resource].times do
+  Agent[:task_worker].start($tuple_space_server)
+end
 
 # execute
 root = Rule::RootRule.new(RuleExpr.new('Main'))
@@ -82,6 +107,9 @@ end
 
 Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 
+#
+# start rule handling
+#
 $thread = Thread.start do
   InnocentWhite.debug_mode do
     while true do
