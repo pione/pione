@@ -39,8 +39,11 @@ module InnocentWhite
     include DRbUndumped
     include TupleSpaceServerMethod
 
+    attr_reader :tuple_space
+
     def initialize(data={})
       @__ts__ = Rinda::TupleSpace.new
+      @tuple_space = @__ts__
       @ts = Rinda::TupleSpaceProxy.new(@__ts__)
       def @ts.to_s;"#<Rinda::TupleSpace>" end
 

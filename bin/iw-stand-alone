@@ -110,20 +110,26 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 #
 # start rule handling
 #
-$domain = nil
 $thread = Thread.start do
   InnocentWhite.debug_mode do
     while true do
-      handler = root.make_handler($tuple_space_server, $domain)
-      $domain = handler.domain unless $domain
+      handler = root.make_handler($tuple_space_server)
       outputs = handler.execute
       Dir.mkdir($output_dir) unless File.exist?($output_dir)
       outputs.first.each do |output|
         path = File.join($output_dir, output.name)
         File.open(path, "w+"){|out| out.write(Resource[output.uri].read)}
       end
-      sleep 5
+
+      tuples = []
+      bag = $tuple_space_server.tuple_space.instance_variable_get("@bag")
+      bag.instance_variable_get("@hash").values.each do |bin|
+        tuples += bin.instance_variable_get("@bin")
+      end
+      tuples.each {|t| p t.value}
+
       break unless $stream
+      sleep 5
     end
   end
 end

@@ -22,10 +22,10 @@ module InnocentWhite
       end
 
       # Make new handler object of this rule.
-      def make_handler(ts_server, domain=nil)
+      def make_handler(ts_server)
         input_combinations = find_input_combinations(ts_server, "/input")
         inputs = input_combinations.first
-        RootHandler.new(ts_server, self, inputs, [], {:domain => domain})
+        RootHandler.new(ts_server, self, inputs, [], {:domain => @domain})
       end
     end
 

@@ -10,6 +10,56 @@ module InnocentWhite
 
     # Base rule class for flow rule and action rule.
     class BaseRule
+      class InputFinder
+        # Find input data combinations from tuple space server.
+        def find_input_combinations(ts_server, domain)
+          combinations = _find_input_combinations(ts_server, domain, @inputs, 1, {})
+          combinations.map{|c,v| c}
+        end
+
+        # Find input data combinations from tuple space server.
+        def find_input_combinations_and_variables(ts_server, domain)
+          _find_input_combinations(ts_server, domain, @inputs, 1, {})
+        end
+
+        private
+
+        # Find input data combinatioins.
+        def _find_input_combinations(ts_server, domain, inputs, index, var)
+          # return empty when we reach the recuirsion end
+          return [[[],var]] if inputs.empty?
+
+          # expand variables and compile to regular expression
+          name = inputs.first.with_variables(var)
+
+          # find an input data by name from tuple space server
+          tuples = find_data_by_name(ts_server, domain, name)
+
+          result = []
+
+          # make combinations
+          if name.all?
+            # case all modifier
+            new_var = make_auto_variables_by_all(name, index, tuples, var)
+            unless tuples.empty?
+              _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
+                result << [c.unshift(tuples), v]
+              end
+            end
+          else
+            # case each modifier
+            tuples.each do |tuple|
+              new_var = make_auto_variables_by_each(name, index, tuple, var)
+              _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
+                result << [c.unshift(tuple), v]
+              end
+            end
+          end
+
+          return result
+        end
+      end
+
       attr_reader :path
       attr_reader :inputs
       attr_reader :outputs
@@ -29,28 +79,11 @@ module InnocentWhite
         return false
       end
 
-      # Find input data combinations from tuple space server.
-      def find_input_combinations(ts_server, domain)
-        combinations = _find_input_combinations(ts_server, domain, @inputs, 1, {})
-        combinations.map{|c,v| c}
-      end
-
-      # Find input data combinations from tuple space server.
-      def find_input_combinations_and_variables(ts_server, domain)
-        _find_input_combinations(ts_server, domain, @inputs, 1, {})
-      end
 
       # Find output data as tuple form from tuple space server.
       def find_outputs(ts_server, domain, inputs, var)
         names = @outputs.map{|output| output.with_variables(var)}
         return names.map{|name| find_data_by_name(ts_server, domain, name)}
-      end
-
-      # Make task data.
-      def write_task(ts_server, domain)
-        find_input_combinations(ts_server, domain).each do |inputs|
-          ts_server.write(Tuple[:task].new(@path, inputs, params))
-        end
       end
 
       def expanded_outputs(var)
@@ -81,42 +114,6 @@ module InnocentWhite
         @inputs.hash + @outputs.hash + @params.hash + @content.hash
       end
 
-      private
-
-      # Find input data combinatioins.
-      def _find_input_combinations(ts_server, domain, inputs, index, var)
-        # return empty when we reach the recuirsion end
-        return [[[],var]] if inputs.empty?
-
-        # expand variables and compile to regular expression
-        name = inputs.first.with_variables(var)
-
-        # find an input data by name from tuple space server
-        tuples = find_data_by_name(ts_server, domain, name)
-
-        result = []
-
-        # make combinations
-        if name.all?
-          # case all modifier
-          new_var = make_auto_variables_by_all(name, index, tuples, var)
-          unless tuples.empty?
-            _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
-              result << [c.unshift(tuples), v]
-            end
-          end
-        else
-          # case each modifier
-          tuples.each do |tuple|
-            new_var = make_auto_variables_by_each(name, index, tuple, var)
-            _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
-              result << [c.unshift(tuple), v]
-            end
-          end
-        end
-
-        return result
-      end
 
       # Find data from tuple space server by the name.
       def find_data_by_name(ts_server, domain, name)
@@ -145,7 +142,78 @@ module InnocentWhite
     end
 
     class BaseHandler
+      class AutoVariableTable < InnocentWhiteObject
+        # Make auto vairables.
+        def initialize(rule, working_directory)
+          @rule = rule
+          @table = {}
+          @working_directory = working_directory
+
+          make_input_auto_variables
+          make_output_auto_variables
+          make_other_auto_variables
+        end
+
+        # Return the variable table as hash.
+        def as_hash
+          @table
+        end
+
+        private
+
+        # make input auto variables
+        def make_input_auto_variables
+          @rule.inputs.each_with_index do |exp, index|
+            make_io_auto_variables(:input, exp, @inputs[index], index+1)
+          end
+        end
+
+        # make output auto variables
+        # FIXME
+        def make_output_auto_variables
+          @rule.outputs.each_with_index do |exp, index|
+            data = make_output_tuple(exp.with_variables(@table).name)
+            make_io_auto_variables(:output, exp, data, index+1)
+          end
+        end
+
+        # Make input or output auto variables.
+        def make_io_auto_variables(type, exp, data, index)
+          name = :make_io_auto_variables_by_all if exp.all?
+          name = :make_io_auto_variables_by_each if exp.each?
+          method(name).call(type, exp, data, index)
+        end
+
+        # Make input or output auto variables for 'exist' modified data name expression.
+        def make_io_auto_variables_by_each(type, exp, data, index)
+          prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
+          @table[prefix] = data.name
+          @table["#{prefix}.URI"] = data.uri
+          if type == :input
+            @table["#{prefix}.VALUE"] = Resource[URI(data.uri)].read
+          end
+          exp.match(data.name).to_a.each_with_index do |s, i|
+            @table["#{prefix}.MATCH[#{i}]"] = s
+          end
+        end
+
+        # Make input or output auto variables for 'all' modified data name expression.
+        def make_io_auto_variables_by_all(type, exp, tuples, index)
+          # FIXME: output
+          return if type == :output
+          prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
+          @table[prefix] = tuples.map{|t| t.name}.join(':')
+        end
+
+        # Make other auto variables.
+        def make_other_auto_variables
+          @table["WORKING_DIRECTORY"] = @working_directory
+          @table["PWD"] = @working_directory
+        end
+      end
+
       include TupleSpaceServerInterface
+      include AutoVariableMethod
 
       attr_reader :rule
       attr_reader :inputs
@@ -160,19 +228,21 @@ module InnocentWhite
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
 
+        # set tuple space server
         set_tuple_space_server(ts_server)
 
+        # set informations
         @rule = rule
         @inputs = inputs
         @outputs = []
         @params = params
         @content = rule.content
-        @variable_table = {}
+        @variable_table = AutoVariableTable.new.as_hash
         @working_directory = make_working_directory(opts)
         @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
         @task_id = Util.task_id(@inputs, @params)
-        @domain = opts[:domain] || Util.domain(@rule.path, @inputs, @params)
-        make_auto_variables
+        @domain = get_handling_domain(opts)
+
         sync_inputs
       end
 
@@ -192,6 +262,10 @@ module InnocentWhite
 
       private
 
+      def get_handling_domain(opts)
+        opts[:domain] || Util.domain(@rule.path, @inputs, @params)
+      end
+
       # Make working directory.
       def make_working_directory(opts)
         # build directory path
@@ -207,12 +281,16 @@ module InnocentWhite
       end
 
       def make_resource_uri(base_uri)
-        URI(base_uri) + "#{Util.domain(@rule.path, @inputs, @params)}/"
+        # URI(base_uri) + "#{Util.domain(@rule.path, @inputs, @params)}/"
+        URI(base_uri) + "#{@domain}/"
       end
 
+      # Synchronize input data into working directory.
       def sync_inputs
         @inputs.flatten.each do |input|
+          # get filepath in working directory
           filepath = File.join(@working_directory, input.name)
+          # write the file
           File.open(filepath, "w+") do |out|
             out.write Resource[URI(input.uri)].read
           end
@@ -235,57 +313,6 @@ module InnocentWhite
       # Make output tuple by name.
       def make_output_tuple(name)
         Tuple[:data].new(@domain, name, (@resource_uri + name).to_s)
-      end
-
-      # Make auto vairables.
-      def make_auto_variables
-        # inputs
-        @rule.inputs.each_with_index do |exp, index|
-          make_io_auto_variables(:input, exp, @inputs[index], index+1)
-        end
-
-        # outputs: FIXME
-        @rule.outputs.each_with_index do |exp, index|
-          data = make_output_tuple(exp.with_variables(@variable_table).name)
-          make_io_auto_variables(:output, exp, data, index+1)
-        end
-
-        # others
-        make_other_auto_variables
-      end
-
-      # Make input or output auto variables.
-      def make_io_auto_variables(type, exp, data, index)
-        name = :make_io_auto_variables_by_all if exp.all?
-        name = :make_io_auto_variables_by_each if exp.each?
-        method(name).call(type, exp, data, index)
-      end
-
-      # Make input or output auto variables for 'exist' modified data name expression.
-      def make_io_auto_variables_by_each(type, exp, data, index)
-        prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-        @variable_table[prefix] = data.name
-        @variable_table["#{prefix}.URI"] = data.uri
-        if type == :input
-          @variable_table["#{prefix}.VALUE"] = Resource[URI(data.uri)].read
-        end
-        exp.match(data.name).to_a.each_with_index do |s, i|
-          @variable_table["#{prefix}.MATCH[#{i}]"] = s
-        end
-      end
-
-      # Make input or output auto variables for 'all' modified data name expression.
-      def make_io_auto_variables_by_all(type, exp, tuples, index)
-        # FIXME: output
-        return if type == :output
-        prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-        @variable_table[prefix] = tuples.map{|t| t.name}.join(':')
-      end
-
-      # Make other auto variables.
-      def make_other_auto_variables
-        @variable_table["WORKING_DIRECTORY"] = @working_directory
-        @variable_table["PWD"] = @working_directory
       end
     end
   end
