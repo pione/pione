@@ -9,63 +9,19 @@ module InnocentWhite
     class UnknownRule < Exception; end
 
     # Base rule class for flow rule and action rule.
-    class BaseRule
-      class InputFinder
-        # Find input data combinations from tuple space server.
-        def find_input_combinations(ts_server, domain)
-          combinations = _find_input_combinations(ts_server, domain, @inputs, 1, {})
-          combinations.map{|c,v| c}
-        end
-
-        # Find input data combinations from tuple space server.
-        def find_input_combinations_and_variables(ts_server, domain)
-          _find_input_combinations(ts_server, domain, @inputs, 1, {})
-        end
-
-        private
-
-        # Find input data combinatioins.
-        def _find_input_combinations(ts_server, domain, inputs, index, var)
-          # return empty when we reach the recuirsion end
-          return [[[],var]] if inputs.empty?
-
-          # expand variables and compile to regular expression
-          name = inputs.first.with_variables(var)
-
-          # find an input data by name from tuple space server
-          tuples = find_data_by_name(ts_server, domain, name)
-
-          result = []
-
-          # make combinations
-          if name.all?
-            # case all modifier
-            new_var = make_auto_variables_by_all(name, index, tuples, var)
-            unless tuples.empty?
-              _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
-                result << [c.unshift(tuples), v]
-              end
-            end
-          else
-            # case each modifier
-            tuples.each do |tuple|
-              new_var = make_auto_variables_by_each(name, index, tuple, var)
-              _find_input_combinations(ts_server, domain, inputs[1..-1], index+1, new_var).each do |c,v|
-                result << [c.unshift(tuple), v]
-              end
-            end
-          end
-
-          return result
-        end
-      end
-
+    class BaseRule < InnocentWhiteObject
       attr_reader :path
       attr_reader :inputs
       attr_reader :outputs
       attr_reader :params
       attr_reader :content
 
+      # Create a rule definition object.
+      # [+path+] rule path
+      # [+inputs+] input expressions
+      # [+outputs+] output expressions
+      # [+params+] parameters
+      # [+content+] rule content
       def initialize(path, inputs, outputs, params, content)
         @path = path
         @inputs = inputs
@@ -74,32 +30,22 @@ module InnocentWhite
         @content = content
       end
 
-      # Return true if the rule has stream input.
-      def stream?
-        return false
-      end
-
-
-      # Find output data as tuple form from tuple space server.
-      def find_outputs(ts_server, domain, inputs, var)
-        names = @outputs.map{|output| output.with_variables(var)}
-        return names.map{|name| find_data_by_name(ts_server, domain, name)}
-      end
-
-      def expanded_outputs(var)
-        @outputs.map{|output| output.with_variables(var)}
-      end
-
-      # Make rule handler from the rule.
+      # Make task handler object for the rule.
       def make_handler(ts_server, inputs, params, opts={})
-        klass = self.kind_of?(ActionRule) ? ActionHandler : FlowHandler
-        klass.new(ts_server, self, inputs, params, opts)
+        handler_class.new(ts_server, self, inputs, params, opts)
       end
 
+      # :nodoc:
+      def handler_class
+        raise NotImplementedError
+      end
+
+      # Return rule path.
       def rule_path
         return @path
       end
 
+      # :nodoc:
       def ==(other)
         return false unless @inputs == other.inputs
         return false unless @outputs == other.outputs
@@ -108,112 +54,17 @@ module InnocentWhite
         return true
       end
 
+      # :nodoc:
       alias :eql? :==
 
+      # :nodoc
       def hash
         @inputs.hash + @outputs.hash + @params.hash + @content.hash
-      end
-
-
-      # Find data from tuple space server by the name.
-      def find_data_by_name(ts_server, domain, name)
-        ts_server.read_all(Tuple[:data].new(name: name, domain: domain))
-      end
-
-      # Make auto-variables by the name modified 'all'.
-      def make_auto_variables_by_all(name, index, tuples, var)
-        new_var = var.clone
-        new_var["INPUT[#{index}]"] = tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)
-        return new_var
-      end
-
-      # Make auto-variables by the name modified 'each'.
-      def make_auto_variables_by_each(name, index, tuple, var)
-        new_var = var.clone
-        md = name.match(tuple.name)
-        new_var["INPUT[#{index}]"] = tuple.name
-        new_var["INPUT[#{index}].URI"] = tuple.uri
-        md.to_a.each_with_index do |s, i|
-          new_var["INPUT[#{index}].*"] = s if i==1
-          new_var["INPUT[#{index}].MATCH[#{i}]"] = s
-        end
-        return new_var
       end
     end
 
     class BaseHandler
-      class AutoVariableTable < InnocentWhiteObject
-        # Make auto vairables.
-        def initialize(rule, working_directory)
-          @rule = rule
-          @table = {}
-          @working_directory = working_directory
-
-          make_input_auto_variables
-          make_output_auto_variables
-          make_other_auto_variables
-        end
-
-        # Return the variable table as hash.
-        def as_hash
-          @table
-        end
-
-        private
-
-        # make input auto variables
-        def make_input_auto_variables
-          @rule.inputs.each_with_index do |exp, index|
-            make_io_auto_variables(:input, exp, @inputs[index], index+1)
-          end
-        end
-
-        # make output auto variables
-        # FIXME
-        def make_output_auto_variables
-          @rule.outputs.each_with_index do |exp, index|
-            data = make_output_tuple(exp.with_variables(@table).name)
-            make_io_auto_variables(:output, exp, data, index+1)
-          end
-        end
-
-        # Make input or output auto variables.
-        def make_io_auto_variables(type, exp, data, index)
-          name = :make_io_auto_variables_by_all if exp.all?
-          name = :make_io_auto_variables_by_each if exp.each?
-          method(name).call(type, exp, data, index)
-        end
-
-        # Make input or output auto variables for 'exist' modified data name expression.
-        def make_io_auto_variables_by_each(type, exp, data, index)
-          prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-          @table[prefix] = data.name
-          @table["#{prefix}.URI"] = data.uri
-          if type == :input
-            @table["#{prefix}.VALUE"] = Resource[URI(data.uri)].read
-          end
-          exp.match(data.name).to_a.each_with_index do |s, i|
-            @table["#{prefix}.MATCH[#{i}]"] = s
-          end
-        end
-
-        # Make input or output auto variables for 'all' modified data name expression.
-        def make_io_auto_variables_by_all(type, exp, tuples, index)
-          # FIXME: output
-          return if type == :output
-          prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
-          @table[prefix] = tuples.map{|t| t.name}.join(':')
-        end
-
-        # Make other auto variables.
-        def make_other_auto_variables
-          @table["WORKING_DIRECTORY"] = @working_directory
-          @table["PWD"] = @working_directory
-        end
-      end
-
       include TupleSpaceServerInterface
-      include AutoVariableMethod
 
       attr_reader :rule
       attr_reader :inputs
@@ -224,6 +75,7 @@ module InnocentWhite
       attr_reader :task_id
       attr_reader :domain
 
+      # Create a new handler for rule.
       def initialize(ts_server, rule, inputs, params, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
@@ -237,15 +89,17 @@ module InnocentWhite
         @outputs = []
         @params = params
         @content = rule.content
-        @variable_table = AutoVariableTable.new.as_hash
         @working_directory = make_working_directory(opts)
+        @variable_table = VariableTable.new
         @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
         @task_id = Util.task_id(@inputs, @params)
         @domain = get_handling_domain(opts)
 
-        sync_inputs
+        setup_variable_table
+        setup_working_directory
       end
 
+      # :nodoc:
       def ==(other)
         return false unless @rule == other.rule
         return false unless @inputs == other.inputs
@@ -254,8 +108,10 @@ module InnocentWhite
         return true
       end
 
+      # :nodoc:
       alias :eql? :==
 
+      # :nodoc:
       def hash
         @rule.hash + @inputs.hash + @outputs.hash + @params.hash
       end
@@ -285,8 +141,20 @@ module InnocentWhite
         URI(base_uri) + "#{@domain}/"
       end
 
+      # Setup variable table. The following variables are introduced in variable
+      # table:
+      # - input auto variables
+      # - output auto variables
+      # - working directory
+      def setup_variable_table
+        @variable_table.make_input_auto_variables(@rule.inputs, @inputs)
+        @variable_table.make_output_auto_variables(@rule.outputs, @outputs)
+        @variable_table.set("WORKING_DIRECTORY", @working_directory)
+        @variable_table.set("PWD", @working_directory)
+      end
+
       # Synchronize input data into working directory.
-      def sync_inputs
+      def setup_working_directory
         @inputs.flatten.each do |input|
           # get filepath in working directory
           filepath = File.join(@working_directory, input.name)
@@ -308,11 +176,6 @@ module InnocentWhite
         @outputs.flatten.each do |output|
           write(output)
         end
-      end
-
-      # Make output tuple by name.
-      def make_output_tuple(name)
-        Tuple[:data].new(@domain, name, (@resource_uri + name).to_s)
       end
     end
   end

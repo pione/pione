@@ -10,6 +10,8 @@ module InnocentWhite
     #     rule /Main
     #   End
     class RootRule < FlowRule
+      INPUT_DOMAIN = '/input'
+      ROOT_DOMAIN = '/root'
 
       # Make new rule.
       def initialize(rule_path)
@@ -18,19 +20,30 @@ module InnocentWhite
         content = [FlowElement::CallRule.new(rule_path)]
         super(nil, inputs, outputs, [], content)
         @path = 'root'
-        @domain = '/root'
+        @domain = ROOT_DOMAIN
       end
 
-      # Make new handler object of this rule.
+      # :nodoc:
       def make_handler(ts_server)
-        input_combinations = find_input_combinations(ts_server, "/input")
-        inputs = input_combinations.first
-        RootHandler.new(ts_server, self, inputs, [], {:domain => @domain})
+        finder = DataFinder.new(ts_server, INPUT_DOMAIN)
+        results = finder.find(:input, @inputs)
+        return nil if results.empty?
+        handler_class.new(ts_server,
+                          self,
+                          results.first.data,
+                          [],
+                          {:domain => @domain})
+      end
+
+      # Return RootHandler class.
+      def handler_class
+        RootHandler
       end
     end
 
     # RootHandler is a special handler for RootRule.
     class RootHandler < FlowHandler
+      # :nodoc:
       def execute
         puts ">>> Start Root Rule Execution" if debug_mode?
         # import inputs from input domain

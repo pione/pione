@@ -1,0 +1,115 @@
+case1:
+  tuples:
+    - 1.a
+    - 2.a
+    - 3.a
+  query:
+    - { name: 1.a }
+  results:
+    - [ 1.a ]
+
+case2:
+  tuples:
+    - 1.a
+    - 2.a
+    - 3.a
+  query:
+    - { name: "*.a" }
+  results:
+    - [ 1.a ]
+    - [ 2.a ]
+    - [ 3.a ]
+
+case3:
+  tuples:
+    - 1.a
+    - 2.a
+    - 3.a
+  query:
+    - { name: "*.a", modifier: all}
+  results:
+    - [ 1.a, 2.a, 3.a ]
+
+case4:
+  tuples:
+    - 1.a
+    - 1.b
+    - 2.a
+    - 2.b
+    - 3.a
+    - 3.b
+  query:
+    - { name: "*.a" }
+    - { name: "{$INPUT[1].*}.b" }
+  results:
+    - [ 1.a, 1.b ]
+    - [ 2.a, 2.b ]
+    - [ 3.a, 3.b ]
+
+case5:
+  tuples:
+    - 1.a
+    - 1.b
+    - 2.a
+    - 2.b
+    - 3.a
+    - 3.b
+  query:
+    - { name: "*.a", modifier: all }
+    - { name: "*.b" }
+  results:
+    - [ 1.a, 2.a, 3.a, 1.b ]
+    - [ 1.a, 2.a, 3.a, 2.b ]
+    - [ 1.a, 2.a, 3.a, 3.b ]
+
+case6:
+  tuples:
+    - 1.a
+    - 1.b
+    - 2.a
+    - 2.b
+    - 3.a
+    - 3.b
+  query:
+    - { name: "*.a" }
+    - { name: "*.b", modifier: all }
+  results:
+    - [ 1.a, 1.b, 2.b, 3.b ]
+    - [ 2.a, 1.b, 2.b, 3.b ]
+    - [ 3.a, 1.b, 2.b, 3.b ]
+
+case7:
+  tuples:
+    - 1.a
+    - 1.b
+    - 2.a
+    - 2.b
+    - 3.a
+    - 3.b
+  query:
+    - { name: "*.a", modifier: all }
+    - { name: "*.b", modifier: all }
+  results:
+    - [ 1.a, 2.a, 3.a, 1.b, 2.b, 3.b ]
+
+case8:
+  tuples:
+    - 1.a
+    - 1.b
+    - 2.a
+    - 2.b
+    - 3.a
+    - 3.b
+  query:
+    - { name: "*.a" }
+    - { name: "*.b" }
+  results:
+    - [ 1.a, 1.b ]
+    - [ 1.a, 2.b ]
+    - [ 1.a, 3.b ]
+    - [ 2.a, 1.b ]
+    - [ 2.a, 2.b ]
+    - [ 2.a, 3.b ]
+    - [ 3.a, 1.b ]
+    - [ 3.a, 2.b ]
+    - [ 3.a, 3.b ]

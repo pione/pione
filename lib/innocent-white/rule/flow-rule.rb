@@ -16,10 +16,20 @@ module InnocentWhite
       def flow?
         true
       end
+
+      # Return FlowHandler class.
+      def handler_class
+        FlowHandler
+      end
     end
 
     # FlowHandler represents a handler for a flow action.
     class FlowHandler < BaseHandler
+      def initialize(*args)
+        super
+        @data_finder = DataFinder.new(tuple_space_server, @domain)
+      end
+
       def execute
         user_message ">>> Start Flow Rule #{@rule.path}"
 
@@ -81,16 +91,13 @@ module InnocentWhite
         # SyncMonitor
         sync_monitor = Agent[:sync_monitor].start(tuple_space_server, self)
 
+        # apply flow-element rules
         while true do
-          # find applicable input combinations
-          inputs = find_applicable_input_combinations
+          # find updatable rule applications
+          applications = select_updatables(find_applicable_rules)
 
-          # find update targets which satisfies update criteria
-          update_targets = find_updatable_targets(inputs)
-
-          unless update_targets.empty?
-            # distribute task
-            handle_task(update_targets)
+          unless applications.empty?
+            distribute_tasks(applications)
           else
             # finish application
             break
@@ -104,90 +111,87 @@ module InnocentWhite
         user_message ">>> End Rule Application: #{@rule.path}"
       end
 
-      # Check application inputs.
-      def find_applicable_input_combinations
-        inputs = []
+      # Find applicable flow-element rules with inputs and variables.
+      def find_applicable_rules
+        combinations = []
         @content.each do |caller|
           # find element rule
           rule = find_rule(caller)
           # check rule status and find combinations
           if rule.status == :known
-            combinations = rule.content.find_input_combinations_and_variables(tuple_space_server, @domain)
-            inputs << [rule, combinations] unless combinations.nil?
+            @data_finder.find(:input, rule.inputs).each do |res|
+              combinations << [rule, res.data, res.variables]
+            end
           else
             raise UnknownRule.new(caller.rule_path)
           end
         end
-        return inputs
+        return combinations
       end
 
       # Find the rule for the caller.
       def find_rule(caller)
         begin
-          return read(Tuple[:rule].new(rule_path: caller.rule_path), 0)
+          return read(Tuple[:rule].new(rule_path: caller.rule_path), 0).content
         rescue Rinda::RequestExpiredError
           puts "Request loading a rule #{caller.rule_path}" if debug_mode?
           write(Tuple[:request_rule].new(caller.rule_path))
-          return read(Tuple[:rule].new(rule_path: caller.rule_path))
+          return read(Tuple[:rule].new(rule_path: caller.rule_path)).content
         end
       end
 
-      # Find input combinations and variables for element rules.
-      def find_updatable_targets(inputs)
-        targets = []
-        inputs.each do |rule, combinations|
-          combinations.each do |inputs, var|
-            outputs = rule.content.find_outputs(tuple_space_server, @domain, inputs, var)
-            if UpdateCriteria.satisfy?(inputs, outputs)
-              targets << [rule, inputs, var]
-            end
-          end
+      # Find inputs and variables for flow element rules.
+      def select_updatables(combinations)
+        combinations.select do |rule, inputs, vars|
+          outputs = @data_finder.find(:output, rule.outputs, vars)
+          UpdateCriteria.satisfy?(rule.inputs, rule.outputs, inputs, outputs)
         end
-        return targets
       end
 
-      def handle_task(targets)
+      def distribute_tasks(applications)
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
 
-        user_message ">>> Start Task Distribution: #{@rule.path}"
+        user_message ">>> Start Task Distribution: #{@rule.rule_path}"
 
-        targets.each do |rule, combination, var|
+        applications.each do |rule, inputs, vars|
           thread = Thread.new do
             # task domain
-            task_domain = Util.domain(rule.rule_path, combination, [])
+            task_domain = Util.domain(rule.rule_path, inputs, [])
 
             # sync monitor
-            #if rule.sync?
-            #  names = rule.expanded_outputs(var)
-            #  write(Tuple[:sync_target].new(src: task_domain, dest: @domain, names: names))
-            #end
+            if rule.sync?
+              names = rule.expanded_outputs(vars)
+              tuple = Tuple[:sync_target].new(src: task_domain,
+                                              dest: @domain,
+                                              names: names)
+              write(tuple)
+            end
 
             # copy input data from the handler domain to task domain
-            copy_data_into_domain(combination.flatten, task_domain)
+            copy_data_into_domain(inputs, task_domain)
 
             # FIXME: params is not supportted now
-            write(Tuple[:task].new(rule.rule_path, combination, []))
+            write(Tuple[:task].new(rule.rule_path, inputs, []))
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))
-            puts "task finished: #{finished}" if debug_mode?
+            user_message "task finished: #{finished}"
 
             # copy data from task domain to this domain
             if finished.status == :succeeded
-              #unless sync_mode?
-                # copy output data from task domain to the handler domain
-                copy_data_into_domain(finished.outputs, @domain)
-              #end
+              # copy output data from task domain to the handler domain
+              copy_data_into_domain(finished.outputs, @domain)
             end
           end
+
           thgroup.add(thread)
         end
 
         # wait to finish threads
         thgroup.list.each {|th| th.join}
 
-        user_message ">>> End Task Distribution: #{@rule.path}"
+        user_message ">>> End Task Distribution: #{@rule.rule_path}"
       end
 
       def finalize_rule_application(sync_monitor)
@@ -197,11 +201,11 @@ module InnocentWhite
 
       # Copy data into specified domain
       def copy_data_into_domain(orig_data, new_domain)
-        new_data = orig_data.flatten
-        new_data.each do |data|
-          data.domain = new_domain
+        orig_data.each do |d|
+          new_data = d.clone
+          new_data.domain = new_domain
+          write(new_data)
         end
-        new_data.each {|data| write(data)}
       end
     end
   end

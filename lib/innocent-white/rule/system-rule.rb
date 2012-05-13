@@ -2,6 +2,7 @@ require 'innocent-white/common'
 
 module InnocentWhite
   module Rule
+    # SystemRule represents built-in rule definition.
     class SystemRule < ActionRule
       def initialize(path, &b)
         inputs = [DataExpr.new('*')]
@@ -10,9 +11,9 @@ module InnocentWhite
         super(path, inputs, outputs, params, b)
       end
 
-      # Make rule handler from the rule.
-      def make_handler(ts_server, inputs, params, opts={})
-        SystemHandler.new(ts_server, self, inputs, params, opts)
+      # Return SystemHandler class.
+      def handler_class
+        SystemHandler
       end
     end
 

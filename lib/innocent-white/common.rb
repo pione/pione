@@ -55,7 +55,15 @@ module InnocentWhite
     end
   end
 
-  class UnknownVariableException < Exception; end
+  # UnknownVariableError represents an unknown variable reference.
+  class UnknownVariableError < StandardError
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+      super("Unknown variable name '#{name}' in the context.")
+    end
+  end
 
   # Utility functions for innocent-white system.
   module Util
@@ -103,7 +111,7 @@ module InnocentWhite
         if variables.has_key?($1)
           variables[$1]
         else
-          raise UnknownVariableException.new($1)
+          raise UnknownVariableError.new($1)
         end
       end
     end
@@ -118,8 +126,9 @@ require 'innocent-white/tuple-space-server'
 require 'innocent-white/log'
 require 'innocent-white/tuple'
 require 'innocent-white/data-expr'
+require 'innocent-white/data-finder'
 require 'innocent-white/rule-expr'
-require 'innocent-white/variable'
+require 'innocent-white/variable-table'
 require 'innocent-white/document'
 require 'innocent-white/rule'
 require 'innocent-white/agent/command-listener'

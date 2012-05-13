@@ -75,7 +75,10 @@ module InnocentWhite
       def transit_to_task_executing(task, rule, process_info)
         puts ">>> Start Task Execution by worker(#{@uuid})" if debug_mode?
 
-        opts = {process_name: process_info.name, process_id: process_info.process_id}
+        opts = {
+          process_name: process_info.name,
+          process_id: process_info.process_id
+        }
         #if rule.rule_path == 'Main'
         #  opts[:domain] = '/main'
         #end
