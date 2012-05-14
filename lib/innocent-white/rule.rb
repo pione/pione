@@ -35,11 +35,6 @@ module InnocentWhite
         handler_class.new(ts_server, self, inputs, params, opts)
       end
 
-      # :nodoc:
-      def handler_class
-        raise NotImplementedError
-      end
-
       # Return rule path.
       def rule_path
         return @path
@@ -61,8 +56,16 @@ module InnocentWhite
       def hash
         @inputs.hash + @outputs.hash + @params.hash + @content.hash
       end
+
+      private
+
+      # :nodoc:
+      def handler_class
+        raise NotImplementedError
+      end
     end
 
+    # BaseHandler is a base class for rule handlers.
     class BaseHandler
       include TupleSpaceServerInterface
 
@@ -76,6 +79,10 @@ module InnocentWhite
       attr_reader :domain
 
       # Create a new handler for rule.
+      # [+ts_server+] tuple space server
+      # [+rule+] rule instance
+      # [+inputs+] input tuples
+      # [+opts+] optionals
       def initialize(ts_server, rule, inputs, params, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
@@ -97,6 +104,10 @@ module InnocentWhite
 
         setup_variable_table
         setup_working_directory
+      end
+
+      def execute
+        raise NotImplementError
       end
 
       # :nodoc:
@@ -141,6 +152,12 @@ module InnocentWhite
         URI(base_uri) + "#{@domain}/"
       end
 
+      # Make output tuple by name.
+      def make_output_tuple(name)
+        uri = (@resource_uri + name).to_s
+        Tuple[:data].new(name: name, domain: @domain, uri: uri)
+      end
+
       # Setup variable table. The following variables are introduced in variable
       # table:
       # - input auto variables
@@ -148,7 +165,10 @@ module InnocentWhite
       # - working directory
       def setup_variable_table
         @variable_table.make_input_auto_variables(@rule.inputs, @inputs)
-        @variable_table.make_output_auto_variables(@rule.outputs, @outputs)
+        output_tuples = @rule.outputs.map {|expr|
+          make_output_tuple(expr.with_variable_table(@variable_table).name)
+        }
+        @variable_table.make_output_auto_variables(@rule.outputs, output_tuples)
         @variable_table.set("WORKING_DIRECTORY", @working_directory)
         @variable_table.set("PWD", @working_directory)
       end
@@ -160,23 +180,11 @@ module InnocentWhite
           filepath = File.join(@working_directory, input.name)
           # write the file
           File.open(filepath, "w+") do |out|
-            out.write Resource[URI(input.uri)].read
+            out.write(Resource[URI(input.uri)].read)
           end
         end
       end
 
-      def write_output_resource
-        @outputs.flatten.each do |output|
-          val = File.read(File.join(@working_directory, output.name))
-          Resource[output.uri].create(val)
-        end
-      end
-
-      def write_output_data
-        @outputs.flatten.each do |output|
-          write(output)
-        end
-      end
     end
   end
 end

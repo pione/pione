@@ -25,19 +25,19 @@ module InnocentWhite
 
     # Find input tuple combinations by input expressions from tuple space
     # server.
-    def find(type, exprs, vars={})
-      find_rec(type, exprs, 1, {})
+    def find(type, exprs, variable_table=VariableTable.new)
+      find_rec(type, exprs, 1, variable_table)
     end
 
     private
 
     # Find input tuple combinatioins recursively.
-    def find_rec(type, exprs, index, vars)
+    def find_rec(type, exprs, index, variable_table)
       # return empty when we reach the recuirsion end
-      return [DataFinderResult.new([], vars)] if exprs.empty?
+      return [DataFinderResult.new([], variable_table)] if exprs.empty?
 
       # expand variables and compile to regular expression
-      head = exprs.first.with_variables(vars)
+      head = exprs.first.with_variable_table(variable_table)
       tail = exprs.drop(1)
 
       # find an input data by name from tuple space server
@@ -46,15 +46,17 @@ module InnocentWhite
       # make combination results
       if head.all?
         # case all modifier
-        _vars = make_auto_variables_by_all(type, head, index, tuples, vars)
+        new_variable_table =
+          make_auto_variables_by_all(type, head, index, tuples, variable_table)
         unless tuples.empty?
-          return find_rec_sub(type, tail, index, tuples, _vars)
+          return find_rec_sub(type, tail, index, tuples, new_variable_table)
         end
       else
         # case each modifier
         return tuples.map {|tuple|
-          _vars = make_auto_variables_by_each(type, head, index, tuple, vars)
-          find_rec_sub(type, tail, index, tuple, _vars)
+          args = [type, head, index, tuple, varriable_table]
+          new_variable_table = make_auto_variables_by_each(*args)
+          find_rec_sub(type, tail, index, tuple, new_variable_table)
         }.flatten
       end
 

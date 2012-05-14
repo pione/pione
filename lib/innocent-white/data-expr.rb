@@ -2,9 +2,10 @@ require 'innocent-white/common'
 
 module InnocentWhite
 
-  # DataExpr is a class for data name expression of rule input and output.
+  # DataExpr is a class for data name expressions of rule input and output.
   class DataExpr
 
+    # separator symbol for all modifier
     SEPARATOR = ':'
 
     # DataExpr::Compiler is a regexp compiler for data expression.
@@ -35,49 +36,54 @@ module InnocentWhite
       module_function :compile
     end
 
-    # -- class --
+    # This module implements DataExpr singleton methods.
+    module SingletonMethod
+      # Create a name expression.
+      def [](name)
+        new(name)
+      end
 
-    # Creates a name expression.
-    def self.[](name)
-      new(name)
+      # Create a name expression with 'each' modifier.
+      def each(name)
+        new(name, :each)
+      end
+
+      # Create a name expression with 'all' modifier.
+      def all(name)
+        new(name, :all)
+      end
+
+      # Create a data name for stdout ouput.
+      def stdout(name)
+        new(name, :each, :stdout)
+      end
+
+      # Create a data name for stderr output.
+      def stderr(name)
+        new(name, :each, :stderr)
+      end
+
+      # Return convertion prcedure for enumerable.
+      def to_proc
+        Proc.new{|name| name.kind_of?(self) ? name : self.new(name)}
+      end
+
+      def attribution(name, &b)
+        Attribution.new(name, &b)
+      end
     end
 
-    # Creates a name expression with 'each' modifier.
-    def self.each(name)
-      new(name, :each)
-    end
-
-    # Create a name expression with 'all' modifier.
-    def self.all(name)
-      new(name, :all)
-    end
-
-    # Create a data name for stdout ouput.
-    def self.stdout(name)
-      new(name, :each, :stdout)
-    end
-
-    # Create a data name for stderr output.
-    def self.stderr(name)
-      new(name, :each, :stderr)
-    end
-
-    # Returns convertion prcedure for enumerable.
-    def self.to_proc
-      Proc.new{|name| name.kind_of?(self) ? name : self.new(name)}
-    end
-
-    def self.attribution(name, &b)
-      Attribution.new(name, &b)
-    end
-
-    # -- instance --
+    include SingletonMethod
 
     attr_reader :name
     attr_reader :modifier
     attr_reader :mode
     attr_reader :exceptions
 
+    # Create a data expression.
+    # [+name+] data expression name
+    # [+modifier+] all / each
+    # [+mode+] nil / stdout / stderr
     def initialize(name, modifier = :each, mode = nil)
       raise ArgumentError.new(name) unless name.kind_of? String or name.kind_of? Regexp
 
@@ -112,9 +118,14 @@ module InnocentWhite
     end
 
     # Return a new expression expanded with the variables.
-    def with_variables(variables)
-      new_exp = self.class.new(Util.expand_variables(name, variables), @modifier)
-      @exceptions.map{|exc| Util.expand_variables(exc.name, variables)}.each do |new_exc|
+    def with_variable_table(variable_table)
+      unless variable_table.kind_of?(VariableTable)
+        variable_table = VariableTable.new(variable_table)
+      end
+      new_exp = self.class.new(variable_table.expand(name), @modifier)
+      @exceptions.map {|exc|
+        variable_table.expand(exc.name)
+      }.each do |new_exc|
         new_exp.except(new_exc)
       end
       return new_exp
@@ -205,10 +216,12 @@ module InnocentWhite
 
     private
 
+    # :nodoc:
     def compile_to_regexp(name)
       Compiler.compile(name)
     end
 
+    # Return true if the name matchs exceptions.
     def match_exceptions(name)
       not(@exceptions.select{|ex| ex.match(name)}.empty?)
     end

@@ -192,10 +192,12 @@ describe 'DataExpr' do
   end
 
   it 'should expand variables' do
-    exp1 = DataExpr.new('{$VAR}.a').with_variables('VAR' => '1')
+    vtable1 = VariableTable.new('VAR' => '1')
+    exp1 = DataExpr.new('{$VAR}.a').with_variable_table(vtable1)
     exp1.match('1.a')
     exp1.should.not.match '1.b'
-    exp2 = DataExpr.new('{$VAR}.a').with_variables('VAR' => '*')
+    vtable2 = VariableTable.new('VAR' => '*')
+    exp2 = DataExpr.new('{$VAR}.a').with_variable_table(vtable2)
     exp2.should.match '1.a'
     exp2.should.match '2.a'
     exp2.should.match 'abc.a'

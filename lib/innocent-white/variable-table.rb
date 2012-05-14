@@ -18,8 +18,8 @@ module InnocentWhite
   # VariableTable represents variable table for rule and data finder.
   class VariableTable < InnocentWhiteObject
     # Make an auto vairable table.
-    def initialize
-      @table = {}
+    def initialize(table={})
+      @table = table.clone
     end
 
     # Return the variable table as hash.
@@ -40,7 +40,7 @@ module InnocentWhite
       @table[var] = val
     end
 
-    # Make input auto variables
+    # Make input auto-variables
     # [+input_exprs+] input expressions
     # [+input_tuples+] input tuples
     def make_input_auto_variables(input_exprs, input_tuples)
@@ -49,13 +49,12 @@ module InnocentWhite
       end
     end
 
-    # make output auto variables
+    # Make output auto-variables.
     # [+output_exprs+] output expressions
     # [+output_tuples+] output tuples
     def make_output_auto_variables(output_exprs, output_tuples)
       output_exprs.each_with_index do |expr, index|
-        data = make_output_tuple(expr.with_variables(@table).name)
-        make_io_auto_variables(:output, expr, data, index+1)
+        make_io_auto_variables(:output, expr, output_tuples[index], index+1)
       end
     end
 
@@ -67,16 +66,14 @@ module InnocentWhite
     private
 
     # Make input or output auto variables.
-    def make_io_auto_variables(type, exp, data, index)
-      name = :make_io_auto_variables_by_all if exp.all?
-      name = :make_io_auto_variables_by_each if exp.each?
+    def make_io_auto_variables(type, expr, data, index)
       prefix = make_prefix(type, index)
-      method(name).call(type, exp, data, prefix)
-    end
-
-    # Make output tuple by name.
-    def make_output_tuple(name)
-      Tuple[:data].new(@domain, name, (@resource_uri + name).to_s)
+      case expr.modifier
+      when :all
+        make_io_auto_variables_by_all(type, expr, data, prefix)
+      when :each
+        make_io_auto_variables_by_each(type, expr, data, prefix)
+      end
     end
 
     # :nodoc:
@@ -87,6 +84,7 @@ module InnocentWhite
     # Make input or output auto variables for 'exist' modified data name
     # expression.
     def make_io_auto_variables_by_each(type, expr, data, prefix)
+      return if data.nil?
       @table[prefix] = data.name
       @table["#{prefix}.URI"] = data.uri
       expr.match(data.name).to_a.each_with_index do |s, i|

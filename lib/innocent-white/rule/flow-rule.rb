@@ -23,13 +23,15 @@ module InnocentWhite
       end
     end
 
-    # FlowHandler represents a handler for a flow action.
+    # FlowHandler represents a handler for flow actions.
     class FlowHandler < BaseHandler
+      # :nodoc:
       def initialize(*args)
         super
         @data_finder = DataFinder.new(tuple_space_server, @domain)
       end
 
+      # :nodoc:
       def execute
         user_message ">>> Start Flow Rule #{@rule.path}"
 
@@ -66,7 +68,7 @@ module InnocentWhite
       def find_outputs
         outputs = []
         @rule.outputs.each_with_index do |exp, i|
-          exp = exp.with_variables(@variable_table)
+          exp = exp.with_variable_table(@variable_table)
           list = read_all(Tuple[:data].new(domain: @domain))
           if exp.all?
             # case all modifier
