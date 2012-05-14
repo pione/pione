@@ -9,16 +9,8 @@ rule Aggregation
 
 Rule MakeHeadTail
   input 'list.txt'
-  output 'head1.txt'
-  output 'head2.txt'
-  output 'head3.txt'
-  output 'head4.txt'
-  output 'head5.txt'
-  output 'tail1.txt'
-  output 'tail2.txt'
-  output 'tail3.txt'
-  output 'tail4.txt'
-  output 'tail5.txt'
+  output 'head*.txt'
+  output 'tail*.txt'
 Action--------------------------------------------------------------------------
 #!/usr/bin/env ruby
 i = 1

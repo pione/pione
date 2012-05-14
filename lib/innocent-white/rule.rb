@@ -1,7 +1,6 @@
 require 'tempfile'
 require 'innocent-white/common'
 require 'innocent-white/agent/sync-monitor'
-require 'innocent-white/flow-element'
 
 module InnocentWhite
   module Rule
@@ -190,6 +189,7 @@ module InnocentWhite
 end
 
 require 'innocent-white/rule/flow-rule'
+require 'innocent-white/rule/flow-element'
 require 'innocent-white/rule/action-rule'
 require 'innocent-white/rule/root-rule'
 require 'innocent-white/rule/system-rule'
