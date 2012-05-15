@@ -8,7 +8,8 @@ module InnocentWhite
         inputs = [DataExpr.new('*')]
         outputs = []
         params = []
-        super(path, inputs, outputs, params, b)
+        features = []
+        super(path, inputs, outputs, params, features, b)
       end
 
       # Return SystemHandler class.

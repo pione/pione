@@ -60,13 +60,14 @@ module InnocentWhite
         inputs = tree[:inputs]
         outputs = tree[:outputs]
         params = tree[:params]
+        features = tree[:features]
         flow_block = tree[:flow_block]
         action_block = tree[:action_block]
         if flow_block
-          Rule::FlowRule.new(name, inputs, outputs, params, flow_block)
+          Rule::FlowRule.new(name, inputs, outputs, params, features, flow_block)
         else
           body = action_block[:body].to_s
-          Rule::ActionRule.new(name, inputs, outputs, params, body)
+          Rule::ActionRule.new(name, inputs, outputs, params, features, body)
         end
       }
 
@@ -97,6 +98,10 @@ module InnocentWhite
       # param_line
       rule(:param_line => subtree(:param)) {
         param[:variable].to_s
+      }
+
+      rule(:feature_line => subtree(:tree)) {
+        tree[:feature_name].to_s
       }
 
       #
@@ -143,7 +148,7 @@ module InnocentWhite
       #
 
       rule(:rule_call => subtree(:rule_expr)) {
-        FlowElement::CallRule.new(rule_expr)
+        Rule::FlowElement::CallRule.new(rule_expr)
       }
 
       rule(:if_block => subtree(:block)) {
@@ -151,7 +156,7 @@ module InnocentWhite
         true_elements = block[:true_elements]
         else_elements = block[:else_elements] || []
         block = {true => true_elements, :else => else_elements}
-        FlowElement::Condition.new(variable, block)
+        Rule::FlowElement::Condition.new(variable, block)
       }
 
       rule(:case_block => subtree(:case_block)) {
@@ -161,7 +166,7 @@ module InnocentWhite
           block[t[:when].to_s] = t[:elements]
         end
         block[:else] = case_block[:else_elements]
-        FlowElement::Condition.new(variable, block)
+        Rule::FlowElement::Condition.new(variable, block)
       }
     end
   end

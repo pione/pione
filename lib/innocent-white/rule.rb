@@ -13,6 +13,7 @@ module InnocentWhite
       attr_reader :inputs
       attr_reader :outputs
       attr_reader :params
+      attr_reader :features
       attr_reader :content
 
       # Create a rule definition object.
@@ -21,11 +22,12 @@ module InnocentWhite
       # [+outputs+] output expressions
       # [+params+] parameters
       # [+content+] rule content
-      def initialize(path, inputs, outputs, params, content)
+      def initialize(path, inputs, outputs, params, features, content)
         @path = path
         @inputs = inputs
         @outputs = outputs
         @params = params
+        @features = features
         @content = content
       end
 
@@ -128,6 +130,7 @@ module InnocentWhite
 
       private
 
+      # Return the domain.
       def get_handling_domain(opts)
         opts[:domain] || Util.domain(@rule.path, @inputs, @params)
       end

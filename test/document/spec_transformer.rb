@@ -95,11 +95,26 @@ describe 'Document::Transformer' do
     end
   end
 
+  describe 'feature_line' do
+    it 'should get a feature line' do
+      line = 'feature ABC'
+      feature = @transformer.apply(@parser.feature_line.parse(line))
+      feature.should == 'ABC'
+    end
+
+    it 'should get a feature line' do
+      line = 'feature .....'
+      should.raise(Document::ParserError) do
+        feature = @transformer.apply(@parser.feature_line.parse(line))
+      end
+    end
+  end
+
   describe 'rule_call_line' do
     it 'should get a call rule element' do
       line = "rule TestA"
       rule_call = @transformer.apply(@parser.rule_call_line.parse(line))
-      rule_call.should.kind_of(FlowElement::CallRule)
+      rule_call.should.kind_of(Rule::FlowElement::CallRule)
       rule_call.expr.name.should == "TestA"
     end
 
@@ -113,7 +128,7 @@ describe 'Document::Transformer' do
     it 'should get a call rule element with parameters' do
       line = 'rule Test.params("a", "b", "c")'
       elt = @transformer.apply(@parser.rule_call_line.parse(line))
-      elt.should.kind_of(FlowElement::CallRule)
+      elt.should.kind_of(Rule::FlowElement::CallRule)
       elt.expr.name.should == "Test"
       elt.expr.params.should == ["a", "b", "c"]
     end
@@ -127,9 +142,9 @@ describe 'Document::Transformer' do
         end
       BLOCK
       cond = @transformer.apply(@parser.if_block.parse(lines))
-      cond.should.kind_of(FlowElement::Condition)
+      cond.should.kind_of(Rule::FlowElement::Condition)
       cond.blocks[true].size.should == 1
-      cond.blocks[true].first.should.kind_of(FlowElement::CallRule)
+      cond.blocks[true].first.should.kind_of(Rule::FlowElement::CallRule)
       cond.blocks[true].first.expr.name.should == "TestA"
       cond.blocks[false].should == nil
     end
@@ -143,12 +158,12 @@ describe 'Document::Transformer' do
         end
       BLOCK
       elt = @transformer.apply(@parser.if_block.parse(lines))
-      elt.should.kind_of(FlowElement::Condition)
+      elt.should.kind_of(Rule::FlowElement::Condition)
       elt.blocks[true].size.should == 1
-      elt.blocks[true].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks[true].first.should.kind_of(Rule::FlowElement::CallRule)
       elt.blocks[true].first.expr.name.should == "TestA"
       elt.blocks[:else].size.should == 1
-      elt.blocks[:else].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks[:else].first.should.kind_of(Rule::FlowElement::CallRule)
       elt.blocks[:else].first.expr.name.should == "TestB"
     end
   end
@@ -166,15 +181,15 @@ describe 'Document::Transformer' do
         end
       BLOCK
       elt = @transformer.apply(@parser.case_block.parse(lines))
-      elt.should.kind_of(FlowElement::Condition)
+      elt.should.kind_of(Rule::FlowElement::Condition)
       elt.blocks["a"].size.should == 1
-      elt.blocks["a"].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks["a"].first.should.kind_of(Rule::FlowElement::CallRule)
       elt.blocks["a"].first.expr.name.should == "TestA"
       elt.blocks["b"].size.should == 1
-      elt.blocks["b"].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks["b"].first.should.kind_of(Rule::FlowElement::CallRule)
       elt.blocks["b"].first.expr.name.should == "TestB"
       elt.blocks[:else].size.should == 1
-      elt.blocks[:else].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks[:else].first.should.kind_of(Rule::FlowElement::CallRule)
       elt.blocks[:else].first.expr.name.should == "TestOthers"
     end
   end
@@ -189,10 +204,10 @@ describe 'Document::Transformer' do
       BLOCK
       block = @transformer.apply(@parser.flow_block.parse(lines))[:flow_block]
       elt1 = block[0]
-      elt1.should.kind_of(FlowElement::CallRule)
+      elt1.should.kind_of(Rule::FlowElement::CallRule)
       elt1.expr.name.should == "TestA"
       elt2 = block[1]
-      elt2.should.kind_of(FlowElement::CallRule)
+      elt2.should.kind_of(Rule::FlowElement::CallRule)
       elt2.expr.name.should == "TestB"
     end
 
@@ -207,13 +222,13 @@ describe 'Document::Transformer' do
       BLOCK
       block = @transformer.apply(@parser.flow_block.parse(lines))[:flow_block]
       elt = block[0]
-      elt.should.kind_of(FlowElement::Condition)
+      elt.should.kind_of(Rule::FlowElement::Condition)
       elt.blocks[true].size.should == 1
-      elt.blocks[true].first.should.kind_of(FlowElement::CallRule)
+      elt.blocks[true].first.should.kind_of(Rule::FlowElement::CallRule)
       elt.blocks[true].first.expr.name.should == "TestA"
       elt.blocks[:else].size.should == 0
       elt = block[1]
-      elt.should.kind_of(FlowElement::CallRule)
+      elt.should.kind_of(Rule::FlowElement::CallRule)
       elt.expr.name.should == "TestB"
     end
   end
@@ -230,9 +245,11 @@ describe 'Document::Transformer' do
       CODE
       action = @transformer.apply(@parser.parse(document)).first
       action.should.be.kind_of Rule::ActionRule
-      action.inputs.should  == [ DataExpr['*.a'] ]
-      action.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
-      action.content.should == "      echo \"test\" > {$OUTPUT[1].NAME}\n"
+      action.inputs.should  == [ DataExpr.new('*.a') ]
+      action.outputs.should == [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
+      action.params.should.empty
+      action.features.should.empty
+      action.content.should.include "echo \"test\" > {$OUTPUT[1].NAME}"
     end
 
     it 'should define flow rule' do
@@ -247,8 +264,10 @@ describe 'Document::Transformer' do
       CODE
       result = @transformer.apply(@parser.parse(document)).first
       result.should.kind_of(Rule::FlowRule)
-      result.inputs.should  == [ DataExpr['*.a'] ]
-      result.outputs.should == [ DataExpr['{$INPUT[1].MATCH[1]}.b'] ]
+      result.inputs.should  == [ DataExpr.new('*.a') ]
+      result.outputs.should == [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
+      result.params.should.empty
+      result.features.should.empty
     end
 
     it 'should get two action rules' do
@@ -296,6 +315,7 @@ describe 'Document::Transformer' do
       result.inputs.size.should == 1
       result.outputs.size.should == 1
       result.params.should == ["ConvertCharSet"]
+      result.features.should.empty
       result.content.size.should == 3
     end
   end

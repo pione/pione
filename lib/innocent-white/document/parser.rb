@@ -3,7 +3,38 @@ require 'parslet'
 
 module InnocentWhite
   class Document
+    class ParserError < Parslet::ParseFailed
+      def initialize(str, expected, source, context)
+        @str = str
+        @expected = expected
+        super(str)
+      end
+
+      def message
+        "#{@str} #{cause}(expected: #{@expected.join(", ")}, #{@source.pos}"
+      end
+    end
+
+    class SyntaxError < Parslet::Atoms::Base
+      def initialize(msg, expected_elements=[])
+        @msg = msg
+        @expected_elements = expected_elements
+      end
+
+      def try(source, context)
+        raise ParserError.new(@msg, @expected_elements, source, context)
+      end
+
+      def to_s_inner(prec)
+        "SYNTAX_ERROR"
+      end
+    end
+
     class Parser < Parslet::Parser
+      def syntax_error(msg, expect_elements)
+        # raise ParserError.new(msg, expect_elements)
+        SyntaxError.new(msg)
+      end
 
       #
       # root
@@ -48,6 +79,7 @@ module InnocentWhite
       rule(:keyword_output) { str('output') }
       rule(:keyword_output_all) { str('output-all') }
       rule(:keyword_param) { str('param') }
+      rule(:keyword_feature) { str('feature') }
       rule(:keyword_flow_block_begin) { str('Flow') }
       rule(:keyword_action_block_begin) { str('Action') }
       rule(:keyword_block_end) { str('End') }
@@ -95,6 +127,11 @@ module InnocentWhite
           identifier >>
           (slash >> identifier).repeat(0)
           ).as(:rule_name)
+      }
+
+      # feature_name
+      rule(:feature_name) {
+        identifier.as(:feature_name)
       }
 
       # attribution_name
@@ -170,6 +207,7 @@ module InnocentWhite
           input_line.repeat(1).as(:inputs) >>
           output_line.repeat(1).as(:outputs) >>
           param_line.repeat.as(:params) >>
+          feature_line.repeat.as(:features) >>
           block
           ).as(:rule_definition)
       }
@@ -220,6 +258,18 @@ module InnocentWhite
           variable >>
           line_end
           ).as(:param_line)
+      }
+
+      # feature_line
+      rule(:feature_line) {
+        ( space? >>
+          keyword_feature >>
+          space >>
+          ( feature_name |
+            syntax_error("Need identifier in this context.", ["idenfifier"])
+           ) >>
+          line_end
+          ).as(:feature_line)
       }
 
       #
@@ -279,7 +329,9 @@ module InnocentWhite
       #
 
       rule(:block) {
-        flow_block | action_block
+        flow_block |
+        action_block #|
+        #error("Found bad block.", ['flow block', 'action block'])
       }
 
       rule(:flow_block) {
@@ -314,7 +366,10 @@ module InnocentWhite
 
       rule(:flow_element) {
         rule_call_line |
-        condition_block
+        condition_block #|
+        #error('Found a bad flow element',
+        #      ['rule_call_line',
+        #       'condition_block'])
       }
 
       rule(:rule_call_line) {

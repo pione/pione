@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 require 'innocent-white/test-util'
 
 describe 'Document::Parser' do
