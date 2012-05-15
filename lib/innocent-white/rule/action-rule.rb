@@ -99,7 +99,6 @@ module InnocentWhite
       # Write resources for output data.
       def write_output_resources
         @outputs.flatten.each do |output|
-          p output
           val = File.read(File.join(@working_directory, output.name))
           Resource[output.uri].create(val)
         end

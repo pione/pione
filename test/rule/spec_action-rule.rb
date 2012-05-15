@@ -23,7 +23,7 @@ describe 'ActionRule' do
     @rule.should.not.flow
   end
 
-  it 'should make action handler' do
+  it 'should make an action handler' do
     dir = Dir.mktmpdir
     uri_a = "local:#{dir}/1.a"
     uri_b = "local:#{dir}/1.b"
@@ -94,9 +94,6 @@ describe 'ActionHandler' do
   end
 
   after do
-    # @handler_sh1.finalize
-    # @handler_sh2.finalize
-    # @handler_sh3.finalize
     tuple_space_server.terminate
   end
 
@@ -116,44 +113,17 @@ describe 'ActionHandler' do
     path.should.include "#{process_name}_#{process_id}"
   end
 
-  it 'should execute an action' do
-    # execute and get result
-    outputs = @handler_sh1.execute
-    res = outputs.first
-    res.name.should == '1.c'
-    Resource[res.uri].read.chomp.should == "3"
-    should.not.raise do
-      read(Tuple[:data].new(name: '1.c', domain: @handler_sh1.domain))
-    end
-  end
-
-  it 'should handle output in stdout' do
-    input_comb = @rule_sh_2.find_input_combinations(@ts_server, '/input')
-    10.times do |i|
-      handler = Rule::ActionHandler.new(tuple_space_server, @rule, input_comb[i], [])
-
+  [:sh1, :sh2, :ruby].each do |sym|
+    it "should execute an action: #{sym}" do
       # execute and get result
-      result = handler.execute
-      output_data = result.first
-      output_data.name.should == "test-#{i+1}.c"
-
-      # validate output, resouce, and tuple space
-      Resource[output_data.uri].read.chomp.should == ((i+1)*2 + 10).to_s
-    end
-  end
-
-  it 'should execute ruby script' do
-    input_comb = @rule_ruby.find_input_combinations(@ts_server, '/input')
-    10.times do |i|
-      handler = Rule::ActionHandler.new(tuple_space_server, @rule, input_comb[i], [])
-
-      # execute and get result
-      result = handler.execute
-      output_data = result.first
-      output_data.name.should == "test-#{i+1}.c"
-
-      # validate output, resouce, and tuple space
-      Resource[output_data.uri].read.chomp.should == ((i+1)*2 + 10).to_s
+      handler = eval("@handler_#{sym}")
+      outputs = handler.execute
+      res = outputs.first
+      res.name.should == '1.c'
+      Resource[res.uri].read.chomp.should == "3"
+      should.not.raise do
+        read(Tuple[:data].new(name: '1.c', domain: handler.domain))
+      end
     end
   end
 end

@@ -8,8 +8,6 @@ module InnocentWhite
 
     class TupleObject < InnocentWhiteObject
 
-      # -- class --
-
       # Define a tuple class and return its class.
       def self.define(format)
         klass = Class.new(self) do

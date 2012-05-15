@@ -1,16 +1,20 @@
 require 'innocent-white/common'
 
 module InnocentWhite
-  class DataFinderResult < Struct.new(:data, :variables)
-    def empty?
-      self[:data].empty?
-    end
-  end
-
   # DataFinder finds data from tuple space server.
   class DataFinder < InnocentWhiteObject
+    # DataFinderResult represents inner results of DataFinder#find.
+    class DataFinderResult < Struct.new(:data, :variables)
+      def empty?
+        self[:data].empty?
+      end
+    end
+
     include TupleSpaceServerInterface
 
+    # Create a new finder.
+    # [+ts_server+] tuple space server
+    # [+domain+] target data domain to find
     def initialize(ts_server, domain)
       set_tuple_space_server(ts_server)
       @domain = domain
@@ -26,7 +30,7 @@ module InnocentWhite
     # Find input tuple combinations by input expressions from tuple space
     # server.
     def find(type, exprs, variable_table=VariableTable.new)
-      find_rec(type, exprs, 1, variable_table)
+      find_rec(type, exprs, 1, variable_table).to_a
     end
 
     private
@@ -44,17 +48,18 @@ module InnocentWhite
       tuples = find_by_expr(head)
 
       # make combination results
+      prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
       if head.all?
         # case all modifier
         new_variable_table =
-          make_auto_variables_by_all(type, head, index, tuples, variable_table)
+          make_auto_variables_by_all(prefix, head, tuples, variable_table)
         unless tuples.empty?
           return find_rec_sub(type, tail, index, tuples, new_variable_table)
         end
       else
         # case each modifier
         return tuples.map {|tuple|
-          args = [type, head, index, tuple, varriable_table]
+          args = [prefix, head, tuple, variable_table]
           new_variable_table = make_auto_variables_by_each(*args)
           find_rec_sub(type, tail, index, tuple, new_variable_table)
         }.flatten
@@ -64,35 +69,33 @@ module InnocentWhite
       return []
     end
 
-    def find_rec_sub(type, tail, index, data, vars)
-      find_rec(type, tail, index+1, vars).map do |res|
+    def find_rec_sub(type, tail, index, data, variable_table)
+      find_rec(type, tail, index+1, variable_table).map do |res|
         new_data = res.data.unshift(data).flatten
-        new_vars = res.variables
-        DataFinderResult.new(new_data, new_vars)
+        new_variable_table = res.variables
+        DataFinderResult.new(new_data, new_variable_table)
       end
     end
 
     # Make auto-variables by the name modified 'all'.
-    def make_auto_variables_by_all(type, expr, index, tuples, vars)
-      new_vars = vars.clone
-      prefix = type == :input ? "INPUT" : "OUTPUT"
-      new_vars["#{prefix}[#{index}]"] =
-        tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)
-      return new_vars
+    def make_auto_variables_by_all(prefix, expr, tuples, variable_table)
+      new_variable_table = VariableTable.new(variable_table)
+      list = tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)
+      new_variable_table.set(prefix, list)
+      return new_variable_table
     end
 
     # Make auto-variables by the name modified 'each'.
-    def make_auto_variables_by_each(type, expr, index, tuple, vars)
-      new_vars = vars.clone
-      prefix = type == :input ? "INPUT" : "OUTPUT"
+    def make_auto_variables_by_each(prefix, expr, tuple, variable_table)
+      new_variable_table = VariableTable.new(variable_table)
       md = expr.match(tuple.name)
-      new_vars["#{prefix}[#{index}]"] = tuple.name
-      new_vars["#{prefix}[#{index}].URI"] = tuple.uri
-      md.to_a.each_with_index do |s, i|
-        new_vars["#{prefix}[#{index}].*"] = s if i == 1
-        new_vars["#{prefix}[#{index}].MATCH[#{i}]"] = s
+      new_variable_table.set(prefix, tuple.name)
+      new_variable_table.set("#{prefix}.URI", tuple.uri)
+      md.to_a.each_with_index do |str, i|
+        new_variable_table.set("#{prefix}.*", str) if i == 1
+        new_variable_table.set("#{prefix}.MATCH[#{i}]", str)
       end
-      return new_vars
+      return new_variable_table
     end
   end
 end

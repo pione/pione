@@ -96,10 +96,10 @@ module InnocentWhite
         @params = params
         @content = rule.content
         @working_directory = make_working_directory(opts)
+        @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new
         @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
         @task_id = Util.task_id(@inputs, @params)
-        @domain = get_handling_domain(opts)
 
         setup_variable_table
         setup_working_directory
@@ -147,7 +147,6 @@ module InnocentWhite
       end
 
       def make_resource_uri(base_uri)
-        # URI(base_uri) + "#{Util.domain(@rule.path, @inputs, @params)}/"
         URI(base_uri) + "#{@domain}/"
       end
 

@@ -10,8 +10,10 @@ module InnocentWhite
       @name = name
       @value = value
       @old = old
-      super("Try to bind the value '#{value}' as variable '#{name}'," +
-            "but already bound the value '#{old}'")
+      message =
+        "Try to bind the value '#{value}' as variable '#{name}'," +
+        "but already bound the value '#{old}'"
+      super(message)
     end
   end
 
@@ -19,7 +21,7 @@ module InnocentWhite
   class VariableTable < InnocentWhiteObject
     # Make an auto vairable table.
     def initialize(table={})
-      @table = table.clone
+      @table = table.to_hash.dup
     end
 
     # Return the variable table as hash.
@@ -67,46 +69,42 @@ module InnocentWhite
 
     # Make input or output auto variables.
     def make_io_auto_variables(type, expr, data, index)
-      prefix = make_prefix(type, index)
+      prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
       case expr.modifier
       when :all
-        make_io_auto_variables_by_all(type, expr, data, prefix)
+        make_io_auto_variables_by_all(prefix, expr, data)
       when :each
-        make_io_auto_variables_by_each(type, expr, data, prefix)
+        make_io_auto_variables_by_each(prefix, expr, data)
       end
-    end
-
-    # :nodoc:
-    def make_prefix(type, index)
-      prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
     end
 
     # Make input or output auto variables for 'exist' modified data name
     # expression.
-    def make_io_auto_variables_by_each(type, expr, data, prefix)
-      return if data.nil?
-      @table[prefix] = data.name
-      @table["#{prefix}.URI"] = data.uri
-      expr.match(data.name).to_a.each_with_index do |s, i|
+    def make_io_auto_variables_by_each(prefix, expr, tuple)
+      return if tuple.nil?
+      set(prefix, tuple.name)
+      set("#{prefix}.URI", tuple.uri)
+      expr.match(tuple.name).to_a.each_with_index do |str, i|
         next if i == 0
-        @table["#{prefix}.*"] = s if i == 1
-        @table["#{prefix}.MATCH[#{i}]"] = s
+        set("#{prefix}.*", str) if i == 1
+        set("#{prefix}.MATCH[#{i}]", str)
       end
     end
 
     # Make input or output auto variables for 'all' modified data name
     # expression.
-    def make_io_auto_variables_by_all(type, expr, tuples, prefix)
+    def make_io_auto_variables_by_all(prefix, expr, tuples)
       # FIXME: output
       return if type == :output
-      @table[prefix] = tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)
-      tuples.each_with_index do |t, i|
+
+      set(prefix, tuples.map{|t| t.name}.join(DataExpr::SEPARATOR))
+      tuples.each_with_index do |tuple, i|
         _prefix = "#{prefix}[#{i+1}]"
-        @table[_prefix] = t.name
-        expr.match(t.name).to_a.each_with_index do |s, ii|
+        set(_prefix, tuple.name)
+        expr.match(tuple.name).to_a.each_with_index do |str, ii|
           next if ii == 0
-          @table["#{_prefix}.*"] = s if ii == 1
-          @table["#{_prefix}.MATCH[#{ii}]"] = s
+          set("#{_prefix}.*", str) if ii == 1
+          set("#{_prefix}.MATCH[#{ii}]", str)
         end
       end
     end
