@@ -3,10 +3,13 @@ require 'innocent-white/common'
 module InnocentWhite
   # DataFinder finds data from tuple space server.
   class DataFinder < InnocentWhiteObject
-    # DataFinderResult represents inner results of DataFinder#find.
-    class DataFinderResult < Struct.new(:data, :variables)
+    # DataFinderResult represents result elements of
+    # DataFinder#find. +combination+ is rule inputs and +variable_table+ is
+    # found variable's table.
+    class DataFinderResult < Struct.new(:combination, :variable_table)
+      # Return true if the combination is empty.
       def empty?
-        self[:data].empty?
+        self[:combination].empty?
       end
     end
 
@@ -29,7 +32,7 @@ module InnocentWhite
 
     # Find tuple combinations by data expressions from tuple space server.
     def find(type, exprs, variable_table=VariableTable.new)
-      find_rec(type, exprs, 1, variable_table).to_a
+      find_rec(type, exprs, 1, variable_table)
     end
 
     private
@@ -70,9 +73,9 @@ module InnocentWhite
 
     def find_rec_sub(type, tail, index, data, variable_table)
       find_rec(type, tail, index+1, variable_table).map do |res|
-        new_data = res.data.unshift(data).flatten
-        new_variable_table = res.variables
-        DataFinderResult.new(new_data, new_variable_table)
+        new_combination = res.combination.unshift(data)
+        new_variable_table = res.variable_table
+        DataFinderResult.new(new_combination, new_variable_table)
       end
     end
 

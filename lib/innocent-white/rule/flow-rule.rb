@@ -121,7 +121,7 @@ module InnocentWhite
           rule = find_rule(caller)
           # check rule status and find combinations
           @data_finder.find(:input, rule.inputs).each do |res|
-            combinations << [caller, rule, res.data, res.variables]
+            combinations << [caller, rule, res.combination, res.variable_table]
           end
         end
         return combinations
@@ -148,7 +148,7 @@ module InnocentWhite
       # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
         combinations.select do |caller, rule, inputs, variable_table|
-          outputs = @data_finder.find(:output, rule.outputs, variable_table).map{|r|r.data}
+          outputs = @data_finder.find(:output, rule.outputs, variable_table).map{|r| r.combination }
           UpdateCriteria.satisfy?(rule, inputs, outputs)
         end
       end

@@ -70,12 +70,16 @@ describe 'DataFinder' do
       # results
       results = testcase['results'].map {|res|
         res.map {|name|
-          Tuple[:data].new(name: name, domain: 'test')
+          if name.kind_of?(Array)
+            name.map {|n| Tuple[:data].new(name: n, domain: 'test') }
+          else
+            Tuple[:data].new(name: name, domain: 'test')
+          end
         }
       }
 
       # test
-      finder.find(:input,  query).map{|r|r.data}.should == results
+      finder.find(:input,  query).map{|r| r.combination }.should == results
     end
   end
 end

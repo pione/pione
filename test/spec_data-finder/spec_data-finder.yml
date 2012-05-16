@@ -28,7 +28,7 @@ case3:
   query:
     - { name: "*.a", modifier: all}
   results:
-    - [ 1.a, 2.a, 3.a ]
+    - [ [1.a, 2.a, 3.a] ]
 
 case4:
   tuples:
