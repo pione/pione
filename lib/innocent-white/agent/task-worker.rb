@@ -9,7 +9,6 @@ module InnocentWhite
 
       class UnknownTask < Exception; end
 
-      define_state :process_info_loading
       define_state :task_waiting
       define_state :task_processing
       define_state :rule_loading
@@ -20,8 +19,7 @@ module InnocentWhite
       define_state_transition :initialized => :task_waiting
       define_state_transition :task_waiting => :task_processing
       define_state_transition :task_processing => :rule_loading
-      define_state_transition :rule_loading => :process_info_loading
-      define_state_transition :process_info_loading => :task_executing
+      define_state_transition :rule_loading => :task_executing
       define_state_transition :task_executing => :data_outputing
       define_state_transition :data_outputing => :task_finishing
       define_state_transition :task_finishing => lambda {|agent, result|
@@ -66,26 +64,13 @@ module InnocentWhite
         end
       end
 
-      # State process_info_loading
-      def transit_to_process_info_loading(task, rule)
-        return task, rule, read(Tuple[:process_info].any)
-      end
-
       # State task_executing.
-      def transit_to_task_executing(task, rule, process_info)
-        puts ">>> Start Task Execution by worker(#{@uuid})" if debug_mode?
+      def transit_to_task_executing(task, rule)
+        debug_message ">>> Start Task Execution by worker(#{@uuid})"
 
-        opts = {
-          process_name: process_info.name,
-          process_id: process_info.process_id
-        }
-        #if rule.rule_path == 'Main'
-        #  opts[:domain] = '/main'
-        #end
         handler = rule.content.make_handler(tuple_space_server,
                                             task.inputs,
-                                            task.params,
-                                            opts)
+                                            task.params)
         @__result_task_execution__ = nil
 
         th = Thread.new do
@@ -115,7 +100,7 @@ module InnocentWhite
         # Sleep unless execution thread will be terminated
         th.join
 
-        puts ">>> End Task Execution by worker(#{@uuid})" if debug_mode?
+        debug_message ">>> End Task Execution by worker(#{@uuid})"
 
         return task, handler, @__result_task_execution__
       end

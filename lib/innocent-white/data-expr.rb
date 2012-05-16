@@ -73,7 +73,7 @@ module InnocentWhite
       end
     end
 
-    include SingletonMethod
+    extend SingletonMethod
 
     attr_reader :name
     attr_reader :modifier

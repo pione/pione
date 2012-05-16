@@ -7,8 +7,9 @@ describe 'ActionRule' do
     inputs = [ DataExpr.new('*.a'), DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
     outputs = [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ]
     params = []
+    features = []
     content = 'expr `cat {$INPUT[1]}` + `cat {$INPUT[2]}`'
-    @rule = Rule::ActionRule.new(rule_path, inputs, outputs, params, content)
+    @rule = Rule::ActionRule.new(rule_path, inputs, outputs, params, features, content)
   end
 
   after do

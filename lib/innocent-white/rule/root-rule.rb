@@ -15,10 +15,10 @@ module InnocentWhite
 
       # Make new rule.
       def initialize(rule_path)
-        inputs  = [DataExpr.all("*")]
-        outputs = [DataExpr.all("*").except("{$INPUT[1]}")]
-        content = [FlowElement::CallRule.new(rule_path)]
-        super(nil, inputs, outputs, [], content)
+        inputs  = [ DataExpr.all("*")]
+        outputs = [ DataExpr.all("*").except("{$INPUT[1]}") ]
+        content = [ FlowElement::CallRule.new(rule_path) ]
+        super(nil, inputs, outputs, [], [], content)
         @path = 'root'
         @domain = ROOT_DOMAIN
       end

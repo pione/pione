@@ -75,6 +75,10 @@ module InnocentWhite
       Process.pid
     end
 
+    def now
+      Time.now
+    end
+
     # Return common base uri of the space.
     def base_uri
       URI(read(Tuple[:base_uri].any).uri)

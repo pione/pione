@@ -72,9 +72,10 @@ module InnocentWhite
       end
 
       # Make output tuple by name.
-      def make_output_tuple(name)
+      def make_output_tuple_with_time(name)
+        time = File.mtime(File.join(@working_directory, name))
         uri = (@resource_uri + name).to_s
-        Tuple[:data].new(name: name, domain: @domain, uri: uri)
+        Tuple[:data].new(name: name, domain: @domain, uri: uri, time: time)
       end
 
       # Collect output data by names from working directory.
@@ -84,13 +85,14 @@ module InnocentWhite
           expr = expr.with_variable_table(@variable_table)
           case expr.modifier
           when :all
-            names = list.select {|elt| expr.match(elt)}
-            unless names.empty?
-              @outputs[i] = names.map{|name| make_output_tuple(name) unless name.empty?}
+            list.select{|elt| expr.match(elt)}.each do |name|
+              unless name.empty?
+                @outputs[i] = make_output_tuple_with_time(name)
+              end
             end
           when :each
             if name = list.find {|elt| expr.match(elt)}
-              @outputs[i] = make_output_tuple(name)
+              @outputs[i] = make_output_tuple_with_time(name)
             end
           end
         end

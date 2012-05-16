@@ -8,6 +8,9 @@ require 'rinda/tuplespace'
 require 'json'
 
 module InnocentWhite
+  @@debug_mode = false
+  @@quiet_mode = false
+
   def debug_mode
     orig = @@debug_mode
     @@debug_mode = true
@@ -24,12 +27,36 @@ module InnocentWhite
 
   # Return true if the system is debug mode.
   def debug_mode?
-    @@debug_mode ||= false
+    @@debug_mode
   end
   module_function :debug_mode?
 
+  def quiet_mode
+    orig = @@quiet_mode
+    @@quiet_mode = true
+    yield
+    @@quiet_mode = orig
+  end
+  module_function :debug_mode
+
+  def quiet_mode=(mode)
+    @@quiet_mode = mode
+  end
+  module_function :quiet_mode=
+
+  def quiet_mode?
+    @@quiet_mode
+  end
+  module_function :quiet_mode?
+
+  def debug_message(msg)
+    if debug_mode? and not(quiet_mode?)
+      puts msg
+    end
+  end
+
   def user_message(msg)
-    puts msg
+    puts msg if not(quiet_mode?)
   end
 
   # Start finalization process for InnocentWhite world.
@@ -42,6 +69,30 @@ module InnocentWhite
     exit
   end
   module_function :finalize
+
+  module Terminal
+    @@color_mode = true
+
+    def color_mode=(bool)
+      @@color_mode = bool
+    end
+    module_function :color_mode=
+
+    def red(str)
+      colorize(str, "\x1b[31m", "\x1b[39m")
+    end
+    module_function :red
+
+    def green(str)
+      colorize(str, "\x1b[32m", "\x1b[39m")
+    end
+    module_function :green
+
+    def colorize(str, bc, ec)
+      @@color_mode ? bc + str + ec : str
+    end
+    module_function :colorize
+  end
 
   # Basic object class of innocent-white system.
   class InnocentWhiteObject
@@ -132,3 +183,4 @@ require 'innocent-white/variable-table'
 require 'innocent-white/document'
 require 'innocent-white/rule'
 require 'innocent-white/agent/command-listener'
+require 'innocent-white/agent/task-worker'

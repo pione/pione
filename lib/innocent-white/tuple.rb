@@ -52,8 +52,6 @@ module InnocentWhite
         new
       end
 
-      # -- instance --
-
       def initialize(*data)
         @data = {}
         return if data.empty?
@@ -174,14 +172,14 @@ module InnocentWhite
     #   name   : data name
     #   uri    : resource location
     #   time   : data created time
-    define_format [:data, :domain, :name, :uri]
+    define_format [:data, :domain, :name, :uri, :time]
     #define_format [:data, :domain, :name, :uri, :time]
 
     # rule application task with inputs, outpus and parameters
     #   rule_path : rule location path
     #   inputs    : input data list
     #   params    : parameter list
-    define_format [:task, :rule_path, :inputs, :params]
+    define_format [:task, :rule_path, :inputs, :params, :features]
 
     # working information
     #   domain  : caller domain

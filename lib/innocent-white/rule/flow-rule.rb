@@ -47,8 +47,8 @@ module InnocentWhite
         end
 
         if debug_mode?
-          puts "Flow Rule #{@rule.path} Result:"
-          @outputs.each {|output| puts "  #{output}"}
+          debug_message "Flow Rule #{@rule.path} Result:"
+          @outputs.each {|output| debug_message "  #{output}"}
         end
 
         user_message ">>> End Flow Rule #{@rule.path}"
@@ -120,12 +120,8 @@ module InnocentWhite
           # find element rule
           rule = find_rule(caller)
           # check rule status and find combinations
-          if rule.status == :known
-            @data_finder.find(:input, rule.inputs).each do |res|
-              combinations << [rule, res.data, res.variables]
-            end
-          else
-            raise UnknownRule.new(caller.rule_path)
+          @data_finder.find(:input, rule.inputs).each do |res|
+            combinations << [caller, rule, res.data, res.variables]
           end
         end
         return combinations
@@ -136,17 +132,24 @@ module InnocentWhite
         begin
           return read(Tuple[:rule].new(rule_path: caller.rule_path), 0).content
         rescue Rinda::RequestExpiredError
-          puts "Request loading a rule #{caller.rule_path}" if debug_mode?
+          debug_message "Request loading a rule #{caller.rule_path}"
           write(Tuple[:request_rule].new(caller.rule_path))
-          return read(Tuple[:rule].new(rule_path: caller.rule_path)).content
+          tuple = read(Tuple[:rule].new(rule_path: caller.rule_path))
+
+          # check whether known or unknown
+          if rule.status == :known
+            return tuple.content
+          else
+            raise UnknownRule.new(caller.rule_path)
+          end
         end
       end
 
       # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
-        combinations.select do |rule, inputs, vars|
-          outputs = @data_finder.find(:output, rule.outputs, vars)
-          UpdateCriteria.satisfy?(rule.inputs, rule.outputs, inputs, outputs)
+        combinations.select do |caller, rule, inputs, variable_table|
+          outputs = @data_finder.find(:output, rule.outputs, variable_table).map{|r|r.data}
+          UpdateCriteria.satisfy?(rule, inputs, outputs)
         end
       end
 
@@ -156,13 +159,13 @@ module InnocentWhite
 
         user_message ">>> Start Task Distribution: #{@rule.rule_path}"
 
-        applications.each do |rule, inputs, vars|
+        applications.each do |caller, rule, inputs, vars|
           thread = Thread.new do
             # task domain
             task_domain = Util.domain(rule.rule_path, inputs, [])
 
             # sync monitor
-            if rule.sync?
+            if caller.sync_mode?
               names = rule.expanded_outputs(vars)
               tuple = Tuple[:sync_target].new(src: task_domain,
                                               dest: @domain,
@@ -174,7 +177,7 @@ module InnocentWhite
             copy_data_into_domain(inputs, task_domain)
 
             # FIXME: params is not supportted now
-            write(Tuple[:task].new(rule.rule_path, inputs, []))
+            write(Tuple[:task].new(rule.rule_path, inputs, [], rule.features))
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))

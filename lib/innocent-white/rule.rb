@@ -4,7 +4,16 @@ require 'innocent-white/agent/sync-monitor'
 
 module InnocentWhite
   module Rule
-    class ExecutionError < Exception; end
+    class ExecutionError < StandardError
+      def initialize(handler)
+        @handler = handler
+      end
+
+      def message
+        "Execution error when handling the rule '#{@handler.rule.rule_path}' inputs=#{@handler.inputs}"
+      end
+    end
+
     class UnknownRule < Exception; end
 
     # Base rule class for flow rule and action rule.
@@ -156,7 +165,7 @@ module InnocentWhite
       # Make output tuple by name.
       def make_output_tuple(name)
         uri = (@resource_uri + name).to_s
-        Tuple[:data].new(name: name, domain: @domain, uri: uri)
+        Tuple[:data].new(name: name, domain: @domain, uri: uri, time: nil)
       end
 
       # Setup variable table. The following variables are introduced in variable

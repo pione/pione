@@ -27,8 +27,7 @@ module InnocentWhite
       tuple_space_server.read_all(q)
     end
 
-    # Find input tuple combinations by input expressions from tuple space
-    # server.
+    # Find tuple combinations by data expressions from tuple space server.
     def find(type, exprs, variable_table=VariableTable.new)
       find_rec(type, exprs, 1, variable_table).to_a
     end

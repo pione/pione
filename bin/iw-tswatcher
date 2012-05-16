@@ -46,32 +46,26 @@ end
 DRb.start_service
 
 # tuple space provider
-provider = TupleSpaceProvider.instance
+provider = InnocentWhite::TupleSpaceProvider.instance
 
-# tuple space servers are not found
-if provider.tuple_space_servers.empty?
-  puts "No tuple space servers."
-  exit 0
+def setup_tuple_space_notifier(tuple_space_server, targets)
+  puts "TupleSpaceServer: %s" % Terminal.red(tuple_space_server.uuid)
+  targets.each do |target|
+    notifier = tuple_space_server.notify(nil, Tuple[target.intern].new, 5)
+    Thread.new do
+      notifier.each do |event, tuple|
+        pp event
+        pp tuple
+      end
+    end
+  end
 end
 
 # print tuples
-provider.tuple_space_servers.each do |ts_server|
-  puts "TupleSpaceServer: %s" % Terminal.red(ts_server.uuid)
-  puts "-"*78
-  ts_server.all_tuples.each do |tuple|
-    # target option
-    if not(OPTS[:targets].empty?) and not(OPTS[:targets].include?(tuple.first.to_s))
-      next
-    end
-
-    # exclude option
-    if OPTS[:exclusions].include?(tuple.first.to_s)
-      next
-    end
-
-    res = PP.pp(tuple, "")
-    res.gsub!(/\:[a-z]\w+/) {|s| Terminal.red(s) }
-    res.gsub!(/\#<(\S+)/) {|s| "#<%s" % Terminal.green($1) }
-    puts res
+while true do
+  provider.tuple_space_servers.each do |ts_server|
+    setup_tuple_space_notifier(ts_server, OPTS[:targets])
+    sleep 3
   end
 end
+

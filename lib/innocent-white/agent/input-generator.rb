@@ -7,11 +7,19 @@ module InnocentWhite
     class InputGenerator < TupleSpaceClient
       set_agent_type :input_generator
 
-      InputData = Struct.new(:name, :uri)
+      InputData = Struct.new(:name, :uri, :time)
       DOMAIN = "/input"
 
       # Base class for generator methods.
       class GeneratorMethod
+        def initialize(ts_server)
+          @tuple_space_server = ts_server
+        end
+
+        def now
+          @tuple_space_server.now
+        end
+
         def generate
           raise RuntimeError
         end
@@ -23,7 +31,8 @@ module InnocentWhite
 
       # Simple generator based on range and extension.
       class SimpleGeneratorMethod < GeneratorMethod
-        def initialize(base_uri, name, name_range, value_range)
+        def initialize(ts_server, base_uri, name, name_range, value_range)
+          super(ts_server)
           @base_uri = base_uri
           @name = name
           @name_range = name_range.to_enum
@@ -34,13 +43,14 @@ module InnocentWhite
           name = DataExpr.new(@name).generate(@name_range.next)
           uri = @base_uri + "./input/#{name}"
           Resource[uri].create(@value_range.next)
-          InputData.new(name, uri.to_s)
+          InputData.new(name, uri.to_s, now)
         end
       end
 
       # Directory based generator.
       class DirGeneratorMethod < GeneratorMethod
-        def initialize(dir_path)
+        def initialize(ts_server, dir_path)
+          super(ts_server)
           @dir_path = dir_path
           @gen = Dir.open(@dir_path).to_enum
         end
@@ -49,13 +59,17 @@ module InnocentWhite
           name = @gen.next
           path = File.join(@dir_path, name)
           uri = "local:#{File.expand_path(path)}"
-          ['.', '..'].include?(name) ? generate : InputData.new(name, uri)
+          if ['.', '..'].include?(name)
+            generate
+          else
+            InputData.new(name, uri, File.mtime(path))
+          end
         end
       end
 
       # StreamGeneratorMethod handles stream inputs.
       class StreamGeneratorMethod < GeneratorMethod
-        def initialize(dir_path)
+        def initialize(ts_server, dir_path)
           @dir_path = dir_path
           @table = Hash.new
           init
@@ -64,11 +78,11 @@ module InnocentWhite
         def generate
           name = @gen.next
           path = File.join(@dir_path, name)
-          mtime = File.open(path).mtime
+          mtime = File.mtime(path)
           if generate_new_file?(name, mtime)
             @table[name] = mtime
             uri = "local:#{File.expand_path(path)}"
-            return InputData.new(name, uri)
+            return InputData.new(name, uri, mtime)
           else
             return nil
           end
@@ -94,17 +108,17 @@ module InnocentWhite
 
       # Create a input generator agent by simple method.
       def self.start_by_simple(ts_server, *args)
-        start(ts_server, SimpleGeneratorMethod.new(ts_server.base_uri, *args))
+        start(ts_server, SimpleGeneratorMethod.new(ts_server, ts_server.base_uri, *args))
       end
 
       # Create a input generator agent by directory method.
       def self.start_by_dir(ts_server, *args)
-        start(ts_server, DirGeneratorMethod.new(*args))
+        start(ts_server, DirGeneratorMethod.new(ts_server, *args))
       end
 
       # Create a input generator agent by stream method.
       def self.start_by_stream(ts_server, *args)
-        start(ts_server, StreamGeneratorMethod.new(*args))
+        start(ts_server, StreamGeneratorMethod.new(ts_server, *args))
       end
 
       define_state :generating
@@ -147,7 +161,7 @@ module InnocentWhite
             msg.add_record(agent_type, "uuid", uuid)
             msg.add_record(agent_type, "object", input.name)
           end
-          write(Tuple[:data].new(domain: DOMAIN, name: input.name, uri: input.uri))
+          write(Tuple[:data].new(DOMAIN, input.name, input.uri, input.time))
           return input
         end
       end

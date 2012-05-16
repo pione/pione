@@ -10,6 +10,7 @@ module InnocentWhite
 
     # Return true if we need to update because of lacking some ouputs.
     def self.not_exist_output?(rule, inputs, outputs)
+      return true if outputs.empty?
       outputs.any?{|output| output.empty? }
     end
 
@@ -22,7 +23,7 @@ module InnocentWhite
       input_last_time = inputs.flatten.map{|input|input.time}.sort.first
 
       # criteria
-      return output_oldest_time > input_last_time
+      return output_oldest_time < input_last_time
     end
 
     # Return true if we need to update.

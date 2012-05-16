@@ -26,8 +26,11 @@ module InnocentWhite
         end
 
         def rule_path
-          p @expr
           @expr.eval
+        end
+
+        def sync_mode?
+          @expr.sync_mode?
         end
       end
 

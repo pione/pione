@@ -72,7 +72,7 @@ module InnocentWhite
       prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
       case expr.modifier
       when :all
-        make_io_auto_variables_by_all(prefix, expr, data)
+        make_io_auto_variables_by_all(type, prefix, expr, data)
       when :each
         make_io_auto_variables_by_each(prefix, expr, data)
       end
@@ -93,7 +93,7 @@ module InnocentWhite
 
     # Make input or output auto variables for 'all' modified data name
     # expression.
-    def make_io_auto_variables_by_all(prefix, expr, tuples)
+    def make_io_auto_variables_by_all(type, prefix, expr, tuples)
       # FIXME: output
       return if type == :output
 
