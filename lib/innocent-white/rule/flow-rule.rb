@@ -137,7 +137,7 @@ module InnocentWhite
           tuple = read(Tuple[:rule].new(rule_path: caller.rule_path))
 
           # check whether known or unknown
-          if rule.status == :known
+          if tuple.status == :known
             return tuple.content
           else
             raise UnknownRule.new(caller.rule_path)
@@ -206,7 +206,7 @@ module InnocentWhite
 
       # Copy data into specified domain
       def copy_data_into_domain(orig_data, new_domain)
-        orig_data.each do |d|
+        orig_data.flatten.each do |d|
           new_data = d.clone
           new_data.domain = new_domain
           write(new_data)

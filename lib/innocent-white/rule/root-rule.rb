@@ -30,7 +30,7 @@ module InnocentWhite
         return nil if results.empty?
         handler_class.new(ts_server,
                           self,
-                          results.first.data,
+                          results.first.combination,
                           [],
                           {:domain => @domain})
       end

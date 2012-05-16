@@ -43,7 +43,7 @@ module InnocentWhite
         if debug_mode?
           user_message ">>> #{file.path}"
           user_message "SH-----------------------------------------------------"
-          user_message Util.expand_variables(@rule.content, @variable_table)
+          user_message @variable_table.expand(@rule.content)
           user_message "-----------------------------------------------------SH"
         end
         file.close
