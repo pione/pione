@@ -179,12 +179,12 @@ module InnocentWhite
     #   rule_path : rule location path
     #   inputs    : input data list
     #   params    : parameter list
-    define_format [:task, :rule_path, :inputs, :params, :features]
+    define_format [:task, :rule_path, :inputs, :params, :features, :uuid]
 
     # working information
     #   domain  : caller domain
     #   task_id : task id
-    define_format [:working, :domain, :task_id]
+    define_format [:working, :uuid]
 
     # task finished notifier
     #   domain  : uuid of the task

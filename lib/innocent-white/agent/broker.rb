@@ -126,10 +126,6 @@ module InnocentWhite
         # Update tuple space server list.
         def update_tuple_space_servers(tuple_space_servers)
           begin
-            puts "broker: check new tuple space server"
-            p tuple_space_servers
-            #check_tuple_space_server
-            #p tuple_space_servers
             del_targets = @tuple_space_servers - tuple_space_servers
             add_targets = tuple_space_servers - @tuple_space_servers
             #return if del_targets.empty? and add_targets.empty?

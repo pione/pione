@@ -36,6 +36,17 @@ option_parser = OptionParser.new do |opt|
       exit
     end
   }
+  opt.on('-d', '--debug') {|name| InnocentWhite.debug_mode = true }
+  opt.on('--color=true or false') {|str|
+    bool = nil
+    bool = true if str == "true"
+    bool = false if str == "false"
+    if bool.nil?
+      puts "invalid color option: %s" % bool
+      exit
+    end
+    Terminal.color_mode = bool
+  }
 end
 
 begin
@@ -126,7 +137,6 @@ $thread = Thread.start do
       bag.instance_variable_get("@hash").values.each do |bin|
         tuples += bin.instance_variable_get("@bin")
       end
-      tuples.each {|t| p t.value}
 
       break unless $stream
       sleep 5

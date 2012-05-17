@@ -15,14 +15,18 @@ module InnocentWhite
 
       attr_reader :queue
 
+      # Create synchronization monitor for sync rules.
+      # [+handler+] rule handler which requested to monitor
+      # [+domain+] agent's monitoring domain
       def initialize(ts_server, handler)
         super(ts_server)
         @handler = handler
         @domain = handler.domain
-        @queue = []
+        @queue = [] # queue of sync targets
       end
 
-      # Write finished tuples for doing synchronization.
+      # Write finished tuples into the destination domain for doing
+      # synchronization.
       def sync
         @queue.size.times do
           target = @queue.pop

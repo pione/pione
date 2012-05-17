@@ -51,12 +51,14 @@ module InnocentWhite
 
   def debug_message(msg)
     if debug_mode? and not(quiet_mode?)
-      puts msg
+      puts "%s: %s" % [Terminal.magenta("debug"), msg]
     end
   end
 
   def user_message(msg)
-    puts msg if not(quiet_mode?)
+    if not(quiet_mode?)
+      puts "%s: %s" % [Terminal.red("user"), msg]
+    end
   end
 
   # Start finalization process for InnocentWhite world.
@@ -87,6 +89,11 @@ module InnocentWhite
       colorize(str, "\x1b[32m", "\x1b[39m")
     end
     module_function :green
+
+    def magenta(str)
+      colorize(str, "\x1b[35m", "\x1b[39m")
+    end
+    module_function :magenta
 
     def colorize(str, bc, ec)
       @@color_mode ? bc + str + ec : str

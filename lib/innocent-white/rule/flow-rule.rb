@@ -159,25 +159,30 @@ module InnocentWhite
 
         user_message ">>> Start Task Distribution: #{@rule.rule_path}"
 
-        applications.each do |caller, rule, inputs, vars|
+        applications.each do |caller, rule, inputs, variable_table|
           thread = Thread.new do
             # task domain
             task_domain = Util.domain(rule.rule_path, inputs, [])
 
             # sync monitor
-            if caller.sync_mode?
-              names = rule.expanded_outputs(vars)
-              tuple = Tuple[:sync_target].new(src: task_domain,
-                                              dest: @domain,
-                                              names: names)
-              write(tuple)
-            end
+            # if caller.sync_mode?
+            #   name = variable_table.expand(rule.rule_path)
+            #   tuple = Tuple[:sync_target].new(src: task_domain,
+            #                                   dest: @domain,
+            #                                   name: name)
+            #   write(tuple)
+            # end
 
             # copy input data from the handler domain to task domain
             copy_data_into_domain(inputs, task_domain)
 
             # FIXME: params is not supportted now
-            write(Tuple[:task].new(rule.rule_path, inputs, [], rule.features))
+            task = Tuple[:task].new(rule.rule_path,
+                                    inputs,
+                                    [],
+                                    rule.features,
+                                    Util.uuid)
+            write(task)
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))

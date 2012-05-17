@@ -40,11 +40,14 @@ describe "Agent::InputGenerator" do
         File.open(File.join(dir, "1.a"), "w+"){|out| out.write("11") }
         File.open(File.join(dir, "2.b"), "w+"){|out| out.write("22") }
         File.open(File.join(dir, "3.c"), "w+"){|out| out.write("33") }
+
         # make generator and wait to finish it's job
         generator = Agent[:input_generator].start_by_dir(tuple_space_server, dir)
         generator.wait_till(:terminated)
+
         # check exceptions
         check_exceptions
+
         # check data
         count_tuple(Tuple[:data].any).should == 3
         should.not.raise(Rinda::RequestExpiredError) do
@@ -67,6 +70,7 @@ describe "Agent::InputGenerator" do
         File.open(File.join(dir, "1.a"), "w+"){|out| out.write("11") }
         File.open(File.join(dir, "2.b"), "w+"){|out| out.write("22") }
         File.open(File.join(dir, "3.c"), "w+"){|out| out.write("33") }
+
         # make generator and wait to finish it's job
         generator = Agent[:input_generator].start_by_stream(tuple_space_server, dir)
         generator.should.stream
@@ -76,24 +80,31 @@ describe "Agent::InputGenerator" do
 
     it 'should provide files in a directory by stream generator' do
       Dir.mktmpdir do |dir|
+        ## initial inputs
         # create input files
         File.open(File.join(dir, "1.a"), "w+"){|out| out.write("11") }
         File.open(File.join(dir, "2.b"), "w+"){|out| out.write("22") }
         File.open(File.join(dir, "3.c"), "w+"){|out| out.write("33") }
+
         # make generator and wait to finish it's job
         generator = Agent[:input_generator].start_by_stream(tuple_space_server, dir)
         generator.wait_till(:sleeping)
+
         # check exceptions
         check_exceptions
+
         # check data
         count_tuple(Tuple[:data].any).should == 3
 
+        ## an addtional input
         # create additional files
         File.open(File.join(dir, "4.d"), "w+"){|out| out.write("44") }
         sleep 1
         generator.wait_till(:sleeping)
+
         # check exceptions
         check_exceptions
+
         # check data
         count_tuple(Tuple[:data].any).should == 4
 
@@ -101,8 +112,10 @@ describe "Agent::InputGenerator" do
         File.open(File.join(dir, "5.e"), "w+"){|out| out.write("55") }
         sleep 1
         generator.wait_till(:sleeping)
+
         # check exceptions
         check_exceptions
+
         # check data
         count_tuple(Tuple[:data].any).should == 5
 

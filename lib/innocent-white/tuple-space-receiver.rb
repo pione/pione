@@ -179,7 +179,6 @@ module InnocentWhite
           # update
           @agents.each do |agent|
             begin
-              p tuple_space_servers
               agent.update_tuple_space_servers(tuple_space_servers)
             rescue DRb::DRbConnError
               puts "dead server or agent"

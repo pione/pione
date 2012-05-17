@@ -4,7 +4,7 @@ module InnocentWhite
   # UpdateCriteria repesents rule application criteria.
   module UpdateCriteria
     # Return true if we need to update because of no output rule.
-    def self.no_output_rule?(rule, inputs, outputs)
+    def self.no_output_rules?(rule, inputs, outputs)
       rule.outputs.empty?
     end
 
@@ -31,7 +31,7 @@ module InnocentWhite
       CRITERIAS.any?{|name| self.send(name, rule, inputs, outputs)}
     end
 
-    CRITERIAS = [ :no_output_rule?,
+    CRITERIAS = [ :no_output_rules?,
                   :not_exist_output?,
                   :exist_newer_input? ]
   end

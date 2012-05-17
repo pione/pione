@@ -32,7 +32,9 @@ module InnocentWhite
 
       # State task_waiting.
       def transit_to_task_waiting
-        return take(Tuple[:task].any)
+        task = take(Tuple[:task].any)
+        write(Tuple[:working].new(task.uuid))
+        return task
       end
 
       # State task_processing.
@@ -99,6 +101,8 @@ module InnocentWhite
 
         # Sleep unless execution thread will be terminated
         th.join
+
+        take(Tuple[:working].new(task.uuid))
 
         debug_message ">>> End Task Execution by worker(#{@uuid})"
 
