@@ -30,9 +30,16 @@ module InnocentWhite
 
       private
 
+      # Create a task worker agent.
+      def initialize(tuple_space_server, features)
+        raise ArgumentError.new(features) unless features.respond_to?(:to_a)
+        @features = FeatureSet.new(*features.to_a)
+        super(tuple_space_server)
+      end
+
       # State task_waiting.
       def transit_to_task_waiting
-        task = take(Tuple[:task].any)
+        task = take(Tuple[:task].new(features: @features))
         write(Tuple[:working].new(task.uuid))
         return task
       end
@@ -84,8 +91,8 @@ module InnocentWhite
           child = nil
           while th.alive? do
             if child.nil? or not(child.running_thread.alive?)
-              puts "+++ Create Sub Task worker +++" if debug_mode?
-              child = self.class.new(tuple_space_server)
+              debug_message "+++ Create Sub Task worker +++"
+              child = self.class.new(tuple_space_server, @features)
               child.once = true
               log do |msg|
                 msg.add_record(agent_type, "action", "create_sub_task_worker")

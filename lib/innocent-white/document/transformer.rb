@@ -60,7 +60,7 @@ module InnocentWhite
         inputs = tree[:inputs]
         outputs = tree[:outputs]
         params = tree[:params]
-        features = tree[:features]
+        features = FeatureSet.new(tree[:features])
         flow_block = tree[:flow_block]
         action_block = tree[:action_block]
         if flow_block

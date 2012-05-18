@@ -30,6 +30,7 @@ module InnocentWhite
       # [+inputs+] input expressions
       # [+outputs+] output expressions
       # [+params+] parameters
+      # [+features+] feature set
       # [+content+] rule content
       def initialize(path, inputs, outputs, params, features, content)
         @path = path

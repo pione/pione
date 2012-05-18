@@ -1,3 +1,4 @@
+require 'set'
 require 'uuidtools'
 require 'socket'
 require 'digest'
@@ -177,6 +178,7 @@ module InnocentWhite
   end
 end
 
+require 'innocent-white/feature-set'
 require 'innocent-white/agent'
 require 'innocent-white/tuple-space-server-interface'
 require 'innocent-white/agent/tuple-space-client'
