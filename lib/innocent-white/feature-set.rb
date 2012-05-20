@@ -2,10 +2,14 @@ require 'innocent-white/common'
 
 module InnocentWhite
   class FeatureSet < InnocentWhiteObject
+    extend Forwardable
+
+    def_delegators(:@set, :empty?, :size)
+
     # Create a feature set.
     # [+*args+] feature list
     def initialize(*args)
-      @set = args.to_set
+      @set = args.flatten.to_set
     end
 
     # Convert into a set.
@@ -20,14 +24,14 @@ module InnocentWhite
 
     # Compare other object by criteria that self is a superset of it.
     def ===(other)
-      return false unless other.respond_to?(:to_a)
-      @set.superset?(other.to_a.to_set)
+      return false unless other.respond_to?(:to_set)
+      @set.superset?(other.to_set)
     end
 
     # :nodoc:
     def ==(other)
       return false unless other.kind_of?(self.class)
-      @set == other.list
+      @set == other.to_set
     end
 
     # :nodoc:

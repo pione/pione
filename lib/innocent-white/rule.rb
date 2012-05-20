@@ -160,7 +160,7 @@ module InnocentWhite
       end
 
       def make_resource_uri(base_uri)
-        URI(base_uri) + "#{@domain}/"
+        URI(base_uri) + "./#{@domain}/"
       end
 
       # Make output tuple by name.

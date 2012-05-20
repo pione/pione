@@ -7,7 +7,15 @@ module InnocentWhite
     class TaskWorker < TupleSpaceClient
       set_agent_type :task_worker
 
-      class UnknownTask < Exception; end
+      class UnknownRuleError < StandardError
+        def initialize(task)
+          @task = task
+        end
+
+        def message
+          "Unknown rule in the task of #{@task.inspect}."
+        end
+      end
 
       define_state :task_waiting
       define_state :task_processing
@@ -31,20 +39,24 @@ module InnocentWhite
       private
 
       # Create a task worker agent.
-      def initialize(tuple_space_server, features)
+      # [+tuple_space_server+] tuple space server
+      # [+features+] feature set
+      def initialize(tuple_space_server, features=[])
         raise ArgumentError.new(features) unless features.respond_to?(:to_a)
-        @features = FeatureSet.new(*features.to_a)
+        @features = FeatureSet.new(features)
         super(tuple_space_server)
       end
 
-      # State task_waiting.
+      # Transition method for the state +task_waiting+. The agent takes a +task+
+      # tuple and writes a +working+ tuple.
       def transit_to_task_waiting
         task = take(Tuple[:task].new(features: @features))
         write(Tuple[:working].new(task.uuid))
         return task
       end
 
-      # State task_processing.
+      # Transition method for the state +task_processing+. The agent starts
+      # processing to do the task.
       def transit_to_task_processing(task)
         log do |msg|
           msg.add_record(agent_type, "action", "process_rule")
@@ -53,7 +65,7 @@ module InnocentWhite
         return task
       end
 
-      # State rule_loading.
+      # Transition method for the state +rule_loading+.
       def transit_to_rule_loading(task)
         rule =
           begin
@@ -67,9 +79,9 @@ module InnocentWhite
             read(Tuple[:rule].new(rule_path: task.rule_path))
           end
         if rule.status == :known
-          return task, rule
+          return task, rule.content
         else
-          raise UnkownTask.new(task)
+          raise UnknownRuleError.new(task)
         end
       end
 
@@ -77,9 +89,9 @@ module InnocentWhite
       def transit_to_task_executing(task, rule)
         debug_message ">>> Start Task Execution by worker(#{@uuid})"
 
-        handler = rule.content.make_handler(tuple_space_server,
-                                            task.inputs,
-                                            task.params)
+        handler = rule.make_handler(tuple_space_server,
+                                    task.inputs,
+                                    task.params)
         @__result_task_execution__ = nil
 
         th = Thread.new do
@@ -87,7 +99,7 @@ module InnocentWhite
         end
 
         # make sub workers if flow rule
-        if rule.content.flow?
+        if rule.flow?
           child = nil
           while th.alive? do
             if child.nil? or not(child.running_thread.alive?)
@@ -109,7 +121,7 @@ module InnocentWhite
         # Sleep unless execution thread will be terminated
         th.join
 
-        take(Tuple[:working].new(task.uuid))
+        take(Tuple[:working].new(task.uuid), 0)
 
         debug_message ">>> End Task Execution by worker(#{@uuid})"
 
@@ -118,9 +130,7 @@ module InnocentWhite
 
       # State data_outputing.
       def transit_to_data_outputing(task, handler, result)
-        result.each do |domain, name, uri|
-          write(Tuple[:data].new(domain: domain, name: name, uri: uri))
-        end
+        result.each {|output| write(output)}
         return task, handler
       end
 
@@ -139,7 +149,7 @@ module InnocentWhite
       # State error
       def transit_to_error(e)
         case e
-        when UnknownTask
+        when UnknownRuleError
           # FIXME
           notify_exception(e)
         else

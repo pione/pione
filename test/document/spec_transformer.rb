@@ -302,13 +302,13 @@ describe 'Document::Transformer' do
           input-all '*.txt'.except('summary.txt')
           output 'summary.txt'
           param $ConvertCharSet
-        Flow---------------------------------------------------------------------------
+        Flow---
         if $ConvertCharset
           rule NKF.params("-w")
         end
         rule CountChar.sync
         rule Summarize
-        -----------------------------------------------------------------------------End
+        ---End
       CODE
       result = @transformer.apply(@parser.parse(document)).first
       result.should.kind_of(Rule::FlowRule)

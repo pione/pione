@@ -1,116 +1,213 @@
 require 'innocent-white/test-util'
 require 'innocent-white/agent/task-worker'
 
-describe "TaskWorker" do
-  before do
-    @ts_server = create_remote_tuple_space_server
+describe 'Agent::TaskWorker' do
+  describe 'transition spec' do
+    before do
+      create_remote_tuple_space_server
+      features = ['A', 'B', 'C']
+      @worker = Agent::TaskWorker.new(tuple_space_server, features)
+    end
 
-    # process info
-    write(Tuple[:process_info].new('spec_task-worker', 'testid'))
+    after do
+      tuple_space_server.terminate
+    end
 
-    # setup workers
-    @worker1 = Agent[:task_worker].start(@ts_server)
-    @worker2 = Agent[:task_worker].start(@ts_server)
-    @worker3 = Agent[:task_worker].start(@ts_server)
+    it 'should take a task' do
+      task = Tuple[:task].new('/Test', [], [], [], Util.uuid)
+      write(task)
+      @worker.__send__(:transit_to_task_waiting).should == task
+    end
 
-    # make a task
-    @uri = "local:/tmp/1.a"
-    Resource[@uri].create "abc"
-    @data = Tuple[:data].new(domain: 'test', name: "1.a", uri: @uri)
-    @task1 = Tuple[:task].new(rule_path: "test", inputs: [@data], params: [])
+    it 'should wait taking a task because of features' do
+      write(Tuple[:task].new('/Test', [], [], ['X'], Util.uuid))
+      should.raise(Timeout::Error) do
+        timeout(1) do
+          @worker.__send__(:transit_to_task_waiting)
+        end
+      end
+    end
 
-    # make a rule
-    doc = InnocentWhite::Document.parse <<-DOCUMENT
-      Rule test
-        input  '*.a'
-        output '{$INPUT[1].MATCH[1]}.b'.stdout
-      Action---
-        echo -n "input: `cat {$INPUT[1]}`"
-      ---End
-    DOCUMENT
-    write(Tuple[:rule].new(rule_path: "test", content: doc["test"], status: :known))
+    it 'should not wait taking a task because of features' do
+      task = Tuple[:task].new('/Test', [], [], ['A'], Util.uuid)
+      write(task)
+      @worker.__send__(:transit_to_task_waiting).should == task
+    end
 
-    # workers are waiting tasks
-    @worker1.wait_till(:task_waiting)
-    @worker2.wait_till(:task_waiting)
-    @worker3.wait_till(:task_waiting)
+    it 'should take a rule' do
+      task1 = Tuple[:task].new('/Test', [], [], [], Util.uuid)
+      rule = Tuple[:rule].new('/Test', :fake_content, :known)
+      write(rule)
+      task2, result = @worker.__send__(:transit_to_rule_loading, task1)
+      result.should == :fake_content
+      task2.should == task1
+    end
+
+    it 'should raise an exception because a rule is unknown' do
+      task = Tuple[:task].new('/Test', [], [], [], Util.uuid)
+      rule = Tuple[:rule].new('/Test', :fake_content, :unknown)
+      write(rule)
+      should.raise(Agent::TaskWorker::UnknownRuleError) do
+        @worker.__send__(:transit_to_rule_loading, task)
+      end
+    end
+
+    it 'should execute a task' do
+      uuid = Util.uuid
+      write(Tuple[:working].new(uuid))
+      task1 = Tuple[:task].new('/Test', [], [], [], uuid)
+      rule = Rule::ActionRule.new('/Test',
+                                  [],
+                                  [DataExpr.new('out.txt')],
+                                  [],
+                                  [],
+                                  "expr 1 + 2 > out.txt")
+      task2, handler, result =
+        @worker.__send__(:transit_to_task_executing, task1, rule)
+      task2.should == task1
+      result.first.name.should == "out.txt"
+    end
+
+    it 'should write output data tuples' do
+      task1 = Tuple[:task].new('/Test', [], [], [], Util.uuid)
+      rule = Rule::FlowRule.new('/Test', [], [], [], [], :dummy)
+      handler1 = Rule::FlowHandler.new(tuple_space_server, rule, [], [])
+      result = [Tuple[:data].new('/Test', '1.a', nil, Time.now)]
+      task2, handler2 =
+        @worker.__send__(:transit_to_data_outputing, task1, handler1, result)
+      task2.should == task1
+      handler2.should == handler1
+      read(Tuple[:data].new(name: '1.a'))
+    end
+
+    it 'should write a finished_task tuple' do
+      task = Tuple[:task].new('/Test', [], [], [], Util.uuid)
+      rule = Rule::FlowRule.new('/Test', [], [], [], [], :dummy)
+      handler = Rule::FlowHandler.new(tuple_space_server, rule, [], [])
+      @worker.__send__(:transit_to_task_finishing, task, handler)
+      finished_task = read(Tuple[:finished].any)
+      finished_task.domain.should == handler.domain
+      finished_task.outputs.should == []
+    end
   end
 
-  it "should wait tasks" do
-    # check agent state
-    @worker1.current_state.should == :task_waiting
-    @worker2.current_state.should == :task_waiting
-    @worker3.current_state.should == :task_waiting
+  describe 'running spec' do
+    before do
+      create_remote_tuple_space_server
 
-    # check exceptions
-    check_exceptions
-  end
+      # process info
+      write(Tuple[:process_info].new('spec_task-worker', 'testid'))
 
-  it "should say hello and bye" do
-    ## check hello message
+      # setup workers
+      @worker1 = Agent[:task_worker].start(tuple_space_server)
+      @worker2 = Agent[:task_worker].start(tuple_space_server)
+      @worker3 = Agent[:task_worker].start(tuple_space_server)
 
-    # check agent tuples
-    agents = read_all(Tuple[:agent].any)
-    agents.should.include @worker1.to_agent_tuple
-    agents.should.include @worker2.to_agent_tuple
-    agents.should.include @worker3.to_agent_tuple
+      # make a task
+      @uri = "local:/tmp/1.a"
+      Resource[@uri].create "abc"
+      @data = Tuple[:data].new(domain: 'test', name: "1.a", uri: @uri)
+      @task1 = Tuple[:task].new(rule_path: "test",
+                                inputs: [@data],
+                                params: [],
+                                features: [],
+                                uuid: Util.uuid)
 
-    # check worker counter
-    @ts_server.current_task_worker_size.should == 3
+      # make a rule
+      doc = InnocentWhite::Document.parse <<-DOCUMENT
+        Rule test
+          input  '*.a'
+          output '{$INPUT[1].MATCH[1]}.b'.stdout
+        Action---
+          echo -n "input: `cat {$INPUT[1]}`"
+        ---End
+        DOCUMENT
+      write(Tuple[:rule].new(rule_path: "test",
+                             content: doc["test"],
+                             status: :known))
 
-    # terminate workers
-    @worker1.terminate
-    @worker2.terminate
-    @worker3.terminate
-
-    # wait to terminate
-    @worker1.wait_till(:terminated)
-    @worker2.wait_till(:terminated)
-    @worker3.wait_till(:terminated)
-
-    ## check bye message
-
-    # check agent tuples
-    agents = read_all(Tuple[:agent].any)
-    agents.should.not.include @worker1.to_agent_tuple
-    agents.should.not.include @worker2.to_agent_tuple
-    agents.should.not.include @worker3.to_agent_tuple
-
-    # check agent counter
-    @ts_server.current_task_worker_size.should == 0
-
-    # check exceptions
-    check_exceptions
-  end
-
-  it "should process tasks" do
-    # terminate worker2,3
-    @worker2.terminate
-    @worker3.terminate
-    @worker2.wait_till(:terminated)
-    @worker3.wait_till(:terminated)
-
-    # check state
-    @worker1.current_state.should == :task_waiting
-    @worker2.running_thread.should.not.be.alive
-    @worker3.running_thread.should.not.be.alive
-
-    # push task
-    @worker1.wait_until_count(1, :task_finishing) do
+      # workers are waiting tasks
       @worker1.wait_till(:task_waiting)
-      write(@task1)
+      @worker2.wait_till(:task_waiting)
+      @worker3.wait_till(:task_waiting)
+    end
+
+    it "should wait tasks" do
+      # check agent state
+      @worker1.current_state.should == :task_waiting
+      @worker2.current_state.should == :task_waiting
+      @worker3.current_state.should == :task_waiting
+
+      # check exceptions
       check_exceptions
     end
 
-    # process task
-    observe_exceptions do
-      sleep 0.3
-      # check finished tuple
-      finished = read(Tuple[:finished].any)
-      #finished.task_id.should == @task1.task_id
-      # check result data
-      data = read(Tuple[:data].new(name: "1.b"))
-      Resource[data.uri].read.should == "input: abc"
+    it "should say hello and bye" do
+      ## check hello message
+
+      # check agent tuples
+      agents = read_all(Tuple[:agent].any)
+      agents.should.include @worker1.to_agent_tuple
+      agents.should.include @worker2.to_agent_tuple
+      agents.should.include @worker3.to_agent_tuple
+
+      # check worker counter
+      tuple_space_server.current_task_worker_size.should == 3
+
+      # terminate workers
+      @worker1.terminate
+      @worker2.terminate
+      @worker3.terminate
+
+      # wait to terminate
+      @worker1.wait_till(:terminated)
+      @worker2.wait_till(:terminated)
+      @worker3.wait_till(:terminated)
+
+      ## check bye message
+
+      # check agent tuples
+      agents = read_all(Tuple[:agent].any)
+      agents.should.not.include @worker1.to_agent_tuple
+      agents.should.not.include @worker2.to_agent_tuple
+      agents.should.not.include @worker3.to_agent_tuple
+
+      # check agent counter
+      tuple_space_server.current_task_worker_size.should == 0
+
+      # check exceptions
+      check_exceptions
+    end
+
+    it "should process tasks" do
+      # terminate worker2,3
+      @worker2.terminate
+      @worker3.terminate
+      @worker2.wait_till(:terminated)
+      @worker3.wait_till(:terminated)
+
+      # check state
+      @worker1.current_state.should == :task_waiting
+      @worker2.running_thread.should.not.be.alive
+      @worker3.running_thread.should.not.be.alive
+
+      # push task
+      @worker1.wait_until_count(1, :task_finishing) do
+        @worker1.wait_till(:task_waiting)
+        write(@task1)
+        check_exceptions
+      end
+
+      # process task
+      observe_exceptions do
+        sleep 0.3
+        # check finished tuple
+        finished = read(Tuple[:finished].any)
+        #finished.task_id.should == @task1.task_id
+        # check result data
+        data = read(Tuple[:data].new(name: "1.b"))
+        Resource[data.uri].read.should == "input: abc"
+      end
     end
   end
 end
