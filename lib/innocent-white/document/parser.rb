@@ -61,10 +61,15 @@ module InnocentWhite
       rule(:slash) { str('/')}
       rule(:space) { match("[ \t]").repeat(1) }
       rule(:space?) { space.maybe }
+      rule(:plus) { str('+') }
+      rule(:minus) { str('-') }
+      rule(:question) { str('?') }
+      rule(:vbar) { str('|') }
 
       rule(:symbols) {
         dot | squote | dquote | backslash | dot | comma |
-        lparen | rparen | lbrace | rbrace | slash
+        lparen | rparen | lbrace | rbrace | slash |
+        plus | minus | question | vbar
       }
 
       rule(:digit) { match('[0-9]') }
@@ -130,8 +135,8 @@ module InnocentWhite
       }
 
       # feature_name
-      rule(:feature_name) {
-        identifier.as(:feature_name)
+      rule(:feature_identifier) {
+        identifier.as(:feature_identifier)
       }
 
       # attribution_name
@@ -265,8 +270,8 @@ module InnocentWhite
         ( space? >>
           keyword_feature >>
           space >>
-          ( feature_name |
-            syntax_error("Need identifier in this context.", ["idenfifier"])
+          ( feature_expr |
+            syntax_error("Need feature expression in this context.", ["idenfifier"])
            ) >>
           line_end
           ).as(:feature_line)
@@ -315,13 +320,42 @@ module InnocentWhite
         rparen
       }
 
-
       rule(:attribution_argument_element) {
         expr >> attribution_argument_element_rest.repeat
       }
 
       rule(:attribution_argument_element_rest) {
         space? >> comma >> space? >> expr
+      }
+
+      #
+      # feature expression
+      #
+
+      rule(:feature_expr) {
+        (feature_name >> disjunctions?.repeat).as(:feature_expr)
+      }
+
+      rule(:disjunctions?) {
+        vbar >> feature_name
+      }
+
+      rule(:feature_name) {
+        requisite_feature_name |
+        exclusive_feature_name |
+        optional_feature_name
+      }
+
+      rule(:requisite_feature_name) {
+        (plus >> feature_identifier).as(:requisite_feature_name)
+      }
+
+      rule(:exclusive_feature_name) {
+        (minus >> feature_identifier).as(:exclusive_feature_name)
+      }
+
+      rule(:optional_feature_name) {
+        (question >> feature_identifier).as(:optional_feature_name)
       }
 
       #
