@@ -118,4 +118,25 @@ describe 'Document::Parser' do
       expr[:string].should == "abc"
     end
   end
+
+  describe 'feature expression' do
+    it 'should parse a requisite feature expression' do
+      expr = @parser.feature_expr.parse('+Linux')
+      name = expr[:feature_expr][:requisite_feature_name]
+      name[:feature_identifier].should == 'Linux'
+    end
+
+    it 'should parse a exclusive feature expression' do
+      expr = @parser.feature_expr.parse('-Linux')
+      name = expr[:feature_expr][:exclusive_feature_name]
+      name[:feature_identifier].should == 'Linux'
+    end
+
+    it 'should parse a preferred feature expression' do
+      expr = @parser.feature_expr.parse('?Linux')
+      name = expr[:feature_expr][:preferred_feature_name]
+      name[:feature_identifier].should == 'Linux'
+    end
+
+  end
 end

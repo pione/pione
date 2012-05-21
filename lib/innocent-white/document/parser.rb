@@ -271,7 +271,8 @@ module InnocentWhite
           keyword_feature >>
           space >>
           ( feature_expr |
-            syntax_error("Need feature expression in this context.", ["idenfifier"])
+            syntax_error("Need feature expression in this context.",
+                         ["idenfifier"])
            ) >>
           line_end
           ).as(:feature_line)
@@ -333,17 +334,17 @@ module InnocentWhite
       #
 
       rule(:feature_expr) {
-        (feature_name >> disjunctions?.repeat).as(:feature_expr)
+        (feature_name >> disjunctions.repeat).as(:feature_expr)
       }
 
-      rule(:disjunctions?) {
+      rule(:disjunctions) {
         vbar >> feature_name
       }
 
       rule(:feature_name) {
         requisite_feature_name |
         exclusive_feature_name |
-        optional_feature_name
+        preferred_feature_name
       }
 
       rule(:requisite_feature_name) {
@@ -354,8 +355,8 @@ module InnocentWhite
         (minus >> feature_identifier).as(:exclusive_feature_name)
       }
 
-      rule(:optional_feature_name) {
-        (question >> feature_identifier).as(:optional_feature_name)
+      rule(:preferred_feature_name) {
+        (question >> feature_identifier).as(:preferred_feature_name)
       }
 
       #
