@@ -96,13 +96,19 @@ describe 'Document::Transformer' do
   end
 
   describe 'feature_line' do
-    it 'should get a feature line' do
-      line = 'feature ABC'
+    it 'should get a feature expression' do
+      line = 'feature +ABC'
       feature = @transformer.apply(@parser.feature_line.parse(line))
-      feature.should == 'ABC'
+      feature.should == FeatureExpr.new('ABC')
     end
 
-    it 'should get a feature line' do
+    it 'should get optional feature expressions' do
+      line = 'feature +A | +B | +C'
+      feature = @transformer.apply(@parser.feature_line.parse(line))
+      feature.should == ''
+    end
+
+    it 'should get a parser error' do
       line = 'feature .....'
       should.raise(Document::ParserError) do
         feature = @transformer.apply(@parser.feature_line.parse(line))

@@ -100,8 +100,10 @@ module InnocentWhite
         param[:variable].to_s
       }
 
+      # feature_line
       rule(:feature_line => subtree(:tree)) {
-        tree[:feature_name].to_s
+        p tree
+        tree[:feature_expr].to_s
       }
 
       #

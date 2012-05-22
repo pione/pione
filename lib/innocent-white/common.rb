@@ -178,6 +178,7 @@ module InnocentWhite
   end
 end
 
+require 'innocent-white/feature-expr'
 require 'innocent-white/feature-set'
 require 'innocent-white/agent'
 require 'innocent-white/tuple-space-server-interface'

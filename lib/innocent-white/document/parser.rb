@@ -7,6 +7,7 @@ module InnocentWhite
       def initialize(str, expected, source, context)
         @str = str
         @expected = expected
+        @source = source
         super(str)
       end
 
