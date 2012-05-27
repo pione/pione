@@ -47,5 +47,5 @@ module InnocentWhite
   end
 end
 
-require 'innocent-white/document/parser'
+require 'innocent-white/parser'
 require 'innocent-white/document/transformer'
