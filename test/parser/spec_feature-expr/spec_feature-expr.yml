@@ -1,0 +1,15 @@
+- case1:
+    string: "+A"
+    tree: {feature_expr: {feature_name: A, type: positive}}
+- case2:
+    string: "-A"
+    tree: {feature_expr: {feature_name: A, type: negative}}
+- case3:
+    string: "?A"
+    tree: {feature_expr: {feature_name: A, type: preferred}}
+- case4:
+    string: "(A)"
+    tree: {feature_expr: {feature_name: A, type: positive}}
+- case5:
+    string: "+A & +A"
+    tree: {feature_expr: {feature_name: A, type: positive}}
