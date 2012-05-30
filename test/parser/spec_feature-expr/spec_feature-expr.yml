@@ -1,15 +1,33 @@
-- case1:
-    string: "+A"
-    tree: {feature_expr: {feature_name: A, type: positive}}
-- case2:
-    string: "-A"
-    tree: {feature_expr: {feature_name: A, type: negative}}
-- case3:
-    string: "?A"
-    tree: {feature_expr: {feature_name: A, type: preferred}}
-- case4:
-    string: "(A)"
-    tree: {feature_expr: {feature_name: A, type: positive}}
-- case5:
-    string: "+A & +A"
-    tree: {feature_expr: {feature_name: A, type: positive}}
+case1:
+  string: "+A"
+  tree: {feature_expr: {feature_name: A, type: positive}}
+case2:
+  string: "-A"
+  tree: {feature_expr: {feature_name: A, type: negative}}
+case3:
+  string: "?A"
+  tree: {feature_expr: {feature_name: A, type: preferred}}
+case4:
+  string: "(A)"
+  tree: {feature_expr: {feature_name: A, type: positive}}
+case5:
+  string: "+A & -A"
+  tree:
+    feature_expr:
+      and:
+        left: {feature_name: A, type: positive}
+        right: {feature_name: A, type: negative}
+case6:
+  string: "-A & +A"
+  tree:
+    feature_expr:
+      and:
+        left: {feature_name: A, type: negative}
+        right: {feature_name: A, type: positive}
+case7:
+  string: "+A | -A"
+  tree:
+    feature_expr:
+      or :
+        left: {feature_name: A, type: positive}
+        right: {feature_name: A, type: negative}

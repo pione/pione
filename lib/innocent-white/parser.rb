@@ -9,8 +9,8 @@ module InnocentWhite
     require 'innocent-white/parser/feature-expr'
 
     include Common
-    include LiteralParser
-    include FeatureParser
+    include Literal
+    include FeatureExpr
 
     #
     # root

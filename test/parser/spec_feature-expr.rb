@@ -1,4 +1,5 @@
 require 'innocent-white/test-util'
+require 'yaml'
 
 class TestParser < Parslet::Parser
   include InnocentWhite::Parser::FeatureExpr
@@ -15,6 +16,17 @@ describe 'Parser::FeatureExpr' do
         should.not.raise(Parslet::ParseFailed) do
           TestParser.new.feature_expr.parse(s)
         end
+      end
+    end
+
+    it 'should parse feature expressions' do
+      testcases = YAML.load(File.read(File.join(File.dirname(__FILE__),
+                                                "spec_feature-expr",
+                                                "spec_feature-expr.yml")))
+      testcases.each do |_, testcase|
+        p testcase
+        tree = TestParser.new.feature_expr.parse(testcase["string"])
+        tree.should == testcase["tree"]
       end
     end
 

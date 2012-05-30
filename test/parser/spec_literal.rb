@@ -89,7 +89,20 @@ describe 'Parser::Literal' do
 
   describe 'feature_name' do
     it 'should parse rule names' do
-      strings = ['+ABC', '-ABC', '?ABC', '+日本語', '-日本語', '?日本語']
+      #strings = ['+ABC', '-ABC', '?ABC', '+日本語', '-日本語', '?日本語']
+      testcases =
+        [ { :string => '+ABC',
+            :tree => {:feature_name => "ABC", :type => 'positive'} },
+          { :string => '-ABC',
+            :tree => {:feature_name => 'ABC', :type => 'negative'} },
+          { :string => '?ABC',
+            :tree => {:feature_name => 'ABC', :type => 'preferred'} },
+          { :string => '+日本語',
+            :tree => {:feature_name => '日本語', :type => 'positive'} },
+          { :string => '-日本語',
+            :tree => {:feature_name => '日本語', :type => 'negative'} },
+          { :string => '?日本語',
+            :tree => {:feature_name => '日本語', :type => 'preferred'} } ]
       strings.each do |s|
         should.not.raise(Parslet::ParseFailed) do
           TestParser.new.feature_name.parse(s)
