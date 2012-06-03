@@ -7,9 +7,9 @@ module InnocentWhite
       include Literal
 
       rule(:feature_expr) {
-        feature_conjunction |
-        feature_disjunction |
-        feature_element
+        (feature_conjunction |
+         feature_disjunction |
+         feature_element).as(:feature_expr)
       }
 
       rule(:feature_element) {
@@ -18,19 +18,21 @@ module InnocentWhite
       }
 
       rule(:feature_conjunction) {
-        feature_element.as(:left) >>
-        space? >>
-        ampersand >>
-        space? >>
-        feature_expr.as(:right)
+        (feature_element.as(:left) >>
+         space? >>
+         ampersand >>
+         space? >>
+         feature_expr.as(:right)
+         ).as(:feature_conjunction)
       }
 
       rule(:feature_disjunction) {
-        feature_element.as(:left) >>
-        space? >>
-        vbar >>
-        space? >>
-        feature_expr.as(:right)
+        (feature_element.as(:left) >>
+         space? >>
+         vbar >>
+         space? >>
+         feature_expr.as(:right)
+         ).as(:feature_disjunction)
       }
     end
   end

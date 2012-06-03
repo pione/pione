@@ -3,6 +3,8 @@ require 'innocent-white/common'
 module InnocentWhite
   class FeatureExpr
     attr_reader :next
+    attr_reader :type
+    attr_reader :identifier
 
     def initialize(identifier, type, next_expr=nil)
       @identifier = identifier
@@ -28,6 +30,10 @@ module InnocentWhite
 
     def selective?
 
+    end
+
+    def ==(other)
+      @type == other.type && @identifier == other.identifier
     end
 
     def ===(feature)

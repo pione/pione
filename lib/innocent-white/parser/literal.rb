@@ -32,9 +32,9 @@ module InnocentWhite
 
       # feature_name
       rule(:feature_name) {
-        ((plus >> identifier) |
-         (minus >> identifier) |
-         (question >> identifier)
+        ((plus.as(:feature_mark) >> identifier.as(:identifier)) |
+         (minus.as(:feature_mark) >> identifier.as(:identifier)) |
+         (question.as(:feature_mark) >> identifier.as(:identifier))
          ).as(:feature_name)
       }
 

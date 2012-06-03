@@ -3,9 +3,7 @@ require 'innocent-white/common'
 module InnocentWhite
   class Transformer
     module Literal
-      include Parslet
-
-      p methods.sort
+      include TransformerModule
 
       # data_name
       # escape characters are substituted
@@ -15,12 +13,23 @@ module InnocentWhite
 
       # feature_name
       # convert into plain string
-      rule(:feature_name => simple(:name)) {
-        name.str
+      rule(:feature_name =>
+           { :feature_mark => simple(:mark),
+             :identifier => simple(:name)}
+           ) {
+        type = case mark
+               when "+"
+                 :requisite
+               when "-"
+                 :exclusive
+               when "?"
+                 :preferred
+               end
+        FeatureExpr.new(name.str, type)
       }
 
       # string
-      rule(:string => simple(:s)) { s.str }
+      rule(:string => simple(:s)) { s.str.gsub(/\\(.)/) {$1} }
 
       # integer
       rule(:integer => simple(:i)) { i.to_i }
