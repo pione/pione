@@ -7,26 +7,25 @@ module InnocentWhite
 
       # data_name
       # escape characters are substituted
-      rule(:data_name => simple(:name)) {
+      rule(:data_name => simple(:name)) do
         name.str.gsub(/\\(.)/) {$1}
-      }
+      end
 
       # feature_name
       # convert into plain string
       rule(:feature_name =>
            { :feature_mark => simple(:mark),
              :identifier => simple(:name)}
-           ) {
-        type = case mark
-               when "+"
-                 :requisite
-               when "-"
-                 :exclusive
-               when "?"
-                 :preferred
-               end
-        FeatureExpr.new(name.str, type)
-      }
+           ) do
+        case mark
+        when "+"
+          FeatureRequisite.new(name.str)
+        when "-"
+          FeatureExclusive.new(name.str)
+        when "?"
+          FeaturePreferred.new(name.str)
+        end
+      end
 
       # string
       rule(:string => simple(:s)) { s.str.gsub(/\\(.)/) {$1} }

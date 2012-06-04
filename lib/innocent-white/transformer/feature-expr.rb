@@ -5,18 +5,22 @@ module InnocentWhite
     module FeatureExpr
       include TransformerModule
 
+      rule(:feature_expr => simple(:expr)) do
+        expr
+      end
+
       rule(:feature_conjunction => {
              :left => simple(:left),
              :right => simple(:right)
            }) do
-        left.and(right)
+        FeatureExpr::And.new(left, right)
       end
 
       rule(:feature_disjunction => {
              :left => simple(:left),
              :right => simple(:right)
            }) do
-        left.or(right)
+        FeatureExpr::Or.new(left, right)
       end
     end
   end
