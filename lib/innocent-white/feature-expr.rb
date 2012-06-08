@@ -2,8 +2,18 @@ require 'innocent-white/common'
 
 module InnocentWhite
   module FeatureExpr
-    # Value represents feature's value.
-    class Value
+
+    # Base is a super class for all feature expressions.
+    class Base
+      def match(other)
+        raise NotImplementedError
+      end
+
+      alias :=== :match
+    end
+
+    # Symbol represents feature symbols.
+    class Symbol < Base
       attr_reader :identifier
 
       def initialize(identifier)
@@ -33,42 +43,58 @@ module InnocentWhite
       alias :match :===
     end
 
-    class Condition
+    # Operator
+    class Operator < Base
       def initialize(value)
         @value = value
       end
     end
 
-    class Requisite < Condition
+    # UnaryOperator is a class for provider opeators and request operator
+    class UnaryOperator < Operator; end
+
+    # ProviderOperator is a class for provider operators.
+    class ProviderOperator < UnaryOperator; end
+
+    # PossibleOperator is a class for possible feature expressions. Possible
+    # feature are written like as "^X", these represent feature's possible
+    # ability.
+    class PossibleExpr < ProviderOperator; end
+
+    # RestrictiveOperator is a class for restrictive feature expression.
+    class RestrictiveExpr < ProviderOperator; end
+
+    # RequestOperator is a class for task's feature expression operators.
+    class RequestOperator < UnaryOperator; end
+
+    # Requisite Operator is a class for requisite feature expressions. Requisite
+    # Feature are written like as "+X", these represent feature's requiste
+    # ability.
+    class RequisiteOperator < RequestOperator
       def ===(other)
         other.to_a.any? {|v| @value == v }
       end
     end
 
-    class Exclusive < Condition
-      def initialize
-        @type = :exclusive
-      end
-    end
+    # 
+    class BlockingOperator < RequestOperator; end
 
-    class FeatureSelective < FeatureExpr
+    class PreferredOperator < RequestOperator; end
 
-    end
+    class Connective < Base
+      attr_reader :left
+      attr_reader :right
 
-    class FeatureOperator < FeatureExpr
       def initialize(left, right)
         @left = left
         @right = right
       end
     end
 
-    class FeatureAnd < FeatureOperator
-      def ===(feature)
-        
-      end
-    end
+    class AndExpr < Connective; end
 
-    class FeatureOr < FeatureOperator
-    end
+    class OrExpr < Connective; end
+
+    class Sentence < Base; end
   end
 end
