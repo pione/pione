@@ -2,13 +2,13 @@
 # -*- ruby -*-
 
 require 'optparse'
-require 'innocent-white/common'
-require 'innocent-white/agent/input-generator'
-require 'innocent-white/agent/task-worker'
-require 'innocent-white/agent/rule-provider'
-require 'innocent-white/agent/logger'
+require 'pione/common'
+require 'pione/agent/input-generator'
+require 'pione/agent/task-worker'
+require 'pione/agent/rule-provider'
+require 'pione/agent/logger'
 
-include InnocentWhite
+include Pione
 
 Thread.abort_on_exception = true
 
@@ -36,7 +36,7 @@ option_parser = OptionParser.new do |opt|
       exit
     end
   }
-  opt.on('-d', '--debug') {|name| InnocentWhite.debug_mode = true }
+  opt.on('-d', '--debug') {|name| Pione.debug_mode = true }
   opt.on('--color=true or false') {|str|
     bool = nil
     bool = true if str == "true"
@@ -69,11 +69,11 @@ end
 $dir = File.dirname(File.expand_path(__FILE__))
 
 # base uri
-uri = "local:#{Dir.mktmpdir('innocent-white-')}/"
+uri = "local:#{Dir.mktmpdir('pione-')}/"
 
 # make drb server and it's connection
 $tuple_space_server = TupleSpaceServer.new(task_worker_resource: 1, base_uri: uri)
-provider = InnocentWhite::TupleSpaceProvider.instance
+provider = Pione::TupleSpaceProvider.instance
 provider.add($tuple_space_server)
 # $remote_drb_server = DRb::DRbServer.new(nil, $tuple_space_server)
 # $remote_server = DRbObject.new(nil, $remote_drb_server.uri)
@@ -122,7 +122,7 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 # start rule handling
 #
 $thread = Thread.start do
-  InnocentWhite.debug_mode do
+  Pione.debug_mode do
     while true do
       handler = root.make_handler($tuple_space_server)
       outputs = handler.execute

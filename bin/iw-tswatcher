@@ -4,10 +4,10 @@
 require 'pp'
 require 'optparse'
 
-require 'innocent-white/common'
-require 'innocent-white/tuple-space-provider'
+require 'pione/common'
+require 'pione/tuple-space-provider'
 
-include InnocentWhite
+include Pione
 
 #
 # parse options
@@ -46,7 +46,7 @@ end
 DRb.start_service
 
 # tuple space provider
-provider = InnocentWhite::TupleSpaceProvider.instance
+provider = Pione::TupleSpaceProvider.instance
 
 def setup_tuple_space_notifier(tuple_space_server, targets)
   puts "TupleSpaceServer: %s" % Terminal.red(tuple_space_server.uuid)

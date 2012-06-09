@@ -1,20 +1,20 @@
 #!/usr/bin/env ruby
 # -*- ruby -*-
 
-require 'innocent-white/common'
-require 'innocent-white/tuple-space-receiver'
-require 'innocent-white/agent/broker'
+require 'pione/common'
+require 'pione/tuple-space-receiver'
+require 'pione/agent/broker'
 
 Thread.abort_on_exception = true
 
-InnocentWhite.debug_mode = true
-InnocentWhite.set_signal_trap
+Pione.debug_mode = true
+Pione.set_signal_trap
 
 # tuple space receiver
-receiver = InnocentWhite::TupleSpaceReceiver.get
+receiver = Pione::TupleSpaceReceiver.get
 
 # broker
-broker = InnocentWhite::Agent[:broker].new(task_worker_resource: 4)
+broker = Pione::Agent[:broker].new(task_worker_resource: 4)
 
 # regist broker
 receiver.register(broker)

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # -*- ruby -*-
 
-require 'innocent-white/common'
+require 'pione/common'
 require 'optparse'
 require 'json'
 

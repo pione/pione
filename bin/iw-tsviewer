@@ -4,10 +4,10 @@
 require 'pp'
 require 'optparse'
 
-require 'innocent-white/common'
-require 'innocent-white/tuple-space-provider'
+require 'pione/common'
+require 'pione/tuple-space-provider'
 
-include InnocentWhite
+include Pione
 
 #
 # parse options
