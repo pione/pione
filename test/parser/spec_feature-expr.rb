@@ -1,8 +1,8 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 require 'yaml'
 
 class TestParser < Parslet::Parser
-  include InnocentWhite::Parser::FeatureExpr
+  include Pione::Parser::FeatureExpr
 end
 
 describe 'Parser::FeatureExpr' do

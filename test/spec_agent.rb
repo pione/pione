@@ -1,4 +1,4 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 class TestAgentType < Agent::Base
   set_agent_type :test_agent_type

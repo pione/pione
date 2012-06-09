@@ -1,4 +1,4 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 describe 'ActionRule' do
   before do

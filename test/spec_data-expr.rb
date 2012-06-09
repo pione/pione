@@ -1,5 +1,5 @@
-require 'innocent-white/test-util'
-require 'innocent-white/data-expr'
+require 'pione/test-util'
+require 'pione/data-expr'
 
 describe 'DataExpr' do
   it 'should get expression informations' do

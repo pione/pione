@@ -1,6 +1,6 @@
-require 'innocent-white/test-util'
-require 'innocent-white/document'
-require 'innocent-white/agent/sync-monitor'
+require 'pione/test-util'
+require 'pione/document'
+require 'pione/agent/sync-monitor'
 
 describe 'Agent::SyncMonitor' do
   before do

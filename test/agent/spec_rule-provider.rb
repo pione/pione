@@ -1,5 +1,5 @@
-require 'innocent-white/test-util'
-require 'innocent-white/agent/rule-provider'
+require 'pione/test-util'
+require 'pione/agent/rule-provider'
 
 describe "Agent::RuleProvider" do
   before do

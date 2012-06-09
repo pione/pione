@@ -1,4 +1,4 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 class TestCommandListener < Agent::TupleSpaceClient
   define_state :test

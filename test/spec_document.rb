@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-require 'innocent-white/test-util'
+require 'pione/test-util'
 require 'parslet/convenience'
 
 describe 'Document' do

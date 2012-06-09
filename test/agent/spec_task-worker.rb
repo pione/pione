@@ -1,5 +1,5 @@
-require 'innocent-white/test-util'
-require 'innocent-white/agent/task-worker'
+require 'pione/test-util'
+require 'pione/agent/task-worker'
 
 describe 'Agent::TaskWorker' do
   describe 'transition spec' do
@@ -114,7 +114,7 @@ describe 'Agent::TaskWorker' do
                                 uuid: Util.uuid)
 
       # make a rule
-      doc = InnocentWhite::Document.parse <<-DOCUMENT
+      doc = Pione::Document.parse <<-DOCUMENT
         Rule test
           input  '*.a'
           output '{$INPUT[1].MATCH[1]}.b'.stdout

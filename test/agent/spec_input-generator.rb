@@ -1,5 +1,5 @@
-require 'innocent-white/test-util'
-require 'innocent-white/agent/input-generator'
+require 'pione/test-util'
+require 'pione/agent/input-generator'
 
 describe "Agent::InputGenerator" do
   before do

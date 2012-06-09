@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 class TestParser < Parslet::Parser
-  include InnocentWhite::Parser::Common
+  include Pione::Parser::Common
 
   rule(:test_line_end) {
     str('begin') >> line_end >> str('end')

@@ -1,4 +1,4 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 describe 'FeatureSet' do
   it 'should create a set with no elements' do

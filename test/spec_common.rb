@@ -1,10 +1,10 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 describe 'Common' do
-  describe "InnocentWhiteObject" do
+  describe "PioneObject" do
     it "should get uuid" do
-      obj1 = InnocentWhiteObject.new
-      obj2 = InnocentWhiteObject.new
+      obj1 = PioneObject.new
+      obj2 = PioneObject.new
       obj1.uuid.should == obj1.uuid
       obj1.uuid.should.not == obj2.uuid
     end

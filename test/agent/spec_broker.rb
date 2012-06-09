@@ -1,8 +1,8 @@
-require 'innocent-white/test-util'
-require 'innocent-white/tuple-space-server'
-require 'innocent-white/agent/broker'
+require 'pione/test-util'
+require 'pione/tuple-space-server'
+require 'pione/agent/broker'
 
-include InnocentWhite
+include Pione
 
 describe "Broker" do
   before do

@@ -1,7 +1,7 @@
 require 'drb/drb'
 require 'stringio'
-require 'innocent-white/test-util'
-require 'innocent-white/agent/logger'
+require 'pione/test-util'
+require 'pione/agent/logger'
 
 DRb.start_service
 

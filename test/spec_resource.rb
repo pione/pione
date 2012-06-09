@@ -1,7 +1,7 @@
 require 'tempfile'
-require 'innocent-white/test-util'
-require 'innocent-white/uri'
-require 'innocent-white/resource'
+require 'pione/test-util'
+require 'pione/uri'
+require 'pione/resource'
 
 describe 'Resource' do
   describe 'Local' do
@@ -44,7 +44,7 @@ describe 'Resource' do
   describe 'FTP' do
     before do
       path = Tempfile.new("spec_resource_").path
-      @uri = URI("ftp://anonymous:test@localhost/innocent-white/test-a.txt")
+      @uri = URI("ftp://anonymous:test@localhost/pione/test-a.txt")
       @ftp = Resource[@uri]
     end
 

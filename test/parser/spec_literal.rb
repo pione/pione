@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 class TestParser < Parslet::Parser
-  include InnocentWhite::Parser::Literal
+  include Pione::Parser::Literal
 end
 
 describe 'Parser::Literal' do

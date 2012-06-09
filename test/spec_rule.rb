@@ -1,8 +1,8 @@
-require 'innocent-white/test-util'
-require 'innocent-white/rule'
-require 'innocent-white/agent/input-generator'
-require 'innocent-white/agent/task-worker'
-require 'innocent-white/agent/rule-provider'
+require 'pione/test-util'
+require 'pione/rule'
+require 'pione/agent/input-generator'
+require 'pione/agent/task-worker'
+require 'pione/agent/rule-provider'
 
 describe 'BaseRule' do
   before do

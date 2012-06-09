@@ -1,6 +1,6 @@
-require 'innocent-white/test-util'
-require 'innocent-white/tuple-space-server'
-require 'innocent-white/tuple-space-provider'
+require 'pione/test-util'
+require 'pione/tuple-space-server'
+require 'pione/tuple-space-provider'
 
 describe 'TupleSpaceProvider' do
   before do

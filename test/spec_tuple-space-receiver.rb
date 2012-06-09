@@ -1,8 +1,8 @@
-require 'innocent-white/tuple-space-receiver'
-require 'innocent-white/tuple-space-provider'
-require 'innocent-white/tuple-space-server'
+require 'pione/tuple-space-receiver'
+require 'pione/tuple-space-provider'
+require 'pione/tuple-space-server'
 
-include InnocentWhite
+include Pione
 
 Thread.abort_on_exception
 

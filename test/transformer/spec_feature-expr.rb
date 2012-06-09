@@ -1,4 +1,4 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 describe 'Transformer::FeatureExpr' do
   it 'should get feature expressions' do

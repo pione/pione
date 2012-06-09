@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 describe 'Document::Parser' do
   before do

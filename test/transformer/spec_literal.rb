@@ -1,4 +1,4 @@
-require 'innocent-white/test-util'
+require 'pione/test-util'
 
 describe 'Transformer::Literal' do
   describe 'data_name' do
