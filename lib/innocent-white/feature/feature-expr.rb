@@ -1,10 +1,10 @@
 require 'innocent-white/common'
 
 module InnocentWhite
-  module FeatureExpr
+  module Feature
 
     # Base is a super class for all feature expressions.
-    class Base
+    class Expr
       def match(other)
         raise NotImplementedError
       end
@@ -13,7 +13,7 @@ module InnocentWhite
     end
 
     # Symbol represents feature symbols.
-    class Symbol < Base
+    class Symbol < Expr
       attr_reader :identifier
 
       def initialize(identifier)
@@ -44,7 +44,7 @@ module InnocentWhite
     end
 
     # Operator
-    class Operator < Base
+    class Operator < Expr
       def initialize(value)
         @value = value
       end
@@ -95,6 +95,6 @@ module InnocentWhite
 
     class OrExpr < Connective; end
 
-    class Sentence < Base; end
+    class Sentence < Expr; end
   end
 end
