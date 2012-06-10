@@ -178,7 +178,7 @@ module Pione
   end
 end
 
-require 'pione/feature-expr'
+require 'pione/feature/feature-expr'
 require 'pione/feature-set'
 require 'pione/agent'
 require 'pione/tuple-space-server-interface'
