@@ -63,6 +63,15 @@ describe 'Feature::Expr' do
         requisite
     end
 
+    it 'should background preferred feature by blocking feature' do
+      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("A"))
+      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("A"))
+      Feature::AndExpr.new(blocking, preferred).simplify.should ==
+        blocking
+      Feature::AndExpr.new(preferred, blocking).simplify.should ==
+        blocking
+    end
+
     it 'should summarize or-clause' do
       a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
       b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
@@ -79,7 +88,8 @@ describe 'Feature::Expr' do
       Feature::AndExpr.new(or1, or2, or3).simplify.should ==
         Feature::OrExpr.new(a, Feature::AndExpr.new(b, c, d))
       Feature::AndExpr.new(or1, or2, or4).simplify.should ==
-        Feature::OrExpr.new(a, Feature::AndExpr.new(b, c, d))
+        Feature::AndExpr.new(Feature::OrExpr.new(a, Feature::AndExpr.new(b, c)),
+                             Feature::OrExpr.new(c, d))
     end
 
     it 'should unify by restrictive feature' do
@@ -89,6 +99,74 @@ describe 'Feature::Expr' do
         restrictive
       Feature::AndExpr.new(restrictive, possible).simplify.should ==
         restrictive
+    end
+  end
+
+  describe 'Feature::OrExpr' do
+    it 'should add elements' do
+      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
+      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      expr = Feature::OrExpr.new(a, b)
+      Feature::OrExpr.new(expr, c, d).should ==
+        Feature::OrExpr.new(a, b, c, d)
+    end
+
+    it 'should unify redundant elements' do
+      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      expr = Feature::OrExpr.new(a, b)
+      Feature::OrExpr.new(expr, a, b).should == expr
+      Feature::OrExpr.new(expr, expr).should == expr
+    end
+
+    it 'should foreground preferred feature over requisite feature' do
+      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
+      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("A"))
+      Feature::OrExpr.new(requisite, preferred).simplify.should ==
+        preferred
+      Feature::OrExpr.new(preferred, requisite).simplify.should ==
+        preferred
+    end
+
+    it 'should foreground preferred feature over blocking feature' do
+      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("A"))
+      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("A"))
+      Feature::OrExpr.new(blocking, preferred).simplify.should ==
+        preferred
+      Feature::OrExpr.new(preferred, blocking).simplify.should ==
+        preferred
+    end
+
+    it 'should unify by possible feature' do
+      possible = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      restrictive = Feature::RestrictiveExpr.new(Feature::Symbol.new("A"))
+      Feature::OrExpr.new(possible, restrictive).simplify.should ==
+        possible
+      Feature::OrExpr.new(restrictive, possible).simplify.should ==
+        possible
+    end
+
+    it 'should neutralize' do
+      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
+      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("A"))
+      Feature::OrExpr.new(requisite, blocking).simplify.should ==
+        Feature::EmptyFeature.new
+      Feature::OrExpr.new(blocking, requisite).simplify.should ==
+        Feature::EmptyFeature.new
+    end
+  end
+
+  describe 'Feature::Sentence' do
+    it 'should expand' do
+      possible_a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      possible_b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      provider = Feature::OrExpr.new(possible_a, possible_b)
+      requisite_a = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
+      requisite_b = Feature::RequisiteExpr.new(Feature::Symbol.new("B"))
+      request = Feature::OrExpr.new(requisite_a, requisite_b)
+      Feature::Sentence.new(provider, request).decide
     end
   end
 end
