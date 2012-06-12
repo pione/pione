@@ -1,33 +1,36 @@
 case1:
   string: "+A"
-  tree: {feature_expr: {feature_name: A, type: positive}}
+  tree: {feature_expr: {atomic_feature: {operator: +, symbol: A}}}
 case2:
   string: "-A"
-  tree: {feature_expr: {feature_name: A, type: negative}}
+  tree: {feature_expr: {atomic_feature: {operator: -, symbol: A}}}
 case3:
   string: "?A"
-  tree: {feature_expr: {feature_name: A, type: preferred}}
+  tree: {feature_expr: {atomic_feature: {operator: "?", symbol: A}}}
 case4:
-  string: "(A)"
-  tree: {feature_expr: {feature_name: A, type: positive}}
+  string: "(+A)"
+  tree: {feature_expr:
+    {feature_expr: {atomic_feature: {operator: +, symbol: A}}}}
 case5:
   string: "+A & -A"
   tree:
     feature_expr:
-      and:
-        left: {feature_name: A, type: positive}
-        right: {feature_name: A, type: negative}
+      feature_conjunction:
+        left: {atomic_feature: {operator: +, symbol: A}}
+        right: {feature_expr: {atomic_feature: {operator: -, symbol: A}}}
 case6:
   string: "-A & +A"
   tree:
     feature_expr:
-      and:
-        left: {feature_name: A, type: negative}
-        right: {feature_name: A, type: positive}
+      feature_conjunction:
+        left: {atomic_feature: {operator: -, symbol: A}}
+        right: {feature_expr:
+          {atomic_feature: {operator: +, symbol: A}}}
 case7:
   string: "+A | -A"
   tree:
     feature_expr:
-      or :
-        left: {feature_name: A, type: positive}
-        right: {feature_name: A, type: negative}
+      feature_disjunction:
+        left: {atomic_feature: {operator: +, symbol: A}}
+        right: {feature_expr:
+          {atomic_feature: {operator: -, symbol: A}}}

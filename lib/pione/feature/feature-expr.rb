@@ -10,10 +10,6 @@ module Pione
         return self
       end
 
-      def expand
-        return self
-      end
-
       def empty?
         return false
       end
@@ -45,6 +41,7 @@ module Pione
       end
     end
 
+    # SpecialFeature is a class for empty feature and boundless feature.
     class SpecialFeature < Expr
       def ==(other)
         other.kind_of?(self.class)
@@ -124,7 +121,9 @@ module Pione
     # ability.
     class RequisiteExpr < RequestExpr; end
 
-    # 
+    # BlockingExpr is a class for blocking feature expressions. Blocking Feature
+    # are written like as "-X", these represent the ability that block to
+    # execute the task.
     class BlockingExpr < RequestExpr; end
 
     class PreferredExpr < RequestExpr; end
@@ -586,11 +585,12 @@ module Pione
 
       # Return true if the provider expression can respond to the request.
       def decide
-        result = catch do |stop|
-          @provider.expander.each do |provider|
-            @request.expander.each do |request|
-              p "1: %s 2: %s" % [provider, request]
-              throw stop, true if match(provider, request)
+        result = nil
+        @provider.expander.each do |provider|
+          @request.expander.each do |request|
+            if match(provider, request)
+              result = true
+              raise StopIteration
             end
           end
         end
@@ -600,7 +600,6 @@ module Pione
       private
 
       def match(provider, request)
-        #puts "+++ provider=%s request=%s" % [provider.inspect, request.inspect]
         _provider, _request = provider, request
         ELIMINATIONS.each do |elim|
           result, p, r = __send__(elim, provider, request)

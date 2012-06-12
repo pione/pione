@@ -93,6 +93,14 @@ module Pione
   end
 end
 
+class Hash
+  def symbolize_keys
+    each_with_object({}) do |(key, val), hash|
+      hash[key.to_sym] = (val.kind_of?(Hash) ? val.symbolize_keys : val)
+    end
+  end
+end
+
 
 # Install utilities.
 class Bacon::Context

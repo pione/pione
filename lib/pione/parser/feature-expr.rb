@@ -6,15 +6,15 @@ module Pione
       include Common
       include Literal
 
-      # feature_name
+      # atomic_feature
       # +X
       # -X
       # ?X
-      rule(:feature_name) {
-        ((plus.as(:feature_mark) >> identifier.as(:identifier)) |
-         (minus.as(:feature_mark) >> identifier.as(:identifier)) |
-         (question.as(:feature_mark) >> identifier.as(:identifier))
-         ).as(:feature_name)
+      rule(:atomic_feature) {
+        ((plus.as(:operator) >> identifier.as(:symbol)) |
+         (minus.as(:operator) >> identifier.as(:symbol)) |
+         (question.as(:operator) >> identifier.as(:symbol))
+         ).as(:atomic_feature)
       }
 
       # feature_expr
@@ -30,7 +30,7 @@ module Pione
       # +X
       # (+X)
       rule(:feature_element) {
-        feature_name |
+        atomic_feature |
         lparen >> feature_expr >> rparen
       }
 

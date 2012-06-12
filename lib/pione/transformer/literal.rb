@@ -11,22 +11,6 @@ module Pione
         name.str.gsub(/\\(.)/) {$1}
       end
 
-      # feature_name
-      # convert into plain string
-      rule(:feature_name =>
-           { :feature_mark => simple(:mark),
-             :identifier => simple(:name)}
-           ) do
-        case mark
-        when "+"
-          FeatureRequisite.new(name.str)
-        when "-"
-          FeatureExclusive.new(name.str)
-        when "?"
-          FeaturePreferred.new(name.str)
-        end
-      end
-
       # string
       rule(:string => simple(:s)) { s.str.gsub(/\\(.)/) {$1} }
 

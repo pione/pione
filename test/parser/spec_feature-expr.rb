@@ -24,9 +24,8 @@ describe 'Parser::FeatureExpr' do
                                                 "spec_feature-expr",
                                                 "spec_feature-expr.yml")))
       testcases.each do |_, testcase|
-        p testcase
         tree = TestParser.new.feature_expr.parse(testcase["string"])
-        tree.should == testcase["tree"]
+        tree.should == testcase["tree"].symbolize_keys
       end
     end
 

@@ -5,6 +5,23 @@ module Pione
     module FeatureExpr
       include TransformerModule
 
+      # feature_name
+      # convert into plain string
+      rule(:atomic_feature =>
+           { :operator => simple(:operator),
+             :symbol => simple(:symbol) }
+           ) do
+        symbol_obj = Feature::Symbol.new(symbol.str)
+        case operator
+        when "+"
+          Feature::RequisiteExpr.new(symbol_obj)
+        when "-"
+          Feature::BlockingExpr.new(symbol_obj)
+        when "?"
+          Feature::PreferredExpr.new(symbol_obj)
+        end
+      end
+
       # feature expr
       rule(:feature_expr => simple(:expr)) do
         expr
@@ -15,7 +32,7 @@ module Pione
              :left => simple(:left),
              :right => simple(:right)
            }) do
-        FeatureExpr::And.new(left, right)
+        Feature::AndExpr.new(left, right)
       end
 
       # feature disjunction
@@ -23,7 +40,7 @@ module Pione
              :left => simple(:left),
              :right => simple(:right)
            }) do
-        FeatureExpr::Or.new(left, right)
+        Feature::OrExpr.new(left, right)
       end
     end
   end
