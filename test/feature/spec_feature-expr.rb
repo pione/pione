@@ -100,6 +100,29 @@ describe 'Feature::Expr' do
       Feature::AndExpr.new(restrictive, possible).simplify.should ==
         restrictive
     end
+
+    it 'should expand' do
+      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
+      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      or1 = Feature::OrExpr.new(a, b)
+      or2 = Feature::OrExpr.new(c, d)
+      list = Feature::AndExpr.new(or1, or2).expander.to_a
+      list.size.should == 4
+      list.should.include Feature::AndExpr.new(a, c)
+      list.should.include Feature::AndExpr.new(a, d)
+      list.should.include Feature::AndExpr.new(b, c)
+      list.should.include Feature::AndExpr.new(b, d)
+    end
+
+    it 'should clone with the set' do
+      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      expr = Feature::AndExpr.new(a, b)
+      expr.clone.should == expr
+      expr.clone.__id__.should.not == expr.__id__
+    end
   end
 
   describe 'Feature::OrExpr' do
@@ -156,6 +179,23 @@ describe 'Feature::Expr' do
       Feature::OrExpr.new(blocking, requisite).simplify.should ==
         Feature::EmptyFeature.new
     end
+
+    it 'should expand' do
+      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
+      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      and1 = Feature::AndExpr.new(a, b)
+      and2 = Feature::AndExpr.new(c, d)
+      list = Feature::OrExpr.new(and1, and2).expander.to_a
+      list.size.should == 2
+      list.should.include Feature::AndExpr.new(a, b)
+      list.should.include Feature::AndExpr.new(c, d)
+    end
+
+    it 'should be empty' do
+      Feature::AndExpr.new(Feature::EmptyFeature.new).should.be.empty
+    end
   end
 
   describe 'Feature::Sentence' do
@@ -166,7 +206,72 @@ describe 'Feature::Expr' do
       requisite_a = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
       requisite_b = Feature::RequisiteExpr.new(Feature::Symbol.new("B"))
       request = Feature::OrExpr.new(requisite_a, requisite_b)
-      Feature::Sentence.new(provider, request).decide
+      Feature::Sentence.new(provider, request).decide.should.be.true
     end
+
+    it 'should eliminate requisite feature' do
+      possible = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
+      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
+      provider = Feature::AndExpr.new(possible)
+      request = Feature::AndExpr.new(requisite)
+      m = Feature::Sentence::EliminationMethod
+      result, p, r = m.eliminate_requisite_feature(provider, request)
+      result.should.be.true
+      p.should.empty
+      r.should.empty
+    end
+
+    it 'should eliminate blocking feature' do
+      possible = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
+      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
+      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("Z"))
+      provider = Feature::AndExpr.new(possible)
+      request = Feature::AndExpr.new(requisite, blocking)
+      m = Feature::Sentence::EliminationMethod
+      result, p, r = m.eliminate_blocking_feature(provider, request)
+      result.should.be.true
+      p.should == Feature::AndExpr.new(possible)
+      r.should == Feature::AndExpr.new(requisite)
+    end
+
+    it 'should eliminate preferred feature' do
+      possible = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
+      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
+      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("Z"))
+      provider = Feature::AndExpr.new(possible)
+      request = Feature::AndExpr.new(requisite, preferred)
+      m = Feature::Sentence::EliminationMethod
+      result, p, r = m.eliminate_preferred_feature(provider, request)
+      result.should.be.true
+      p.should == Feature::AndExpr.new(possible)
+      r.should == Feature::AndExpr.new(requisite)
+    end
+
+    it 'should eliminate or-clause including empty feature' do
+      possible1 = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
+      possible2 = Feature::PossibleExpr.new(Feature::Symbol.new("Y"))
+      or_clause = Feature::OrExpr.new(Feature::EmptyFeature.new, possible1)
+      provider = Feature::AndExpr.new(or_clause, possible2)
+      request = Feature::AndExpr.new(Feature::EmptyFeature.new)
+      m = Feature::Sentence::EliminationMethod
+      result, p, r = m.eliminate_or_clause_including_empty_feature(provider, request)
+      result.should.be.true
+      p.should == Feature::AndExpr.new(possible2)
+      r.should.be.empty
+    end
+
+    it 'should eliminate possible feature' do
+      possible1 = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
+      possible2 = Feature::PossibleExpr.new(Feature::Symbol.new("Y"))
+      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
+      provider = Feature::AndExpr.new(possible1, possible2)
+      request = Feature::AndExpr.new(requisite)
+      m = Feature::Sentence::EliminationMethod
+      result, p, r = m.eliminate_possible_feature(provider, request)
+      result.should.be.true
+      p.should == Feature::AndExpr.new(possible2)
+      r.should == Feature::AndExpr.new(requisite)
+    end
+
   end
 end
