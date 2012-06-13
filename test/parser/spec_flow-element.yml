@@ -10,6 +10,8 @@ if_block_begin:
     - 'if "abc"'
     - "if 1.0"
     - "if A"
+    - if true
+    - if false
   invalid:
     - "if +A"
     - "if -A"

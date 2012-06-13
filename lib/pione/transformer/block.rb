@@ -3,7 +3,9 @@ module Pione
     module Block
       include TransformerModule
 
-      rule(:flow_block => {:flow_elements => })
+      rule(:flow_block => sequence(:elements) {
+        return elements
+      }
     end
   end
 end

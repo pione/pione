@@ -32,6 +32,16 @@ module Pione
         def sync_mode?
           @expr.sync_mode?
         end
+
+        def ==(other)
+          @expr == expr
+        end
+
+        alias :eql? :==
+
+        def hash
+          @expr.hash
+        end
       end
 
       # Condition represents conditional flow applications.

@@ -50,5 +50,19 @@ module Pione
     def eval
       @name
     end
+
+    def ==(other)
+      return false unless other.kind_of?(self.class)
+      return false unless @name == other.name
+      return false unless sync_mode? == other.sync_mode?
+      return false unless @params == other.params
+      return true
+    end
+
+    alias :eql? :==
+
+    def hash
+      @name.hash + @params.hash + @sync_mode.hash
+    end
   end
 end

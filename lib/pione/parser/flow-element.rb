@@ -10,7 +10,9 @@ module Pione
       # flow_element
       rule(:flow_element) {
         call_rule_line |
-        condition_block #|
+        if_block |
+        case_block
+        #|
         #error('Found a bad flow element',
         #      ['rule_call_line',
         #       'condition_block'])
@@ -27,11 +29,6 @@ module Pione
          ).as(:call_rule)
       }
 
-      # condition_block
-      rule(:condition_block) {
-        if_block | case_block
-      }
-
       # if_block
       #   if $Var
       #     rule Test1
@@ -40,7 +37,7 @@ module Pione
       #   end
       rule(:if_block) {
         (if_block_begin >>
-         flow_element.repeat.as(:true_elements) >>
+         flow_element.repeat.as(:if_true_elements) >>
          if_block_else.maybe >>
          if_block_end).as(:if_block)
       }
@@ -51,7 +48,7 @@ module Pione
         space? >>
         keyword_if >>
         space? >>
-        expr >>
+        expr.as(:condition) >>
         line_end
       }
 
@@ -64,7 +61,7 @@ module Pione
         space? >>
         keyword_else >>
         line_end >>
-        flow_element.repeat.as(:else_elements)
+        flow_element.repeat.as(:if_false_elements)
       }
 
       # if_block_end
