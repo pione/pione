@@ -1,9 +1,9 @@
 module Pione
-  module Transformer
+  class Transformer
     module FlowElement
       include TransformerModule
 
-      rule(:rule_call => subtree(:rule_expr)) {
+      rule(:call_rule => subtree(:rule_expr)) {
         Rule::FlowElement::CallRule.new(rule_expr)
       }
 

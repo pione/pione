@@ -1,34 +1,43 @@
 module Pione
-  module Parser
+  class Parser
     module FlowElement
-      include Parslet::Parser
+      include Parslet
+      include SyntaxError
+      include Common
+      include Literal
+      include Expr
 
-      #
-      # flow element
-      #
-
+      # flow_element
       rule(:flow_element) {
-        rule_call_line |
+        call_rule_line |
         condition_block #|
         #error('Found a bad flow element',
         #      ['rule_call_line',
         #       'condition_block'])
       }
 
-      rule(:rule_call_line) {
+      # call_rule_line
+      #   rule Test
+      rule(:call_rule_line) {
         (space? >>
-         keyword_call_rule >>
+         keyword_rule >>
          space? >>
          rule_expr >>
          line_end
-         ).as(:rule_call)
+         ).as(:call_rule)
       }
 
+      # condition_block
       rule(:condition_block) {
-        if_block |
-        case_block
+        if_block | case_block
       }
 
+      # if_block
+      #   if $Var
+      #     rule Test1
+      #   else
+      #     rule Test2
+      #   end
       rule(:if_block) {
         (if_block_begin >>
          flow_element.repeat.as(:true_elements) >>
@@ -36,6 +45,8 @@ module Pione
          if_block_end).as(:if_block)
       }
 
+      # if_block_begin
+      #   if $Var
       rule(:if_block_begin) {
         space? >>
         keyword_if >>
@@ -44,6 +55,11 @@ module Pione
         line_end
       }
 
+      # if_block_else
+      #   else
+      #     rule Test1
+      #     rule Test2
+      #     ...
       rule(:if_block_else) {
         space? >>
         keyword_else >>
@@ -51,10 +67,21 @@ module Pione
         flow_element.repeat.as(:else_elements)
       }
 
+      # if_block_end
+      #   end
       rule(:if_block_end) {
         space? >> keyword_end >> line_end
       }
 
+      # case_block
+      #   case $Var
+      #   when 1
+      #     rule Test1
+      #   when 2
+      #     rule Test2
+      #   else
+      #     rule Test3
+      #   end
       rule(:case_block) {
         (case_block_begin >>
          when_block.repeat.as(:when_block) >>
@@ -63,6 +90,8 @@ module Pione
          ).as(:case_block)
       }
 
+      # case_block_begin
+      #   case $Var
       rule(:case_block_begin) {
         space? >>
         keyword_case >>
@@ -71,11 +100,18 @@ module Pione
         line_end
       }
 
+      # when_block
+      #   when 1
+      #     rule Test1
+      #     rule Test2
+      #     ...
       rule(:when_block) {
         when_block_begin >>
         flow_element.repeat.as(:elements)
       }
 
+      # when_block_begin
+      #   when 1
       rule(:when_block_begin) {
         space? >>
         keyword_when >>

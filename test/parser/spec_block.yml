@@ -1,0 +1,78 @@
+flow_block_begin_line:
+  valid:
+    - "Flow"
+    - "Flow-"
+    - "Flow--"
+    - "Flow---"
+    - "Flow----"
+    - "Flow-----"
+  invalid:
+    - "-Flow"
+    - "--Flow"
+    - "---Flow"
+action_block_begin_line:
+  valid:
+    - "Action"
+    - "Action-"
+    - "Action--"
+    - "Action---"
+    - "Action----"
+    - "Action-----"
+  invalid:
+    - "-Action"
+    - "--Action"
+    - "---Action"
+block_end_line:
+  valid:
+    - "End"
+    - "-End"
+    - "--End"
+    - "---End"
+    - "----End"
+    - "-----End"
+  invalid:
+    - "End-"
+    - "End--"
+    - "End---"
+flow_block:
+  valid:
+    - |
+      Flow
+        rule Test
+      End
+    - |
+      Flow
+        rule Test1
+        rule Test2
+        rule Test3
+      End
+    - |
+      Flow
+        rule Test1
+        if $Var
+          rule Test2
+        end
+      End
+    - |
+      Flow
+        rule Test1
+        case $Var
+        when 2
+          rule Test2
+        when 3
+          rule Test3
+        end
+      End
+    - |
+      Flow
+        rule Test1
+        if $Var1
+          rule Test2
+        end
+        case $Var2
+        when 3
+          rule Test3
+        when 4
+          rule Test4
+        end
+      End

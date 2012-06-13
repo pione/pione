@@ -1,0 +1,146 @@
+call_rule_line:
+  valid:
+    - rule Test
+  invalid:
+    - rule
+if_block_begin:
+  valid:
+    - "if $Var"
+    - "if 1"
+    - 'if "abc"'
+    - "if 1.0"
+    - "if A"
+  invalid:
+    - "if +A"
+    - "if -A"
+    - "if $$"
+if_block_end:
+  valid:
+    - "end"
+if_block_else:
+  valid:
+    - |
+      else
+        rule Test
+    - |
+      else
+if_block:
+  valid:
+    - |
+      if $Var
+        rule Test
+      end
+    - |
+      if $Var
+        rule Test1
+        rule Test2
+        rule Test3
+      end
+    - |
+      if $Var
+        if $Var
+          rule Test
+        end
+      end
+    - |
+      if $Var
+        rule Test1
+      else
+        rule Test2
+      end
+  invalid:
+    - |
+      if $Var
+        rule Test
+    - |
+      else
+        rule Test
+      end
+case_block_begin:
+  valid:
+    - case $Var
+    - case 1
+    - case 1.0
+    - case 'data.txt'
+    - case "string"
+  invalid:
+    - case +A
+    - case -A
+    - case ?A
+when_block_begin:
+  valid:
+    - when $Var
+    - when 1
+    - when 1.0
+    - when 'data.txt'
+    - when "string"
+  invalid:
+    - when +A
+    - when -A
+    - when ?A
+when_block:
+  valid:
+    - when $Var
+    - |
+      when $Var
+        rule Test
+    - |
+      when $Var
+        rule Test1
+        rule Test2
+        rule Test3
+case_block:
+  valid:
+    - |
+      case $Var
+      end
+    - |
+      case $Var
+      when 1
+        rule Test
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+        rule Test2
+        rule Test3
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+      when 2
+        rule Test2
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+      when 2
+        rule Test2
+      else
+        rule Test3
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+      when 2
+        rule Test2
+      else
+      end
+flow_element:
+  valid:
+    - rule Test
+    - |
+      if $Var
+        rule Test
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+      when 2
+        rule Test2
+      end

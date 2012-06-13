@@ -7,10 +7,16 @@ module Pione
     require 'pione/parser/common'
     require 'pione/parser/literal'
     require 'pione/parser/feature-expr'
+    require 'pione/parser/expr'
+    require 'pione/parser/flow-element'
+    require 'pione/parser/block'
 
     include Common
     include Literal
     include FeatureExpr
+    include Expr
+    include FlowElement
+    include Block
 
     #
     # root
@@ -150,98 +156,6 @@ module Pione
           ) >>
         line_end
         ).as(:feature_line)
-    }
-
-    #
-    # expression
-    #
-
-    rule(:expr) {
-      float |
-      integer |
-      data_expr |
-      rule_expr |
-      string |
-      paren_expr
-    }
-
-    rule(:paren_expr) {
-      lparen >> expr >> rparen
-    }
-
-    rule(:data_expr) {
-      (data_name >> attributions?).as(:data_expr)
-    }
-
-    rule(:rule_expr) {
-      (rule_name >> attributions?).as(:rule_expr)
-    }
-
-    rule(:attributions?) {
-      attribution.repeat.as(:attributions)
-    }
-
-    rule(:attribution) {
-      dot >>
-      attribution_name >>
-      attribution_arguments.maybe
-    }
-
-    # attribution_name
-    rule(:attribution_name) {
-      identifier.as(:attribution_name)
-    }
-
-    rule(:attribution_arguments) {
-      lparen >>
-      space? >>
-      attribution_argument_element.repeat.as(:arguments) >>
-      space? >>
-      rparen
-    }
-
-    rule(:attribution_argument_element) {
-      expr >> attribution_argument_element_rest.repeat
-    }
-
-    rule(:attribution_argument_element_rest) {
-      space? >> comma >> space? >> expr
-    }
-
-    #
-    # block
-    #
-
-    rule(:block) {
-      flow_block |
-      action_block #|
-      #error("Found bad block.", ['flow block', 'action block'])
-    }
-
-    rule(:flow_block) {
-      (flow_block_begin_line >>
-       flow_element.repeat >>
-       block_end_line
-       ).as(:flow_block)
-    }
-
-    rule(:action_block) {
-      (action_block_begin_line >>
-       (block_end_line.absent? >> any).repeat.as(:body) >>
-       block_end_line
-       ).as(:action_block)
-    }
-
-    rule(:flow_block_begin_line) {
-      space? >> keyword_flow_block_begin >> str('-').repeat(3) >> line_end
-    }
-
-    rule(:action_block_begin_line) {
-      space? >> keyword_action_block_begin >> str('-').repeat(3) >> line_end
-    }
-
-    rule(:block_end_line) {
-      space? >> str('-').repeat(3) >> keyword_block_end >> line_end
     }
   end
 end

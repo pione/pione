@@ -1,5 +1,6 @@
 require 'tmpdir'
 require 'bacon'
+require 'yaml'
 require 'pione/common'
 require 'pione/agent'
 require 'pione/agent/input-generator'
