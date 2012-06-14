@@ -20,6 +20,10 @@ module Pione
       # float
       rule(:float => simple(:f)) { f.to_f }
 
+      # variable
+      rule(:variable => simple(:v)) do
+        Variable.new(v)
+      end
     end
   end
 end

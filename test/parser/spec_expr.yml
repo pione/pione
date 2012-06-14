@@ -1,0 +1,32 @@
+expr_operator:
+  valid:
+    - "=="
+    - "!="
+    - ">="
+    - "<="
+    - ">"
+    - "<"
+    - "&&"
+    - "||"
+expr_operator_application:
+  valid:
+    - true == true
+    - true != false
+    - 10 >= 1
+    - 1 <= 10
+    - 10 > 1
+    - 1 < 10
+    - true && true
+    - true || false
+expr:
+  valid:
+    - "1"
+    - (1)
+    - '"a" == "a"'
+    - '"a" != "b"'
+    - true && true
+    - true || false
+    - ($Var1 == "a") && ($Var2 == "b")
+    - ($Var1 == "a") || $Var2
+    - ($Var1 == ($Var2 == "a"))
+    - true == true == true

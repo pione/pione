@@ -24,7 +24,12 @@ module Pione
         :question => '?',
         :vbar => '|',
         :ampersand => '&',
-        :doller => '$'
+        :doller => '$',
+        :colon => ':',
+        :equals => '=',
+        :exclamation => '!',
+        :less_than => '<',
+        :greater_than => '>'
       }
 
       SYMBOLS.each do |key, val|

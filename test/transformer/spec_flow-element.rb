@@ -9,7 +9,35 @@ describe 'Transformer::FlowElement' do
     res.expr.should == RuleExpr.new("Test")
   end
 
-  it 'should get a IfBlock' do
+  it 'should get a ConditionalBlock by if_parse' do
+    string = <<-STRING
+      if $Var == "a"
+        rule A
+      else
+        rule B
+      end
+    STRING
+    tree = Parser.new.if_block.parse(string)
+    res = Transformer.new.apply(tree)
+    res.should.kind_of(Rule::FlowElement::ConditionalBlock)
+    res.expr.should == Expr::Equals.new(Variable.new("Var"), "a")
+    res.eval(VariableTable.new("Var" => "a"))
+  end
 
+  it 'should get a ConditionalBlock by case_parse' do
+    string = <<-STRING
+      case $Var
+      when "a"
+        rule A
+      when "b"
+        rule B
+      when "c"
+        rule C
+      end
+    STRING
+    tree = Parser.new.case_block.parse(string)
+    res = Transformer.new.apply(tree)
+    res.should.kind_of(Rule::FlowElement::ConditionalBlock)
+    res.expr.should == Variable.new("Var")
   end
 end

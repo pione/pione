@@ -13,17 +13,20 @@ module Pione
         Rule::FlowElement::CallRule.new(rule_expr)
       }
 
+      # if_block
       rule(:if_block =>
-           { :if_true_elements => sequence(:if_true),
-             :if_false_elements => sequence(:if_false),
-             :condition => simple(:condition)
+           { :condition => simple(:condition),
+             :if_true_elements => sequence(:if_true),
+             :if_false_elements => sequence(:if_false)
            }) do
         block = {true => if_true, :else => if_false}
-        Rule::FlowElement::Condition.new(condition, block)
+        Rule::FlowElement::ConditionalBlock.new(condition, block)
       end
 
+      # case_block
       rule(:case_block =>
-           { :when_block => subtree(:when_block) } ) {
+           { :condition => simple(:condition),
+             :when_block => subtree(:when_block) } ) {
         variable = case_block[:variable].to_s
         block = {}
         case_block[:when_block].each do |t|

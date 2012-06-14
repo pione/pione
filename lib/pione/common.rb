@@ -178,6 +178,7 @@ module Pione
   end
 end
 
+require 'pione/model'
 require 'pione/feature/feature-expr'
 require 'pione/feature-set'
 require 'pione/agent'

@@ -11,8 +11,8 @@ module Pione
       #   => CallRule.new(RuleExpr.new('r1'))
       #
       # For example with absolute path:
-      #   rule /abc/a
-      #   => CallRule.new(RuleExpr.new('/abc/a'))
+      #   rule /abc:a
+      #   => CallRule.new(RuleExpr.new('/abc:a'))
       #
       # For example with variable:
       #   rule $X
@@ -25,10 +25,12 @@ module Pione
           @expr = expr
         end
 
-        def rule_path
-          @expr.eval
+        # Return a rule path with expanding variables.
+        def rule_path(vtable=VariableTable.new)
+          @expr.eval(vtable)
         end
 
+        # Returns true if sync mode.
         def sync_mode?
           @expr.sync_mode?
         end
@@ -39,21 +41,22 @@ module Pione
 
         alias :eql? :==
 
+        # Returns hash value.
         def hash
           @expr.hash
         end
       end
 
-      # Condition represents conditional flow applications.
+      # ConditionalBlock represents conditional flow applications.
       # For example of /if/ statement:
       #   if $X == "a"
       #     rule r1
       #   else
       #     rule r2
       #   end
-      #   => Condition.new(Application.new('==', Variable.new('X'), 'a'),
-      #                    { true => [CallRule.new('r1')],
-      #                      :else => [CallRule.new('r2')] })
+      #   => ConditionalBlock.new(Application.new('==', Variable.new('X'), 'a'),
+      #                           { true => [CallRule.new('r1')],
+      #                             :else => [CallRule.new('r2')] })
       #
       # For example of case statement:
       #   case $X
@@ -64,12 +67,12 @@ module Pione
       #   else
       #     rule r3
       #   end
-      #   => Condition.new(Variable.new('X'),
-      #                    { 'a' => [CallRule.new('r1')],
-      #                      'b' => [CallRule.new('r2')],
-      #                      :else => [CallRule.new('r3')] })
+      #   => ConditionalBlock.new(Variable.new('X'),
+      #                           { 'a' => [CallRule.new('r1')],
+      #                             'b' => [CallRule.new('r2')],
+      #                             :else => [CallRule.new('r3')] })
       #
-      class Condition
+      class ConditionalBlock
         attr_reader :expr
         attr_reader :blocks
 
@@ -78,16 +81,17 @@ module Pione
           @blocks = blocks
         end
 
-        # Evaluates the condition and returns it's result flows.
+        # Evaluates the condition and returns the flow block.
         def eval(vtable=VariableTable.new)
           value = @expr.eval(vtable)
-          block = @blocks.find {|key, val| key === value}
+          block = @blocks.find {|key, _| key === value}
           block = block[1] unless block.nil?
           block = @blocks[:else] if block.nil?
           block = [] if block.nil?
           return block
         end
       end
+
 
       # Assignment represents a value assignment for variable.
       # For example assigning a string:
@@ -106,8 +110,9 @@ module Pione
           @expr = expr
         end
 
+        # Evaluates a right value and set it into variable table.
         def eval(vtable)
-          @expr.eval(vtable)
+          vtable.set(@variable, @expr.eval(vtable))
         end
       end
     end

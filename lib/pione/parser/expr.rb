@@ -7,17 +7,43 @@ module Pione
       include Literal
 
       rule(:expr) {
-        float |
-        integer |
-        data_expr |
-        rule_expr |
-        string |
-        variable |
-        paren_expr
+        expr_operator_application |
+        expr_element
       }
 
-      rule(:paren_expr) {
+      rule(:expr_element) {
+        atomic_expr |
         lparen >> expr >> rparen
+      }
+
+      rule(:atomic_expr) {
+        float |
+        integer |
+        string |
+        data_expr |
+        rule_expr |
+        variable
+      }
+
+      rule(:expr_operator) {
+        colon >> equals |
+        equals >> equals |
+        exclamation >> equals |
+        less_than >> equals |
+        less_than |
+        greater_than >> equals |
+        greater_than |
+        ampersand >> ampersand |
+        vbar >> vbar
+      }
+
+      rule(:expr_operator_application) {
+        (expr_element.as(:left) >>
+         space? >>
+         expr_operator.as(:operator) >>
+         space? >>
+         expr.as(:right)
+         ).as(:expr_operator_application)
       }
 
       rule(:data_expr) {

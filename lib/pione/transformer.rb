@@ -51,10 +51,12 @@ module Pione
   class Transformer < Parslet::Transform
     require 'pione/transformer/literal'
     require 'pione/transformer/feature-expr'
+    require 'pione/transformer/expr'
     require 'pione/transformer/flow-element'
 
     include Literal
     include FeatureExpr
+    include Expr
     include FlowElement
 
     def initialize(data={})
