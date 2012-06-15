@@ -11,14 +11,15 @@ module Pione
       rule(:flow_element) {
         call_rule_line |
         if_block |
-        case_block
+        case_block |
+        assignment
         #|
         #error('Found a bad flow element',
         #      ['rule_call_line',
         #       'condition_block'])
       }
 
-      # call_rule_line
+      # call_rule_line:
       #   rule Test
       rule(:call_rule_line) {
         (space? >>
@@ -29,7 +30,7 @@ module Pione
          ).as(:call_rule)
       }
 
-      # if_block
+      # if_block:
       #   if $Var
       #     rule Test1
       #   else
@@ -42,7 +43,7 @@ module Pione
          if_block_end).as(:if_block)
       }
 
-      # if_block_begin
+      # if_block_begin:
       #   if $Var
       rule(:if_block_begin) {
         space? >>
@@ -52,7 +53,7 @@ module Pione
         line_end
       }
 
-      # if_block_else
+      # if_block_else:
       #   else
       #     rule Test1
       #     rule Test2
@@ -70,7 +71,7 @@ module Pione
         space? >> keyword_end >> line_end
       }
 
-      # case_block
+      # case_block:
       #   case $Var
       #   when 1
       #     rule Test1
@@ -87,7 +88,7 @@ module Pione
          ).as(:case_block)
       }
 
-      # case_block_begin
+      # case_block_begin:
       #   case $Var
       rule(:case_block_begin) {
         space? >>
@@ -97,7 +98,7 @@ module Pione
         line_end
       }
 
-      # when_block
+      # when_block:
       #   when 1
       #     rule Test1
       #     rule Test2
@@ -107,7 +108,7 @@ module Pione
         flow_element.repeat.as(:elements)
       }
 
-      # when_block_begin
+      # when_block_begin:
       #   when 1
       rule(:when_block_begin) {
         space? >>
@@ -115,6 +116,18 @@ module Pione
         space? >>
         expr.as(:when) >>
         line_end
+      }
+
+      # assignment:
+      #   $X := 1
+      rule(:assignment) {
+        (space? >>
+         variable.as(:symbol) >>
+         space? >>
+         colon >> equals >>
+         space? >>
+         expr.as(:value) >>
+         line_end).as(:assignment)
       }
     end
   end

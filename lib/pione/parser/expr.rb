@@ -20,13 +20,14 @@ module Pione
         float |
         integer |
         string |
+        variable |
         data_expr |
-        rule_expr |
-        variable
+        rule_expr
       }
 
+      # expr_operator:
+      #   :=, ==, !=, >=, >, <=, <, &&, ||, +, -, *, /, %
       rule(:expr_operator) {
-        colon >> equals |
         equals >> equals |
         exclamation >> equals |
         less_than >> equals |
@@ -34,9 +35,16 @@ module Pione
         greater_than >> equals |
         greater_than |
         ampersand >> ampersand |
-        vbar >> vbar
+        vbar >> vbar |
+        plus |
+        minus |
+        asterisk |
+        slash |
+        percent
       }
 
+      # expr_operator_application:
+      #   X + X
       rule(:expr_operator_application) {
         (expr_element.as(:left) >>
          space? >>
@@ -46,10 +54,14 @@ module Pione
          ).as(:expr_operator_application)
       }
 
+      # data_expr:
+      #  '*.a'
       rule(:data_expr) {
         (data_name >> attributions?).as(:data_expr)
       }
 
+      # rule_expr:
+      #   /Text/Util:Nkf.param("-w")
       rule(:rule_expr) {
         (rule_name >> attributions?).as(:rule_expr)
       }

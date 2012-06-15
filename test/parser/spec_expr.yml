@@ -8,6 +8,11 @@ expr_operator:
     - "<"
     - "&&"
     - "||"
+    - "+"
+    - "-"
+    - "*"
+    - "%"
+    - "/"
 expr_operator_application:
   valid:
     - true == true
@@ -18,6 +23,11 @@ expr_operator_application:
     - 1 < 10
     - true && true
     - true || false
+    - 1 + 1
+    - 1 - 1
+    - 1 * 1
+    - 1 % 1
+    - 1 / 1
 expr:
   valid:
     - "1"

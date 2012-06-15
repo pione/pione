@@ -114,16 +114,6 @@ module Pione
     end
   end
 
-  # UnknownVariableError represents an unknown variable reference.
-  class UnknownVariableError < StandardError
-    attr_reader :name
-
-    def initialize(name)
-      @name = name
-      super("Unknown variable name '#{name}' in the context.")
-    end
-  end
-
   # Utility functions for pione system.
   module Util
     # Set signal trap for the system.
@@ -164,33 +154,18 @@ module Pione
     def self.domain(rule_path, inputs, params)
       "#{rule_path}_#{task_id(inputs, params)}"
     end
-
-    def self.expand_variables(str, variables)
-      str.gsub(/\{\$(.+?)\}/) do
-        if variables.has_key?($1)
-          variables[$1]
-        else
-          raise UnknownVariableError.new($1)
-        end
-      end
-    end
-
   end
 end
 
 require 'pione/model'
 require 'pione/feature/feature-expr'
-require 'pione/feature-set'
 require 'pione/agent'
 require 'pione/tuple-space-server-interface'
 require 'pione/agent/tuple-space-client'
 require 'pione/tuple-space-server'
 require 'pione/log'
 require 'pione/tuple'
-require 'pione/data-expr'
 require 'pione/data-finder'
-require 'pione/rule-expr'
-require 'pione/variable-table'
 require 'pione/document'
 require 'pione/rule'
 require 'pione/agent/command-listener'

@@ -146,3 +146,12 @@ flow_element:
       when 2
         rule Test2
       end
+assignment:
+  valid:
+    - "$X := 1"
+    - "$Var := true"
+    - "$X := $Y"
+    - "$X := 1 + 1"
+    - "$X := true || false || true"
+  invalid:
+    - "$X := ($Y := 1)"

@@ -29,7 +29,9 @@ module Pione
         :equals => '=',
         :exclamation => '!',
         :less_than => '<',
-        :greater_than => '>'
+        :greater_than => '>',
+        :asterisk => '*',
+        :percent => '%'
       }
 
       SYMBOLS.each do |key, val|

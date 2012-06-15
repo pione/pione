@@ -47,36 +47,60 @@ module Pione
         end
       end
 
+      # Block represents flow element sequence.
+      #   Flow
+      #     rule Test1
+      #     rule Test2
+      #     rule Test3
+      #   End
+      #   => Block.new([ CallRule.new('Test1'),
+      #                  CallRule.new('Test2'),
+      #                  CallRule.new('Test3') ])
+      class Block < PioneObject
+        attr_reader :elements
+
+        def initialize(elements = [])
+          @elements = elements
+        end
+
+        # Evaluates each elements and return it.
+        def eval(vtable)
+          @elements.map{|e| e.eval(vtable)}
+        end
+      end
+
       # ConditionalBlock represents conditional flow applications.
       # For example of /if/ statement:
       #   if $X == "a"
-      #     rule r1
+      #     rule Test1
       #   else
-      #     rule r2
+      #     rule Test2
       #   end
-      #   => ConditionalBlock.new(Application.new('==', Variable.new('X'), 'a'),
-      #                           { true => [CallRule.new('r1')],
-      #                             :else => [CallRule.new('r2')] })
+      #   => ConditionalBlock.new(
+      #        BinaryOperator::Equals.new(Variable.new('X'), 'a'),
+      #                           { true => [CallRule.new('Test1')],
+      #                             :else => [CallRule.new('Test2')] })
       #
       # For example of case statement:
       #   case $X
       #   when "a"
-      #     rule r1
+      #     rule Test1
       #   when "b"
-      #     rule r2
+      #     rule Test2
       #   else
-      #     rule r3
+      #     rule Test3
       #   end
-      #   => ConditionalBlock.new(Variable.new('X'),
-      #                           { 'a' => [CallRule.new('r1')],
-      #                             'b' => [CallRule.new('r2')],
-      #                             :else => [CallRule.new('r3')] })
+      #   => ConditionalBlock.new(
+      #        Variable.new('X'),
+      #        { 'a' => Block.new([CallRule.new('Test1')]),
+      #          'b' => Block.new([CallRule.new('Test2')]),
+      #          :else => Block.new([CallRule.new('Test3')]) })
       #
       class ConditionalBlock
         attr_reader :expr
         attr_reader :blocks
 
-        def initialize(expr, blocks)
+        def initialize(expr, blocks=[])
           @expr = expr
           @blocks = blocks
         end
@@ -88,10 +112,9 @@ module Pione
           block = block[1] unless block.nil?
           block = @blocks[:else] if block.nil?
           block = [] if block.nil?
-          return block
+          return block.eval(vtable)
         end
       end
-
 
       # Assignment represents a value assignment for variable.
       # For example assigning a string:
@@ -110,7 +133,7 @@ module Pione
           @expr = expr
         end
 
-        # Evaluates a right value and set it into variable table.
+        # Evaluates value and update the variable table with it.
         def eval(vtable)
           vtable.set(@variable, @expr.eval(vtable))
         end

@@ -1,24 +1,15 @@
-module Pione
-  class Variable < PioneObject
-    attr_reader :name
-    def initialize(name)
-      @name = name
-    end
-
+module Pione::Model
+  class PioneModelObject < PioneObject
+    # Returns self.
     def eval(vtable)
-      vtable.get(@name)
-    end
-
-    def ==(other)
-      other.kind_of?(self.class) && @name == other.name
-    end
-
-    alias :eql? :==
-
-    def hash
-      @name.hash
+      return self
     end
   end
+
+  require 'pione/model/variable'
+  require 'pione/model/variable-table'
+  require 'pione/model/data-expr'
+  require 'pione/model/rule-expr'
 
   module Expr
     class BinaryOperator < PioneObject

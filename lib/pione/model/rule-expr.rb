@@ -1,6 +1,4 @@
-require 'pione/common'
-
-module Pione
+module Pione::Model
   # Unknown attribution for RuleExpr.
   class UnknownRuleExprAttribution < Exception
     def initialize(name)

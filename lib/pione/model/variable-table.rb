@@ -1,6 +1,19 @@
 require 'pione/common'
 
-module Pione
+module Pione::Model
+
+  # UnknownVariableError represents an unknown variable reference.
+  class UnknownVariableError < StandardError
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+      super("Unknown variable name '#{name}' in the context.")
+    end
+  end
+
+  # VariableBindingError represents a error that you try to bind different value
+  # to a variable.
   class VariableBindingError < StandardError
     attr_reader :name
     attr_reader :value
@@ -18,7 +31,7 @@ module Pione
   end
 
   # VariableTable represents variable table for rule and data finder.
-  class VariableTable < PioneObject
+  class VariableTable < PioneModelObject
     # Make an auto vairable table.
     def initialize(table={})
       @table = table.to_hash.dup
@@ -62,7 +75,14 @@ module Pione
 
     # Expand variables in the string.
     def expand(str)
-      Util.expand_variables(str, to_hash)
+      variables = to_hash
+      str.gsub(/\{\$(.+?)\}/) do
+        if variables.has_key?($1)
+          variables[$1]
+        else
+          raise UnknownVariableError.new($1)
+        end
+      end
     end
 
     private

@@ -1,9 +1,7 @@
-require 'pione/common'
-
-module Pione
+module Pione::Model
 
   # DataExpr is a class for data name expressions of rule input and output.
-  class DataExpr
+  class DataExpr < PioneModelObject
 
     # separator symbol for all modifier
     SEPARATOR = ':'
