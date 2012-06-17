@@ -8,9 +8,17 @@ module Pione::Model
       @name = name
     end
 
+    def pione_model_type
+      TypeAny
+    end
+
     # Evaluates self variable name in the table and returns it.
-    def eval(vtable)
-      vtable.get(@name)
+    def eval(vtable=VariableTable.new)
+      val = vtable.get(self)
+      if val.nil?
+        raise UnboundVariableError.new(self)
+      end
+      return val
     end
 
     # Return true if other is a variable object which name is same as myself.

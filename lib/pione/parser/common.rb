@@ -66,7 +66,9 @@ module Pione
         :keyword_when => 'when',
         :keyword_end => 'end',
         :keyword_package => 'package',
-        :keyword_require => 'require'
+        :keyword_require => 'require',
+        :keyword_true => 'true',
+        :keyword_false => 'false'
       }
 
       KEYWORDS.each do |key, val|

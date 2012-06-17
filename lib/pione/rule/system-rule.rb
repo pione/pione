@@ -5,7 +5,7 @@ module Pione
     # SystemRule represents built-in rule definition.
     class SystemRule < ActionRule
       def initialize(path, &b)
-        inputs = [DataExpr.new('*')]
+        inputs = [Model::DataExpr.new('*')]
         outputs = []
         params = []
         features = []

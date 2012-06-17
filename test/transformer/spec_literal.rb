@@ -16,22 +16,8 @@ describe 'Transformer::Literal' do
     end
   end
 
-  describe 'feature_name' do
-    it 'should get feature expressions' do
-      data = {
-        '+abc' => FeatureExpr.new('abc', :requisite),
-        '-abc' => FeatureExpr.new('abc', :exclusive),
-        '?abc' => FeatureExpr.new('abc', :preferred)
-      }
-      data.each do |string, expected|
-        res = Transformer.new.apply(Parser.new.feature_name.parse(string))
-        res.should == expected
-      end
-    end
-  end
-
   describe 'string' do
-    it 'should get strings' do
+    it 'should get pione strings' do
       data = {
         '"abc"' => 'abc',
         '"a\bc"' => 'abc',
@@ -40,7 +26,7 @@ describe 'Transformer::Literal' do
       }
       data.each do |string, expected|
         res = Transformer.new.apply(Parser.new.string.parse(string))
-        res.should == expected
+        res.should == PioneString.new(expected)
       end
     end
   end
@@ -59,7 +45,7 @@ describe 'Transformer::Literal' do
       }
       data.each do |string, expected|
         res = Transformer.new.apply(Parser.new.integer.parse(string))
-        res.should == expected
+        res.should == PioneInteger.new(expected)
       end
     end
   end
@@ -78,7 +64,7 @@ describe 'Transformer::Literal' do
       }
       data.each do |string, expected|
         res = Transformer.new.apply(Parser.new.float.parse(string))
-        res.should == expected
+        res.should == PioneFloat.new(expected)
       end
     end
   end

@@ -8,7 +8,7 @@ module Pione
 
       rule(:expr) {
         expr_operator_application |
-        expr_element
+        expr_element >> messages.maybe
       }
 
       rule(:expr_element) {
@@ -17,6 +17,7 @@ module Pione
       }
 
       rule(:atomic_expr) {
+        boolean |
         float |
         integer |
         string |
@@ -66,34 +67,29 @@ module Pione
         (rule_name >> attributions?).as(:rule_expr)
       }
 
-      rule(:attributions?) {
+      rule(:attributions) {
         attribution.repeat.as(:attributions)
       }
 
-      rule(:attribution) {
+      rule(:message) {
         dot >>
-        attribution_name >>
-        attribution_arguments.maybe
+        identifier.as(:message_name)
+        message_arguments.maybe
       }
 
-      # attribution_name
-      rule(:attribution_name) {
-        identifier.as(:attribution_name)
-      }
-
-      rule(:attribution_arguments) {
+      rule(:message_arguments) {
         lparen >>
         space? >>
-        attribution_argument_element.repeat.as(:arguments) >>
+        message_arguments_elements.maybe.as(:message_arguments) >>
         space? >>
         rparen
       }
 
-      rule(:attribution_argument_element) {
+      rule(:message_arguments_elements) {
         expr >> attribution_argument_element_rest.repeat
       }
 
-      rule(:attribution_argument_element_rest) {
+      rule(:message_argument_elements_rest) {
         space? >> comma >> space? >> expr
       }
     end

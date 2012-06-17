@@ -170,3 +170,7 @@ require 'pione/document'
 require 'pione/rule'
 require 'pione/agent/command-listener'
 require 'pione/agent/task-worker'
+
+module Pione
+  include Pione::Model
+end

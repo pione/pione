@@ -57,6 +57,11 @@ module Pione
           digit.repeat(1)
           ).as(:float)
       }
+
+      # boolean
+      rule(:boolean) {
+        (keyword_true | keyword_false).as(:boolean)
+      }
     end
   end
 end

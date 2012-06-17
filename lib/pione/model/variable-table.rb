@@ -2,6 +2,12 @@ require 'pione/common'
 
 module Pione::Model
 
+  class UnboundVariableError < StandardError
+    def initialize(variable)
+      @variable = variable
+    end
+  end
+
   # UnknownVariableError represents an unknown variable reference.
   class UnknownVariableError < StandardError
     attr_reader :name
@@ -48,11 +54,11 @@ module Pione::Model
     end
 
     # Set a new variable.
-    def set(var, val)
-      if old = @table[var] and not(val == old)
+    def set(variable, val=nil)
+      if old = @table[variable] and not(val == old)
         raise VariableBindingError.new(var, val, old)
       end
-      @table[var] = val
+      @table[variable] = val
     end
 
     # Make input auto-variables
