@@ -11,6 +11,8 @@ module Pione
              :right => simple(:right) }) do
         Model::BinaryOperator.new(operator, left, right)
       end
+
+      rule(:)
     end
   end
 end

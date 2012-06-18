@@ -28,6 +28,9 @@ expr_operator_application:
     - 1 * 1
     - 1 % 1
     - 1 / 1
+message:
+  valid:
+    - .abc(1)
 expr:
   valid:
     - "1"
