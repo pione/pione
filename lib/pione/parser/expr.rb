@@ -6,24 +6,44 @@ module Pione
       include Common
       include Literal
 
+      # expr:
+      #   1 + 1
+      #   (1 + 1).next
+      #   true
+      #   '*.txt'.as_string
       rule(:expr) {
-        expr_operator_application |
-        expr_element >> messages.maybe
+        ( expr_operator_application |
+          expr_element >> message.repeat.as(:messages)
+          ).as(:expr)
       }
 
+      # expr_element:
+      #   true
+      #   (1 + 1)
+      #   ("abc".index(1, 1))
       rule(:expr_element) {
-        atomic_expr |
+        ( atomic_expr.as(:atom) >>
+          message.repeat.as(:messages)
+          ).as(:atomic_expr) |
         lparen >> expr >> rparen
       }
 
+      # atomic_expr:
+      #   true
+      #   0.1
+      #   1
+      #   "abc"
+      #   $var
+      #   '*.txt'
+      #   abc
       rule(:atomic_expr) {
         boolean |
         float |
         integer |
         string |
         variable |
-        data_expr |
-        rule_expr
+        data_name |
+        rule_name
       }
 
       # expr_operator:
@@ -55,28 +75,25 @@ module Pione
          ).as(:expr_operator_application)
       }
 
-      # data_expr:
-      #  '*.a'
-      rule(:data_expr) {
-        (data_name >> attributions?).as(:data_expr)
+      # messages:
+      #   .param("-w").sync
+      rule(:messages) {
+        message.repeat.as(:messages)
       }
 
-      # rule_expr:
-      #   /Text/Util:Nkf.param("-w")
-      rule(:rule_expr) {
-        (rule_name >> attributions?).as(:rule_expr)
-      }
-
-      rule(:attributions) {
-        attribution.repeat.as(:attributions)
-      }
-
+      # message:
+      #   .params("-w")
+      #   .sync
       rule(:message) {
-        dot >>
-        identifier.as(:message_name)
-        message_arguments.maybe
+        (dot >>
+         identifier.as(:message_name) >>
+         message_arguments.maybe
+         ).as(:message)
       }
 
+      # message_arguments:
+      #   ("-w")
+      #   (true, false)
       rule(:message_arguments) {
         lparen >>
         space? >>
@@ -85,11 +102,16 @@ module Pione
         rparen
       }
 
+      # message_arguments_elements:
+      #   (true)
+      #   (true, true, true)
       rule(:message_arguments_elements) {
-        expr >> attribution_argument_element_rest.repeat
+        expr >> message_arguments_elements_rest.repeat
       }
 
-      rule(:message_argument_elements_rest) {
+      # message_arguments_elements_rest:
+      #   , true
+      rule(:message_arguments_elements_rest) {
         space? >> comma >> space? >> expr
       }
     end
