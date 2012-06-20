@@ -22,17 +22,15 @@ module Pione
         identifier.as(:variable)
       }
 
-      # rule_name
-      rule(:rule_name) {
-        ( slash.maybe >>
-          identifier >>
-          (slash >> identifier).repeat(0)
-          ).as(:rule_name)
-      }
-
       # package_name
       rule(:package_name) {
-        identifier.as(:package_name)
+        ampersand >>
+        identifier.repeat(1).as(:package_name)
+      }
+
+      # rule_name
+      rule(:rule_name) {
+        identifier.as(:rule_name)
       }
 
       # string

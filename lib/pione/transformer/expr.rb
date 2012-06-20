@@ -2,9 +2,12 @@ require 'pione/common'
 
 module Pione
   class Transformer
+    class MessageArgument < Struct.new(:name, :parameters); end
+
     module Expr
       include TransformerModule
 
+      # expr_operator_application
       rule(:expr_operator_application =>
            { :left => simple(:left),
              :operator => simple(:operator),
@@ -12,32 +15,26 @@ module Pione
         Model::BinaryOperator.new(operator, left, right)
       }
 
+      # expr
+      rule(:expr => simple(:obj)) { obj }
       rule(:expr =>
-           { :atom => simple(:atom),
+           { :receiver => simple(:receiver),
              :messages => sequence(:messages) }) {
-        if messages.empty?
-          atom
-        else
-          obj = atom
-          messages.each do |msg|
-            obj = Model::Message.new(msg, obj, msg.params)
-          end
-          obj
+        obj = receiver
+        messages.each do |msg|
+          obj = Model::Message.new(msg.name, obj, *msg.parameters)
         end
+        obj
       }
 
-      rule(:atomic_expr =>
-           { :atom => simple(:atom),
-             :messages => sequence(:messages) }) {
-        if messages.empty?
-          atom
-        else
-          obj = atom
-          messages.each do |msg|
-            obj = Model::Message.new(msg, obj, msg.params)
-          end
-          obj
-        end
+      # message
+      rule(:message => {:message_name => simple(:name)}) {
+        MessageArgument.new(name)
+      }
+      rule(:message =>
+           { :message_name => simple(:name),
+             :message_parameters => sequence(:parameters) }) {
+        MessageArgument.new(name, parameters)
       }
     end
   end

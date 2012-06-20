@@ -13,7 +13,7 @@ module Pione
       #   '*.txt'.as_string
       rule(:expr) {
         ( expr_operator_application |
-          expr_element >> message.repeat.as(:messages)
+          expr_element.as(:receiver) >> message.repeat.as(:messages)
           ).as(:expr)
       }
 
@@ -22,10 +22,10 @@ module Pione
       #   (1 + 1)
       #   ("abc".index(1, 1))
       rule(:expr_element) {
-        ( atomic_expr.as(:atom) >>
-          message.repeat.as(:messages)
-          ).as(:atomic_expr) |
-        lparen >> expr >> rparen
+        ((atomic_expr.as(:receiver) >>
+          message.repeat.as(:messages)) |
+         lparen >> expr >> rparen
+         ).as(:expr)
       }
 
       # atomic_expr:
@@ -35,6 +35,7 @@ module Pione
       #   "abc"
       #   $var
       #   '*.txt'
+      #   $abc:test
       #   abc
       rule(:atomic_expr) {
         boolean |
@@ -43,7 +44,19 @@ module Pione
         string |
         variable |
         data_name |
-        rule_name
+        rule_expr
+      }
+
+      # rule_expr:
+      #   &abc:test
+      #   $var:test
+      #   :test
+      #   test
+      rule(:rule_expr) {
+        (package_name >> colon >> rule_name |
+         variable_name >> colon >> rule_name |
+         colon >> rule_name |
+         rule_name).as(:rule_expr)
       }
 
       # expr_operator:
@@ -75,43 +88,37 @@ module Pione
          ).as(:expr_operator_application)
       }
 
-      # messages:
-      #   .param("-w").sync
-      rule(:messages) {
-        message.repeat.as(:messages)
-      }
-
       # message:
       #   .params("-w")
       #   .sync
       rule(:message) {
         (dot >>
          identifier.as(:message_name) >>
-         message_arguments.maybe
+         message_parameters.maybe
          ).as(:message)
       }
 
-      # message_arguments:
+      # message_parameters:
       #   ("-w")
       #   (true, false)
-      rule(:message_arguments) {
+      rule(:message_parameters) {
         lparen >>
         space? >>
-        message_arguments_elements.maybe.as(:message_arguments) >>
+        message_parameters_elements.maybe.as(:message_parameters) >>
         space? >>
         rparen
       }
 
-      # message_arguments_elements:
+      # message_parameters_elements:
       #   (true)
       #   (true, true, true)
-      rule(:message_arguments_elements) {
-        expr >> message_arguments_elements_rest.repeat
+      rule(:message_parameters_elements) {
+        expr >> message_parameters_elements_rest.repeat
       }
 
-      # message_arguments_elements_rest:
+      # message_paramters_elements_rest:
       #   , true
-      rule(:message_arguments_elements_rest) {
+      rule(:message_parameters_elements_rest) {
         space? >> comma >> space? >> expr
       }
     end
