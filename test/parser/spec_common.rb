@@ -270,7 +270,7 @@ describe 'Parser::Common' do
     end
 
     it 'should fail in test_empty_lines_4' do
-      strings = [ "item item", "item " ]
+      strings = [ "item item", "item "]
       strings.each do |s|
         should.raise(Parslet::ParseFailed) do
           TestParser.new.test_empty_lines_4.parse(s)

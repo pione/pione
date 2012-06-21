@@ -5,6 +5,7 @@ module Pione
       include SyntaxError
       include Common
       include Literal
+      include FeatureExpr
 
       # expr:
       #   1 + 1
@@ -44,7 +45,8 @@ module Pione
         string |
         variable |
         data_name |
-        rule_expr
+        rule_expr |
+        feature_expr
       }
 
       # rule_expr:
@@ -54,7 +56,7 @@ module Pione
       #   test
       rule(:rule_expr) {
         (package_name >> colon >> rule_name |
-         variable_name >> colon >> rule_name |
+         variable >> colon >> rule_name |
          colon >> rule_name |
          rule_name).as(:rule_expr)
       }

@@ -31,7 +31,8 @@ module Pione
         :less_than => '<',
         :greater_than => '>',
         :asterisk => '*',
-        :percent => '%'
+        :percent => '%',
+        :armark => '@'
       }
 
       SYMBOLS.each do |key, val|

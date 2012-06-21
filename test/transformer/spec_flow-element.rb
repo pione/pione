@@ -20,8 +20,9 @@ describe 'Transformer::FlowElement' do
     tree = Parser.new.if_block.parse(string)
     res = Transformer.new.apply(tree)
     res.should.kind_of(Rule::FlowElement::ConditionalBlock)
-    res.expr.should == Expr::Equals.new(Variable.new("Var"), "a")
-    res.eval(VariableTable.new("Var" => "a"))
+    res.expr.should == Model::BinaryOperator.new("==",
+                                                 Variable.new("Var"),
+                                                 PioneString.new("a"))
   end
 
   it 'should get a ConditionalBlock by case_parse' do

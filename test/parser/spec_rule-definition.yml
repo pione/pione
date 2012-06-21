@@ -1,0 +1,42 @@
+input_line:
+  valid:
+    - input '*.txt'
+    - input "*.txt".as_data_expr
+  invalid:
+    - input @@@
+output_line:
+  valid:
+    - output '*.txt'
+    - output "*.txt".as_data_expr
+  invalid:
+    - output @@@
+param_line:
+  valid:
+    - param $abc
+    - param $a
+  invalid:
+    - param $
+feature_line:
+  valid:
+    - feature +A
+    - feature -A
+    - feature ?A
+    - feature "A".as_requisite_feature
+  invalid:
+    - feature +
+    - feature -
+    - feature ?
+rule_condition:
+  valid:
+    - input "*.txt"
+    - output "*.txt"
+    - param $var
+    - feature +A
+rule_conditions:
+  valid:
+    - |
+      input "*.a"
+      input "*.b"
+      output "*.c"
+      param $var
+      feature +A

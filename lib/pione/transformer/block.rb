@@ -3,8 +3,14 @@ module Pione
     module Block
       include TransformerModule
 
-      rule(:flow_block => sequence(:elements) {
-        return elements
+      # flow_block:
+      rule(:flow_block => sequence(:elements)) {
+        return Rule::FlowBlock.new(elements)
+      }
+
+      # action_block:
+      rule(:action_block => simple(:body)) {
+        return Rule::ActionBlock.new(body)
       }
     end
   end

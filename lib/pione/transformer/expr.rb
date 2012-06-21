@@ -36,6 +36,14 @@ module Pione
              :message_parameters => sequence(:parameters) }) {
         MessageArgument.new(name, parameters)
       }
+
+      # rule_expr
+      rule(:rule_expr => simple(:rule)) { rule }
+      rule(:rule_expr =>
+           { :package_name => simple(:package_name),
+             :rule => simple(:rule_obj) }) {
+        rule_obj.package = package_name
+      }
     end
   end
 end

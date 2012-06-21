@@ -12,9 +12,10 @@ if_block_begin:
     - "if A"
     - if true
     - if false
-  invalid:
     - "if +A"
     - "if -A"
+    - "if ?A"
+  invalid:
     - "if $$"
 if_block_end:
   valid:
@@ -65,7 +66,6 @@ case_block_begin:
     - case 1.0
     - case 'data.txt'
     - case "string"
-  invalid:
     - case +A
     - case -A
     - case ?A
@@ -76,10 +76,11 @@ when_block_begin:
     - when 1.0
     - when 'data.txt'
     - when "string"
-  invalid:
     - when +A
     - when -A
     - when ?A
+  invalid:
+    - when @
 when_block:
   valid:
     - when $Var

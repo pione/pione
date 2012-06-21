@@ -21,7 +21,6 @@ describe 'Parser::FeatureExpr' do
 
     it 'should parse feature expressions' do
       testcases = YAML.load(File.read(File.join(File.dirname(__FILE__),
-                                                "spec_feature-expr",
                                                 "spec_feature-expr.yml")))
       testcases.each do |_, testcase|
         tree = TestParser.new.feature_expr.parse(testcase["string"])

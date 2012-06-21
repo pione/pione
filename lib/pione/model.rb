@@ -1,5 +1,9 @@
 module Pione::Model
+
+  # PioneModelTypeError represents type mismatch error in PIONE model world.
   class PioneModelTypeError < StandardError
+    # @param [PioneModelObject] obj PIONE model object
+    # @param [Type] type expected type
     def initialize(obj, type)
       @obj = obj
       @type = type
@@ -11,6 +15,7 @@ module Pione::Model
     end
   end
 
+  # Type is a class for type expression of PIONE model objects.
   class Type < Pione::PioneObject
     attr_reader :type_string
     attr_reader :method_interface
@@ -35,6 +40,7 @@ module Pione::Model
     end
   end
 
+  # TypeList represetnts list type of element type.
   class TypeList < Type
     attr_reader :element_type
 
@@ -49,15 +55,19 @@ module Pione::Model
     end
   end
 
+  # PioneMethodInterface represents type of PIONE object's methods.
   class PioneMethodInterface < Pione::PioneObject
     attr_reader :inputs
     attr_reader :output
 
+    # @param [[Type]] inputs inputs type definition
+    # @pram [Type] output type definition
     def initialize(inputs, output)
       @inputs = inputs
       @output = output
     end
 
+    # Validates inputs data types for the method.
     def validate_inputs(*args)
       @inputs.each_with_index do |input, i|
         unless input.match(args[i].pione_model_type)
@@ -66,6 +76,7 @@ module Pione::Model
       end
     end
 
+    # Validates output data type for the method.
     def validate_output(value)
       @output.match(value.pione_model_type)
     end

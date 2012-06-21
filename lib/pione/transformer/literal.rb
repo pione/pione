@@ -11,9 +11,14 @@ module Pione
         name.str.gsub(/\\(.)/) {$1}
       end
 
+      # rule_name
+      rule(:rule_name => simple(:name)) do
+        Model::RuleExpr.new(name)
+      end
+
       # boolean
       rule(:boolean => simple(:s)) do
-        s == "true" ? Model::PioneBoolean.true : Model::PioneBoolean.false
+        (s == "true") ? Model::PioneBoolean.true : Model::PioneBoolean.false
       end
 
       # string
