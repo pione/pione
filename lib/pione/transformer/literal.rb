@@ -5,17 +5,6 @@ module Pione
     module Literal
       include TransformerModule
 
-      # data_name
-      # escape characters are substituted
-      rule(:data_name => simple(:name)) do
-        name.str.gsub(/\\(.)/) {$1}
-      end
-
-      # rule_name
-      rule(:rule_name => simple(:name)) do
-        Model::RuleExpr.new(name)
-      end
-
       # boolean
       rule(:boolean => simple(:s)) do
         (s == "true") ? Model::PioneBoolean.true : Model::PioneBoolean.false
@@ -39,6 +28,22 @@ module Pione
       # variable
       rule(:variable => simple(:v)) do
         Model::Variable.new(v)
+      end
+
+      # data_name
+      # escape characters are substituted
+      rule(:data_name => simple(:name)) do
+        Model::DataExpr.new(name.str.gsub(/\\(.)/) {$1})
+      end
+
+      # package_name
+      rule(:package_name => simple(:name)) do
+        Model::Package.new(name)
+      end
+
+      # rule_name
+      rule(:rule_name => simple(:name)) do
+        Model::RuleExpr.new(name)
       end
     end
   end

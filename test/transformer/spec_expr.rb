@@ -1,66 +1,60 @@
-require 'pione/test-util'
-
-def execute_testcase(msg, testcase)
-  testcase.each do |string, val|
-    it "#{msg}: #{string}" do
-      res = Transformer.new.apply(Parser.new.expr.parse(string))
-      res.should == val
-    end
-  end
-end
+require 'test-util'
 
 describe 'Transformer::Expr' do
-  describe 'binary operator' do
-    testcase_binary_operator = {
-      "1 + 2" =>
-      Model::BinaryOperator.new("+",
-                                PioneInteger.new(1),
-                                PioneInteger.new(2)),
-      '"a" + "b"' =>
-      Model::BinaryOperator.new("+",
-                                PioneString.new("a"),
-                                PioneString.new("b")),
-      "false || true" =>
-      Model::BinaryOperator.new("||",
-                                PioneBoolean.false,
-                                PioneBoolean.true),
-      "$var * 3" =>
-      Model::BinaryOperator.new("*",
-                                Variable.new("var"),
-                                PioneInteger.new(3)),
-      "($Var1 == \"a\") && ($Var2 == \"b\")" =>
-      Model::BinaryOperator.new("&&",
-                                Model::BinaryOperator.new("==",
-                                                          Model::Variable.new("Var1"),
-                                                          Model::PioneString.new("a")),
-                                Model::BinaryOperator.new("==",
-                                                          Model::Variable.new("Var2"),
-                                                          Model::PioneString.new("b"))),
-    }
-    execute_testcase("should get binary operator", testcase_binary_operator)
+  transformer_spec("binary operator", :expr) do
+    tc "1 + 2" do
+      BinaryOperator.new("+",
+                         PioneInteger.new(1),
+                         PioneInteger.new(2))
+    end
+    tc '"a" + "b"' do
+      BinaryOperator.new("+",
+                         PioneString.new("a"),
+                         PioneString.new("b"))
+    end
+    tc "false || true" do
+      BinaryOperator.new("||",
+                         PioneBoolean.false,
+                         PioneBoolean.true)
+    end
+    tc "$var * 3" do
+      BinaryOperator.new("*",
+                         Variable.new("var"),
+                         PioneInteger.new(3))
+    end
+    tc "($Var1 == \"a\") && ($Var2 == \"b\")" do
+      BinaryOperator.new("&&",
+                         BinaryOperator.new("==",
+                                            Variable.new("Var1"),
+                                            PioneString.new("a")),
+                         BinaryOperator.new("==",
+                                            Variable.new("Var2"),
+                                            PioneString.new("b")))
+    end
+  end
 
-    testcase_message = {
-      "1.next" =>
-      Model::Message.new("next",
-                         Model::PioneInteger.new(1)),
-      "1.next.next" =>
-      Model::Message.new("next",
-                         Model::Message.new("next",
-                                            Model::PioneInteger.new(1))),
-      "\"abc\".index(1,1)" =>
-      Model::Message.new("index",
-                         Model::PioneString.new("abc"),
-                         Model::PioneInteger.new(1),
-                         Model::PioneInteger.new(1)),
-      "(1 + 2).prev" =>
-      Model::Message.new("prev",
-                         Model::BinaryOperator.new("+",
-                                                   Model::PioneInteger.new(1),
-                                                   Model::PioneInteger.new(2))),
-      "abc.sync" =>
-      Model::Message.new("sync",
-                         Model::RuleExpr.new("abc"))
-    }
-    execute_testcase("should get message", testcase_message)
+  transformer_spec("message", :expr) do
+    tc "1.next" do
+      Message.new("next", PioneInteger.new(1))
+    end
+    tc "1.next.next" do
+      Message.new("next",
+                  Message.new("next", PioneInteger.new(1)))
+    end
+    tc "\"abc\".index(1,1)" do
+      Message.new("index",
+                  PioneString.new("abc"),
+                  PioneInteger.new(1),
+                  PioneInteger.new(1))
+    end
+    tc "(1 + 2).prev" do
+      Message.new("prev",
+                  BinaryOperator.new("+",
+                                     PioneInteger.new(1),
+                                     PioneInteger.new(2)))
+    end
+    tc "abc.sync" do
+      Message.new("sync", RuleExpr.new("abc"))
+    end
   end
 end

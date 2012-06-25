@@ -1,32 +1,66 @@
-require 'pione/test-util'
+require 'test-util'
 
 describe 'Transformer::FlowElement' do
-  it 'should get a CallRule' do
-    string = "rule Test"
-    tree = Parser.new.call_rule_line.parse(string)
-    res = Transformer.new.apply(tree)
-    res.should.kind_of(Rule::FlowElement::CallRule)
-    res.expr.should == RuleExpr.new("Test")
+  transformer_spec("call_rule_line", :call_rule_line) do
+    tc("rule Test" => CallRule.new(RuleExpr.new("Test")))
   end
 
-  it 'should get a ConditionalBlock by if_parse' do
-    string = <<-STRING
+  transformer_spec("if_block", :if_block) do
+    tc(<<-STRING) do
+      if $Var == 1
+        rule A
+      end
+    STRING
+      ConditionalBlock.new(BinaryOperator.new("==",
+                                              Variable.new("Var"),
+                                              PioneInteger.new(1)),
+                           { true =>
+                             Block.new(CallRule.new(RuleExpr.new("A")))
+                           })
+    end
+    tc(<<-STRING) do
       if $Var == "a"
         rule A
       else
         rule B
       end
     STRING
-    tree = Parser.new.if_block.parse(string)
-    res = Transformer.new.apply(tree)
-    res.should.kind_of(Rule::FlowElement::ConditionalBlock)
-    res.expr.should == Model::BinaryOperator.new("==",
-                                                 Variable.new("Var"),
-                                                 PioneString.new("a"))
+      ConditionalBlock.new(BinaryOperator.new("==",
+                                              Variable.new("Var"),
+                                              PioneString.new("a")),
+                           { true =>
+                             Block.new(CallRule.new(RuleExpr.new("A"))),
+                             :else =>
+                             Block.new(CallRule.new(RuleExpr.new("B")))
+                           })
+    end
+    tc(<<-STRING) do
+      if $a
+        if $b
+          rule Test1
+        else
+          rule Test2
+        end
+      else
+        rule Test3
+      end
+    STRING
+      inner_block =
+        Block.new(ConditionalBlock.new(Variable.new("b"),
+                                       { true =>
+                                         Block.new(CallRule.new("Test1")),
+                                         :else =>
+                                         Block.new(CallRule.new("Test2"))
+                                       }))
+      ConditionalBlock.new(Variable.new("a"),
+                           { true => inner_block,
+                             :else => Block.new(CallRule.new("Test3"))
+                           })
+    end
   end
 
-  it 'should get a ConditionalBlock by case_parse' do
-    string = <<-STRING
+  transformer_spec("case_block", :case_block) do
+    tc(<<-STRING) do
       case $Var
       when "a"
         rule A
@@ -36,9 +70,28 @@ describe 'Transformer::FlowElement' do
         rule C
       end
     STRING
-    tree = Parser.new.case_block.parse(string)
-    res = Transformer.new.apply(tree)
-    res.should.kind_of(Rule::FlowElement::ConditionalBlock)
-    res.expr.should == Variable.new("Var")
+      ConditionalBlock.new(Variable.new("Var"),
+                           { PioneString.new("a") =>
+                             Block.new(CallRule.new(RuleExpr.new("A"))),
+                             PioneString.new("b") =>
+                             Block.new(CallRule.new(RuleExpr.new("B"))),
+                             PioneString.new("c") =>
+                             Block.new(CallRule.new(RuleExpr.new("C"))) })
+    end
+    tc(<<-STRING) do
+      case $Var
+      when "a"
+        rule Test1
+      else
+        rule Test2
+      end
+    STRING
+      ConditionalBlock.new(Variable.new("Var"),
+                           { PioneString.new("a") =>
+                             Block.new(CallRule.new(RuleExpr.new("Test1"))),
+                             :else =>
+                             Block.new(CallRule.new(RuleExpr.new("Test2")))
+                           })
+    end
   end
 end

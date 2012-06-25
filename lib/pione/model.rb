@@ -137,7 +137,11 @@ module Pione::Model
   require 'pione/model/variable'
   require 'pione/model/variable-table'
   require 'pione/model/data-expr'
+  require 'pione/model/package'
   require 'pione/model/rule-expr'
   require 'pione/model/binary-operator'
   require 'pione/model/message'
+  require 'pione/model/call-rule'
+  require 'pione/model/assignment'
+  require 'pione/model/block'
 end

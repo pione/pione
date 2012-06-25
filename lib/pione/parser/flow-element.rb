@@ -37,10 +37,11 @@ module Pione
       #     rule Test2
       #   end
       rule(:if_block) {
-        (if_block_begin >>
-         flow_element.repeat.as(:if_true_elements) >>
-         if_block_else.maybe >>
-         if_block_end).as(:if_block)
+        ( if_block_begin >>
+          flow_element.repeat.as(:if_true_elements) >>
+          else_block.maybe.as(:if_else_block) >>
+          conditional_block_end
+          ).as(:if_block)
       }
 
       # if_block_begin:
@@ -58,16 +59,17 @@ module Pione
       #     rule Test1
       #     rule Test2
       #     ...
-      rule(:if_block_else) {
-        space? >>
-        keyword_else >>
-        line_end >>
-        flow_element.repeat.as(:if_false_elements)
+      rule(:else_block) {
+        ( space? >>
+          keyword_else >>
+          line_end >>
+          flow_element.repeat.as(:elements)
+          ).as(:else_block)
       }
 
-      # if_block_end
+      # conditional_block_end
       #   end
-      rule(:if_block_end) {
+      rule(:conditional_block_end) {
         space? >> keyword_end >> line_end
       }
 
@@ -82,9 +84,9 @@ module Pione
       #   end
       rule(:case_block) {
         (case_block_begin >>
-         when_block.repeat.as(:when_block) >>
-         if_block_else.maybe >>
-         if_block_end
+         when_block.repeat.as(:when_blocks) >>
+         else_block.maybe.as(:case_else_block) >>
+         conditional_block_end
          ).as(:case_block)
       }
 
@@ -94,7 +96,7 @@ module Pione
         space? >>
         keyword_case >>
         space? >>
-        expr >>
+        expr.as(:condition) >>
         line_end
       }
 
@@ -104,8 +106,9 @@ module Pione
       #     rule Test2
       #     ...
       rule(:when_block) {
-        when_block_begin >>
-        flow_element.repeat.as(:elements)
+        ( when_block_begin >>
+          flow_element.repeat.as(:elements)
+          ).as(:when_block)
       }
 
       # when_block_begin:
@@ -114,20 +117,20 @@ module Pione
         space? >>
         keyword_when >>
         space? >>
-        expr.as(:when) >>
+        expr.as(:value) >>
         line_end
       }
 
       # assignment:
       #   $X := 1
       rule(:assignment) {
-        (space? >>
-         variable.as(:symbol) >>
-         space? >>
-         colon >> equals >>
-         space? >>
-         expr.as(:value) >>
-         line_end).as(:assignment)
+        ( space? >>
+          variable.as(:symbol) >>
+          space? >>
+          colon >> equals >>
+          space? >>
+          expr.as(:value) >>
+          line_end).as(:assignment)
       }
     end
   end

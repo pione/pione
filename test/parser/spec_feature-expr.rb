@@ -1,5 +1,4 @@
-require 'pione/test-util'
-require 'yaml'
+require 'test-util'
 
 class TestParser < Parslet::Parser
   include Pione::Parser::FeatureExpr

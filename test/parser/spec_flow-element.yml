@@ -17,10 +17,10 @@ if_block_begin:
     - "if ?A"
   invalid:
     - "if $$"
-if_block_end:
+conditional_block_end:
   valid:
     - "end"
-if_block_else:
+else_block:
   valid:
     - |
       else
@@ -50,6 +50,21 @@ if_block:
         rule Test1
       else
         rule Test2
+      end
+    - |
+      if $Var
+        rule Test
+      else
+      end
+    - |
+      if $a
+        if $b
+          rule A
+        else
+          rule B
+        end
+      else
+        rule C
       end
   invalid:
     - |

@@ -1,5 +1,5 @@
 module Pione::Model
-  class Package < Pione
+  class Package < PioneModelObject
     def initialize(name)
       @name = name
     end

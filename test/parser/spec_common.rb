@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-require 'pione/test-util'
+require 'test-util'
 
 class TestParser < Parslet::Parser
   include Pione::Parser::Common

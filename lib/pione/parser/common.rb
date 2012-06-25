@@ -32,13 +32,15 @@ module Pione
         :greater_than => '>',
         :asterisk => '*',
         :percent => '%',
-        :armark => '@'
+        :atmark => '@'
       }
 
+      # make symbols
       SYMBOLS.each do |key, val|
         rule(key) { str(val) }
       end
 
+      # make all symbols rule
       rule(:symbols) {
         SYMBOLS.keys.inject(nil) do |res, elt|
           res ? res | send(elt) : send(elt)
@@ -55,9 +57,7 @@ module Pione
         :keyword_Action => 'Action',
         :keyword_End => 'End',
         :keyword_input => 'input',
-        :keyword_input_all => 'input-all',
         :keyword_output => 'output',
-        :keyword_output_all => 'output-all',
         :keyword_param => 'param',
         :keyword_feature => 'feature',
         :keyword_rule => 'rule',
@@ -72,6 +72,7 @@ module Pione
         :keyword_false => 'false'
       }
 
+      # make keywords
       KEYWORDS.each do |key, val|
         rule(key) { str(val) }
       end
@@ -80,14 +81,30 @@ module Pione
       # utilities
       #
 
+      # identifier
+      rule(:identifier) {
+        ((space | symbols | line_end).absent? >> any).repeat(1)
+      }
+
+      # digit
       rule(:digit) { match('[0-9]') }
+
+      # space
       rule(:space) { match("[ \t]").repeat(1) }
+
+      # space?
       rule(:space?) { space.maybe }
+
+      # line_end
       rule(:line_end) { space? >> (str("\n") | any.absent?) }
+
+      # empty_lines
       rule(:empty_lines) {
         (space? >> str("\n")).repeat(1) >>
         (space? >> any.absent?).maybe
        }
+
+      # empty_lines?
       rule(:empty_lines?) { empty_lines.maybe }
     end
   end

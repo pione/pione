@@ -40,3 +40,8 @@ rule_conditions:
       output "*.c"
       param $var
       feature +A
+    - |
+      output "*.a"
+      input "*.b"
+      feature -A
+      param $var

@@ -4,33 +4,9 @@ module Pione
       include Parslet
       include Common
 
-      # data_name
-      rule(:data_name) {
-        squote >>
-        (backslash >> any | squote.absent? >> any).repeat.as(:data_name) >>
-        squote
-      }
-
-      # identifier
-      rule(:identifier) {
-        ((space | symbols | line_end).absent? >> any).repeat(1)
-      }
-
-      # variable
-      rule(:variable) {
-        doller >>
-        identifier.as(:variable)
-      }
-
-      # package_name
-      rule(:package_name) {
-        ampersand >>
-        identifier.repeat(1).as(:package_name)
-      }
-
-      # rule_name
-      rule(:rule_name) {
-        identifier.as(:rule_name)
+      # boolean
+      rule(:boolean) {
+        (keyword_true | keyword_false).as(:boolean)
       }
 
       # string
@@ -56,9 +32,28 @@ module Pione
           ).as(:float)
       }
 
-      # boolean
-      rule(:boolean) {
-        (keyword_true | keyword_false).as(:boolean)
+      # variable
+      rule(:variable) {
+        doller >>
+        identifier.as(:variable)
+      }
+
+      # data_name
+      rule(:data_name) {
+        squote >>
+        (backslash >> any | squote.absent? >> any).repeat.as(:data_name) >>
+        squote
+      }
+
+      # package_name
+      rule(:package_name) {
+        ampersand >>
+        identifier.repeat(1).as(:package_name)
+      }
+
+      # rule_name
+      rule(:rule_name) {
+        identifier.as(:rule_name)
       }
     end
   end

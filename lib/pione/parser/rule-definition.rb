@@ -13,17 +13,21 @@ class Pione::Parser
       (space? >> rule_definition >> empty_lines?).repeat
     }
 
-    # rule_header
-    rule(:rule_header) {
-      keyword_rule_header >> space >> rule_name >> line_end
-    }
-
     # rule_definition
     rule(:rule_definition) {
-      ( rule_header.as(:rule_header) >>
+      ( rule_header >>
         rule_conditions >>
         block
         ).as(:rule_definition)
+    }
+
+    # rule_header
+    rule(:rule_header) {
+      ( keyword_rule_header >>
+        space >>
+        rule_name >>
+        line_end
+        ).as(:rule_header)
     }
 
     # rule_conditions
@@ -43,33 +47,23 @@ class Pione::Parser
     # rule conditions
     #
 
-    # input_header
-    rule(:input_header) {
-      (keyword_input_all | keyword_input).as(:input_header)
-    }
-
     # input_line
     rule(:input_line) {
-      (space? >>
-       input_header >>
-       space >>
-       (expr.as(:expr) |
-        syntax_error("expected expr in input_line context",
-                     [:expr])
-        ) >>
-       line_end
-       ).as(:input_line)
-    }
-
-    # output_header
-    rule(:output_header) {
-      (keyword_output_all | keyword_output).as(:output_header)
+      ( space? >>
+        keyword_input >>
+        space >>
+        (expr.as(:expr) |
+         syntax_error("expected expr in input_line context",
+                      [:expr])
+         ) >>
+        line_end
+        ).as(:input_line)
     }
 
     # output_line
     rule(:output_line) {
       ( space? >>
-        output_header >>
+        keyword_output >>
         space >>
         (expr.as(:expr) |
          syntax_error("expected expr in output_line context",

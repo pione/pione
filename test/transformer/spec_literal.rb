@@ -1,87 +1,58 @@
-require 'pione/test-util'
+require 'test-util'
 
 describe 'Transformer::Literal' do
-  describe 'data_name' do
-    data = {
-      "'abc'" => 'abc',
-      "'a\\bc'" => 'abc',
-      "'a\\''" => "a'",
-      "'a\\\"'" => "a\""
-    }
-    data.each do |string, val|
-      it "should get strings: #{string}" do
-        res = Transformer.new.apply(Parser.new.data_name.parse(string))
-        res.should == val
-      end
-    end
+  transformer_spec('boolean', :boolean) do
+    tc('true' => PioneBoolean.true)
+    tc('false' => PioneBoolean.false)
   end
 
-  describe 'package_name' do
-    data = {
-      "&abc" => Model::Package.new('abc'),
-      "&ABC" => Model::Package.new('ABC'),
-    }
-    data.each do |string, val|
-      it "should get strings: #{string}" do
-        res = Transformer.new.apply(Parser.new.data_name.parse(string))
-        res.should == val
-      end
-    end
+  transformer_spec('string', :string) do
+    tc('"abc"' => PioneString.new('abc'))
+    tc('"a\bc"' => PioneString.new('abc'))
+    tc('"a\'"' => PioneString.new('a\''))
+    tc('"a\""' => PioneString.new('a"'))
   end
 
-  describe 'string' do
-    data = {
-      '"abc"' => 'abc',
-      '"a\bc"' => 'abc',
-      '"a\'"' => 'a\'',
-      '"a\""' => 'a"'
-    }
-    data.each do |string, expected|
-      it "should get pione strings: #{string}" do
-        res = Transformer.new.apply(Parser.new.string.parse(string))
-        res.should == PioneString.new(expected)
-      end
-    end
+  transformer_spec('integer', :integer) do
+    tc('1' => PioneInteger.new(1))
+    tc('123' => PioneInteger.new(123))
+    tc('01' => PioneInteger.new(1))
+    tc('000123' => PioneInteger.new(123))
+    tc('-1' => PioneInteger.new(-1))
+    tc('-01' => PioneInteger.new(-1))
+    tc('+1' => PioneInteger.new(1))
+    tc('+01' => PioneInteger.new(1))
   end
 
-  describe 'integer' do
-    data = {
-      '1' => 1,
-      '123' => 123,
-      '01' => 1,
-      '000123' => 123,
-      '-1' => -1,
-      '-01' => -1,
-      '+1' => 1,
-      '+01' => 1
-    }
-    data.each do |string, expected|
-      it "should get integers: #{string}" do
-        res = Transformer.new.apply(Parser.new.integer.parse(string))
-        res.should == PioneInteger.new(expected)
-      end
-    end
+  transformer_spec('float', :float) do
+    tc('0.1' => PioneFloat.new(0.1))
+    tc('123.1' => PioneFloat.new(123.1))
+    tc('01.23' => PioneFloat.new(1.23))
+    tc('000123.456' => PioneFloat.new(123.456))
+    tc('-1.2' => PioneFloat.new(-1.2))
+    tc('-01.1' => PioneFloat.new(-1.1))
+    tc('+1.9' => PioneFloat.new(1.9))
+    tc('+01.8' => PioneFloat.new(1.8))
   end
 
-  describe 'float' do
-    data = {
-      '0.1' => 0.1,
-      '123.1' => 123.1,
-      '01.23' => 1.23,
-      '000123.456' => 123.456,
-      '-1.2' => -1.2,
-      '-01.1' => -1.1,
-      '+1.9' => 1.9,
-      '+01.8' => 1.8
-    }
-    data.each do |string, expected|
-      it "should get floats: #{string}" do
-        res = Transformer.new.apply(Parser.new.float.parse(string))
-        res.should == PioneFloat.new(expected)
-      end
-    end
+  transformer_spec('variable', :variable) do
+    tc("$Var" => Variable.new('Var'))
+    tc("$var" => Variable.new('var'))
   end
 
-  #describe 'rule_name'
+  transformer_spec('data_name', :data_name) do
+    tc("'abc'" => DataExpr.new('abc'))
+    tc("'a\\bc'" => DataExpr.new('abc'))
+    tc("'a\\''" => DataExpr.new("a'"))
+    tc("'a\\\"'" => DataExpr.new("a\""))
+  end
 
+  transformer_spec('package_name', :package_name) do
+    tc("&abc" => Package.new('abc'))
+    tc("&ABC" => Package.new('ABC'))
+  end
+
+  transformer_spec('rule_name', :rule_name) do
+    tc("abc" => RuleExpr.new("abc"))
+  end
 end
