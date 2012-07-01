@@ -1,4 +1,4 @@
-require 'pione/test-util'
+require_relative '../test-util'
 
 describe 'Model::Variable' do
   before do

@@ -1,4 +1,4 @@
-require 'pione/test-util'
+require_relative 'test-util'
 
 data = DataExpr.new('*')
 
@@ -10,11 +10,11 @@ Action---
 --End
 
 Rule OutputsRule
-  inputs '*.a'
+  input '*.a'
   output '*'.except('{$INPUT[1]}')
-Action---
+Action
 echo -n "abc" > {$OUTPUT[1]}
----End
+End
 DOCUMENT
 
 

@@ -1,5 +1,7 @@
 module Pione::Model
   class Package < PioneModelObject
+    attr_reader :name
+
     def initialize(name)
       @name = name
     end
@@ -8,5 +10,14 @@ module Pione::Model
       TypePackage
     end
 
+    def ==(other)
+      @name == other.name
+    end
+
+    alias :eql? :==
+
+    def hash
+      @value.hash
+    end
   end
 end

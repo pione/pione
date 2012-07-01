@@ -1,4 +1,4 @@
-require 'test-util'
+require_relative '../test-util'
 
 class TestParser < Parslet::Parser
   include Pione::Parser::FeatureExpr

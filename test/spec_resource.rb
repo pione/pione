@@ -1,7 +1,5 @@
 require 'tempfile'
-require 'pione/test-util'
-require 'pione/uri'
-require 'pione/resource'
+require_relative 'test-util'
 
 describe 'Resource' do
   describe 'Local' do

@@ -1,4 +1,4 @@
-require 'test-util'
+require_relative '../test-util'
 
 describe 'Parser::FlowElement' do
   TestUtil::Parser.spec(Pione::Parser::FlowElement, __FILE__, self)

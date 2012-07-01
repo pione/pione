@@ -1,5 +1,4 @@
-require 'pione/test-util'
-require 'pione/uri'
+require_relative 'test-util'
 
 describe 'URI' do
   describe 'Local' do

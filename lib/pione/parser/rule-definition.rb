@@ -23,7 +23,7 @@ class Pione::Parser
 
     # rule_header
     rule(:rule_header) {
-      ( keyword_rule_header >>
+      ( keyword_Rule >>
         space >>
         rule_name >>
         line_end

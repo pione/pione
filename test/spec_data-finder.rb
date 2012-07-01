@@ -1,10 +1,10 @@
-require 'pione/test-util'
+require_relative 'test-util'
 require 'yaml'
 
 #
 # test cases
 #
-yamlname = 'spec_data-finder/spec_data-finder.yml'
+yamlname = 'spec_data-finder.yml'
 ymlpath = File.join(File.dirname(__FILE__), yamlname)
 testcases = YAML.load_file(ymlpath)
 

@@ -1,4 +1,4 @@
-require 'test-util'
+require_relative '../test-util'
 
 describe 'Transformer::Literal' do
   transformer_spec('boolean', :boolean) do

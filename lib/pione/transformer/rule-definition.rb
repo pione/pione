@@ -2,6 +2,11 @@ class Pione::Transformer
   module RuleDefinition
     include Pione::TransformerModule
 
+    def check_data_type(obj, pione_model_type)
+      pione_model_type.match(obj.pione_mode_type)
+    end
+    module_function :check_data_type
+
     # rule_definition
     rule(:rule_definition => {
            :rule_header => simple(:header),
@@ -25,7 +30,7 @@ class Pione::Transformer
 
     # output_line
     rule(:output_line => simple(:data_expr)) {
-      check_model_type(data_expr, Model::TypeDataExpr)
+      check_data_type(data_expr, Model::TypeDataExpr)
       RuleCondition.new(:output, data_expr)
     }
 
@@ -37,7 +42,7 @@ class Pione::Transformer
 
     # feature_line
     rule(:feature_line => simple(:feature_expr)) {
-      check_model_type(feature_expr, Model::TypeFeatureExpr)
+      check_data_type(feature_expr, Model::TypeFeatureExpr)
       RuleCondition.new(:feature, feature_expr)
     }
   end

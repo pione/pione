@@ -1,4 +1,4 @@
-require 'pione/test-util.rb'
+require_relative 'test-util.rb'
 
 include Pione
 

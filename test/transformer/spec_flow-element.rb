@@ -1,4 +1,4 @@
-require 'test-util'
+require_relative '../test-util'
 
 describe 'Transformer::FlowElement' do
   transformer_spec("call_rule_line", :call_rule_line) do

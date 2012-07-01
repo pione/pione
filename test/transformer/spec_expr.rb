@@ -1,4 +1,4 @@
-require 'test-util'
+require_relative '../test-util'
 
 describe 'Transformer::Expr' do
   transformer_spec("binary operator", :expr) do

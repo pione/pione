@@ -1,5 +1,4 @@
-require 'pione/test-util'
-
+require_relative 'test-util'
 
 describe "Tuple" do
   describe "Tuple::TupleObject" do

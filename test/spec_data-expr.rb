@@ -1,5 +1,4 @@
-require 'pione/test-util'
-require 'pione/data-expr'
+require_relative 'test-util'
 
 describe 'DataExpr' do
   it 'should get expression informations' do

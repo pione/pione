@@ -1,4 +1,4 @@
-require 'test-util'
+require_relative '../test-util'
 
 describe 'Transformer::FeatureExpr' do
   a = Feature::Symbol.new('A')
