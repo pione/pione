@@ -20,5 +20,18 @@ module Pione::Model
     def eval(vtable)
       vtable.set(@variable, @expr.eval(vtable))
     end
+
+    # Return true if other is a variable object which name is same as myself.
+    def ==(other)
+      return false unless other.kind_of?(self.class)
+      @variable == other.variable && @expr == other.expr
+    end
+
+    alias :eql? :==
+
+    # Returns hash value.
+    def hash
+      @name.hash
+    end
   end
 end
