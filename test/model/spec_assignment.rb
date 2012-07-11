@@ -20,6 +20,6 @@ describe 'Model::Assignment' do
   it 'should push its variable and value into variable table' do
     vtable = VariableTable.new
     x = Assignment.new(Variable.new("X"), PioneString.new("a"))
-    x.eval(vtable)
+    x.eval(vtable).should == PioneString.new("a")
   end
 end
