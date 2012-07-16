@@ -10,7 +10,13 @@ module Pione::Model
       TypePackage
     end
 
+    def +(other)
+      raise ArgumentError.new(other) unless other.kind_of?(RuleExpr)
+      "#{@name}:#{other.name}"
+    end
+
     def ==(other)
+      return false unless other.kind_of?(self.class)
       @name == other.name
     end
 

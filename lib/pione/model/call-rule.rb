@@ -13,13 +13,12 @@ module Pione::Model
   #   => CallRule.new(Variable.new('X'))
   class CallRule < PioneModelObject
     attr_reader :expr
-    attr_accessor :package
 
     def initialize(expr)
       @expr = expr
     end
 
-    # Return a rule path with expanding variables.
+    # Return a rule path string with expanding variables.
     def rule_path(vtable=VariableTable.new)
       @expr.eval(vtable)
     end
@@ -29,8 +28,12 @@ module Pione::Model
       @expr.sync_mode?
     end
 
+    def eval(vtable)
+      self.class.new(@expr.eval(vtable))
+    end
+
     def ==(other)
-      @expr == expr
+      @expr == other.expr
     end
 
     alias :eql? :==

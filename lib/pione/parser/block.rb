@@ -26,7 +26,7 @@ module Pione
       # action_block
       rule(:action_block) {
         (action_block_begin_line >>
-         (block_end_line.absent? >> any).repeat.as(:body) >>
+         (block_end_line.absent? >> any).repeat.as(:content) >>
          block_end_line
          ).as(:action_block)
       }

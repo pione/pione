@@ -55,10 +55,24 @@ module Pione::Model
 
     # Set a new variable.
     def set(variable, val=nil)
+      raise ArgumentError.new(variable) unless variable.kind_of?(Variable)
       if old = @table[variable] and not(val == old)
         raise VariableBindingError.new(var, val, old)
       end
       @table[variable] = val
+    end
+
+    # Expand variables in the string.
+    def expand(str)
+      variables = to_hash
+      str.gsub(/\{\$(.+?)\}/) do
+        var = Variable.new($1)
+        if variables.has_key?(var)
+          variables[var].to_ruby
+        else
+          raise UnknownVariableError.new($1)
+        end
+      end
     end
 
     # Make input auto-variables
@@ -76,18 +90,6 @@ module Pione::Model
     def make_output_auto_variables(output_exprs, output_tuples)
       output_exprs.each_with_index do |expr, index|
         make_io_auto_variables(:output, expr, output_tuples[index], index+1)
-      end
-    end
-
-    # Expand variables in the string.
-    def expand(str)
-      variables = to_hash
-      str.gsub(/\{\$(.+?)\}/) do
-        if variables.has_key?($1)
-          variables[$1]
-        else
-          raise UnknownVariableError.new($1)
-        end
       end
     end
 

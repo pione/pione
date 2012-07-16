@@ -40,9 +40,9 @@ module Pione
       # rule_expr
       rule(:rule_expr => simple(:rule)) { rule }
       rule(:rule_expr =>
-           { :package_name => simple(:package_name),
-             :rule => simple(:rule_obj) }) {
-        rule_obj.package = package_name
+           { :package => simple(:package),
+             :expr => simple(:expr) }) {
+        expr.set_package(package)
       }
     end
   end

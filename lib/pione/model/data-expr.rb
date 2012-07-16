@@ -83,12 +83,18 @@ module Pione::Model
     # [+modifier+] all / each
     # [+mode+] nil / stdout / stderr
     def initialize(name, modifier = :each, mode = nil)
-      raise ArgumentError.new(name) unless name.kind_of? String or name.kind_of? Regexp
+      unless name.kind_of? String or name.kind_of? Regexp
+        raise ArgumentError.new(name)
+      end
 
       @name = name
       @modifier = modifier
       @mode = mode
       @exceptions = []
+    end
+
+    def pione_model_type
+      TypeDataExpr
     end
 
     # Set it each modifier.

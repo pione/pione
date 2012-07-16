@@ -3,26 +3,6 @@ require 'pione/update-criteria'
 
 module Pione
   module Rule
-
-    # FlowRule represents a flow structured rule. This rule is consisted by flow
-    # elements and executes elements actions.
-    class FlowRule < BaseRule
-      # Return false because flow rule is not action rule.
-      def action?
-        false
-      end
-
-      # Return true.
-      def flow?
-        true
-      end
-
-      # Return FlowHandler class.
-      def handler_class
-        FlowHandler
-      end
-    end
-
     # FlowHandler represents a handler for flow actions.
     class FlowHandler < BaseHandler
       # :nodoc:

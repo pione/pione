@@ -2,26 +2,6 @@ require 'pione/common'
 
 module Pione
   module Rule
-    # ActionRule is a rule writing action.
-    class ActionRule < BaseRule
-      # Return true.
-      def action?
-        true
-      end
-
-      # Return false.
-      def flow?
-        false
-      end
-
-      private
-
-      # Return ActionHandler class.
-      def handler_class
-        ActionHandler
-      end
-    end
-
     # ActionHandler handles ActionRule.
     class ActionHandler < BaseHandler
       # Execute the action.

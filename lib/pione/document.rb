@@ -1,6 +1,5 @@
 require 'parslet'
 require 'pione/common'
-require 'pione/rule'
 
 module Pione
   class Document < PioneObject

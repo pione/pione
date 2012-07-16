@@ -158,7 +158,6 @@ module Pione
 end
 
 require 'pione/model'
-require 'pione/feature/feature-expr'
 require 'pione/agent'
 require 'pione/tuple-space-server-interface'
 require 'pione/agent/tuple-space-client'
@@ -167,7 +166,7 @@ require 'pione/log'
 require 'pione/tuple'
 require 'pione/data-finder'
 require 'pione/document'
-require 'pione/rule'
+require 'pione/rule-handler'
 require 'pione/agent/command-listener'
 require 'pione/agent/task-worker'
 

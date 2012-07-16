@@ -23,3 +23,8 @@ desc 'model test'
 task 'test:model' do
   sh "bacon -I lib -I test test/model/spec_*.rb"
 end
+
+desc 'agent test'
+task 'test:agent' do
+  sh "bacon -I lib -I test test/agent/spec_*.rb"
+end

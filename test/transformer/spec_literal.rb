@@ -53,6 +53,6 @@ describe 'Transformer::Literal' do
   end
 
   transformer_spec('rule_name', :rule_name) do
-    tc("abc" => RuleExpr.new("abc"))
+    tc("abc" => RuleExpr.new(Package.new("main"), "abc"))
   end
 end

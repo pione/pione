@@ -1,8 +1,14 @@
 call_rule_line:
   valid:
     - rule Test
+    - rule :Test
+    - "rule &package:Test"
+    - rule $var
   invalid:
     - rule
+    - "rule &package:$var"
+    - rule $var:Test
+    - rule :$var
 if_block_begin:
   valid:
     - "if $Var"

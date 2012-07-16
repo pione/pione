@@ -2,7 +2,37 @@ require_relative '../test-util'
 
 describe 'Transformer::FlowElement' do
   transformer_spec("call_rule_line", :call_rule_line) do
-    tc("rule Test" => CallRule.new(RuleExpr.new("Test")))
+    tc(
+      "rule Test" =>
+      CallRule.new(RuleExpr.new(Package.new("main"), "Test"))
+    )
+    tc(
+      "rule :Test" =>
+      CallRule.new(RuleExpr.new(Package.new("main"), "Test"))
+    )
+    tc(
+      "rule &test:Test" =>
+      CallRule.new(RuleExpr.new(Package.new("test"), "Test"))
+    )
+    tc("rule $var" => CallRule.new(Variable.new("var")))
+  end
+
+  transformer_spec("assignment", :assignment) do
+    tc(
+      "$var := 1" =>
+      Assignment.new(Variable.new("var"), PioneInteger.new(1))
+    )
+    tc(
+      "$a := $b" =>
+      Assignment.new(Variable.new("a"), Variable.new("b"))
+    )
+    tc(
+      "$var := &package:test" =>
+      Assignment.new(
+        Variable.new("var"),
+        RuleExpr.new(Package.new("package"), "test")
+      )
+    )
   end
 
   transformer_spec("if_block", :if_block) do
@@ -11,12 +41,18 @@ describe 'Transformer::FlowElement' do
         rule A
       end
     STRING
-      ConditionalBlock.new(BinaryOperator.new("==",
-                                              Variable.new("Var"),
-                                              PioneInteger.new(1)),
-                           { true =>
-                             Block.new(CallRule.new(RuleExpr.new("A")))
-                           })
+      ConditionalBlock.new(
+        BinaryOperator.new(
+          "==",
+          Variable.new("Var"),
+          PioneInteger.new(1)
+        ),
+        { true =>
+          FlowBlock.new(
+            CallRule.new(RuleExpr.new(Package.new("main"), "A"))
+          )
+        }
+      )
     end
     tc(<<-STRING) do
       if $Var == "a"
@@ -25,14 +61,18 @@ describe 'Transformer::FlowElement' do
         rule B
       end
     STRING
-      ConditionalBlock.new(BinaryOperator.new("==",
-                                              Variable.new("Var"),
-                                              PioneString.new("a")),
-                           { true =>
-                             Block.new(CallRule.new(RuleExpr.new("A"))),
-                             :else =>
-                             Block.new(CallRule.new(RuleExpr.new("B")))
-                           })
+      ConditionalBlock.new(
+        BinaryOperator.new(
+          "==",
+          Variable.new("Var"),
+          PioneString.new("a")
+        ),
+        { true =>
+          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "A"))),
+          :else =>
+          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "B")))
+        }
+      )
     end
     tc(<<-STRING) do
       if $a
@@ -45,17 +85,29 @@ describe 'Transformer::FlowElement' do
         rule Test3
       end
     STRING
-      inner_block =
-        Block.new(ConditionalBlock.new(Variable.new("b"),
-                                       { true =>
-                                         Block.new(CallRule.new("Test1")),
-                                         :else =>
-                                         Block.new(CallRule.new("Test2"))
-                                       }))
-      ConditionalBlock.new(Variable.new("a"),
-                           { true => inner_block,
-                             :else => Block.new(CallRule.new("Test3"))
-                           })
+      inner_block = FlowBlock.new(
+        ConditionalBlock.new(
+          Variable.new("b"),
+          { true =>
+            FlowBlock.new(
+              CallRule.new(RuleExpr.new(Package.new("main"), "Test1"))
+            ),
+            :else =>
+            FlowBlock.new(
+              CallRule.new(RuleExpr.new(Package.new("main"), "Test2"))
+            )
+          }
+        )
+      )
+      ConditionalBlock.new(
+        Variable.new("a"),
+        { true => inner_block,
+          :else =>
+          FlowBlock.new(
+            CallRule.new(RuleExpr.new(Package.new("main"), "Test3"))
+          )
+        }
+      )
     end
   end
 
@@ -70,13 +122,16 @@ describe 'Transformer::FlowElement' do
         rule C
       end
     STRING
-      ConditionalBlock.new(Variable.new("Var"),
-                           { PioneString.new("a") =>
-                             Block.new(CallRule.new(RuleExpr.new("A"))),
-                             PioneString.new("b") =>
-                             Block.new(CallRule.new(RuleExpr.new("B"))),
-                             PioneString.new("c") =>
-                             Block.new(CallRule.new(RuleExpr.new("C"))) })
+      ConditionalBlock.new(
+        Variable.new("Var"),
+        { PioneString.new("a") =>
+          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "A"))),
+          PioneString.new("b") =>
+          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "B"))),
+          PioneString.new("c") =>
+          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "C")))
+        }
+      )
     end
     tc(<<-STRING) do
       case $Var
@@ -86,12 +141,14 @@ describe 'Transformer::FlowElement' do
         rule Test2
       end
     STRING
-      ConditionalBlock.new(Variable.new("Var"),
-                           { PioneString.new("a") =>
-                             Block.new(CallRule.new(RuleExpr.new("Test1"))),
-                             :else =>
-                             Block.new(CallRule.new(RuleExpr.new("Test2")))
-                           })
+      ConditionalBlock.new(
+        Variable.new("Var"),
+        { PioneString.new("a") =>
+          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "Test1"))),
+          :else =>
+          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "Test2")))
+        }
+      )
     end
   end
 end

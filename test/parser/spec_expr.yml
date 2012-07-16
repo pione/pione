@@ -34,6 +34,15 @@ message:
     - .sync
     - .abc(1, "s", '*.txt')
     - .abc(1.0.abc(3.def))
+rule_expr:
+  valid:
+    - "&package:rule_name"
+    - ":rule_name"
+    - "rule_name"
+  invalid:
+    - "$var:rule_name"
+    - "&package:$var"
+    - "$var:$var"
 expr:
   valid:
     - "1"

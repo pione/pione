@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'pione/common'
 
-module Pione
+module Pione::Model
   module Feature
 
     # Expr is a super class for all feature expressions.

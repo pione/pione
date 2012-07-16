@@ -3,33 +3,47 @@ require_relative '../test-util'
 describe 'Transformer::Expr' do
   transformer_spec("binary operator", :expr) do
     tc "1 + 2" do
-      BinaryOperator.new("+",
-                         PioneInteger.new(1),
-                         PioneInteger.new(2))
+      BinaryOperator.new(
+        "+",
+        PioneInteger.new(1),
+        PioneInteger.new(2)
+      )
     end
     tc '"a" + "b"' do
-      BinaryOperator.new("+",
-                         PioneString.new("a"),
-                         PioneString.new("b"))
+      BinaryOperator.new(
+        "+",
+        PioneString.new("a"),
+        PioneString.new("b")
+      )
     end
     tc "false || true" do
-      BinaryOperator.new("||",
-                         PioneBoolean.false,
-                         PioneBoolean.true)
+      BinaryOperator.new(
+        "||",
+        PioneBoolean.false,
+        PioneBoolean.true
+      )
     end
     tc "$var * 3" do
-      BinaryOperator.new("*",
-                         Variable.new("var"),
-                         PioneInteger.new(3))
+      BinaryOperator.new(
+        "*",
+        Variable.new("var"),
+        PioneInteger.new(3)
+      )
     end
     tc "($Var1 == \"a\") && ($Var2 == \"b\")" do
-      BinaryOperator.new("&&",
-                         BinaryOperator.new("==",
-                                            Variable.new("Var1"),
-                                            PioneString.new("a")),
-                         BinaryOperator.new("==",
-                                            Variable.new("Var2"),
-                                            PioneString.new("b")))
+      BinaryOperator.new(
+        "&&",
+        BinaryOperator.new(
+          "==",
+          Variable.new("Var1"),
+          PioneString.new("a")
+        ),
+        BinaryOperator.new(
+          "==",
+          Variable.new("Var2"),
+          PioneString.new("b")
+        )
+      )
     end
   end
 
@@ -38,23 +52,31 @@ describe 'Transformer::Expr' do
       Message.new("next", PioneInteger.new(1))
     end
     tc "1.next.next" do
-      Message.new("next",
-                  Message.new("next", PioneInteger.new(1)))
+      Message.new(
+        "next",
+        Message.new("next", PioneInteger.new(1))
+      )
     end
     tc "\"abc\".index(1,1)" do
-      Message.new("index",
-                  PioneString.new("abc"),
-                  PioneInteger.new(1),
-                  PioneInteger.new(1))
+      Message.new(
+        "index",
+        PioneString.new("abc"),
+        PioneInteger.new(1),
+        PioneInteger.new(1)
+      )
     end
     tc "(1 + 2).prev" do
-      Message.new("prev",
-                  BinaryOperator.new("+",
-                                     PioneInteger.new(1),
-                                     PioneInteger.new(2)))
+      Message.new(
+        "prev",
+        BinaryOperator.new(
+          "+",
+          PioneInteger.new(1),
+          PioneInteger.new(2)
+        )
+      )
     end
     tc "abc.sync" do
-      Message.new("sync", RuleExpr.new("abc"))
+      Message.new("sync", RuleExpr.new(Package.new("main"), "abc"))
     end
   end
 end

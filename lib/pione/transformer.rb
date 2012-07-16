@@ -53,17 +53,19 @@ module Pione
     require 'pione/transformer/feature-expr'
     require 'pione/transformer/expr'
     require 'pione/transformer/flow-element'
+    require 'pione/transformer/block'
     require 'pione/transformer/rule-definition'
 
     include Literal
     include FeatureExpr
     include Expr
     include FlowElement
+    include Block
     include RuleDefinition
 
-    def initialize(data={})
+    def initialize(package=Package.new("main"))
       super()
-      @package = data[:package]
+      @current_package = package
     end
 
     def check_model_type(data, type)
@@ -76,7 +78,7 @@ module Pione
 
     # package
     rule(:package => subtree(:tree)) {
-      @package = Package.new(tree[:package_name].to_s)
+      @current_package = Package.new(tree[:package_name].to_s)
     }
   end
 end

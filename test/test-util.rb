@@ -124,7 +124,9 @@ module TestUtil::Transformer
     context.describe name do
       testcases.each do |tc|
         it "should get #{name}: #{tc.string}" do
-          res = Transformer.new.apply(Parser.new.send(parser).parse(tc.string))
+          res = Transformer.new.apply(
+            Parser.new.send(parser).parse(tc.string)
+          )
           res.should == tc.expected
         end
       end

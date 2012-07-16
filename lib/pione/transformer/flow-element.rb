@@ -10,7 +10,7 @@ module Pione
 
       # call_rule
       rule(:call_rule => subtree(:rule_expr)) {
-        Model::CallRule.new(rule_expr)
+        CallRule.new(rule_expr)
       }
 
       # if_block
@@ -19,15 +19,15 @@ module Pione
              :if_true_elements => sequence(:if_true),
              :if_else_block => simple(:if_false)
            }) {
-        block = { true => Model::Block.new(*if_true) }
+        block = { true => FlowBlock.new(*if_true) }
         block[:else] = if_false if if_false
-        Model::ConditionalBlock.new(condition, block)
+        ConditionalBlock.new(condition, block)
       }
 
       # else_block
       rule(:else_block =>
            { :elements => sequence(:elements) }) {
-        Model::Block.new(*elements)
+        FlowBlock.new(*elements)
       }
 
       # case_block
@@ -48,9 +48,17 @@ module Pione
 
     # when_block
     rule(:when_block =>
-         { :value => simple(:value),
-           :elements => sequence(:elements) }) {
-      WhenBlock.new(value, Model::Block.new(*elements))
+      { :value => simple(:value),
+        :elements => sequence(:elements) }
+    ) {
+      WhenBlock.new(value, FlowBlock.new(*elements))
+    }
+
+    rule(:assignment =>
+      { :symbol => simple(:symbol),
+        :value => simple(:value) }
+    ) {
+      Assignment.new(symbol, value)
     }
   end
 end

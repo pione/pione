@@ -38,6 +38,12 @@ module Pione::Model
       @method_interface[name] = PioneMethodInterface.new(inputs, output)
       @method_body[name] = b
     end
+
+    def check(data)
+      unless match(data.pione_model_type)
+        raise PioneModelTypeError.new(data, type)
+      end
+    end
   end
 
   # TypeList represetnts list type of element type.
@@ -134,6 +140,7 @@ module Pione::Model
   require 'pione/model/integer'
   require 'pione/model/float'
   require 'pione/model/string'
+  require 'pione/model/feature-expr'
   require 'pione/model/variable'
   require 'pione/model/variable-table'
   require 'pione/model/data-expr'
@@ -144,4 +151,5 @@ module Pione::Model
   require 'pione/model/call-rule'
   require 'pione/model/assignment'
   require 'pione/model/block'
+  require 'pione/model/rule'
 end

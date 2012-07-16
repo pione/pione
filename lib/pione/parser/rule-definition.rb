@@ -17,7 +17,7 @@ class Pione::Parser
     rule(:rule_definition) {
       ( rule_header >>
         rule_conditions >>
-        block
+        block.as(:block)
         ).as(:rule_definition)
     }
 

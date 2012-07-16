@@ -1,5 +1,35 @@
 module Pione::Model
-  # Block represents flow element sequence.
+  # ActionBlock represents content script of action.
+  #   Action
+  #   echo "abc"
+  #   End
+  #   => ActionBlock.new("  echo \"abc\"")
+  class ActionBlock < PioneModelObject
+    attr_reader :content
+
+    def initialize(content)
+      @content = content
+    end
+
+    # Expands variables.
+    def eval(vtable)
+      self.class.new(vtable.expand(@content))
+    end
+
+    def ==(other)
+      return false unless other.kind_of?(self.class)
+      @content == other.content
+    end
+
+    alias :eql? :==
+
+    # Returns hash value.
+    def hash
+      @content.hash
+    end
+  end
+
+  # FlowBlock represents flow element sequence.
   #   Flow
   #     rule Test1
   #     rule Test2
@@ -8,7 +38,7 @@ module Pione::Model
   #   => Block.new([ CallRule.new('Test1'),
   #                  CallRule.new('Test2'),
   #                  CallRule.new('Test3') ])
-  class Block < PioneModelObject
+  class FlowBlock < PioneModelObject
     attr_reader :elements
 
     def initialize(*elements)
@@ -21,7 +51,7 @@ module Pione::Model
     end
 
     def ==(other)
-      return false unless other.kind_of?(Block)
+      return false unless other.kind_of?(self.class)
       @elements == other.elements
     end
 

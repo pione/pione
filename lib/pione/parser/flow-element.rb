@@ -25,7 +25,7 @@ module Pione
         (space? >>
          keyword_rule >>
          space? >>
-         rule_expr >>
+         expr >>
          line_end
          ).as(:call_rule)
       }

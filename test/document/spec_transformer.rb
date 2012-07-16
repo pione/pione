@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-require 'pione/test-util'
+require_relative 'test-util'
 
 describe 'Document::Transformer' do
   before do

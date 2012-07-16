@@ -7,12 +7,16 @@ module Pione::Model
 
   # Rule representation in the flow element context.
   class RuleExpr < PioneModelObject
+    attr_reader :package
     attr_reader :name
+    attr_reader :sync_mode
     attr_reader :params
 
     # Create a rule expression.
+    # @param [String] package pione package name
     # @param [String] name rule name
-    def initialize(name, sync_mode=false, params=[])
+    def initialize(package, name, sync_mode=false, params=[])
+      @package = package
       @name = name
       @sync_mode = sync_mode
       @params = params
@@ -28,19 +32,24 @@ module Pione::Model
     end
 
     def sync(truth)
-      return self.class.new(@name, truth, @params)
+      return self.class.new(@package, @name, truth, @params)
     end
 
-    def set_params(params)
-      return self.class.new(@name, @sync_mode, params)
+    def set_package(package)
+      return self.class.new(package, @name, @sync_mode, @params)
+    end
+
+    def set_params(*params)
+      return self.class.new(@package, @name, @sync_mode, params)
     end
 
     def eval(vtable=VariableTable.new)
-      return self.class.new(vtable.expand(@name), @sync_mode, @params)
+      return self.class.new(@package, vtable.expand(@name), @sync_mode, @params)
     end
 
     def ==(other)
       return false unless other.kind_of?(self.class)
+      return false unless @package = other.package
       return false unless @name == other.name
       return false unless sync_mode? == other.sync_mode?
       return false unless @params == other.params
@@ -50,15 +59,17 @@ module Pione::Model
     alias :eql? :==
 
     def hash
-      @name.hash + @params.hash + @sync_mode.hash
+      @package.hash + @name.hash + @params.hash + @sync_mode.hash
     end
   end
 
   TypeRuleExpr.instance_eval do
     define_pione_method("==", [TypeRuleExpr], TypeBoolean) do |rec, other|
-      PioneBoolean.new(rec.name == other.name &&
-                       rec.sync_mode? == other.sync_mode? &&
-                       rec.params == other.params)
+      PioneBoolean.new(
+        rec.package == other.package &&
+        rec.name == other.name &&
+        rec.sync_mode? == other.sync_mode? &&
+        rec.params == other.params)
     end
 
     define_pione_method("!=", [TypeRuleExpr], TypeBoolean) do |rec, other|

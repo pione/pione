@@ -43,22 +43,21 @@ module Pione
         float |
         integer |
         string |
-        variable |
         data_name |
         rule_expr |
-        feature_expr
+        feature_expr |
+        variable
       }
 
       # rule_expr:
       #   &abc:test
-      #   $var:test
       #   :test
       #   test
       rule(:rule_expr) {
-        (package_name >> colon >> rule_name |
-         variable >> colon >> rule_name |
-         colon >> rule_name |
-         rule_name).as(:rule_expr)
+        ( package_name.as(:package) >> colon >> rule_name.as(:expr) |
+          colon >> rule_name |
+          rule_name
+        ).as(:rule_expr)
       }
 
       # expr_operator:

@@ -2,48 +2,56 @@ class Pione::Transformer
   module RuleDefinition
     include Pione::TransformerModule
 
-    def check_data_type(obj, pione_model_type)
+    def check_model_type(obj, pione_model_type)
       pione_model_type.match(obj.pione_mode_type)
     end
-    module_function :check_data_type
+    module_function :check_model_type
 
     # rule_definition
     rule(:rule_definition => {
-           :rule_header => simple(:header),
+           :rule_header => simple(:name),
            :rule_conditions => sequence(:conditions),
            :block => simple(:block) }) {
-      name = header.name
-      inputs = conditions.fileter{|c| c.type == :input}.map{|c| c.obj}
-      outputs = conditions.fileter{|c| c.type == :output}.map{|c| c.obj}
-      params = conditions.fileter{|c| c.type == :param}.map{|c| c.obj}
-      features = conditions.fileter{|c| c.type == :feature}.map{|c| c.obj}
-      block.concrete_class.new(name, inputs, outputs, params, features, block)
+      expr = RuleExpr.new(
+        Package.new(@current_package), name
+      )
+      inputs = conditions.select{|c| c.type == :input}.map{|c| c.obj}
+      outputs = conditions.select{|c| c.type == :output}.map{|c| c.obj}
+      params = conditions.select{|c| c.type == :param}.map{|c| c.obj}
+      features = conditions.select{|c| c.type == :feature}.map{|c| c.obj}
+      condition = RuleCondition.new(inputs, outputs, params, features)
+      case block
+      when ActionBlock
+        ActionRule
+      when FlowBlock
+        FlowRule
+      end.new(expr, condition, block)
     }
 
-    RuleCondition = Struct.new(:type, :obj)
+    Condition = Struct.new(:type, :obj)
 
     # input_line
     rule(:input_line => simple(:data_expr)) {
-      check_data_type(data_expr, Model::TypeDataExpr)
-      RuleCondition.new(:input, data_expr)
+      TypeDataExpr.check(data_expr)
+      Condition.new(:input, data_expr)
     }
 
     # output_line
     rule(:output_line => simple(:data_expr)) {
-      check_data_type(data_expr, Model::TypeDataExpr)
-      RuleCondition.new(:output, data_expr)
+      TypeDataExpr.check(data_expr)
+      Condition.new(:output, data_expr)
     }
 
     # param_line
     rule(:param_line => simple(:variable)) {
-      check_data_type(variable, Model::TypeVariable)
-      RuleCondition.new(:param, variable)
+      TypeAny.check(variable)
+      Condition.new(:param, variable)
     }
 
     # feature_line
     rule(:feature_line => simple(:feature_expr)) {
-      check_data_type(feature_expr, Model::TypeFeatureExpr)
-      RuleCondition.new(:feature, feature_expr)
+      TypeFeatureExpr.check(feature_expr)
+      Condition.new(:feature, feature_expr)
     }
   end
 end

@@ -1,6 +1,5 @@
 require 'pione/common'
 require 'pione/agent'
-require 'pione/rule'
 
 module Pione
   module Agent

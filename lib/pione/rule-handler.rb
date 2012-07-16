@@ -200,8 +200,7 @@ module Pione
   end
 end
 
-require 'pione/rule/flow-rule'
-require 'pione/rule/flow-element'
-require 'pione/rule/action-rule'
-require 'pione/rule/root-rule'
-require 'pione/rule/system-rule'
+require 'pione/rule-handler/flow-rule'
+require 'pione/rule-handler/action-rule'
+require 'pione/rule-handler/root-rule'
+require 'pione/rule-handler/system-rule'
