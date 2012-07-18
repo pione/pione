@@ -63,9 +63,21 @@ module Pione
     include Block
     include RuleDefinition
 
-    def initialize(package=Package.new("main"))
+    def initialize(package_name="main")
       super()
-      @current_package = package
+      @current_package_name = package_name
+      Thread.current[:current_package_name] = @current_package_name
+    end
+
+    def apply(*args)
+      # p caller
+      # unless Thread.current[:current_package_name]
+      # p @current_package_name
+      #   Thread.current[:current_package_name] = @current_package_name
+      # end
+      res = super
+      #Thread.current[:current_package_name] = nil
+      return res
     end
 
     def check_model_type(data, type)

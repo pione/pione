@@ -43,7 +43,10 @@ module Pione
 
       # rule_name
       rule(:rule_name => simple(:name)) do
-        Model::RuleExpr.new(@current_package, name)
+        RuleExpr.new(
+          Package.new(Thread.current[:current_package_name]),
+          name
+        )
       end
     end
   end

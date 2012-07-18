@@ -82,7 +82,7 @@ module Pione::Model
     # [+name+] data expression name
     # [+modifier+] all / each
     # [+mode+] nil / stdout / stderr
-    def initialize(name, modifier = :each, mode = nil)
+    def initialize(name, modifier = :each, mode = nil, exceptions = [])
       unless name.kind_of? String or name.kind_of? Regexp
         raise ArgumentError.new(name)
       end
@@ -90,7 +90,7 @@ module Pione::Model
       @name = name
       @modifier = modifier
       @mode = mode
-      @exceptions = []
+      @exceptions = exceptions
     end
 
     def pione_model_type
@@ -156,11 +156,16 @@ module Pione::Model
     end
 
     # Set a exception and return self.
-    def except(*names)
-      @exceptions += names.map do |name|
-        name.kind_of?(DataExpr) ? name : DataExpr.new(name)
-      end
-      return self
+    # def except(*names)
+    #   @exceptions += names.map do |name|
+    #     name.kind_of?(DataExpr) ? name : DataExpr.new(name)
+    #   end
+    #   return self
+    # end
+    def except(name)
+      exceptions =
+        @exceptions.clone + [name.kind_of?(DataExpr) ? name : DataExpr.new(name)]
+      return self.class.new(@name, @modifier, @mode, exceptions)
     end
 
     # Return matched data if the name is matched with the expression.
@@ -228,6 +233,24 @@ module Pione::Model
     # Return true if the name matchs exceptions.
     def match_exceptions(name)
       not(@exceptions.select{|ex| ex.match(name)}.empty?)
+    end
+  end
+
+  TypeDataExpr.instance_eval do
+    define_pione_method("==", [TypeDataExpr], TypeBoolean) do |rec, other|
+      PioneBoolean.new(rec.value == other.value)
+    end
+
+    define_pione_method("!=", [TypeDataExpr], TypeBoolean) do |rec, other|
+      PioneBoolean.not(rec.call_pione_method("==", other))
+    end
+
+    define_pione_method("all", [], TypeDataExpr) do |rec|
+      DataExpr.new(rec.name, :all, rec.mode, rec.exceptions)
+    end
+
+    define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |rec, target|
+      rec.except(target)
     end
   end
 end

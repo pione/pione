@@ -9,12 +9,9 @@ class Pione::Transformer
 
     # rule_definition
     rule(:rule_definition => {
-           :rule_header => simple(:name),
+           :rule_header => simple(:rule_expr),
            :rule_conditions => sequence(:conditions),
            :block => simple(:block) }) {
-      expr = RuleExpr.new(
-        Package.new(@current_package), name
-      )
       inputs = conditions.select{|c| c.type == :input}.map{|c| c.obj}
       outputs = conditions.select{|c| c.type == :output}.map{|c| c.obj}
       params = conditions.select{|c| c.type == :param}.map{|c| c.obj}
@@ -25,7 +22,7 @@ class Pione::Transformer
         ActionRule
       when FlowBlock
         FlowRule
-      end.new(expr, condition, block)
+      end.new(rule_expr, condition, block)
     }
 
     Condition = Struct.new(:type, :obj)

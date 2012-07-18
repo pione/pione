@@ -78,5 +78,11 @@ describe 'Transformer::Expr' do
     tc "abc.sync" do
       Message.new("sync", RuleExpr.new(Package.new("main"), "abc"))
     end
+    tc "'*.txt'.all" do
+      Message.new("all", DataExpr.new("*.txt"))
+    end
+    tc "'*.txt'.all()" do
+      Message.new("all", DataExpr.new("*.txt"))
+    end
   end
 end

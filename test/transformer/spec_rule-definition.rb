@@ -2,14 +2,14 @@ require_relative '../test-util'
 
 describe 'Transformer::RuleDefinition' do
   transformer_spec("rule_definition", :rule_definitions) do
-    tc(<<-STRING) do
-      Rule Test
-        input  '*.a'
-        output '{$INPUT[1].MATCH[1]}.b'
-      Action
-      echo "test" > {$OUTPUT[1].NAME}
-      End
-    STRING
+    tc(<<STRING) do
+Rule Test
+  input  '*.a'
+output '{$INPUT[1].MATCH[1]}.b'
+Action
+echo "test" > {$OUTPUT[1].NAME}
+End
+STRING
       [ActionRule.new(
         RuleExpr.new(Package.new("main"), "Test"),
         RuleCondition.new(
@@ -18,7 +18,7 @@ describe 'Transformer::RuleDefinition' do
           [],
           []
         ),
-        "echo \"test\" > {$OUTPUT[1].NAME}"
+          ActionBlock.new("echo \"test\" > {$OUTPUT[1].NAME}\n")
       )]
     end
 
@@ -28,62 +28,62 @@ describe 'Transformer::RuleDefinition' do
         output '{$INPUT[1].MATCH[1]}.b'
       Flow
       rule TestA
-      rule TestB.sync
+      rule TestB
       End
     STRING
-      FlowRule.new(
-        RuleExpr.new(Package.new("main"), "Test"),
-        RuleCondition.new(
-          [ DataExpr.new('*.a') ],
-          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
-          [],
-          []
-        ),
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("main"), "TestA")),
-          CallRule.new(RuleExpr.new(Package.new("main"), "TestB").sync(true))
-        )
-      )
+      [ FlowRule.new(
+          RuleExpr.new(Package.new("main"), "Test"),
+          RuleCondition.new(
+            [ DataExpr.new('*.a') ],
+            [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
+            [],
+            []
+          ),
+          FlowBlock.new(
+            CallRule.new(RuleExpr.new(Package.new("main"), "TestA")),
+            CallRule.new(RuleExpr.new(Package.new("main"), "TestB"))
+          )
+      )]
     end
 
     tc(<<-STRING) do
       Rule Main
-        input '*.txt'.all.except('summary.txt')
+        input '*.txt'.except('summary.txt')
         output 'summary.txt'
         param $ConvertCharSet
-      Flow---
+      Flow
       if $ConvertCharset
         rule NKF.params("-w")
       end
-      rule CountChar.sync
+      rule CountChar
       rule Summarize
-      ---End
+      End
     STRING
-      FlowRule.new(
-        RuleExpr.new(Package.new("main"), "Main"),
-        RuleCondition.new(
-          [DataExpr.new("*.txt").all.except("summary.txt")],
-          [DataExpr.new("summary.txt")],
-          [Variable.new("ConvertCharSet")],
-          []
-        ),
-        FlowBlock.new(
-          ConditionalBlock.new(
-            Variable.new("CounvertCharset"),
-            { true => FlowBlock.new(
-                CallRule.new(
-                  RuleExpr.new(Package.new("main"), "NKF").set_params("-w")
-                )
-            )}
+      [ FlowRule.new(
+          RuleExpr.new(Package.new("main"), "Main"),
+          RuleCondition.new(
+            [DataExpr.new("*.txt").all.except("summary.txt")],
+            [DataExpr.new("summary.txt")],
+            [Variable.new("ConvertCharSet")],
+            []
           ),
-          CallRule.new(
-            RuleExpr.new(Package.new("main"), "CountChar").sync(true)
-          ),
-          CallRule.new(
-            RuleExpr.new(Package.new("main"), "Summarize")
+          FlowBlock.new(
+            ConditionalBlock.new(
+              Variable.new("CounvertCharset"),
+              { true => FlowBlock.new(
+                  CallRule.new(
+                    RuleExpr.new(Package.new("main"), "NKF").set_params("-w")
+                  )
+              )}
+            ),
+            CallRule.new(
+              RuleExpr.new(Package.new("main"), "CountChar")
+            ),
+            CallRule.new(
+              RuleExpr.new(Package.new("main"), "Summarize")
+            )
           )
-        )
-      )
+      )]
     end
   end
 
