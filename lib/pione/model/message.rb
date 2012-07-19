@@ -19,7 +19,7 @@ module Pione::Model
     end
 
     def pione_model_type
-      @receiver.pione_model_type.method_interface[@name].output
+      @receiver.pione_model_type.method_interface[@name.to_s].output
     end
 
     # Evaluates the application expression and returns application result.

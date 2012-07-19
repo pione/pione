@@ -84,5 +84,8 @@ describe 'Transformer::Expr' do
     tc "'*.txt'.all()" do
       Message.new("all", DataExpr.new("*.txt"))
     end
+    tc "'*.txt'.all(true)" do
+      Message.new("all", DataExpr.new("*.txt"), PioneBoolean.true)
+    end
   end
 end

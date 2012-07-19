@@ -18,6 +18,20 @@ describe 'Model::PioneString' do
     @a.should.not == @b
   end
 
+  it 'should expand variables' do
+    vtable = VariableTable.new({
+        Variable.new("var1") => PioneString.new("a"),
+        Variable.new("var2") => PioneString.new("b")
+      })
+    PioneString.new("{$var1}:{$var2}").eval(vtable).should ==
+      PioneString.new("a:b")
+  end
+
+  it 'should expand an expression' do
+    PioneString.new("1 + 1 = <?1 + 1?>").eval.should ==
+      PioneString.new("1 + 1 = 2")
+  end
+
   describe 'pione method ==' do
     it 'should true' do
       @a.call_pione_method("==", PioneString.new("a")).should.true

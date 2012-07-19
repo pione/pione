@@ -10,6 +10,16 @@ module Pione::Model
       TypeString
     end
 
+    def eval(vtable=VariableTable.new)
+      value = vtable.expand(@value)
+      self.class.new(
+        value.gsub(/\<\?(.+?)\?\>/) do
+          expr = Transformer.new.apply(Parser.new.expr.parse($1))
+          expr.eval(vtable).call_pione_method("as_string").to_ruby
+        end
+      )
+    end
+
     def to_ruby
       return @value
     end

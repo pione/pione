@@ -25,30 +25,30 @@ class Pione::Transformer
       end.new(rule_expr, condition, block)
     }
 
-    Condition = Struct.new(:type, :obj)
+    ConditionLine = Struct.new(:type, :obj)
 
     # input_line
     rule(:input_line => simple(:data_expr)) {
       TypeDataExpr.check(data_expr)
-      Condition.new(:input, data_expr)
+      ConditionLine.new(:input, data_expr)
     }
 
     # output_line
     rule(:output_line => simple(:data_expr)) {
       TypeDataExpr.check(data_expr)
-      Condition.new(:output, data_expr)
+      ConditionLine.new(:output, data_expr)
     }
 
     # param_line
     rule(:param_line => simple(:variable)) {
       TypeAny.check(variable)
-      Condition.new(:param, variable)
+      ConditionLine.new(:param, variable)
     }
 
     # feature_line
     rule(:feature_line => simple(:feature_expr)) {
       TypeFeatureExpr.check(feature_expr)
-      Condition.new(:feature, feature_expr)
+      ConditionLine.new(:feature, feature_expr)
     }
   end
 end

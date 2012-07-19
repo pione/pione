@@ -128,6 +128,7 @@ module Pione::Model
     # @param [Array] args method's arguments
     # @return [Object] method's result
     def call_pione_method(name, *args)
+      name = name.to_s
       pione_model_type.method_interface[name].validate_inputs(*args)
       output = pione_model_type.method_body[name].call(self, *args)
       pione_model_type.method_interface[name].validate_output(output)

@@ -1,6 +1,32 @@
 require_relative '../test-util'
 
+ConditionLine = Transformer::RuleDefinition::ConditionLine
+
 describe 'Transformer::RuleDefinition' do
+  transformer_spec("input_line", :input_line) do
+    tc("input '*.txt'") do
+      ConditionLine.new(:input, DataExpr.new("*.txt"))
+    end
+  end
+
+  transformer_spec("output_line", :output_line) do
+    tc("output '*.txt'") do
+      ConditionLine.new(:output, DataExpr.new("*.txt"))
+    end
+  end
+
+  transformer_spec("param_line", :param_line) do
+    tc("param $var") do
+      ConditionLine.new(:param, Variable.new("var"))
+    end
+  end
+
+  transformer_spec("param_line", :param_line) do
+    tc("param $var") do
+      ConditionLine.new(:param, Variable.new("var"))
+    end
+  end
+
   transformer_spec("rule_definition", :rule_definitions) do
     tc(<<STRING) do
 Rule Test
@@ -62,18 +88,23 @@ STRING
       [ FlowRule.new(
           RuleExpr.new(Package.new("main"), "Main"),
           RuleCondition.new(
-            [DataExpr.new("*.txt").all.except("summary.txt")],
+            [Message.new(
+                "except",
+                DataExpr.new("*.txt"),
+                DataExpr.new("summary.txt"))],
             [DataExpr.new("summary.txt")],
             [Variable.new("ConvertCharSet")],
             []
           ),
           FlowBlock.new(
             ConditionalBlock.new(
-              Variable.new("CounvertCharset"),
+              Variable.new("ConvertCharset"),
               { true => FlowBlock.new(
-                  CallRule.new(
-                    RuleExpr.new(Package.new("main"), "NKF").set_params("-w")
-                  )
+                  CallRule.new(Message.new(
+                      "params",
+                      RuleExpr.new(Package.new("main"), "NKF"),
+                      PioneString.new("-w")
+                  ))
               )}
             ),
             CallRule.new(
@@ -112,7 +143,7 @@ STRING
             [],
             []
           ),
-          ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}")
+          ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         ),
         ActionRule.new(
           RuleExpr.new(Package.new("main"), "TestB"),
@@ -122,7 +153,7 @@ STRING
             [],
             []
           ),
-          ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}")
+          ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         )
       ]
     end

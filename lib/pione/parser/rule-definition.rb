@@ -78,7 +78,7 @@ class Pione::Parser
       ( space? >>
         keyword_param >>
         space >>
-        (variable.as(:variable) |
+        (expr.as(:expr) |
          syntax_error("expected variable in param_line context",
                       [:variable])
          ) >>
