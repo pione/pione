@@ -1,6 +1,6 @@
-require_relative 'test-util'
+require_relative '../test-util'
 
-describe 'DataExpr' do
+describe 'Model::DataExpr' do
   it 'should get expression informations' do
     exp = DataExpr.new('test.a')
     exp.should.be.each
@@ -179,7 +179,7 @@ describe 'DataExpr' do
   end
 
   it 'should handle exceptions (Case 2)' do
-    exp = DataExpr.new('*').except('test-1.a','test-2.a')
+    exp = DataExpr.new('*').except('test-1.a').except('test-2.a')
     exp.should.not.match 'test-1.a'
     exp.should.not.match 'test-2.a'
     exp.should.match 'test-3.a'
@@ -191,11 +191,11 @@ describe 'DataExpr' do
   end
 
   it 'should expand variables' do
-    vtable1 = VariableTable.new('VAR' => '1')
+    vtable1 = VariableTable.new(Variable.new('VAR') => PioneString.new('1'))
     exp1 = DataExpr.new('{$VAR}.a').with_variable_table(vtable1)
     exp1.match('1.a')
     exp1.should.not.match '1.b'
-    vtable2 = VariableTable.new('VAR' => '*')
+    vtable2 = VariableTable.new(Variable.new('VAR') => PioneString.new('*'))
     exp2 = DataExpr.new('{$VAR}.a').with_variable_table(vtable2)
     exp2.should.match '1.a'
     exp2.should.match '2.a'

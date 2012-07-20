@@ -50,14 +50,16 @@ module Pione::Model
 
     # Get the variable value.
     def get(var)
+      raise ArgumentError.new(var) unless var.kind_of?(Variable)
       @table[var]
     end
 
     # Set a new variable.
     def set(variable, val=nil)
       raise ArgumentError.new(variable) unless variable.kind_of?(Variable)
+      raise ArgumentError.new(val) unless val.kind_of?(PioneModelObject)
       if old = @table[variable] and not(val == old)
-        raise VariableBindingError.new(var, val, old)
+        raise VariableBindingError.new(variable, val, old)
       end
       @table[variable] = val
     end
@@ -110,12 +112,12 @@ module Pione::Model
     # expression.
     def make_io_auto_variables_by_each(prefix, expr, tuple)
       return if tuple.nil?
-      set(prefix, tuple.name)
-      set("#{prefix}.URI", tuple.uri)
+      set(Variable.new(prefix), PioneString.new(tuple.name))
+      set(Variable.new("#{prefix}.URI"), PioneString.new(tuple.uri))
       expr.match(tuple.name).to_a.each_with_index do |str, i|
         next if i == 0
-        set("#{prefix}.*", str) if i == 1
-        set("#{prefix}.MATCH[#{i}]", str)
+        set(Variable.new("#{prefix}.*"), PioneString.new(str)) if i == 1
+        set(Variable.new("#{prefix}.MATCH[#{i}]"), PioneString.new(str))
       end
     end
 
@@ -125,14 +127,14 @@ module Pione::Model
       # FIXME: output
       return if type == :output
 
-      set(prefix, tuples.map{|t| t.name}.join(DataExpr::SEPARATOR))
+      set(Variable.new(prefix), PioneString.new(tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)))
       tuples.each_with_index do |tuple, i|
         _prefix = "#{prefix}[#{i+1}]"
-        set(_prefix, tuple.name)
+        set(Variable.new(_prefix), PioneString.new(tuple.name))
         expr.match(tuple.name).to_a.each_with_index do |str, ii|
           next if ii == 0
-          set("#{_prefix}.*", str) if ii == 1
-          set("#{_prefix}.MATCH[#{ii}]", str)
+          set(Variable.new("#{_prefix}.*"), PioneString.new(str)) if ii == 1
+          set(Variable.new("#{_prefix}.MATCH[#{ii}]"), PioneString.new(str))
         end
       end
     end

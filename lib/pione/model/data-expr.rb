@@ -121,15 +121,23 @@ module Pione::Model
       return self
     end
 
+    def eval(vtable=VariableTable.new)
+      value = with_variable_table(vtable)
+      self.class.new(
+        value.gsub(/\<\?\s*(.+?)\s*\?\>/) do
+          expr = Transformer.new.apply(Parser.new.expr.parse($1))
+          expr.eval(vtable).call_pione_method("as_string").to_ruby
+        end
+      )
+    end
+
     # Return a new expression expanded with the variables.
     def with_variable_table(variable_table)
       unless variable_table.kind_of?(VariableTable)
         variable_table = VariableTable.new(variable_table)
       end
       new_exp = self.class.new(variable_table.expand(name), @modifier)
-      @exceptions.map {|exc|
-        variable_table.expand(exc.name)
-      }.each do |new_exc|
+      @exceptions.map {|exc| exc.eval(vtable)}.each do |new_exc|
         new_exp.except(new_exc)
       end
       return new_exp

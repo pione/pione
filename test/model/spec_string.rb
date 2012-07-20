@@ -30,6 +30,8 @@ describe 'Model::PioneString' do
   it 'should expand an expression' do
     PioneString.new("1 + 1 = <?1 + 1?>").eval.should ==
       PioneString.new("1 + 1 = 2")
+    PioneString.new("1 + 2 = <? 1 + 2 ?>").eval.should ==
+      PioneString.new("1 + 2 = 3")
   end
 
   describe 'pione method ==' do
