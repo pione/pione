@@ -49,17 +49,18 @@ describe 'TupleSpaceProvider' do
       sleep 60
     end
 
-    @kill << pid1 << pid2 << pid3
+    @kill << pid2 << pid3
 
     sleep 0.1
     [pid1, pid2, pid3].should.include TupleSpaceProvider.instance.pid
     Process.kill('KILL', pid1)
+    Process.wait.should == pid1
 
-    sleep 0.1
+    #sleep 2
     [pid2, pid3].should.include TupleSpaceProvider.instance.pid
     Process.kill('KILL', pid2)
+    Process.wait.should == pid2
 
-    sleep 0.1
     TupleSpaceProvider.instance.pid.should == pid3
   end
 
