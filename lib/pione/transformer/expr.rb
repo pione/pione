@@ -2,7 +2,8 @@ require 'pione/common'
 
 module Pione
   class Transformer
-    class MessageArgument < Struct.new(:name, :parameters); end
+    MessageArgument = Struct.new(:name, :parameters)
+    ParametersElement = Struct.new(:key, :value)
 
     module Expr
       include TransformerModule
@@ -49,10 +50,28 @@ module Pione
 
       # rule_expr
       rule(:rule_expr => simple(:rule)) { rule }
-      rule(:rule_expr =>
-           { :package => simple(:package),
-             :expr => simple(:expr) }) {
+      rule(:rule_expr => {
+          :package => simple(:package),
+          :expr => simple(:expr)
+        }) {
         expr.set_package(package)
+      }
+
+      # parameters
+      rule(:parameters => nil) { Parameters.new({}) }
+      rule(:parameters => simple(:elt)) {
+        Parameters.new({elt.key => elt.value})
+      }
+      rule(:parameters => sequence(:list)) {
+        elts = Hash[*list.map{|elt| [elt.key, elt.value]}.flatten(1)]
+        Parameters.new(elts)
+      }
+
+      rule(:parameters_element => {
+          :key => simple(:key),
+          :value => simple(:value)
+        }) {
+        ParametersElement.new(key.to_s, value)
       }
     end
   end

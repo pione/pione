@@ -40,15 +40,15 @@ class Pione::Transformer
     }
 
     # param_line
-    rule(:param_line => simple(:variable)) {
-      TypeAny.check(variable)
-      ConditionLine.new(:param, variable)
+    rule(:param_line => simple(:param)) {
+      TypeParameters.check(param)
+      ConditionLine.new(:param, param)
     }
 
     # feature_line
-    rule(:feature_line => simple(:feature_expr)) {
-      TypeFeatureExpr.check(feature_expr)
-      ConditionLine.new(:feature, feature_expr)
+    rule(:feature_line => simple(:feature)) {
+      TypeFeature.check(feature)
+      ConditionLine.new(:feature, feature)
     }
   end
 end

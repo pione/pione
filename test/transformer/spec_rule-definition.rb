@@ -16,14 +16,23 @@ describe 'Transformer::RuleDefinition' do
   end
 
   transformer_spec("param_line", :param_line) do
-    tc("param $var") do
-      ConditionLine.new(:param, Variable.new("var"))
+    tc("param {var: 1}") do
+      ConditionLine.new(:param, Parameters.new({"var" => 1.to_pione}))
+    end
+    tc("param {var1: 1, var2: 2}") do
+      ConditionLine.new(
+        :param,
+        Parameters.new({"var1" => 1.to_pione, "var2" => 2.to_pione})
+      )
     end
   end
 
-  transformer_spec("param_line", :param_line) do
-    tc("param $var") do
-      ConditionLine.new(:param, Variable.new("var"))
+  transformer_spec("feature_line", :feature_line) do
+    tc("feature +A") do
+      ConditionLine.new(
+        :feature,
+        Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
+      )
     end
   end
 
@@ -76,7 +85,7 @@ STRING
       Rule Main
         input '*.txt'.except('summary.txt')
         output 'summary.txt'
-        param $ConvertCharSet
+        param {ConvertCharSet: true}
       Flow
       if $ConvertCharset
         rule NKF.params("-w")
@@ -93,7 +102,7 @@ STRING
                 DataExpr.new("*.txt"),
                 DataExpr.new("summary.txt"))],
             [DataExpr.new("summary.txt")],
-            [Variable.new("ConvertCharSet")],
+            [Parameters.new({"ConvertCharSet" => PioneBoolean.true})],
             []
           ),
           FlowBlock.new(

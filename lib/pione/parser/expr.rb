@@ -36,6 +36,7 @@ module Pione
       #   "abc"
       #   $var
       #   '*.txt'
+      #   {var: 1}
       #   $abc:test
       #   abc
       rule(:atomic_expr) {
@@ -46,6 +47,7 @@ module Pione
         data_name |
         rule_expr |
         feature_expr |
+        parameters |
         variable
       }
 
@@ -121,6 +123,32 @@ module Pione
       #   , true
       rule(:message_parameters_elements_rest) {
         space? >> comma >> space? >> expr
+      }
+
+      # parameters
+      rule(:parameters) {
+        lbrace >>
+        space? >>
+        parameters_elements.maybe.as(:parameters) >>
+        space? >>
+        rbrace
+      }
+
+      rule(:parameters_elements) {
+        parameters_element >> parameters_elements_rest.repeat
+      }
+
+      rule(:parameters_element) {
+        ( identifier.as(:key) >>
+          space? >>
+          colon >>
+          space? >>
+          expr.as(:value)
+        ).as(:parameters_element)
+      }
+
+      rule(:parameters_elements_rest) {
+        space? >> comma >> space? >> parameters_element
       }
     end
   end

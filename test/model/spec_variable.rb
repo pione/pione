@@ -32,8 +32,7 @@ describe 'Model::Variable' do
 
     it 'should raise unbound variable error' do
       vtable = VariableTable.new
-      vtable.set(@a)
-      vtable.set(@b)
+      vtable.set(@a, PioneInteger.new(1))
       should.raise(UnboundVariableError) do
         BinaryOperator.new("==", @a, @b).eval(vtable)
       end
@@ -67,8 +66,7 @@ describe 'Model::Variable' do
 
     it 'should raise unbound variable error' do
       vtable = VariableTable.new
-      vtable.set(@a)
-      vtable.set(@b)
+      vtable.set(@a, PioneInteger.new(1))
       should.raise(UnboundVariableError) do
         BinaryOperator.new("!=", @a, @b).eval(vtable)
       end

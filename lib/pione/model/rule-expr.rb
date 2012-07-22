@@ -1,10 +1,4 @@
 module Pione::Model
-  class PackagePath < PioneModelObject
-    def initialize(path)
-      @path = path.split("/")
-    end
-  end
-
   # Rule representation in the flow element context.
   class RuleExpr < PioneModelObject
     attr_reader :package
@@ -15,7 +9,8 @@ module Pione::Model
     # Create a rule expression.
     # @param [String] package pione package name
     # @param [String] name rule name
-    def initialize(package, name, sync_mode=false, params=[])
+    # @param [Parameters] params parameters
+    def initialize(package, name, sync_mode=false, params=Parameters.new({}))
       @package = package
       @name = name
       @sync_mode = sync_mode
@@ -39,7 +34,7 @@ module Pione::Model
       return self.class.new(package, @name, @sync_mode, @params)
     end
 
-    def set_params(*params)
+    def set_params(params)
       return self.class.new(@package, @name, @sync_mode, params)
     end
 
@@ -80,10 +75,8 @@ module Pione::Model
       rec.sync(b.value)
     end
 
-    define_pione_method("params",
-                        [TypeList.new(TypeAny)],
-                        TypeRuleExpr) do |rec, params|
-      rec.set_params(params.value)
+    define_pione_method("params", [TypeParameters], TypeRuleExpr) do |rec, params|
+      rec.set_params(params)
     end
 
     define_pione_method("as_string", [], TypeString) do |rec|

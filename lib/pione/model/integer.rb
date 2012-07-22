@@ -104,3 +104,9 @@ module Pione::Model
     end
   end
 end
+
+class Integer
+  def to_pione
+    PioneInteger.new(self)
+  end
+end

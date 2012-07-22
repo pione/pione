@@ -15,6 +15,21 @@ module Pione::Model
     end
   end
 
+  class MethodNotFound < StandardError
+    attr_reader :name
+    attr_reader :obj
+
+    def initialize(name, obj)
+      @name = name
+      @obj = obj
+    end
+
+    def message
+      str = @obj.call_pione_method("as_string")
+      "method \"%s\" is not found in %s" % [@name, str]
+    end
+  end
+
   # Type is a class for type expression of PIONE model objects.
   class Type < Pione::PioneObject
     attr_reader :type_string
@@ -35,13 +50,18 @@ module Pione::Model
     # @param [String] name method name
     # @return [void]
     def define_pione_method(name, inputs, output, &b)
+      raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
+      raise ArgumentError.new(inputs) unless inputs.all?{|input|
+        input.kind_of?(Type)
+      }
+      raise ArgumentError.new(output) unless output.kind_of?(Type)
       @method_interface[name] = PioneMethodInterface.new(inputs, output)
       @method_body[name] = b
     end
 
     def check(data)
       unless match(data.pione_model_type)
-        raise PioneModelTypeError.new(data, type)
+        raise PioneModelTypeError.new(data, @type_string)
       end
     end
   end
@@ -92,9 +112,10 @@ module Pione::Model
   TypeInteger = Type.new("integer")
   TypeFloat = Type.new("float")
   TypeString = Type.new("string")
-  TypeDataExpr = Type.new("data_expr")
+  TypeDataExpr = Type.new("data-expr")
   TypeFeature = Type.new("feature")
   TypeRuleExpr = Type.new("rule-expr")
+  TypeParameters = Type.new("parameters")
 
   TypeAny = Type.new("any")
   def TypeAny.match(other)
@@ -129,10 +150,14 @@ module Pione::Model
     # @return [Object] method's result
     def call_pione_method(name, *args)
       name = name.to_s
-      pione_model_type.method_interface[name].validate_inputs(*args)
-      output = pione_model_type.method_body[name].call(self, *args)
-      pione_model_type.method_interface[name].validate_output(output)
-      return output
+      if method = pione_model_type.method_interface[name]
+        method.validate_inputs(*args)
+        output = pione_model_type.method_body[name].call(self, *args)
+        pione_model_type.method_interface[name].validate_output(output)
+        return output
+      else
+        raise MethodNotFound.new(name, self)
+      end
     end
   end
 
@@ -145,6 +170,7 @@ module Pione::Model
   require 'pione/model/variable'
   require 'pione/model/variable-table'
   require 'pione/model/data-expr'
+  require 'pione/model/parameters'
   require 'pione/model/package'
   require 'pione/model/rule-expr'
   require 'pione/model/binary-operator'

@@ -88,4 +88,23 @@ describe 'Transformer::Expr' do
       Message.new("all", DataExpr.new("*.txt"), PioneBoolean.true)
     end
   end
+
+  transformer_spec("parameters", :expr) do
+    tc "{}" do
+      Parameters.new({})
+    end
+    tc "{var1: 1}" do
+      Parameters.new({"var1" => 1.to_pione})
+    end
+    tc "{var1: 1, var2: 2}" do
+      Parameters.new({"var1" => 1.to_pione, "var2" => 2.to_pione})
+    end
+    tc "{var1: \"a\", var2: \"b\", var3: \"c\"}" do
+      Parameters.new({
+          "var1" => "a".to_pione,
+          "var2" => "b".to_pione,
+          "var3" => "c".to_pione
+        })
+    end
+  end
 end

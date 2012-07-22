@@ -57,7 +57,7 @@ module Pione::Model
       PioneInteger.new(rec.value.to_i)
     end
 
-    define_pione_method("as_float", [], PioneFloat) do |rec|
+    define_pione_method("as_float", [], TypeFloat) do |rec|
       PioneFloat.new(rec.value.to_f)
     end
 
@@ -74,5 +74,11 @@ module Pione::Model
                         TypeString) do |rec, nth, len|
       PioneString.new(rec.value[nth.value, len.value])
     end
+  end
+end
+
+class String
+  def to_pione
+    PioneString.new(self)
   end
 end

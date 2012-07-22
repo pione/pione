@@ -5,7 +5,11 @@ module Pione::Model
   module Feature
 
     # Expr is a super class for all feature expressions.
-    class Expr
+    class Expr < PioneModelObject
+      def pione_model_type
+        TypeFeature
+      end
+
       def simplify
         return self
       end
@@ -86,8 +90,16 @@ module Pione::Model
     class UnaryOperator < Operator
       attr_reader :symbol
 
+      def self.operator
+        @operator
+      end
+
       def initialize(symbol)
         @symbol = symbol
+      end
+
+      def as_string
+        self.class.operator + @symbol.identifier
       end
 
       def ==(other)
@@ -108,10 +120,14 @@ module Pione::Model
     # PossibleOperator is a class for possible feature expressions. Possible
     # feature are written like as "^X", these represent feature's possible
     # ability.
-    class PossibleExpr < ProviderExpr; end
+    class PossibleExpr < ProviderExpr
+      @operator = "^"
+    end
 
     # RestrictiveExpr is a class for restrictive feature expression.
-    class RestrictiveExpr < ProviderExpr; end
+    class RestrictiveExpr < ProviderExpr
+      @operator = "!"
+    end
 
     # RequestOperator is a class for task's feature expression operators.
     class RequestExpr < UnaryOperator; end
@@ -119,14 +135,20 @@ module Pione::Model
     # Requisite Operator is a class for requisite feature expressions. Requisite
     # Feature are written like as "+X", these represent feature's requiste
     # ability.
-    class RequisiteExpr < RequestExpr; end
+    class RequisiteExpr < RequestExpr
+      @operator = "+"
+    end
 
     # BlockingExpr is a class for blocking feature expressions. Blocking Feature
     # are written like as "-X", these represent the ability that block to
     # execute the task.
-    class BlockingExpr < RequestExpr; end
+    class BlockingExpr < RequestExpr
+      @operator = "-"
+    end
 
-    class PreferredExpr < RequestExpr; end
+    class PreferredExpr < RequestExpr
+      @operator = "?"
+    end
 
     class Connective < Expr
       attr_reader :elements
@@ -619,6 +641,20 @@ module Pione::Model
           end
         end
       end
+    end
+  end
+
+  TypeFeature.instance_eval do
+    define_pione_method("==", [TypeFeature], TypeBoolean) do |rec, other|
+      PioneBoolean.new(rec == other)
+    end
+
+    define_pione_method("!=", [TypeFeature], TypeBoolean) do |rec, other|
+      PioneBoolean.not(rec.call_pione_method("==", other))
+    end
+
+    define_pione_method("as_string", [], TypeString) do |rec|
+      PioneString.new(rec.as_string)
     end
   end
 end

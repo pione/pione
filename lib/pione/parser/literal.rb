@@ -28,7 +28,8 @@ module Pione
         ( match('[+-]').maybe >>
           digit.repeat(1) >>
           dot >>
-          digit.repeat(1)
+          digit.repeat(1) >>
+          (match('[eE]') >> digit.repeat(1)).maybe
           ).as(:float)
       }
 
@@ -55,6 +56,9 @@ module Pione
       rule(:rule_name) {
         identifier.as(:rule_name)
       }
+
+      # parameters is a part of literal syntax but defined in Expr module
+      # because it includes expr.
     end
   end
 end
