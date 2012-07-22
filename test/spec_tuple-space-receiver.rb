@@ -1,3 +1,4 @@
+require_relative 'test-util'
 require 'pione/tuple-space-receiver'
 require 'pione/tuple-space-provider'
 require 'pione/tuple-space-server'

@@ -1,4 +1,4 @@
-require 'pione/test-util'
+require_relative '../test-util'
 require 'pione/tuple-space-server'
 require 'pione/agent/broker'
 

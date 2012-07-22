@@ -12,7 +12,7 @@ module Pione
         @table = {}
 
         # import system rules
-        Rule::SYSTEM_RULES.each do |command_rule|
+        Model::SYSTEM_RULES.each do |command_rule|
           @table[command_rule.rule_path] = command_rule
         end
       end

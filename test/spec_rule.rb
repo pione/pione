@@ -1,5 +1,4 @@
-require 'pione/test-util'
-require 'pione/rule'
+require_relative 'test-util'
 require 'pione/agent/input-generator'
 require 'pione/agent/task-worker'
 require 'pione/agent/rule-provider'

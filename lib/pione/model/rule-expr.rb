@@ -17,6 +17,11 @@ module Pione::Model
       @params = params
     end
 
+    # Returns rule path form.
+    def path
+      "&%s:%s" % [@package.name, @name]
+    end
+
     def pione_model_type
       TypeRuleExpr
     end

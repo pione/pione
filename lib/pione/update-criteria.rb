@@ -11,7 +11,7 @@ module Pione
     # Return true if we need to update because of lacking some ouputs.
     def self.not_exist_output?(rule, inputs, outputs)
       return true if outputs.empty?
-      outputs.any?{|output| output.empty? }
+      rule.outputs.size != outputs.size
     end
 
     # Return true if we need to update because of newer inputs.

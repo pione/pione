@@ -1,6 +1,6 @@
 require 'drb/drb'
 require 'stringio'
-require 'pione/test-util'
+require_relative '../test-util'
 require 'pione/agent/logger'
 
 DRb.start_service

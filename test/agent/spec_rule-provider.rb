@@ -1,4 +1,4 @@
-require 'pione/test-util'
+require_relative '../test-util'
 require 'pione/agent/rule-provider'
 
 describe "Agent::RuleProvider" do

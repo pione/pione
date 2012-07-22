@@ -28,7 +28,7 @@ module Pione
       rules = transformer.apply(parser.parse(src))
       table = {}
       rules.each do |rule|
-        table[rule.path] = rule
+        table[rule.rule_path] = rule
       end
       return new(table)
     end

@@ -83,7 +83,10 @@ module Pione
     def make_auto_variables_by_all(prefix, expr, tuples, variable_table)
       new_variable_table = VariableTable.new(variable_table)
       list = tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)
-      new_variable_table.set(prefix, list)
+      new_variable_table.set(
+        Variable.new(prefix),
+        PioneString.new(list)
+      )
       return new_variable_table
     end
 
@@ -91,11 +94,25 @@ module Pione
     def make_auto_variables_by_each(prefix, expr, tuple, variable_table)
       new_variable_table = VariableTable.new(variable_table)
       md = expr.match(tuple.name)
-      new_variable_table.set(prefix, tuple.name)
-      new_variable_table.set("#{prefix}.URI", tuple.uri)
+      new_variable_table.set(
+        Variable.new(prefix),
+        PioneString.new(tuple.name)
+      )
+      new_variable_table.set(
+        Variable.new("#{prefix}.URI"),
+        PioneString.new(tuple.uri)
+      )
       md.to_a.each_with_index do |str, i|
-        new_variable_table.set("#{prefix}.*", str) if i == 1
-        new_variable_table.set("#{prefix}.MATCH[#{i}]", str)
+        if i == 1
+          new_variable_table.set(
+            Variable.new("#{prefix}.*"),
+            PioneString.new(str)
+          )
+        end
+        new_variable_table.set(
+          Variable.new("#{prefix}.MATCH[#{i}]"),
+          PioneString.new(str)
+        )
       end
       return new_variable_table
     end

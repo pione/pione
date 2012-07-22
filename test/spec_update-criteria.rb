@@ -16,6 +16,8 @@ Action
 echo -n "abc" > {$OUTPUT[1]}
 End
 DOCUMENT
+$no_outputs_rule = document["&main:NoOutputsRule"]
+$outputs_rule = document["&main:OutputsRule"]
 
 
 time1 = Time.now
@@ -39,9 +41,8 @@ describe 'UpdateCriteria' do
     end
 
     it 'should not be updatable' do
-      input_tuples = [tuple1, tuple2]
-      output_tuples = [tuple3]
-
+      inputs = [tuple1, tuple2]
+      outputs = [tuple3]
       UC.no_output_rules?($outputs_rule, inputs, outputs).should.false
     end
   end
@@ -60,11 +61,9 @@ describe 'UpdateCriteria' do
     end
 
     it 'should be not updatable' do
-      inputs = []
-      outputs = []
-      UC.not_exist_output?(@rule)
+      inputs = [tuple1]
+      outputs = [tuple3]
+      UC.not_exist_output?(@rule, inputs, outputs).should.false
     end
-
   end
-
 end

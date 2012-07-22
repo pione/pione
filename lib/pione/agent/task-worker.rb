@@ -42,7 +42,7 @@ module Pione
       # [+features+] feature set
       def initialize(tuple_space_server, features=[])
         raise ArgumentError.new(features) unless features.respond_to?(:to_a)
-        @features = FeatureSet.new(features)
+        @features = features
         super(tuple_space_server)
       end
 

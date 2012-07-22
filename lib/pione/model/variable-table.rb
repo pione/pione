@@ -67,7 +67,7 @@ module Pione::Model
     # Expand variables in the string.
     def expand(str)
       variables = to_hash
-      str.gsub(/\{\$(.+?)\}/) do
+      str.to_s.gsub(/\{\$(.+?)\}/) do
         var = Variable.new($1)
         if variables.has_key?(var)
           variables[var].to_ruby

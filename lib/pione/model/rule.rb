@@ -38,12 +38,28 @@ module Pione::Model
       @body = body
     end
 
-    def rule_path(vtable)
-      @expr.eval(vtable)
+    def rule_path(vtable=VariableTable.new)
+      @expr.eval(vtable).path
     end
 
     def self.rule_type
       @rule_type
+    end
+
+    def inputs
+      @condition.inputs
+    end
+
+    def outputs
+      @condition.outputs
+    end
+
+    def params
+      @condition.params
+    end
+
+    def features
+      @condition.features
     end
 
     # Return true.
@@ -134,4 +150,13 @@ module Pione::Model
       RuleCondition.new(inputs, [], [], [])
     end
   end
+
+  SYSTEM_TERMINATE = SystemRule.new('/System/Terminate') do |tuple_space_server|
+    user_message "!!!!!!!!!!!!!!!!!"
+    user_message "!!! Terminate !!!"
+    user_message "!!!!!!!!!!!!!!!!!"
+    tuple_space_server.write(Tuple[:command].new("terminate"))
+  end
+
+  SYSTEM_RULES = [ SYSTEM_TERMINATE ]
 end

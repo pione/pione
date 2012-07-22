@@ -30,7 +30,7 @@ describe 'Log' do
     log = Log.new do |l|
       l.add_record("spec_log", "action", "test")
     end
-    md = /[A-Z0-9]{4}\[(.+)\]\s+pione\.spec_log\.action:\s+test/.match(log.format)
+    md = /(.+)\s+[A-Z0-9]{4}\s+\.spec_log\.action:\s+\"test\"/.match(log.format)
     md.should.not.be.nil
     should.not.raise { Time.iso8601(md[1]) }
   end
@@ -42,10 +42,10 @@ describe 'Log' do
     end
     lines = log.format.split("\n")
     lines.size.should == 2
-    md1 = /^[A-Z0-9]{4}\[(.+)\]\s+pione\.spec_log\.test1:\s+a$/.match(lines[0])
+    md1 = /^(.+)\s+[A-Z0-9]{4}\s+\.spec_log\.test1:\s+\"a\"$/.match(lines[0])
     md1.should.not.be.nil
     should.not.raise { Time.iso8601(md1[1]) }
-    md2 = /^[A-Z0-9]{4}\[(.+)\]\s+pione\.spec_log\.test2:\s+b$/.match(lines[1])
+    md2 = /^(.+)\s+[A-Z0-9]{4}\s+\.spec_log\.test2:\s+\"b\"$/.match(lines[1])
     md2.should.not.be.nil
     should.not.raise { Time.iso8601(md2[1]) }
   end

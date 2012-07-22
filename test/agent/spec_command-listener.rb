@@ -1,4 +1,4 @@
-require 'pione/test-util'
+require_relative '../test-util'
 
 class TestCommandListener < Agent::TupleSpaceClient
   define_state :test
