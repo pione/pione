@@ -20,8 +20,8 @@ describe "Agent::RuleProvider" do
         content "echo 'xyz' > {$OUTPUT[1]}"
       ---End
     DOCUMENT
-    @rule_abc = doc['abc']
-    @rule_xyz = doc['xyz']
+    @rule_abc = doc['&main:abc']
+    @rule_xyz = doc['&main:xyz']
     @provider.read_document(doc)
   end
 
@@ -29,21 +29,21 @@ describe "Agent::RuleProvider" do
     # wait provider's setup
     @provider.wait_till(:request_waiting)
     # write a request
-    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: 'abc'))
+    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: '&main:abc'))
     check_exceptions
     # check rule tuple
     should.not.raise(Rinda::RequestExpiredError) do
-      rule = read(Tuple[:rule].new(rule_path: 'abc'))
+      rule = read(Tuple[:rule].new(rule_path: '&main:abc'))
       rule.status.should == :known
       rule.content.class.should == Rule::ActionRule
       rule.content.should == @rule_abc
     end
     # write another request
-    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: 'xyz'))
+    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: '&main:xyz'))
     check_exceptions
     # check rule tuple
     should.not.raise(Rinda::RequestExpiredError) do
-      rule = read(Tuple[:rule].new(rule_path: 'xyz'))
+      rule = read(Tuple[:rule].new(rule_path: '&main:xyz'))
       rule.status.should == :known
       rule.content.class.should == Rule::ActionRule
       rule.content.should == @rule_xyz

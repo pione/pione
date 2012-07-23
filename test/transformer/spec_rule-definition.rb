@@ -31,7 +31,7 @@ describe 'Transformer::RuleDefinition' do
     tc("feature +A") do
       ConditionLine.new(
         :feature,
-        Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
+        Feature::RequisiteExpr.new("A")
       )
     end
   end

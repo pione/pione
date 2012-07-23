@@ -27,7 +27,7 @@ module Pione
         @format = definition
 
         # create accessors
-        @format.each do |key|
+        @format.each do |key, _|
           define_method(key) do
             @data[key]
           end
@@ -57,15 +57,22 @@ module Pione
         return if data.empty?
 
         format = self.class.format
+        format_keys = format.map{|key,_| key}
+        format_table = Hash[*format[1..-1].select{|item| item.kind_of?(Array)}.flatten(1)]
         if data.first.kind_of?(Hash)
           _data = data.first
           _data.keys.each do |key|
-            raise FormatError.new(key) if not(format.include?(key))
+            # key check
+            raise FormatError.new(key) unless format_keys.include?(key)
+            # type check
+            if _data[key] && not(format_table[key].nil?)
+              raise FormatError.new(_data[key]) unless _data[key].kind_of?(format_table[key])
+            end
           end
           @data = _data
         else
           raise FormatError.new(data) unless data.size == format.size - 1
-          @data = Hash[format[1..-1].zip(data)]
+          @data = Hash[format_keys[1..-1].zip(data)]
         end
       end
 
@@ -96,7 +103,7 @@ module Pione
 
       # Convert to plain tuple form.
       def to_tuple_space_form
-        self.class.format[1..-1].map{|key| @data[key]}.unshift(identifier)
+        self.class.format[1..-1].map{|key, _| @data[key]}.unshift(identifier)
       end
 
       def to_json(*a)
@@ -121,7 +128,7 @@ module Pione
 
       # check arguments
       # format is a list of symbols
-      format.each {|f| raise FormatError.new(f) unless Symbol === f}
+      format.each {|name, _| raise FormatError.new(name) unless Symbol === name}
       # fobid to define same identifier and different format
       if TABLE.has_key?(identifier)
         if not(TABLE[identifier].format == format)
@@ -176,10 +183,17 @@ module Pione
     #define_format [:data, :domain, :name, :uri, :time]
 
     # rule application task with inputs, outpus and parameters
-    #   rule_path : rule location path
-    #   inputs    : input data list
-    #   params    : parameter list
-    define_format [:task, :rule_path, :inputs, :params, :features, :uuid]
+    #   rule_path : string     : rule location path
+    #   inputs    : data list  : input data list
+    #   params    : parameters : parameter list
+    #   features  : feature    : request features
+    #   uuid      : string     : task id
+    define_format [:task,
+                   [:rule_path, String],
+                   [:inputs, Array],
+                   [:params, Model::Parameters],
+                   [:features, Model::Feature::Expr],
+                   [:uuid, String]]
 
     # working information
     #   domain  : caller domain

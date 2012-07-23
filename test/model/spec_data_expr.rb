@@ -229,4 +229,71 @@ describe 'Model::DataExpr' do
     exp.select('test-.a','test-1.a','test-a.a','test-a.b').should == ['test-1.a', 'test-a.a']
     exp.select.should.empty
   end
+
+  describe 'pione method ==' do
+    it 'should get true' do
+      DataExpr.new('test.a').call_pione_method("==", DataExpr.new('test.a')).should.be.true
+    end
+
+    it 'should get false' do
+      DataExpr.new('test.a').call_pione_method("==", DataExpr.new('test.b')).should.be.false
+    end
+  end
+
+  describe 'pione method !=' do
+    it 'should get true' do
+      DataExpr.new('test.a').call_pione_method("!=", DataExpr.new('test.b')).should.be.true
+    end
+
+    it 'should get false' do
+      DataExpr.new('test.a').call_pione_method("!=", DataExpr.new('test.a')).should.be.false
+    end
+  end
+
+  describe 'pione method all' do
+    it 'should set modifier all' do
+      DataExpr.new('test.a').call_pione_method("all").should ==
+        DataExpr.new('test.a').all
+      DataExpr.new('test.a').all.call_pione_method("all").should ==
+        DataExpr.new('test.a').all
+    end
+  end
+
+  describe 'pione method each' do
+    it 'should set modifier each' do
+      DataExpr.new('test.a').call_pione_method("each").should ==
+        DataExpr.new('test.a').each
+      DataExpr.new('test.a').all.call_pione_method("each").should ==
+        DataExpr.new('test.a').each
+    end
+  end
+
+  describe 'pione method except' do
+    it 'should set a exception' do
+      DataExpr.new('test.a').call_pione_method("except", DataExpr.new('test.b')).should ==
+        DataExpr.new('test.a').except(DataExpr.new('test.b'))
+    end
+  end
+
+  describe 'pione method stdout' do
+    it 'should set stdout mode' do
+      DataExpr.new('test.a').call_pione_method("stdout").should ==
+        DataExpr.new('test.a').stdout
+      DataExpr.new('test.a').stdout.call_pione_method("stdout").should ==
+        DataExpr.new('test.a').stdout
+      DataExpr.new('test.a').stderr.call_pione_method("stdout").should ==
+        DataExpr.new('test.a').stdout
+    end
+  end
+
+  describe 'pione method stderr' do
+    it 'should set stderr mode' do
+      DataExpr.new('test.a').call_pione_method("stderr").should ==
+        DataExpr.new('test.a').stderr
+      DataExpr.new('test.a').stdout.call_pione_method("stderr").should ==
+        DataExpr.new('test.a').stderr
+      DataExpr.new('test.a').stderr.call_pione_method("stderr").should ==
+        DataExpr.new('test.a').stderr
+    end
+  end
 end

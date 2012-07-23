@@ -29,6 +29,11 @@ task 'test:agent' do
   sh "bacon -I lib -I test test/agent/spec_*.rb"
 end
 
+desc 'rule-handler test'
+task 'test:rule-handler' do
+  sh "bacon -I lib -I test test/rule-handler/spec_*.rb"
+end
+
 desc 'other test'
 task 'test:other' do
   sh "bacon -I lib -I test test/spec_*.rb"

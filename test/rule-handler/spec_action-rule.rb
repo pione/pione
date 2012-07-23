@@ -1,15 +1,19 @@
-require 'pione/test-util'
+require_relative '../test-util'
+
+$document = Document.parse <<RULES
+Rule Test
+  input '*.a'
+  input '{$INPUT[1].MATCH[1]}.b'
+  output '{$INPUT[1].MATCH[1]}.c'
+Action
+expr `cat {$INPUT[1]}` + `cat {$INPUT[2]}`
+End
+RULES
 
 describe 'ActionRule' do
   before do
     create_remote_tuple_space_server
-    rule_path = '/Test'
-    inputs = [ DataExpr.new('*.a'), DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
-    outputs = [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ]
-    params = []
-    features = []
-    content = 'expr `cat {$INPUT[1]}` + `cat {$INPUT[2]}`'
-    @rule = Rule::ActionRule.new(rule_path, inputs, outputs, params, features, content)
+    @rule = $document["&main:Test"]
   end
 
   after do
@@ -35,7 +39,7 @@ describe 'ActionRule' do
               Tuple[:data].new(name: '1.b', uri: uri_b)]
     params = []
     handler = @rule.make_handler(tuple_space_server, inputs, params)
-    handler.should.be.kind_of(Rule::ActionHandler)
+    handler.should.be.kind_of(RuleHandler::ActionHandler)
   end
 end
 
@@ -44,40 +48,40 @@ Rule Shell1
   input '*.a'
   input '{$INPUT[1].*}.b'
   output '{$INPUT[1].*}.c'
-Action---
+Action
 VAL1=`cat {$INPUT[1]}`;
 VAL2=`cat {$INPUT[2]}`;
 expr $VAL1 + $VAL2 > {$OUTPUT[1]}
----End
+End
 
 Rule Shell2
   input '*.a'
   input '{$INPUT[1].*}.b'
   output '{$INPUT[1].*}.c'.stdout
-Action---
+Action
 VAL1=`cat {$INPUT[1]}`;
 VAL2=`cat {$INPUT[2]}`;
 expr $VAL1 + $VAL2
----End
+End
 
 Rule Ruby
   input '*.a'
   input '{$INPUT[1].*}.b'
   output '{$INPUT[1].*}.c'.stdout
-Action---
+Action
 #!/usr/bin/env ruby
 val1 = File.read('{$INPUT[1]}').to_i
 val2 = File.read('{$INPUT[2]}').to_i
 puts val1 + val2
----End
+End
 DOCUMENT
 
 describe 'ActionHandler' do
   before do
     create_remote_tuple_space_server
-    @rule_sh1 = doc['Shell1']
-    @rule_sh2 = doc['Shell2']
-    @rule_ruby = doc['Ruby']
+    @rule_sh1 = doc['&main:Shell1']
+    @rule_sh2 = doc['&main:Shell2']
+    @rule_ruby = doc['&main:Ruby']
 
     dir = Dir.mktmpdir
     uri_a = "local:#{dir}/1.a"

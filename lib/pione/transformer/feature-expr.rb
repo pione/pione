@@ -11,14 +11,13 @@ module Pione
            { :operator => simple(:operator),
              :symbol => simple(:symbol) }
            ) do
-        symbol_obj = Feature::Symbol.new(symbol.str)
         case operator
         when "+"
-          Feature::RequisiteExpr.new(symbol_obj)
+          Feature::RequisiteExpr.new(symbol.str)
         when "-"
-          Feature::BlockingExpr.new(symbol_obj)
+          Feature::BlockingExpr.new(symbol.str)
         when "?"
-          Feature::PreferredExpr.new(symbol_obj)
+          Feature::PreferredExpr.new(symbol.str)
         end
       end
 

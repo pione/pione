@@ -1,5 +1,5 @@
 module Pione
-  module Rule
+  module RuleHandler
     # RootHandler is a special handler for RootRule.
     class RootHandler < FlowHandler
       # :nodoc:

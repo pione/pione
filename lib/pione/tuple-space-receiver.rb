@@ -1,6 +1,5 @@
-require 'socket'
-require 'drb/drb'
 require 'pione/common'
+require 'socket'
 
 module Pione
   class TupleSpaceReceiver < PioneObject
@@ -8,7 +7,7 @@ module Pione
     UDP_PORT = 54321
     RECEIVER_URI = "druby://localhost:10107"
     DISCONNECT_TIME = 180
-    MAX_RETRY_NUMBER = 50
+    MAX_RETRY_NUMBER = 10
 
     class InstanceError < StandardError; end
 
@@ -55,8 +54,6 @@ module Pione
         # do nothing
       end
     end
-
-    # -- object --
 
     attr_reader :receiver_thread
     attr_reader :updater_thread
@@ -152,7 +149,9 @@ module Pione
     def update_tuple_space_servers
       @thread_update_list = Thread.new do
         loop do
-          puts "check for updating tuple space servers"
+          if Pione.debug_mode?
+            puts "check for updating tuple space servers"
+          end
 
           @tuple_space_servers.delete_if do |ts_server, time|
             begin

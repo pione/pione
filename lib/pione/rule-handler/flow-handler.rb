@@ -1,8 +1,5 @@
-require 'pione/common'
-require 'pione/update-criteria'
-
 module Pione
-  module Rule
+  module RuleHandler
     # FlowHandler represents a handler for flow actions.
     class FlowHandler < BaseHandler
       # :nodoc:
@@ -13,7 +10,7 @@ module Pione
 
       # :nodoc:
       def execute
-        user_message ">>> Start Flow Rule #{@rule.path}"
+        user_message ">>> Start Flow Rule #{@rule.rule_path}"
 
         # 1. apply flow elements
         apply_rules
@@ -27,11 +24,11 @@ module Pione
         end
 
         if debug_mode?
-          debug_message "Flow Rule #{@rule.path} Result:"
+          debug_message "Flow Rule #{@rule.rule_path} Result:"
           @outputs.each {|output| debug_message "  #{output}"}
         end
 
-        user_message ">>> End Flow Rule #{@rule.path}"
+        user_message ">>> End Flow Rule #{@rule.rule_path}"
 
         return @outputs
       end
@@ -47,8 +44,8 @@ module Pione
       # Find outputs from the domain of tuple space.
       def find_outputs
         outputs = []
-        @rule.outputs.each_with_index do |exp, i|
-          exp = exp.with_variable_table(@variable_table)
+        @rule.outputs.each_with_index do |expr, i|
+          expr = expr.eval(@variable_table)
           list = read_all(Tuple[:data].new(domain: @domain))
           if exp.all?
             # case all modifier
@@ -68,7 +65,7 @@ module Pione
 
       # Apply target input data to rules.
       def apply_rules
-        user_message ">>> Start Rule Application: #{@rule.path}"
+        user_message ">>> Start Rule Application: #{@rule.rule_path}"
 
         # SyncMonitor
         sync_monitor = Agent[:sync_monitor].start(tuple_space_server, self)
@@ -90,13 +87,13 @@ module Pione
         sync_monitor.sync
         sync_monitor.terminate
 
-        user_message ">>> End Rule Application: #{@rule.path}"
+        user_message ">>> End Rule Application: #{@rule.rule_path}"
       end
 
       # Find applicable flow-element rules with inputs and variables.
       def find_applicable_rules
         combinations = []
-        @content.each do |caller|
+        @content.elements.each do |caller|
           # find element rule
           rule = find_rule(caller)
           # check rule status and find combinations
@@ -142,7 +139,7 @@ module Pione
         applications.each do |caller, rule, inputs, variable_table|
           thread = Thread.new do
             # task domain
-            task_domain = Util.domain(rule.rule_path, inputs, [])
+            task_domain = Util.domain(rule.expr.package.name, rule.expr.name, inputs, [])
 
             # sync monitor
             # if caller.sync_mode?

@@ -11,7 +11,10 @@ describe 'TupleSpaceProvider' do
     TupleSpaceProvider.terminate
     # kill processes
     @kill.each do |pid|
-      Process.kill('KILL', pid)
+      begin
+        Process.kill('KILL', pid)
+      rescue Errno::ESRCH
+      end
     end
   end
 
@@ -24,9 +27,12 @@ describe 'TupleSpaceProvider' do
   end
 
   it 'should terminate' do
+    TupleSpaceProvider.instance
     TupleSpaceProvider.terminate
     remote = DRbObject.new_with_uri(TupleSpaceProvider::PROVIDER_URI)
     should.raise { puts remote.uuid }
+    TupleSpaceProvider.instance
+    TupleSpaceProvider.terminate
   end
 
   it 'should move provider' do
@@ -41,25 +47,33 @@ describe 'TupleSpaceProvider' do
 
     pid2 = Process.fork do
       TupleSpaceServer.new
-      sleep 60
+      100.times do
+        TupleSpaceProvider.instance
+        sleep 0.1
+      end
     end
 
     pid3 = Process.fork do
       TupleSpaceServer.new
-      sleep 60
+      100.times do
+        TupleSpaceProvider.instance
+        sleep 0.1
+      end
     end
 
-    @kill << pid2 << pid3
+    @kill << pid1 << pid2 << pid3
 
     sleep 0.1
+
     [pid1, pid2, pid3].should.include TupleSpaceProvider.instance.pid
     Process.kill('KILL', pid1)
-    Process.wait.should == pid1
+    Process.waitpid(pid1)
+    sleep 0.1
 
-    #sleep 2
     [pid2, pid3].should.include TupleSpaceProvider.instance.pid
     Process.kill('KILL', pid2)
-    Process.wait.should == pid2
+    Process.waitpid(pid2)
+    sleep 0.1
 
     TupleSpaceProvider.instance.pid.should == pid3
   end

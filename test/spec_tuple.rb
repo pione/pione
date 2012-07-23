@@ -4,7 +4,10 @@ describe "Tuple" do
   describe "Tuple::TupleObject" do
     before do
       # test type tuple for this test
-      Tuple.define_format([:test, :attr1, :attr2, :attr3])
+      Tuple.define_format([:test,
+                           [:attr1, Integer],
+                           [:attr2, Symbol],
+                           [:attr3, Object]])
     end
 
     after do
@@ -18,11 +21,11 @@ describe "Tuple" do
     end
 
     it "should get a tuple object" do
-      t1 = Tuple[:test].new(attr1: 1, attr2: 2, attr3: 3)
-      t2 = Tuple[:test].new(attr1: 3, attr2: 2, attr3: 1)
-      t3 = Tuple[:test].new(attr2: 2, attr3: 3, attr1: 1)
-      t4 = Tuple[:test].new(1, 2, 3)
-      t5 = Tuple[:test].new(3, 2, 1)
+      t1 = Tuple[:test].new(attr1: 1, attr2: :a, attr3: 3)
+      t2 = Tuple[:test].new(attr1: 3, attr2: :a, attr3: 1)
+      t3 = Tuple[:test].new(attr2: :a, attr3: 3, attr1: 1)
+      t4 = Tuple[:test].new(1, :a, 3)
+      t5 = Tuple[:test].new(3, :a, 1)
       [t1, t2, t3, t4, t5].each {|t| t.should.be.kind_of? Tuple[:test]}
       t1.should.not == t2
       t1.should == t3
@@ -81,7 +84,7 @@ describe "Tuple" do
       end
       # same format
       should.not.raise(ArgumentError) do
-        Tuple.define_format([:test, :attr1, :attr2, :attr3])
+        Tuple.define_format([:test, [:attr1, Integer], [:attr2, Symbol], [:attr3, Object]])
       end
     end
   end

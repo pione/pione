@@ -6,6 +6,8 @@ module Pione::Model
     attr_reader :features
 
     def initialize(inputs, outputs, params, features)
+      raise ArgumentError.new(params) unless params.kind_of?(Parameters)
+      raise ArgumentError.new(features) unless features.kind_of?(Feature::Expr)
       @inputs = inputs
       @outputs = outputs
       @params = params
@@ -72,6 +74,15 @@ module Pione::Model
       self.class.rule_type == :flow
     end
 
+    # Make task handler object for the rule.
+    def make_handler(ts_server, inputs, params, opts={})
+      handler_class.new(ts_server, self, inputs, params, opts)
+    end
+
+    def handler_class
+      raise NotImplementedError
+    end
+
     def ==(other)
       return false unless other.kind_of?(self.class)
       return false unless @expr == other.expr
@@ -90,12 +101,20 @@ module Pione::Model
   # ActionRule is a rule writing action.
   class ActionRule < Rule
     @rule_type = :action
+
+    def handler_class
+      RuleHandler::ActionHandler
+    end
   end
 
   # FlowRule represents a flow structured rule. This rule is consisted by flow
   # elements and executes elements actions.
   class FlowRule < Rule
     @rule_type = :flow
+
+    def handler_class
+      RuleHandler::FlowHandler
+    end
   end
 
   # RootRule is a hidden toplevel rule like the following:
@@ -135,6 +154,10 @@ module Pione::Model
                         [],
                         {:domain => @domain})
     end
+
+    def handler_class
+      RuleHandler::RootHandler
+    end
   end
 
   # SystemRule represents built-in rule definition.
@@ -147,7 +170,11 @@ module Pione::Model
 
     def make_condition
       inputs = [DataExpr.new('*')]
-      RuleCondition.new(inputs, [], [], [])
+      RuleCondition.new(inputs, [], Parameters.empty, Feature::EmptyFeature.new)
+    end
+
+    def handler_class
+      RuleHandler::SystemHandler
     end
   end
 

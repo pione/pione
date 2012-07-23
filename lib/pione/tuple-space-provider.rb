@@ -58,8 +58,6 @@ module Pione
       end
     end
 
-    # -- instance --
-
     attr_accessor :timeout
     attr_accessor :receiver_port
     attr_accessor :drb_service

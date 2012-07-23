@@ -59,6 +59,12 @@ describe "Agent::Logger" do
     @logger.wait_to_clear_logs
     # remote server is shoutdown
     remote_drb_server.stop_service
+    DRb.stop_service
+    DRb.remove_server(remote_drb_server)
+    p remote_drb_server
+    p tuple_space_server
+
+    tuple_space_server.write(Tuple[:data].new)
     @logger.wait_till(:terminated)
     # write a message after remote server was down
     Util.ignore_exception do

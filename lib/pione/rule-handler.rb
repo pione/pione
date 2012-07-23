@@ -1,10 +1,9 @@
-require 'tempfile'
 require 'pione/common'
 require 'pione/agent/sync-monitor'
 
 module Pione
-  module Rule
-    class ExecutionError < StandardError
+  module RuleHandler
+    class RuleExecutionError < StandardError
       def initialize(handler)
         @handler = handler
       end
@@ -14,67 +13,7 @@ module Pione
       end
     end
 
-    class UnknownRule < Exception; end
-
-    # Base rule class for flow rule and action rule.
-    class BaseRule < PioneObject
-      attr_reader :path
-      attr_reader :inputs
-      attr_reader :outputs
-      attr_reader :params
-      attr_reader :features
-      attr_reader :content
-
-      # Create a rule definition object.
-      # [+path+] rule path
-      # [+inputs+] input expressions
-      # [+outputs+] output expressions
-      # [+params+] parameters
-      # [+features+] feature set
-      # [+content+] rule content
-      def initialize(path, inputs, outputs, params, features, content)
-        @path = path
-        @inputs = inputs
-        @outputs = outputs
-        @params = params
-        @features = features
-        @content = content
-      end
-
-      # Make task handler object for the rule.
-      def make_handler(ts_server, inputs, params, opts={})
-        handler_class.new(ts_server, self, inputs, params, opts)
-      end
-
-      # Return rule path.
-      def rule_path
-        return @path
-      end
-
-      # :nodoc:
-      def ==(other)
-        return false unless @inputs == other.inputs
-        return false unless @outputs == other.outputs
-        return false unless @params == other.params
-        return false unless @content == other.content
-        return true
-      end
-
-      # :nodoc:
-      alias :eql? :==
-
-      # :nodoc
-      def hash
-        @inputs.hash + @outputs.hash + @params.hash + @content.hash
-      end
-
-      private
-
-      # :nodoc:
-      def handler_class
-        raise NotImplementedError
-      end
-    end
+    class UnknownRule < StandardError; end
 
     # BaseHandler is a base class for rule handlers.
     class BaseHandler
@@ -106,7 +45,7 @@ module Pione
         @inputs = inputs
         @outputs = []
         @params = params
-        @content = rule.content
+        @content = rule.body
         @working_directory = make_working_directory(opts)
         @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new
@@ -142,16 +81,16 @@ module Pione
 
       # Return the domain.
       def get_handling_domain(opts)
-        opts[:domain] || Util.domain(@rule.path, @inputs, @params)
+        opts[:domain] || Util.domain(@rule.expr.package.name, @rule.expr.name, @inputs, @params)
       end
 
-      # Make working directory.
+      # Make a working directory.
       def make_working_directory(opts)
         # build directory path
         process_name = opts[:process_name] || "no-process-name"
         process_id = opts[:process_id] || "no-process-id"
         process_dirname = "#{process_name}_#{process_id}"
-        task_dirname = "#{@rule.path}_#{Util.task_id(@inputs, @params)}"
+        task_dirname = "#{@rule.expr.package.name}-#{@rule.expr.name}_#{Util.task_id(@inputs, @params)}"
         tmpdir = Dir.tmpdir
         basename = File.join(tmpdir, process_dirname, task_dirname)
         # create a directory
@@ -176,12 +115,13 @@ module Pione
       # - working directory
       def setup_variable_table
         @variable_table.make_input_auto_variables(@rule.inputs, @inputs)
-        output_tuples = @rule.outputs.map {|expr|
-          make_output_tuple(expr.with_variable_table(@variable_table).name)
-        }
-        @variable_table.make_output_auto_variables(@rule.outputs, output_tuples)
-        @variable_table.set("WORKING_DIRECTORY", @working_directory)
-        @variable_table.set("PWD", @working_directory)
+        outputs = @rule.outputs.map {|expr| expr.eval(@variable_table) }
+        output_tuples = outputs.map {|expr| make_output_tuple(expr.name) }
+        @variable_table.make_output_auto_variables(outputs, output_tuples)
+        @variable_table.set(Variable.new("WORKING_DIRECTORY"),
+                            PioneString.new(@working_directory))
+        @variable_table.set(Variable.new("PWD"),
+                            PioneString.new(@working_directory))
       end
 
       # Synchronize input data into working directory.
@@ -195,12 +135,11 @@ module Pione
           end
         end
       end
-
     end
   end
 end
 
-require 'pione/rule-handler/flow-rule'
-require 'pione/rule-handler/action-rule'
-require 'pione/rule-handler/root-rule'
-require 'pione/rule-handler/system-rule'
+require 'pione/rule-handler/flow-handler'
+require 'pione/rule-handler/action-handler'
+require 'pione/rule-handler/root-handler'
+require 'pione/rule-handler/system-handler'

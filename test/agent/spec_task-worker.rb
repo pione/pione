@@ -5,7 +5,9 @@ describe 'Agent::TaskWorker' do
   describe 'transition spec' do
     before do
       create_remote_tuple_space_server
-      features = ['A', 'B', 'C']
+      features = Feature::AndExpr.new(Feature::PossibleExpr.new('A'),
+                                      Feature::PossibleExpr.new('B'),
+                                      Feature::PossibleExpr.new('C'))
       @worker = Agent::TaskWorker.new(tuple_space_server, features)
     end
 
@@ -14,13 +16,14 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should take a task' do
-      task = Tuple[:task].new('/Test', [], [], [], Util.uuid)
+      task = Tuple[:task].new('&main:Test', [], [], Feature::EmptyFeature.new, Util.uuid)
       write(task)
+      @worker.__send__(:transit_to_initialized)
       @worker.__send__(:transit_to_task_waiting).should == task
     end
 
     it 'should wait taking a task because of features' do
-      write(Tuple[:task].new('/Test', [], [], ['X'], Util.uuid))
+      write(Tuple[:task].new('&main:Test', [], [], Feature::RequisiteExpr.new('X'), Util.uuid))
       should.raise(Timeout::Error) do
         timeout(1) do
           @worker.__send__(:transit_to_task_waiting)
@@ -29,14 +32,14 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should not wait taking a task because of features' do
-      task = Tuple[:task].new('/Test', [], [], ['A'], Util.uuid)
+      task = Tuple[:task].new('&main:Test', [], [], Feature::RequisiteExpr.new('A'), Util.uuid)
       write(task)
       @worker.__send__(:transit_to_task_waiting).should == task
     end
 
     it 'should take a rule' do
-      task1 = Tuple[:task].new('/Test', [], [], [], Util.uuid)
-      rule = Tuple[:rule].new('/Test', :fake_content, :known)
+      task1 = Tuple[:task].new('&main:Test', [], [], Feature::EmptyFeature.new, Util.uuid)
+      rule = Tuple[:rule].new('&main:Test', :fake_content, :known)
       write(rule)
       task2, result = @worker.__send__(:transit_to_rule_loading, task1)
       result.should == :fake_content
@@ -44,8 +47,8 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should raise an exception because a rule is unknown' do
-      task = Tuple[:task].new('/Test', [], [], [], Util.uuid)
-      rule = Tuple[:rule].new('/Test', :fake_content, :unknown)
+      task = Tuple[:task].new('&main:Test', [], [], Feature::EmptyFeature.new, Util.uuid)
+      rule = Tuple[:rule].new('&main:Test', :fake_content, :unknown)
       write(rule)
       should.raise(Agent::TaskWorker::UnknownRuleError) do
         @worker.__send__(:transit_to_rule_loading, task)
@@ -55,13 +58,13 @@ describe 'Agent::TaskWorker' do
     it 'should execute a task' do
       uuid = Util.uuid
       write(Tuple[:working].new(uuid))
-      task1 = Tuple[:task].new('/Test', [], [], [], uuid)
-      rule = Rule::ActionRule.new('/Test',
-                                  [],
-                                  [DataExpr.new('out.txt')],
-                                  [],
-                                  [],
-                                  "expr 1 + 2 > out.txt")
+      task1 = Tuple[:task].new('&main:Test', [], [], Feature::EmptyFeature.new, uuid)
+      rule = ActionRule.new(RuleExpr.new(Package.new('main'), 'Test'),
+                            RuleCondition.new([],
+                                              [DataExpr.new('out.txt')],
+                                              [],
+                                              []),
+                            ActionBlock.new("expr 1 + 2 > out.txt"))
       task2, handler, result =
         @worker.__send__(:transit_to_task_executing, task1, rule)
       task2.should == task1
@@ -69,10 +72,12 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should write output data tuples' do
-      task1 = Tuple[:task].new('/Test', [], [], [], Util.uuid)
-      rule = Rule::FlowRule.new('/Test', [], [], [], [], :dummy)
-      handler1 = Rule::FlowHandler.new(tuple_space_server, rule, [], [])
-      result = [Tuple[:data].new('/Test', '1.a', nil, Time.now)]
+      task1 = Tuple[:task].new('&main:Test', [], [], [], Util.uuid)
+      rule = FlowRule.new(RuleExpr.new(Package.new('main'), 'Test'),
+                          RuleCondition.new([], [], [], []),
+                          :dummy)
+      handler1 = RuleHandler::FlowHandler.new(tuple_space_server, rule, [], [])
+      result = [Tuple[:data].new('&main:Test', '1.a', nil, Time.now)]
       task2, handler2 =
         @worker.__send__(:transit_to_data_outputing, task1, handler1, result)
       task2.should == task1
@@ -81,9 +86,11 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should write a finished_task tuple' do
-      task = Tuple[:task].new('/Test', [], [], [], Util.uuid)
-      rule = Rule::FlowRule.new('/Test', [], [], [], [], :dummy)
-      handler = Rule::FlowHandler.new(tuple_space_server, rule, [], [])
+      task = Tuple[:task].new('&main:Test', [], [], [], Util.uuid)
+      rule = FlowRule.new(RuleExpr.new(Package.new('main'), 'Test'),
+                                RuleCondition.new([], [], [], []),
+                                :dummy)
+      handler = RuleHandler::FlowHandler.new(tuple_space_server, rule, [], [])
       @worker.__send__(:transit_to_task_finishing, task, handler)
       finished_task = read(Tuple[:finished].any)
       finished_task.domain.should == handler.domain
@@ -107,10 +114,10 @@ describe 'Agent::TaskWorker' do
       @uri = "local:/tmp/1.a"
       Resource[@uri].create "abc"
       @data = Tuple[:data].new(domain: 'test', name: "1.a", uri: @uri)
-      @task1 = Tuple[:task].new(rule_path: "test",
+      @task1 = Tuple[:task].new(rule_path: "&main:test",
                                 inputs: [@data],
                                 params: [],
-                                features: [],
+                                features: Feature::EmptyFeature.new,
                                 uuid: Util.uuid)
 
       # make a rule
@@ -118,12 +125,12 @@ describe 'Agent::TaskWorker' do
         Rule test
           input  '*.a'
           output '{$INPUT[1].MATCH[1]}.b'.stdout
-        Action---
-          echo -n "input: `cat {$INPUT[1]}`"
-        ---End
+        Action
+        echo -n "input: `cat {$INPUT[1]}`"
+        End
         DOCUMENT
-      write(Tuple[:rule].new(rule_path: "test",
-                             content: doc["test"],
+      write(Tuple[:rule].new(rule_path: "&main:test",
+                             content: doc["&main:test"],
                              status: :known))
 
       # workers are waiting tasks

@@ -20,7 +20,7 @@ module Pione::Model
 
     # Return a rule path string with expanding variables.
     def rule_path(vtable=VariableTable.new)
-      @expr.eval(vtable)
+      @expr.eval(vtable).rule_path
     end
 
     # Returns true if sync mode.

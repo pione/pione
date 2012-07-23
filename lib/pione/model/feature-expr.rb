@@ -19,30 +19,12 @@ module Pione::Model
       end
 
       def match(other)
-        raise NotImplementedError
+        raise ArgumentError.new(other) unless other.kind_of?(Expr)
+        Sentence.new(self, other).decide
+        # raise NotImplementedError
       end
 
       alias :=== :match
-    end
-
-    # Symbol represents feature symbols.
-    class Symbol < Expr
-      attr_reader :identifier
-
-      def initialize(identifier)
-        @identifier = identifier
-      end
-
-      def ==(other)
-        other.kind_of?(Symbol) and @identifier == other.identifier
-      end
-
-      alias :eql? :==
-
-      # Return hash value.
-      def hash
-        @identifier.hash
-      end
     end
 
     # SpecialFeature is a class for empty feature and boundless feature.
@@ -99,7 +81,7 @@ module Pione::Model
       end
 
       def as_string
-        self.class.operator + @symbol.identifier
+        self.class.operator + @symbol.to_s
       end
 
       def ==(other)
@@ -607,14 +589,17 @@ module Pione::Model
 
       # Return true if the provider expression can respond to the request.
       def decide
-        result = nil
-        @provider.expander.each do |provider|
-          @request.expander.each do |request|
-            if match(provider, request)
-              result = true
-              raise StopIteration
+        result = false
+        begin
+          @provider.expander.each do |provider|
+            @request.expander.each do |request|
+              if match(provider, request)
+                result = true
+                raise StopIteration
+              end
             end
           end
+        rescue StopIteration
         end
         return result
       end

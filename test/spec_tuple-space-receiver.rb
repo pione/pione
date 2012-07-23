@@ -21,6 +21,15 @@ describe "TupleSpaceReceiver" do
     r2.uuid.should == r3.uuid
   end
 
+  it 'should terminate' do
+    TupleSpaceReceiver.instance
+    TupleSpaceReceiver.terminate
+    remote = DRbObject.new_with_uri(TupleSpaceReceiver::RECEIVER_URI)
+    should.raise { puts remote.uuid }
+    TupleSpaceReceiver.instance
+    TupleSpaceReceiver.terminate
+  end
+
   it "should receive tuple space servers" do
     ts_server = TupleSpaceServer.new
     provider = TupleSpaceProvider.instance

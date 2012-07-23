@@ -2,27 +2,23 @@ require_relative '../test-util'
 
 describe 'Feature::Expr' do
   it 'should equal' do
-    Feature::Symbol.new("A").should == Feature::Symbol.new("A")
-    Feature::PossibleExpr.new(Feature::Symbol.new("A")).should ==
-      Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-    Feature::RestrictiveExpr.new(Feature::Symbol.new("A")).should ==
-      Feature::RestrictiveExpr.new(Feature::Symbol.new("A"))
+    Feature::PossibleExpr.new("A").should ==
+      Feature::PossibleExpr.new("A")
+    Feature::RestrictiveExpr.new("A").should ==
+      Feature::RestrictiveExpr.new("A")
   end
 
   it 'should not equal' do
-    a = Feature::Symbol.new("A")
-    b = Feature::Symbol.new("B")
-    a.should.not == b
-    possible_a = Feature::PossibleExpr.new(a)
-    possible_b = Feature::PossibleExpr.new(b)
-    restrictive_a = Feature::RestrictiveExpr.new(a)
-    restrictive_b = Feature::RestrictiveExpr.new(b)
-    requisite_a = Feature::RequisiteExpr.new(a)
-    requisite_b = Feature::RequisiteExpr.new(b)
-    blocking_a = Feature::BlockingExpr.new(a)
-    blocking_b = Feature::BlockingExpr.new(b)
-    preferred_a = Feature::PreferredExpr.new(a)
-    preferred_b = Feature::PreferredExpr.new(b)
+    possible_a = Feature::PossibleExpr.new("A")
+    possible_b = Feature::PossibleExpr.new("B")
+    restrictive_a = Feature::RestrictiveExpr.new("A")
+    restrictive_b = Feature::RestrictiveExpr.new("B")
+    requisite_a = Feature::RequisiteExpr.new("A")
+    requisite_b = Feature::RequisiteExpr.new("B")
+    blocking_a = Feature::BlockingExpr.new("A")
+    blocking_b = Feature::BlockingExpr.new("B")
+    preferred_a = Feature::PreferredExpr.new("A")
+    preferred_b = Feature::PreferredExpr.new("B")
     empty = Feature::EmptyFeature.new
     boundless = Feature::BoundlessFeature.new
     possible_a.should.not == possible_b
@@ -35,28 +31,40 @@ describe 'Feature::Expr' do
     restrictive_a.should.not == restrictive_b
   end
 
+  it 'should match' do
+    possible = Feature::PossibleExpr.new("A")
+    requisite = Feature::RequisiteExpr.new("A")
+    possible.match(requisite).should.true
+  end
+
+  it 'should not match' do
+    possible = Feature::PossibleExpr.new("A")
+    requisite = Feature::RequisiteExpr.new("B")
+    possible.match(requisite).should.false
+  end
+
   describe 'Feature::AndExpr' do
     it 'should add elements' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
-      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
-      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
+      c = Feature::PossibleExpr.new("C")
+      d = Feature::PossibleExpr.new("D")
       and1 = Feature::AndExpr.new(a, b)
       Feature::AndExpr.new(and1, c, d).should ==
         Feature::AndExpr.new(a, b, c, d)
     end
 
     it 'should unify redundant elements' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
       and1 = Feature::AndExpr.new(a, b)
       Feature::AndExpr.new(and1, a, b).should == and1
       Feature::AndExpr.new(and1, and1).should == and1
     end
 
     it 'should background preferred feature by requisite feature' do
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
-      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("A"))
+      requisite = Feature::RequisiteExpr.new("A")
+      preferred = Feature::PreferredExpr.new("A")
       Feature::AndExpr.new(requisite, preferred).simplify.should ==
         requisite
       Feature::AndExpr.new(preferred, requisite).simplify.should ==
@@ -64,8 +72,8 @@ describe 'Feature::Expr' do
     end
 
     it 'should background preferred feature by blocking feature' do
-      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("A"))
-      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("A"))
+      blocking = Feature::BlockingExpr.new("A")
+      preferred = Feature::PreferredExpr.new("A")
       Feature::AndExpr.new(blocking, preferred).simplify.should ==
         blocking
       Feature::AndExpr.new(preferred, blocking).simplify.should ==
@@ -73,10 +81,10 @@ describe 'Feature::Expr' do
     end
 
     it 'should summarize or-clause' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
-      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
-      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
+      c = Feature::PossibleExpr.new("C")
+      d = Feature::PossibleExpr.new("D")
       or1 = Feature::OrExpr.new(a, b)
       or2 = Feature::OrExpr.new(a, c)
       or3 = Feature::OrExpr.new(a, d)
@@ -93,8 +101,8 @@ describe 'Feature::Expr' do
     end
 
     it 'should unify by restrictive feature' do
-      possible = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      restrictive = Feature::RestrictiveExpr.new(Feature::Symbol.new("A"))
+      possible = Feature::PossibleExpr.new("A")
+      restrictive = Feature::RestrictiveExpr.new("A")
       Feature::AndExpr.new(possible, restrictive).simplify.should ==
         restrictive
       Feature::AndExpr.new(restrictive, possible).simplify.should ==
@@ -102,10 +110,10 @@ describe 'Feature::Expr' do
     end
 
     it 'should expand' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
-      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
-      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
+      c = Feature::PossibleExpr.new("C")
+      d = Feature::PossibleExpr.new("D")
       or1 = Feature::OrExpr.new(a, b)
       or2 = Feature::OrExpr.new(c, d)
       list = Feature::AndExpr.new(or1, or2).expander.to_a
@@ -117,8 +125,8 @@ describe 'Feature::Expr' do
     end
 
     it 'should clone with the set' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
       expr = Feature::AndExpr.new(a, b)
       expr.clone.should == expr
       expr.clone.__id__.should.not == expr.__id__
@@ -127,26 +135,26 @@ describe 'Feature::Expr' do
 
   describe 'Feature::OrExpr' do
     it 'should add elements' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
-      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
-      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
+      c = Feature::PossibleExpr.new("C")
+      d = Feature::PossibleExpr.new("D")
       expr = Feature::OrExpr.new(a, b)
       Feature::OrExpr.new(expr, c, d).should ==
         Feature::OrExpr.new(a, b, c, d)
     end
 
     it 'should unify redundant elements' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
       expr = Feature::OrExpr.new(a, b)
       Feature::OrExpr.new(expr, a, b).should == expr
       Feature::OrExpr.new(expr, expr).should == expr
     end
 
     it 'should foreground preferred feature over requisite feature' do
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
-      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("A"))
+      requisite = Feature::RequisiteExpr.new("A")
+      preferred = Feature::PreferredExpr.new("A")
       Feature::OrExpr.new(requisite, preferred).simplify.should ==
         preferred
       Feature::OrExpr.new(preferred, requisite).simplify.should ==
@@ -154,8 +162,8 @@ describe 'Feature::Expr' do
     end
 
     it 'should foreground preferred feature over blocking feature' do
-      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("A"))
-      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("A"))
+      blocking = Feature::BlockingExpr.new("A")
+      preferred = Feature::PreferredExpr.new("A")
       Feature::OrExpr.new(blocking, preferred).simplify.should ==
         preferred
       Feature::OrExpr.new(preferred, blocking).simplify.should ==
@@ -163,8 +171,8 @@ describe 'Feature::Expr' do
     end
 
     it 'should unify by possible feature' do
-      possible = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      restrictive = Feature::RestrictiveExpr.new(Feature::Symbol.new("A"))
+      possible = Feature::PossibleExpr.new("A")
+      restrictive = Feature::RestrictiveExpr.new("A")
       Feature::OrExpr.new(possible, restrictive).simplify.should ==
         possible
       Feature::OrExpr.new(restrictive, possible).simplify.should ==
@@ -172,8 +180,8 @@ describe 'Feature::Expr' do
     end
 
     it 'should neutralize' do
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
-      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("A"))
+      requisite = Feature::RequisiteExpr.new("A")
+      blocking = Feature::BlockingExpr.new("A")
       Feature::OrExpr.new(requisite, blocking).simplify.should ==
         Feature::EmptyFeature.new
       Feature::OrExpr.new(blocking, requisite).simplify.should ==
@@ -181,10 +189,10 @@ describe 'Feature::Expr' do
     end
 
     it 'should expand' do
-      a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
-      c = Feature::PossibleExpr.new(Feature::Symbol.new("C"))
-      d = Feature::PossibleExpr.new(Feature::Symbol.new("D"))
+      a = Feature::PossibleExpr.new("A")
+      b = Feature::PossibleExpr.new("B")
+      c = Feature::PossibleExpr.new("C")
+      d = Feature::PossibleExpr.new("D")
       and1 = Feature::AndExpr.new(a, b)
       and2 = Feature::AndExpr.new(c, d)
       list = Feature::OrExpr.new(and1, and2).expander.to_a
@@ -199,19 +207,19 @@ describe 'Feature::Expr' do
   end
 
   describe 'Feature::Sentence' do
-    it 'should expand' do
-      possible_a = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      possible_b = Feature::PossibleExpr.new(Feature::Symbol.new("B"))
+    it 'should get true' do
+      possible_a = Feature::PossibleExpr.new("A")
+      possible_b = Feature::PossibleExpr.new("B")
       provider = Feature::OrExpr.new(possible_a, possible_b)
-      requisite_a = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
-      requisite_b = Feature::RequisiteExpr.new(Feature::Symbol.new("B"))
+      requisite_a = Feature::RequisiteExpr.new("A")
+      requisite_b = Feature::RequisiteExpr.new("B")
       request = Feature::OrExpr.new(requisite_a, requisite_b)
       Feature::Sentence.new(provider, request).decide.should.be.true
     end
 
     it 'should eliminate requisite feature' do
-      possible = Feature::PossibleExpr.new(Feature::Symbol.new("A"))
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("A"))
+      possible = Feature::PossibleExpr.new("A")
+      requisite = Feature::RequisiteExpr.new("A")
       provider = Feature::AndExpr.new(possible)
       request = Feature::AndExpr.new(requisite)
       m = Feature::Sentence::EliminationMethod
@@ -222,9 +230,9 @@ describe 'Feature::Expr' do
     end
 
     it 'should eliminate blocking feature' do
-      possible = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
-      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("Z"))
+      possible = Feature::PossibleExpr.new("X")
+      requisite = Feature::RequisiteExpr.new("Y")
+      blocking = Feature::BlockingExpr.new("Z")
       provider = Feature::AndExpr.new(possible)
       request = Feature::AndExpr.new(requisite, blocking)
       m = Feature::Sentence::EliminationMethod
@@ -235,9 +243,9 @@ describe 'Feature::Expr' do
     end
 
     it 'should eliminate preferred feature' do
-      possible = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
-      preferred = Feature::PreferredExpr.new(Feature::Symbol.new("Z"))
+      possible = Feature::PossibleExpr.new("X")
+      requisite = Feature::RequisiteExpr.new("Y")
+      preferred = Feature::PreferredExpr.new("Z")
       provider = Feature::AndExpr.new(possible)
       request = Feature::AndExpr.new(requisite, preferred)
       m = Feature::Sentence::EliminationMethod
@@ -248,8 +256,8 @@ describe 'Feature::Expr' do
     end
 
     it 'should eliminate or-clause including empty feature' do
-      possible1 = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
-      possible2 = Feature::PossibleExpr.new(Feature::Symbol.new("Y"))
+      possible1 = Feature::PossibleExpr.new("X")
+      possible2 = Feature::PossibleExpr.new("Y")
       or_clause = Feature::OrExpr.new(Feature::EmptyFeature.new, possible1)
       provider = Feature::AndExpr.new(or_clause, possible2)
       request = Feature::AndExpr.new(Feature::EmptyFeature.new)
@@ -261,9 +269,9 @@ describe 'Feature::Expr' do
     end
 
     it 'should eliminate possible feature' do
-      possible1 = Feature::PossibleExpr.new(Feature::Symbol.new("X"))
-      possible2 = Feature::PossibleExpr.new(Feature::Symbol.new("Y"))
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
+      possible1 = Feature::PossibleExpr.new("X")
+      possible2 = Feature::PossibleExpr.new("Y")
+      requisite = Feature::RequisiteExpr.new("Y")
       provider = Feature::AndExpr.new(possible1, possible2)
       request = Feature::AndExpr.new(requisite)
       m = Feature::Sentence::EliminationMethod
@@ -276,15 +284,15 @@ describe 'Feature::Expr' do
 
   describe "pione method ==" do
     it 'should get true' do
-      requisite_a = Feature::RequisiteExpr.new(Feature::Symbol.new("X"))
-      requisite_b = Feature::RequisiteExpr.new(Feature::Symbol.new("X"))
+      requisite_a = Feature::RequisiteExpr.new("X")
+      requisite_b = Feature::RequisiteExpr.new("X")
       requisite_a.call_pione_method("==", requisite_b).should ==
         PioneBoolean.true
     end
 
     it 'should get false' do
-      requisite_a = Feature::RequisiteExpr.new(Feature::Symbol.new("X"))
-      requisite_b = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
+      requisite_a = Feature::RequisiteExpr.new("X")
+      requisite_b = Feature::RequisiteExpr.new("Y")
       requisite_a.call_pione_method("==", requisite_b).should ==
         PioneBoolean.false
     end
@@ -292,15 +300,15 @@ describe 'Feature::Expr' do
 
   describe "pione method !=" do
     it 'should get true' do
-      requisite_a = Feature::RequisiteExpr.new(Feature::Symbol.new("X"))
-      requisite_b = Feature::RequisiteExpr.new(Feature::Symbol.new("Y"))
+      requisite_a = Feature::RequisiteExpr.new("X")
+      requisite_b = Feature::RequisiteExpr.new("Y")
       requisite_a.call_pione_method("!=", requisite_b).should ==
         PioneBoolean.true
     end
 
     it 'should get false' do
-      requisite_a = Feature::RequisiteExpr.new(Feature::Symbol.new("X"))
-      requisite_b = Feature::RequisiteExpr.new(Feature::Symbol.new("X"))
+      requisite_a = Feature::RequisiteExpr.new("X")
+      requisite_b = Feature::RequisiteExpr.new("X")
       requisite_a.call_pione_method("!=", requisite_b).should ==
         PioneBoolean.false
     end
@@ -308,10 +316,10 @@ describe 'Feature::Expr' do
 
   describe "pione method as_string" do
     it 'should get string' do
-      requisite = Feature::RequisiteExpr.new(Feature::Symbol.new("X"))
+      requisite = Feature::RequisiteExpr.new("X")
       requisite.call_pione_method("as_string").should ==
         PioneString.new("+X")
-      blocking = Feature::BlockingExpr.new(Feature::Symbol.new("X"))
+      blocking = Feature::BlockingExpr.new("X")
       blocking.call_pione_method("as_string").should ==
         PioneString.new("-X")
     end

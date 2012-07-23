@@ -1,7 +1,5 @@
-require 'pione/common'
-
 module Pione
-  module Rule
+  module RuleHandler
     # ActionHandler handles ActionRule.
     class ActionHandler < BaseHandler
       # Execute the action.
@@ -19,7 +17,7 @@ module Pione
       # Write the data to the tempfile as shell script.
       def write_shell_script(&b)
         file = File.open(File.join(@working_directory,"sh"), "w+")
-        file.print(@variable_table.expand(@rule.content))
+        file.print(@rule.body.eval(@variable_table).content)
         if debug_mode?
           user_message ">>> #{file.path}"
           user_message "SH-----------------------------------------------------"
@@ -40,6 +38,7 @@ module Pione
       # Write stdout data as output file
       def write_stdout_as_output_file(stdout)
         @rule.outputs.each do |output|
+          output = output.eval(@variable_table)
           if output.stdout?
             name = output.with_variable_table(@variable_table).name
             filepath = File.join(@working_directory, name)
@@ -62,7 +61,7 @@ module Pione
       def collect_outputs
         list = Dir.entries(@working_directory)
         @rule.outputs.each_with_index do |expr, i|
-          expr = expr.with_variable_table(@variable_table)
+          expr = expr.eval(@variable_table)
           case expr.modifier
           when :all
             list.select{|elt| expr.match(elt)}.each do |name|

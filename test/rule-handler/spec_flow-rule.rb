@@ -1,15 +1,19 @@
-require 'pione/test-util'
+require_relative '../test-util'
+
+$document = Document.parse(<<DOCUMENT)
+Rule Test
+  input '*.a'
+  input '{$INPUT[1].MATCH[1]}.b'
+  output '{$INPUT[1].MATCH[1]}.c'
+Flow
+rule TestAction
+End
+DOCUMENT
 
 describe 'FlowRule' do
   before do
     create_remote_tuple_space_server
-    rule_path = '/Test'
-    inputs = [DataExpr.new('*.a'), DataExpr.new('{$INPUT[1].MATCH[1]}.b')]
-    outputs = [DataExpr.new('{$INPUT[1].MATCH[1]}.c')]
-    params = []
-    features = []
-    content = [Rule::FlowElement::CallRule.new(RuleExpr.new('TestAction'))]
-    @rule = Rule::FlowRule.new(rule_path, inputs, outputs, params, features, content)
+    @rule = $document["&main:Test"]
   end
 
   after do
@@ -35,7 +39,7 @@ describe 'FlowRule' do
               Tuple[:data].new(name: '1.b', uri: uri_b)]
     params = []
     handler = @rule.make_handler(tuple_space_server, inputs, params)
-    handler.should.be.kind_of(Rule::FlowHandler)
+    handler.should.be.kind_of(RuleHandler::FlowHandler)
   end
 end
 
@@ -62,8 +66,8 @@ DOCUMENT
 describe 'FlowHandler' do
   before do
     create_remote_tuple_space_server
-    @rule = doc['Test']
-    write(Tuple[:rule].new('Shell', doc['Shell'], :known))
+    @rule = doc['&main:Test']
+    write(Tuple[:rule].new('&main:Shell', doc['&main:Shell'], :known))
 
     dir = Dir.mktmpdir
     uri_a = "local:#{dir}/1.a"
@@ -77,7 +81,7 @@ describe 'FlowHandler' do
 
     @handler = @rule.make_handler(tuple_space_server,
                                   @tuples,
-                                  [],
+                                  Parameters.empty,
                                   {:domain => 'test'})
   end
 
@@ -104,7 +108,7 @@ describe 'FlowHandler' do
     quiet_mode do
       thread = Thread.new { @handler.execute }
       task = read(Tuple[:task].new)
-      task.rule_path.should == 'Shell'
+      task.rule_path.should == '&main:Shell'
       task.inputs.map{|d|d.name}.sort.should == ['1.a', '1.b']
       task.params.should.empty
       task.features.should.empty

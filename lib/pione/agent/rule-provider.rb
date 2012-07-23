@@ -24,7 +24,7 @@ module Pione
       end
 
       def add_rule(rule_path, content)
-        raise ArgumentError unless content.kind_of?(Rule::BaseRule)
+        raise ArgumentError unless content.kind_of?(Rule)
         @table[rule_path] = content
       end
 

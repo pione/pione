@@ -22,6 +22,11 @@ module Pione::Model
       "&%s:%s" % [@package.name, @name]
     end
 
+    # FIXME
+    def rule_path
+      path
+    end
+
     def pione_model_type
       TypeRuleExpr
     end

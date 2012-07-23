@@ -40,8 +40,8 @@ module Pione
       # Create a task worker agent.
       # [+tuple_space_server+] tuple space server
       # [+features+] feature set
-      def initialize(tuple_space_server, features=[])
-        raise ArgumentError.new(features) unless features.respond_to?(:to_a)
+      def initialize(tuple_space_server, features=Feature::EmptyFeature.new)
+        raise ArgumentError.new(features) unless features.kind_of?(Feature::Expr)
         @features = features
         super(tuple_space_server)
       end

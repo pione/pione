@@ -7,6 +7,18 @@ module Pione::Model
       @data = data
     end
 
+    def self.empty
+      self.new({})
+    end
+
+    def self.merge(*list)
+      new_params = empty
+      list.each do |params|
+        new_params = new_params.merge(params)
+      end
+      return new_params
+    end
+
     def pione_model_type
       TypeParameters
     end
@@ -41,6 +53,14 @@ module Pione::Model
 
     def empty?
       @data.empty?
+    end
+
+    def merge(other)
+      @data.merge(other)
+    end
+
+    def values
+      @data.keys.sort
     end
 
     def string_form

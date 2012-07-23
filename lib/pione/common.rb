@@ -7,6 +7,7 @@ require 'drb/drb'
 require 'rinda/rinda'
 require 'rinda/tuplespace'
 require 'json'
+require 'tempfile'
 
 module Pione
   @@debug_mode = false
@@ -151,8 +152,8 @@ module Pione
     end
 
     # Make target domain name by module name, inputs, and outputs.
-    def self.domain(rule_path, inputs, params)
-      "#{rule_path}_#{task_id(inputs, params)}"
+    def self.domain(package_name, rule_name, inputs, params)
+      "#{package_name}-#{rule_name}_#{task_id(inputs, params)}"
     end
   end
 end
@@ -166,6 +167,7 @@ require 'pione/log'
 require 'pione/tuple'
 require 'pione/data-finder'
 require 'pione/document'
+require 'pione/update-criteria'
 require 'pione/rule-handler'
 require 'pione/agent/command-listener'
 require 'pione/agent/task-worker'

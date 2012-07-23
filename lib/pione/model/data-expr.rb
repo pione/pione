@@ -99,35 +99,34 @@ module Pione::Model
 
     # Set it each modifier.
     def each
-      @modifier = :each
-      return self
+      return self.class.new(@name, :each, @mode, @exceptions)
     end
 
     # Set it all modifier.
     def all
-      @modifier = :all
-      return self
+      return self.class.new(@name, :all, @mode, @exceptions)
     end
 
     # Set it stdout mode.
     def stdout
-      @mode = :stdout
-      return self
+      return self.class.new(@name, @modifier, :stdout, @exceptions)
     end
 
     # Set it stderr mode.
     def stderr
-      @mode = :stderr
-      return self
+      return self.class.new(@name, @modifier, :stderr, @exceptions)
     end
 
     def eval(vtable=VariableTable.new)
       value = with_variable_table(vtable)
       self.class.new(
-        value.gsub(/\<\?\s*(.+?)\s*\?\>/) do
+        value.name.gsub(/\<\?\s*(.+?)\s*\?\>/) do
           expr = Transformer.new.apply(Parser.new.expr.parse($1))
           expr.eval(vtable).call_pione_method("as_string").to_ruby
-        end
+        end,
+        @modifier,
+        @mode,
+        @exceptions
       )
     end
 
@@ -246,7 +245,7 @@ module Pione::Model
 
   TypeDataExpr.instance_eval do
     define_pione_method("==", [TypeDataExpr], TypeBoolean) do |rec, other|
-      PioneBoolean.new(rec.value == other.value)
+      PioneBoolean.new(rec == other)
     end
 
     define_pione_method("!=", [TypeDataExpr], TypeBoolean) do |rec, other|
@@ -254,11 +253,23 @@ module Pione::Model
     end
 
     define_pione_method("all", [], TypeDataExpr) do |rec|
-      DataExpr.new(rec.name, :all, rec.mode, rec.exceptions)
+      rec.all
+    end
+
+    define_pione_method("each", [], TypeDataExpr) do |rec|
+      rec.each
     end
 
     define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |rec, target|
       rec.except(target)
+    end
+
+    define_pione_method("stdout", [], TypeDataExpr) do |rec|
+      rec.stdout
+    end
+
+    define_pione_method("stderr", [], TypeDataExpr) do |rec|
+      rec.stderr
     end
   end
 end

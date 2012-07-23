@@ -48,22 +48,16 @@ describe 'UpdateCriteria' do
   end
 
   describe 'criteria: not_exist_output' do
-    before do
-      inputs = [data]
-      outputs = [data]
-      @rule = Rule::BaseRule.new('test', inputs, outputs, [], [], nil)
-    end
-
     it 'should be updatable' do
       inputs = [tuple1, tuple2]
       outputs = []
-      UC.not_exist_output?(@rule, inputs, outputs).should.true
+      UC.not_exist_output?($outputs_rule, inputs, outputs).should.true
     end
 
     it 'should be not updatable' do
       inputs = [tuple1]
       outputs = [tuple3]
-      UC.not_exist_output?(@rule, inputs, outputs).should.false
+      UC.not_exist_output?($outputs_rule, inputs, outputs).should.false
     end
   end
 end
