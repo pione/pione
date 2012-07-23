@@ -5,14 +5,14 @@ describe 'Model::RuleCondition' do
     a = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      [Variable.new("a")],
-      [Feature::RequisiteExpr.new("a")]
+      Parameters.new("var" => "a".to_pione),
+      Feature.and(Feature::RequisiteExpr.new("a"))
     )
     b = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      [Variable.new("a")],
-      [Feature::RequisiteExpr.new("a")]
+      Parameters.new("var" => "a".to_pione),
+      Feature.and(Feature::RequisiteExpr.new("a"))
     )
     a.should == b
   end
@@ -21,14 +21,14 @@ describe 'Model::RuleCondition' do
     a = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      [Variable.new("a")],
-      [Feature::RequisiteExpr.new("a")]
+      Parameters.new("var" => "a".to_pione),
+      Feature.and(Feature::RequisiteExpr.new("a"))
     )
     b = RuleCondition.new(
       [DataExpr.new("b")],
       [DataExpr.new("b")],
-      [Variable.new("b")],
-      [Feature::RequisiteExpr.new("b")]
+      Parameters.new("var" => "b".to_pione),
+      Feature.and(Feature::RequisiteExpr.new("b"))
     )
     a.should.not == b
   end
@@ -37,14 +37,14 @@ end
 condition_a = RuleCondition.new(
   [DataExpr.new("a")],
   [DataExpr.new("a")],
-  [Variable.new("a")],
-  [Feature::RequisiteExpr.new("a")]
+  Parameters.new("var" => "a".to_pione),
+  Feature.and(Feature::RequisiteExpr.new("a"))
 )
 condition_b = RuleCondition.new(
   [DataExpr.new("b")],
   [DataExpr.new("b")],
-  [Variable.new("b")],
-  [Feature::RequisiteExpr.new("b")]
+  Parameters.new("var" => "b".to_pione),
+  Feature.and(Feature::RequisiteExpr.new("b"))
 )
 
 describe 'Model::ActionRule' do
@@ -90,6 +90,24 @@ describe 'Model::ActionRule' do
       condition_a,
       'echo "a"'
     ).should.not.flow
+  end
+
+  it 'should make an action handler' do
+    create_remote_tuple_space_server
+    rule = ActionRule.new(
+      RuleExpr.new(Package.new("test"), 'a'),
+      condition_a,
+      'echo "a"'
+    )
+    dir = Dir.mktmpdir
+    uri_a = "local:#{dir}/1.a"
+    uri_b = "local:#{dir}/1.b"
+    Resource[uri_a].create("1")
+    inputs = [Tuple[:data].new(name: '1.a', uri: uri_a)]
+    params = Parameters.empty
+    handler = rule.make_handler(tuple_space_server, inputs, params)
+    handler.should.be.kind_of(RuleHandler::ActionHandler)
+    tuple_space_server.terminate
   end
 end
 

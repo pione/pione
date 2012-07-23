@@ -9,7 +9,10 @@ module Pione
       end
 
       def message
-        "Execution error when handling the rule '#{@handler.rule.rule_path}' inputs=#{@handler.inputs}"
+        "Execution error when handling the rule '%s' inputs=%s" % [
+          @handler.rule.rule_path,
+          @handler.inputs
+        ]
       end
     end
 
@@ -81,7 +84,12 @@ module Pione
 
       # Return the domain.
       def get_handling_domain(opts)
-        opts[:domain] || Util.domain(@rule.expr.package.name, @rule.expr.name, @inputs, @params)
+        opts[:domain] || Util.domain(
+          @rule.expr.package.name,
+          @rule.expr.name,
+          @inputs,
+          @params
+        )
       end
 
       # Make a working directory.
@@ -90,7 +98,11 @@ module Pione
         process_name = opts[:process_name] || "no-process-name"
         process_id = opts[:process_id] || "no-process-id"
         process_dirname = "#{process_name}_#{process_id}"
-        task_dirname = "#{@rule.expr.package.name}-#{@rule.expr.name}_#{Util.task_id(@inputs, @params)}"
+        task_dirname = "%s-%s_%s" % [
+          @rule.expr.package.name,
+          @rule.expr.name,
+          Util.task_id(@inputs, @params)
+        ]
         tmpdir = Dir.tmpdir
         basename = File.join(tmpdir, process_dirname, task_dirname)
         # create a directory
@@ -118,10 +130,14 @@ module Pione
         outputs = @rule.outputs.map {|expr| expr.eval(@variable_table) }
         output_tuples = outputs.map {|expr| make_output_tuple(expr.name) }
         @variable_table.make_output_auto_variables(outputs, output_tuples)
-        @variable_table.set(Variable.new("WORKING_DIRECTORY"),
-                            PioneString.new(@working_directory))
-        @variable_table.set(Variable.new("PWD"),
-                            PioneString.new(@working_directory))
+        @variable_table.set(
+          Variable.new("WORKING_DIRECTORY"),
+          PioneString.new(@working_directory)
+        )
+        @variable_table.set(
+          Variable.new("PWD"),
+          PioneString.new(@working_directory)
+        )
       end
 
       # Synchronize input data into working directory.

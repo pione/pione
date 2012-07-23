@@ -9,13 +9,17 @@ class Pione::Transformer
 
     # rule_definition
     rule(:rule_definition => {
-           :rule_header => simple(:rule_expr),
-           :rule_conditions => sequence(:conditions),
-           :block => simple(:block) }) {
+        :rule_header => simple(:rule_expr),
+        :rule_conditions => sequence(:conditions),
+        :block => simple(:block) }) {
       inputs = conditions.select{|c| c.type == :input}.map{|c| c.obj}
       outputs = conditions.select{|c| c.type == :output}.map{|c| c.obj}
-      params = Parameters.merge(*conditions.select{|c| c.type == :param}.map{|c| c.obj})
-      features = Feature::AndExpr.new(*conditions.select{|c| c.type == :feature}.map{|c| c.obj})
+      params = Parameters.merge(
+        *conditions.select{|c| c.type == :param}.map{|c| c.obj}
+      )
+      features = Feature::AndExpr.new(
+        *conditions.select{|c| c.type == :feature}.map{|c| c.obj}
+      )
       condition = RuleCondition.new(inputs, outputs, params, features)
       case block
       when ActionBlock

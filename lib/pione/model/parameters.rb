@@ -56,7 +56,7 @@ module Pione::Model
     end
 
     def merge(other)
-      @data.merge(other)
+      self.class.new(@data.merge(other.data))
     end
 
     def values

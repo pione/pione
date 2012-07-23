@@ -46,13 +46,13 @@ echo "test" > {$OUTPUT[1].NAME}
 End
 STRING
       [ActionRule.new(
-        RuleExpr.new(Package.new("main"), "Test"),
-        RuleCondition.new(
-          [ DataExpr.new('*.a') ],
-          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
-          [],
-          []
-        ),
+          RuleExpr.new(Package.new("main"), "Test"),
+          RuleCondition.new(
+            [ DataExpr.new('*.a') ],
+            [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
+            Parameters.empty,
+            Feature.empty
+          ),
           ActionBlock.new("echo \"test\" > {$OUTPUT[1].NAME}\n")
       )]
     end
@@ -71,8 +71,8 @@ STRING
           RuleCondition.new(
             [ DataExpr.new('*.a') ],
             [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
-            [],
-            []
+            Parameters.empty,
+            Feature.empty
           ),
           FlowBlock.new(
             CallRule.new(RuleExpr.new(Package.new("main"), "TestA")),
@@ -102,8 +102,8 @@ STRING
                 DataExpr.new("*.txt"),
                 DataExpr.new("summary.txt"))],
             [DataExpr.new("summary.txt")],
-            [Parameters.new({"ConvertCharSet" => PioneBoolean.true})],
-            []
+            Parameters.new({"ConvertCharSet" => PioneBoolean.true}),
+            Feature.empty
           ),
           FlowBlock.new(
             ConditionalBlock.new(
@@ -149,8 +149,8 @@ STRING
           RuleCondition.new(
             [ DataExpr.new("*.a") ],
             [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
-            [],
-            []
+            Parameters.empty,
+            Feature.empty
           ),
           ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         ),
@@ -159,8 +159,8 @@ STRING
           RuleCondition.new(
             [ DataExpr.new("*.b") ],
             [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ],
-            [],
-            []
+            Parameters.empty,
+            Feature.empty
           ),
           ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         )

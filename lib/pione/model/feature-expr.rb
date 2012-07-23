@@ -3,6 +3,17 @@ require 'pione/common'
 
 module Pione::Model
   module Feature
+    def self.and(*exprs)
+      AndExpr.new(*exprs)
+    end
+
+    def self.or(*exprs)
+      OrExpr.new(*exprs)
+    end
+
+    def self.empty
+      EmptyFeature.new
+    end
 
     # Expr is a super class for all feature expressions.
     class Expr < PioneModelObject
@@ -52,6 +63,10 @@ module Pione::Model
 
       def empty?
         true
+      end
+
+      def ==(other)
+        other.empty?
       end
     end
 
@@ -179,11 +194,13 @@ module Pione::Model
 
       # Returns true if the connective set is empty.
       def empty?
+        return true if @elements = Set.new([Feature.empty])
         return false unless @elements.size == 1
         return @elements.first.empty?
       end
 
       def ==(other)
+        return true if empty? and other.kind_of?(Expr) and other.empty?
         other.kind_of?(self.class) and @elements == other.elements
       end
 
@@ -233,9 +250,15 @@ module Pione::Model
                            else
                              union.to_a.first
                            end
-              add(OrExpr.new(union_expr,
-                             AndExpr.new(OrExpr.new(*(target.elements - union).to_a),
-                                         OrExpr.new(*(elt.elements - union).to_a))))
+              add(
+                OrExpr.new(
+                  union_expr,
+                  AndExpr.new(
+                    OrExpr.new(*(target.elements - union).to_a),
+                    OrExpr.new(*(elt.elements - union).to_a)
+                  )
+                )
+              )
               return true
             else
               # Γ1 & (Γ1 | Γ3) -> Γ1

@@ -20,14 +20,6 @@ describe 'ActionRule' do
     tuple_space_server.terminate
   end
 
-  it 'should be an action' do
-    @rule.should.action
-  end
-
-  it 'should not be a flow' do
-    @rule.should.not.flow
-  end
-
   it 'should make an action handler' do
     dir = Dir.mktmpdir
     uri_a = "local:#{dir}/1.a"

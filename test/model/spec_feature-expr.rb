@@ -40,10 +40,26 @@ describe 'Feature::Expr' do
   it 'should not match' do
     possible = Feature::PossibleExpr.new("A")
     requisite = Feature::RequisiteExpr.new("B")
-    possible.match(requisite).should.false
+    requisite.match(possible).should.false
+  end
+
+  describe 'Feature::EmptyFeature' do
+    it 'should be equal' do
+      Feature.empty.should == Feature.empty
+      Feature.empty.should == Feature.and()
+      Feature.empty.should == Feature.or()
+    end
   end
 
   describe 'Feature::AndExpr' do
+    it 'should be equal' do
+      Feature.and().should == Feature.empty
+    end
+
+    it 'should be empty' do
+      Feature.and.should.be.empty
+    end
+
     it 'should add elements' do
       a = Feature::PossibleExpr.new("A")
       b = Feature::PossibleExpr.new("B")
