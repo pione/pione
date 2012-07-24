@@ -1,0 +1,52 @@
+Rule Main
+  output 'result.txt'
+  param {N: 100}
+Flow
+rule Fib.params({N: $N})
+rule Result.params({N: $N})
+End
+
+Rule Fib0
+  output 'fib0.txt'
+Action
+echo -n '0'
+End
+
+Rule Fib1
+  output 'fib1.txt'
+Action
+echo -n '1'
+End
+
+Rule Fib
+  output 'fib{$N}.txt'
+  param {N: 100}
+Flow
+case $N
+when 0
+  rule Fib0
+when 1
+  rule Fib1
+else
+  $P1 := $N - 1
+  $P2 := $N - 2
+  rule Fib.params({N: $P1})
+  rule Fib.params({N: $P2})
+  rule Calc.params({N: $N, P1: $P1, P2: $P2})
+end
+End
+
+Rule Calc
+  input 'fib{$P1}.txt'
+  input 'fib{$P2}.txt'
+  output 'fib{$N}.txt'
+Action
+expr `cat {$INPUT[1]}` `cat {$INPUT[2]}` > {$OUTPUT[1]}
+End
+
+Rule Result
+  input 'fib{$N}.txt'
+  output 'result.txt'
+Action
+cat {$INPUT[1]} > {$OUTPUT[1]}
+End

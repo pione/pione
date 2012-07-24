@@ -49,7 +49,7 @@ module Pione
           list = read_all(Tuple[:data].new(domain: @domain))
           if expr.all?
             # case all modifier
-            names = list.select {|elt| exp.match(elt.name)}
+            names = list.select {|elt| expr.match(elt.name)}
             unless names.empty?
               @outputs[i] = names
             end

@@ -1,3 +1,4 @@
+$stand_alone = "bin/pione-stand-alone"
 
 desc 'generate HTML API documentation'
 task :html do
@@ -5,8 +6,29 @@ task :html do
 end
 
 desc 'count characters in input direcotry'
-task :CountChar do
-  sh "ruby -I lib bin/pione-stand-alone example/CountChar/CountChar.pione"
+task 'example:CountChar' do
+  sh "ruby -I lib %s -i %s %s" % [
+    $stand_alone,
+    "example/CountChar/text",
+    "example/CountChar/CountChar.pione"
+  ]
+end
+
+desc 'sum numbers in file'
+task 'example:Sum' do
+  sh "ruby -I lib %s -i %s %s" % [
+    $stand_alone,
+    "example/Sum/input",
+    "example/Sum/Sum.pione"
+  ]
+end
+
+desc 'fib calc'
+task 'example:Fib' do
+  sh "ruby -I lib %s %s" % [
+    $stand_alone,
+    "example/Fib/Fib.pione"
+  ]
 end
 
 desc 'parser test'

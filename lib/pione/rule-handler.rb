@@ -9,9 +9,10 @@ module Pione
       end
 
       def message
-        "Execution error when handling the rule '%s' inputs=%s" % [
+        "Execution error when handling the rule '%s': inputs=%s, output=%s" % [
           @handler.rule.rule_path,
-          @handler.inputs
+          @handler.inputs,
+          @handler.outputs
         ]
       end
     end
@@ -49,11 +50,11 @@ module Pione
         @rule = rule
         @inputs = inputs
         @outputs = []
-        @params = params
+        @params = @rule.params.merge(params)
         @content = rule.body
         @working_directory = make_working_directory(opts)
         @domain = get_handling_domain(opts)
-        @variable_table = VariableTable.new
+        @variable_table = VariableTable.new(@params.data)
         @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
         @task_id = Util.task_id(@inputs, @params)
 

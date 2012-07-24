@@ -2,17 +2,17 @@ Rule Main
   input '*'.except('summary.txt').all
   output 'summary.txt'
 Flow
-  rule CountUTF8Char
+  rule CountChar
   rule Summarize
   rule Terminate
 End
 
-Rule CountUTF8Char
+Rule CountChar
   input '*.txt'.except('summary.txt')
-  output '{$INPUT[1].MATCH[1]}.count'
+  output '{$INPUT[1]}.count'
 Flow
   rule ConvertToUtf8
-  rule CountChar
+  rule CountUTF8Char
 End
 
 Rule ConvertToUtf8
@@ -22,7 +22,7 @@ Action
 nkf -w {$INPUT[1]} > {$OUTPUT[1]}
 End
 
-Rule CountChar
+Rule CountUTF8Char
   input '*.utf8'
   output '{$INPUT[1].MATCH[1]}.count'.stdout
 Action
