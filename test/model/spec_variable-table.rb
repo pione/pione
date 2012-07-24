@@ -44,7 +44,7 @@ describe 'Model::VariableTable' do
   end
 
   it 'should raise an error by unknown variable when expanding a string' do
-    should.raise(UnknownVariableError) do
+    should.raise(UnboundVariableError) do
       @table.expand('{$D}')
     end
   end

@@ -222,6 +222,13 @@ describe 'Feature::Expr' do
     end
   end
 
+  #
+  # test cases
+  #
+  yamlname = 'spec_feature-expr.yml'
+  ymlpath = File.join(File.dirname(__FILE__), yamlname)
+  testcases = YAML.load_file(ymlpath)
+
   describe 'Feature::Sentence' do
     it 'should get true' do
       possible_a = Feature::PossibleExpr.new("A")
@@ -295,6 +302,15 @@ describe 'Feature::Expr' do
       result.should.be.true
       p.should == Feature::AndExpr.new(possible2)
       r.should == Feature::AndExpr.new(requisite)
+    end
+
+    testcases.each do |testname, testcase|
+      it "should get #{testcase["result"]}: #{testname}" do
+        parser = Parser.new.feature_expr
+        provide = Transformer.new.apply(parser.parse(testcase["provide"]))
+        request = Transformer.new.apply(parser.parse(testcase["request"]))
+        Feature::Sentence.new(provide, request).decide.should == testcase["result"]
+      end
     end
   end
 

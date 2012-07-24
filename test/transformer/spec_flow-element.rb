@@ -47,7 +47,7 @@ describe 'Transformer::FlowElement' do
           Variable.new("Var"),
           PioneInteger.new(1)
         ),
-        { true =>
+        { PioneBoolean.true =>
           FlowBlock.new(
             CallRule.new(RuleExpr.new(Package.new("main"), "A"))
           )
@@ -67,7 +67,7 @@ describe 'Transformer::FlowElement' do
           Variable.new("Var"),
           PioneString.new("a")
         ),
-        { true =>
+        { PioneBoolean.true =>
           FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "A"))),
           :else =>
           FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "B")))
@@ -88,7 +88,7 @@ describe 'Transformer::FlowElement' do
       inner_block = FlowBlock.new(
         ConditionalBlock.new(
           Variable.new("b"),
-          { true =>
+          { PioneBoolean.true =>
             FlowBlock.new(
               CallRule.new(RuleExpr.new(Package.new("main"), "Test1"))
             ),
@@ -101,7 +101,7 @@ describe 'Transformer::FlowElement' do
       )
       ConditionalBlock.new(
         Variable.new("a"),
-        { true => inner_block,
+        { PioneBoolean.true => inner_block,
           :else =>
           FlowBlock.new(
             CallRule.new(RuleExpr.new(Package.new("main"), "Test3"))

@@ -32,7 +32,8 @@ module Pione
         :greater_than => '>',
         :asterisk => '*',
         :percent => '%',
-        :atmark => '@'
+        :atmark => '@',
+        :hat => '^'
       }
 
       # make symbols

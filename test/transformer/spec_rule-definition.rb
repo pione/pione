@@ -108,7 +108,7 @@ STRING
           FlowBlock.new(
             ConditionalBlock.new(
               Variable.new("ConvertCharset"),
-              { true => FlowBlock.new(
+              { PioneBoolean.true => FlowBlock.new(
                   CallRule.new(Message.new(
                       "params",
                       RuleExpr.new(Package.new("main"), "NKF"),

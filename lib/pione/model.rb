@@ -144,6 +144,11 @@ module Pione::Model
       return self
     end
 
+    # Return true if the object is atomic.
+    def atomic?
+      true
+    end
+
     # Calls pione model object method.
     # @param [String] name method name
     # @param [Array] args method's arguments

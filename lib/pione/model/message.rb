@@ -18,6 +18,11 @@ module Pione::Model
       @arguments = arguments
     end
 
+    # Returns false because Message is a complex form.
+    def atomic?
+      false
+    end
+
     def pione_model_type
       @receiver.pione_model_type.method_interface[@name.to_s].output
     end

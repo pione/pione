@@ -11,9 +11,13 @@ module Pione
       # -X
       # ?X
       rule(:atomic_feature) {
-        ((plus.as(:operator) >> identifier.as(:symbol)) |
-         (minus.as(:operator) >> identifier.as(:symbol)) |
-         (question.as(:operator) >> identifier.as(:symbol))
+        ( (plus.as(:operator) >> identifier.as(:symbol)) |
+          (minus.as(:operator) >> identifier.as(:symbol)) |
+          (question.as(:operator) >> identifier.as(:symbol)) |
+          (hat.as(:operator) >> identifier.as(:symbol)) |
+          (exclamation.as(:operator) >> identifier.as(:symbol)) |
+          (asterisk.as(:symbol)) |
+          (atmark.as(:symbol))
          ).as(:atomic_feature)
       }
 

@@ -29,7 +29,7 @@ describe 'ActionRule' do
 
     inputs = [Tuple[:data].new(name: '1.a', uri: uri_a),
               Tuple[:data].new(name: '1.b', uri: uri_b)]
-    params = []
+    params = Parameters.empty
     handler = @rule.make_handler(tuple_space_server, inputs, params)
     handler.should.be.kind_of(RuleHandler::ActionHandler)
   end
@@ -85,9 +85,15 @@ describe 'ActionHandler' do
                 Tuple[:data].new(name: '1.b', uri: uri_b) ]
     @tuples.each {|t| write(t) }
 
-    @handler_sh1 = @rule_sh1.make_handler(tuple_space_server, @tuples, [])
-    @handler_sh2 = @rule_sh1.make_handler(tuple_space_server, @tuples, [])
-    @handler_ruby = @rule_sh1.make_handler(tuple_space_server, @tuples, [])
+    @handler_sh1 = @rule_sh1.make_handler(
+      tuple_space_server, @tuples, Parameters.empty
+    )
+    @handler_sh2 = @rule_sh1.make_handler(
+      tuple_space_server, @tuples, Parameters.empty
+    )
+    @handler_ruby = @rule_sh1.make_handler(
+      tuple_space_server, @tuples, Parameters.empty
+    )
   end
 
   after do
@@ -104,7 +110,9 @@ describe 'ActionHandler' do
     process_name = "test-process-123"
     process_id = "xyz"
     opts = {:process_name => process_name, :process_id => process_id}
-    handler = @rule_sh1.make_handler(tuple_space_server, @tuples, [], opts)
+    handler = @rule_sh1.make_handler(
+      tuple_space_server, @tuples, Parameters.empty, opts
+    )
     path = handler.working_directory
     Dir.should.exist(path)
     path.should.include "#{process_name}_#{process_id}"

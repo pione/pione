@@ -15,6 +15,10 @@ module Pione::Model
       EmptyFeature.new
     end
 
+    def self.boundless
+      BoundlessFeature.new
+    end
+
     # Expr is a super class for all feature expressions.
     class Expr < PioneModelObject
       def pione_model_type
@@ -32,7 +36,6 @@ module Pione::Model
       def match(other)
         raise ArgumentError.new(other) unless other.kind_of?(Expr)
         Sentence.new(self, other).decide
-        # raise NotImplementedError
       end
 
       alias :=== :match
@@ -66,6 +69,7 @@ module Pione::Model
       end
 
       def ==(other)
+        return false unless other.kind_of?(Expr)
         other.empty?
       end
     end
@@ -194,7 +198,8 @@ module Pione::Model
 
       # Returns true if the connective set is empty.
       def empty?
-        return true if @elements = Set.new([Feature.empty])
+        return true if @elements.empty?
+        return true if @elements == Set.new([Feature.empty])
         return false unless @elements.size == 1
         return @elements.first.empty?
       end
@@ -632,10 +637,10 @@ module Pione::Model
       def match(provider, request)
         _provider, _request = provider, request
         ELIMINATIONS.each do |elim|
-          result, p, r = __send__(elim, provider, request)
+          result, new_provider, new_request = __send__(elim, provider, request)
           if result
-            _provider = p
-            _request = r
+            _provider = new_provider
+            _request = new_request
             break
           end
         end

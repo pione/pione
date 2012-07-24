@@ -18,8 +18,20 @@ module Pione
           Feature::BlockingExpr.new(symbol.str)
         when "?"
           Feature::PreferredExpr.new(symbol.str)
+        when "^"
+          Feature::PossibleExpr.new(symbol.str)
+        when "!"
+          Feature::RestrictiveExpr.new(symbol.str)
         end
       end
+      rule(:atomic_feature => {:symbol => simple(:symbol)}) {
+        case symbol
+        when "*"
+          Feature.empty
+        when "@"
+          Feature.boundless
+        end
+      }
 
       # feature expr
       rule(:feature_expr => simple(:expr)) do

@@ -129,30 +129,34 @@ module Pione::Model
     ROOT_DOMAIN = '/root'
 
     # Make new rule.
-    def initialize(rule_path)
-      package = RootPackage.new
-      name = 'root'
+    def initialize(expr)
       condition = make_condition
-      body = [FlowElement::CallRule.new(rule_path)]
-      super(package, name, condition, body)
+      super(expr, condition, FlowBlock.new(CallRule.new(expr)))
       @domain = ROOT_DOMAIN
     end
 
     def make_condition
       inputs  = [ DataExpr.all("*")]
       outputs = [ DataExpr.all("*").except("{$INPUT[1]}") ]
-      RuleCondition.new(inputs, outputs, [], [])
+      RuleCondition.new(
+        inputs,
+        outputs,
+        Parameters.empty,
+        Feature.empty
+      )
     end
 
     def make_handler(ts_server)
       finder = DataFinder.new(ts_server, INPUT_DOMAIN)
-      results = finder.find(:input, @inputs)
+      results = finder.find(:input, inputs)
       return nil if results.empty?
-      handler_class.new(ts_server,
-                        self,
-                        results.first.combination,
-                        [],
-                        {:domain => @domain})
+      handler_class.new(
+        ts_server,
+        self,
+        results.first.combination,
+        Parameters.empty,
+        {:domain => @domain}
+      )
     end
 
     def handler_class

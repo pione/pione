@@ -72,6 +72,14 @@ module Pione
           @data = _data
         else
           raise FormatError.new(data) unless data.size == format.size - 1
+          # type check
+          data.each_with_index do |key, i|
+            if format[i+1].kind_of?(Array)
+              unless data[i].kind_of?(format[i+1][1])
+                raise FormatError.new(data[i])
+              end
+            end
+          end
           @data = Hash[format_keys[1..-1].zip(data)]
         end
       end

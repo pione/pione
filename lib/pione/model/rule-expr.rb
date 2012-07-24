@@ -10,7 +10,7 @@ module Pione::Model
     # @param [String] package pione package name
     # @param [String] name rule name
     # @param [Parameters] params parameters
-    def initialize(package, name, sync_mode=false, params=Parameters.new({}))
+    def initialize(package, name, sync_mode=false, params=Parameters.empty)
       @package = package
       @name = name
       @sync_mode = sync_mode

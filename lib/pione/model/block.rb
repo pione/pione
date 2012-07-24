@@ -42,12 +42,45 @@ module Pione::Model
     attr_reader :elements
 
     def initialize(*elements)
+      unless elements.all? {|elt| elt.kind_of?(PioneModelObject)}
+        raise ArgumentError.new(elements)
+      end
       @elements = elements
     end
 
     # Evaluates each elements and return it.
     def eval(vtable)
-      @elements.map{|e| e.eval(vtable)}
+      assignments = @elements.select{|elt| elt.kind_of?(Assignment)}
+      conditional_blocks = @elements.select{|elt| elt.kind_of?(ConditionalBlock)}
+      call_rules = @elements.select{|elt| elt.kind_of?(CallRule)}
+
+      if not(assignments.empty?)
+        assignments.each do |assignment|
+          assignment.eval(vtable)
+        end
+        FlowBlock.new(*(conditional_blocks+call_rules)).eval(vtable)
+      elsif not(conditional_blocks.empty?)
+        exception = nil
+        new_blocks = []
+        next_blocks = []
+        conditional_blocks.each do |block|
+          begin
+            new_blocks << block.eval(vtable)
+          rescue UnboundVariableError => e
+            exception = e
+            next_blocks << block
+          end
+        end
+        # fail to evaluate conditional blocks
+        if conditional_blocks == next_blocks
+          raise exception
+        end
+        # next
+        elements = new_blocks.inject([]){|elts, block| elts += block.elements}
+        FlowBlock.new(*(elements + next_blocks + call_rules)).eval(vtable)
+      else
+        FlowBlock.new(*call_rules)
+      end
     end
 
     def ==(other)
@@ -86,27 +119,35 @@ module Pione::Model
   #   end
   #   => ConditionalBlock.new(
   #        Variable.new('X'),
-  #        { 'a' => Block.new([CallRule.new('Test1')]),
-  #          'b' => Block.new([CallRule.new('Test2')]),
-  #          :else => Block.new([CallRule.new('Test3')]) })
+  #        { 'a' => FlowBlock.new(CallRule.new('Test1')),
+  #          'b' => FlowBlock.new(CallRule.new('Test2')),
+  #          :else => FlowBlock.new(CallRule.new('Test3')) })
   #
   class ConditionalBlock < PioneModelObject
     attr_reader :condition
     attr_reader :blocks
 
     def initialize(condition, blocks={})
+      unless blocks.all?{|key,val|
+          (key.kind_of?(PioneModelObject) or key == :else) &&
+          val.kind_of?(FlowBlock)
+        }
+        raise ArgumentError.new(blocks)
+      end
       @condition = condition
       @blocks = blocks
     end
 
     # Evaluates the condition and returns the flow block.
-    def eval(vtable=VariableTable.new)
+    def eval(vtable)
       value = @condition.eval(vtable)
-      block = @blocks.find {|key, _| key === value}
-      block = block[1] unless block.nil?
-      block = @blocks[:else] if block.nil?
-      block = [] if block.nil?
-      return block.eval(vtable)
+      if block = @blocks.find {|key, _| key == value}
+        return block[1].eval(vtable)
+      elsif block = @blocks[:else]
+        return block.eval(vtable)
+      else
+        return FlowBlock.new
+      end
     end
 
     def ==(other)

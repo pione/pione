@@ -1,36 +1,25 @@
-case1:
-  string: "+A"
-  tree: {feature_expr: {atomic_feature: {operator: +, symbol: A}}}
-case2:
-  string: "-A"
-  tree: {feature_expr: {atomic_feature: {operator: -, symbol: A}}}
-case3:
-  string: "?A"
-  tree: {feature_expr: {atomic_feature: {operator: "?", symbol: A}}}
-case4:
-  string: "(+A)"
-  tree: {feature_expr:
-    {feature_expr: {atomic_feature: {operator: +, symbol: A}}}}
-case5:
-  string: "+A & -A"
-  tree:
-    feature_expr:
-      feature_conjunction:
-        left: {atomic_feature: {operator: +, symbol: A}}
-        right: {feature_expr: {atomic_feature: {operator: -, symbol: A}}}
-case6:
-  string: "-A & +A"
-  tree:
-    feature_expr:
-      feature_conjunction:
-        left: {atomic_feature: {operator: -, symbol: A}}
-        right: {feature_expr:
-          {atomic_feature: {operator: +, symbol: A}}}
-case7:
-  string: "+A | -A"
-  tree:
-    feature_expr:
-      feature_disjunction:
-        left: {atomic_feature: {operator: +, symbol: A}}
-        right: {feature_expr:
-          {atomic_feature: {operator: -, symbol: A}}}
+atomic_feature:
+  valid:
+    - "+A"
+    - "-A"
+    - "?A"
+    - "^A"
+    - "!A"
+    - "*"
+    - "@"
+feature_expr:
+  valid:
+    - "+A"
+    - "-A"
+    - "?A"
+    - "^A"
+    - "!A"
+    - "*"
+    - "@"
+    - "(+A)"
+    - "+A & -A"
+    - "-A & +A"
+    - "+A | -A"
+    - "+A & *"
+    - "* & * & *"
+    - "* | *"

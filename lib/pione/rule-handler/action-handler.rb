@@ -21,7 +21,7 @@ module Pione
         if debug_mode?
           user_message ">>> #{file.path}"
           user_message "SH-----------------------------------------------------"
-          user_message @variable_table.expand(@rule.content)
+          user_message @rule.body.eval(@variable_table).content
           user_message "-----------------------------------------------------SH"
         end
         file.close
@@ -40,7 +40,7 @@ module Pione
         @rule.outputs.each do |output|
           output = output.eval(@variable_table)
           if output.stdout?
-            name = output.with_variable_table(@variable_table).name
+            name = output.eval(@variable_table).name
             filepath = File.join(@working_directory, name)
             File.open(filepath, "w+") do |out|
               out.write stdout

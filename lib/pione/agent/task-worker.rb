@@ -88,9 +88,11 @@ module Pione
       def transit_to_task_executing(task, rule)
         debug_message ">>> Start Task Execution by worker(#{@uuid})"
 
-        handler = rule.make_handler(tuple_space_server,
-                                    task.inputs,
-                                    task.params)
+        handler = rule.make_handler(
+          tuple_space_server,
+          task.inputs,
+          task.params
+        )
         @__result_task_execution__ = nil
 
         th = Thread.new do

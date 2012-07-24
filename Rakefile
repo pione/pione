@@ -6,7 +6,7 @@ end
 
 desc 'count characters in input direcotry'
 task :CountChar do
-  sh "ruby -I lib bin/iw-stand-alone example/CountChar/CountChar.iw"
+  sh "ruby -I lib bin/pione-stand-alone example/CountChar/CountChar.pione"
 end
 
 desc 'parser test'

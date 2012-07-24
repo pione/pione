@@ -18,14 +18,7 @@ describe 'Parser::FeatureExpr' do
       end
     end
 
-    it 'should parse feature expressions' do
-      testcases = YAML.load(File.read(File.join(File.dirname(__FILE__),
-                                                "spec_feature-expr.yml")))
-      testcases.each do |_, testcase|
-        tree = TestParser.new.feature_expr.parse(testcase["string"])
-        tree.should == testcase["tree"].symbolize_keys
-      end
-    end
+    TestUtil::Parser.spec(Pione::Parser::FeatureExpr, __FILE__, self)
 
     it 'should fail with other strings' do
       strings = ['A', '(-A', '?A)']

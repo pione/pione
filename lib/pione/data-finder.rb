@@ -43,7 +43,7 @@ module Pione
       return [DataFinderResult.new([], variable_table)] if exprs.empty?
 
       # expand variables and compile to regular expression
-      head = exprs.first.with_variable_table(variable_table)
+      head = exprs.first.eval(variable_table)
       tail = exprs.drop(1)
 
       # find an input data by name from tuple space server

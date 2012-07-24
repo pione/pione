@@ -2,7 +2,7 @@ module Pione::Model
   # Assignment represents a value assignment for variable.
   # For example assigning a string:
   #   $X := "a"
-  #   => Assignment.new(Variable.new('X'), 'a')
+  #   => Assignment.new(Variable.new('X'), PioneString.new('a'))
   #
   # For exmpale assigning a variable value:
   #   $X := $Y
@@ -12,13 +12,16 @@ module Pione::Model
     attr_reader :expr
 
     def initialize(variable, expr)
+      raise ArgumentError.new(variable) unless variable.kind_of?(Variable)
+      raise ArgumentError.new(expr) unless expr.kind_of?(PioneModelObject)
       @variable = variable
       @expr = expr
     end
 
     # Evaluates value and update the variable table with it.
     def eval(vtable)
-      vtable.set(@variable, @expr.eval(vtable))
+      # put expr into the table directory because of lazy evaluation
+      vtable.set(@variable, @expr)
     end
 
     # Return true if other is a variable object which name is same as myself.

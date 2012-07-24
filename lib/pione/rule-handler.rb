@@ -30,6 +30,7 @@ module Pione
       attr_reader :resource_uri
       attr_reader :task_id
       attr_reader :domain
+      attr_reader :variable_table
 
       # Create a new handler for rule.
       # [+ts_server+] tuple space server
@@ -39,6 +40,7 @@ module Pione
       def initialize(ts_server, rule, inputs, params, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
+        raise ArgumentError.new(params) unless params.kind_of?(Parameters)
 
         # set tuple space server
         set_tuple_space_server(ts_server)

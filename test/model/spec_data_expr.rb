@@ -192,15 +192,21 @@ describe 'Model::DataExpr' do
 
   it 'should expand variables' do
     vtable1 = VariableTable.new(Variable.new('VAR') => PioneString.new('1'))
-    exp1 = DataExpr.new('{$VAR}.a').with_variable_table(vtable1)
+    exp1 = DataExpr.new('{$VAR}.a').eval(vtable1)
     exp1.match('1.a')
     exp1.should.not.match '1.b'
     vtable2 = VariableTable.new(Variable.new('VAR') => PioneString.new('*'))
-    exp2 = DataExpr.new('{$VAR}.a').with_variable_table(vtable2)
+    exp2 = DataExpr.new('{$VAR}.a').eval(vtable2)
     exp2.should.match '1.a'
     exp2.should.match '2.a'
     exp2.should.match 'abc.a'
     exp2.should.not.match '1.b'
+  end
+
+  it 'should expand an expression' do
+    vtable = VariableTable.new
+    vtable.set(Variable.new("X"), 1.to_pione)
+    DataExpr.new('<? $X + 1 ?>.a').eval(vtable).name.should == "2.a"
   end
 
   it 'should generate a name (Case 1)' do

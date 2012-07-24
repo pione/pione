@@ -5,19 +5,18 @@ module Pione::Model
     attr_reader :name
 
     def initialize(name)
-      @name = name
+      @name = name.to_s
     end
 
     def pione_model_type
       TypeAny
     end
 
-    # Evaluates self variable name in the table and returns it.
-    def eval(vtable=VariableTable.new)
+    # Evaluates self variable name in the table and returns it. Return self if
+    # the variable name is unbound in the table.
+    def eval(vtable)
       val = vtable.get(self)
-      if val.nil?
-        raise UnboundVariableError.new(self)
-      end
+      raise UnboundVariableError.new(self) if val.nil?
       return val
     end
 

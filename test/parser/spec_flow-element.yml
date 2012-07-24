@@ -100,8 +100,10 @@ when_block_begin:
     - when +A
     - when -A
     - when ?A
-  invalid:
     - when @
+    - when *
+    - "when !A"
+    - when ^A
 when_block:
   valid:
     - when $Var

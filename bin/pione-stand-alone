@@ -101,7 +101,7 @@ OPTS[:resource].times do
 end
 
 # execute
-root = Rule::RootRule.new(RuleExpr.new('Main'))
+root = Rule::RootRule.new(RuleExpr.new(Package.new('main'), 'Main'))
 
 class CommandExecuter
   def terminate

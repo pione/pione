@@ -1,25 +1,31 @@
 Rule Main
-  input-all '*'.except('summary.txt')
+  input '*'.except('summary.txt').all
   output 'summary.txt'
-Flow----------------------------------------------------------------------------
-rule ConvertToUtf8
-rule CountChar.sync
-rule Summarize
-rule Terminate
------------------------------------------------------------------------------End
+Flow
+  rule CountUTF8Char
+  rule Summarize
+  rule Terminate
+End
+
+Rule CountUTF8Char
+  input '*.txt'.except('summary.txt')
+  output '{$INPUT[1].MATCH[1]}.count'
+Flow
+  rule ConvertToUtf8
+  rule CountChar
+End
 
 Rule ConvertToUtf8
   input '*.txt'.except('summary.txt')
   output '{$INPUT[1]}.utf8'
-  param $OPTIONS
-Action--------------------------------------------------------------------------
+Action
 nkf -w {$INPUT[1]} > {$OUTPUT[1]}
------------------------------------------------------------------------------End
+End
 
 Rule CountChar
   input '*.utf8'
   output '{$INPUT[1].MATCH[1]}.count'.stdout
-Action--------------------------------------------------------------------------
+Action
 #!/usr/bin/env ruby
 # coding: utf-8
 table = {}
@@ -30,12 +36,12 @@ end
 table.each do |key, val|
   puts "#{key.inspect[1..-2]}:#{val}"
 end
------------------------------------------------------------------------------End
+End
 
 Rule Summarize
-  input-all '*.count'
+  input '*.count'.all
   output 'summary.txt'.stdout
-Action--------------------------------------------------------------------------
+Action
 #!/usr/bin/env ruby
 # coding: utf-8
 table = {}
@@ -50,11 +56,11 @@ File.open("{$OUTPUT[1]}", "w+") do |out|
     puts "#{key.inspect[1..-2]}:#{table[key]}"
   end
 end
------------------------------------------------------------------------------End
+End
 
 Rule Terminate
   input 'terminate.cmd'
   output 'terminate.cmd.done'
-Flow----------------------------------------------------------------------------
-rule /System/Terminate
------------------------------------------------------------------------------End
+Flow
+rule &System:Terminate
+End

@@ -144,6 +144,7 @@ module Pione
 
     # Make task_id by input data names.
     def self.task_id(inputs, params)
+      raise ArgumentError.new(params) unless params.kind_of?(Parameters)
       # FIXME: inputs.flatten?
       input_names = inputs.flatten.map{|t| t.name}
       is = input_names.join("\000")
@@ -153,7 +154,7 @@ module Pione
 
     # Make target domain name by module name, inputs, and outputs.
     def self.domain(package_name, rule_name, inputs, params)
-      "#{package_name}-#{rule_name}_#{task_id(inputs, params)}"
+      "%s-%s_%s" % [package_name, rule_name, task_id(inputs, params)]
     end
   end
 end

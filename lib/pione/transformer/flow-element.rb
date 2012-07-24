@@ -19,7 +19,7 @@ module Pione
              :if_true_elements => sequence(:if_true),
              :if_else_block => simple(:if_false)
            }) {
-        block = { true => FlowBlock.new(*if_true) }
+        block = { PioneBoolean.true => FlowBlock.new(*if_true) }
         block[:else] = if_false if if_false
         ConditionalBlock.new(condition, block)
       }

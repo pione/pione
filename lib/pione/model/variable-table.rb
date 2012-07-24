@@ -2,19 +2,14 @@ require 'pione/common'
 
 module Pione::Model
 
+  # UnboundVariableError represents an unknown variable reference.
   class UnboundVariableError < StandardError
+    attr_reader :variable
+
     def initialize(variable)
       @variable = variable
-    end
-  end
-
-  # UnknownVariableError represents an unknown variable reference.
-  class UnknownVariableError < StandardError
-    attr_reader :name
-
-    def initialize(name)
-      @name = name
-      super("Unknown variable name '#{name}' in the context.")
+      msg = "Refferred unbound variable '%s' in the context."
+      super(msg % [@variable.name])
     end
   end
 
@@ -48,10 +43,23 @@ module Pione::Model
       @table
     end
 
+    # Return true if the table is empty.
+    def empty?
+      @table.empty?
+    end
+
     # Get the variable value.
     def get(var)
       raise ArgumentError.new(var) unless var.kind_of?(Variable)
-      @table[var]
+      val = @table[var]
+      if val.kind_of?(Variable)
+        next_val = get(@table[var])
+        return next_val.nil? ? val : next_val
+      elsif val.kind_of?(PioneModelObject) and not(val.atomic?)
+        return val.eval(self)
+      else
+        return val
+      end
     end
 
     # Set a new variable.
@@ -67,13 +75,17 @@ module Pione::Model
     # Expand variables in the string.
     def expand(str)
       variables = to_hash
-      str.to_s.gsub(/\{\$(.+?)\}/) do
+      new_str = str.to_s.gsub(/\{\$(.+?)\}/) do
         var = Variable.new($1)
         if variables.has_key?(var)
           variables[var].to_ruby
         else
-          raise UnknownVariableError.new($1)
+          raise UnboundVariableError.new(Variable.new($1))
         end
+      end
+      new_str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
+        expr = Transformer.new.apply(Parser.new.expr.parse($1))
+        expr.eval(self).call_pione_method("as_string").to_ruby
       end
     end
 
@@ -99,6 +111,7 @@ module Pione::Model
 
     # Make input or output auto variables.
     def make_io_auto_variables(type, expr, data, index)
+      expr = expr.eval(self)
       prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
       case expr.modifier
       when :all

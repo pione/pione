@@ -19,13 +19,18 @@ module Pione::Model
       @right = right
     end
 
+    # Returns false because Message is a complex form.
+    def atomic?
+      false
+    end
+
     def pione_model_type
       @left.pione_model_type.method_interface[@symbol].output
     end
 
     # Evaluates the application expression and returns application result.
     # @param [VariableTable] vtable variable table for the evaluation
-    def eval(vtable=VariableTable.new)
+    def eval(vtable)
       left = @left.eval(vtable)
       right = @right.eval(vtable)
       left.call_pione_method(@symbol, right)

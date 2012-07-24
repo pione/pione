@@ -8,19 +8,19 @@ module Pione
         @data_finder = DataFinder.new(tuple_space_server, @domain)
       end
 
-      # :nodoc:
+      # Process flow elements.
       def execute
         user_message ">>> Start Flow Rule #{@rule.rule_path}"
 
-        # 1. apply flow elements
-        apply_rules
+        # rule application
+        apply_rules(@rule.body.eval(@variable_table).elements)
 
-        # 2. find outputs
+        # find outputs
         find_outputs
 
-        # 3. check output
+        # check output validation
         if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
-          raise ExecutionError.new(self)
+          raise RuleExecutionError.new(self)
         end
 
         if debug_mode?
@@ -47,7 +47,7 @@ module Pione
         @rule.outputs.each_with_index do |expr, i|
           expr = expr.eval(@variable_table)
           list = read_all(Tuple[:data].new(domain: @domain))
-          if exp.all?
+          if expr.all?
             # case all modifier
             names = list.select {|elt| exp.match(elt.name)}
             unless names.empty?
@@ -55,7 +55,7 @@ module Pione
             end
           else
             # case each modifier
-            name = list.find {|elt| exp.match(elt.name)}
+            name = list.find {|elt| expr.match(elt.name)}
             if name
               @outputs[i] = name
             end
@@ -64,36 +64,30 @@ module Pione
       end
 
       # Apply target input data to rules.
-      def apply_rules
+      def apply_rules(callers)
         user_message ">>> Start Rule Application: #{@rule.rule_path}"
-
-        # SyncMonitor
-        sync_monitor = Agent[:sync_monitor].start(tuple_space_server, self)
 
         # apply flow-element rules
         while true do
           # find updatable rule applications
-          applications = select_updatables(find_applicable_rules)
+          applications = select_updatables(find_applicable_rules(callers))
 
           unless applications.empty?
+            # push task tuples into tuple space
             distribute_tasks(applications)
           else
-            # finish application
+            # finish applications
             break
           end
         end
-
-        # release lock of sync monitor
-        sync_monitor.sync
-        sync_monitor.terminate
 
         user_message ">>> End Rule Application: #{@rule.rule_path}"
       end
 
       # Find applicable flow-element rules with inputs and variables.
-      def find_applicable_rules
+      def find_applicable_rules(callers)
         combinations = []
-        @content.elements.each do |caller|
+        callers.each do |caller|
           # find element rule
           rule = find_rule(caller)
           # check rule status and find combinations
@@ -139,26 +133,24 @@ module Pione
         applications.each do |caller, rule, inputs, variable_table|
           thread = Thread.new do
             # task domain
-            task_domain = Util.domain(rule.expr.package.name, rule.expr.name, inputs, [])
-
-            # sync monitor
-            # if caller.sync_mode?
-            #   name = variable_table.expand(rule.rule_path)
-            #   tuple = Tuple[:sync_target].new(src: task_domain,
-            #                                   dest: @domain,
-            #                                   name: name)
-            #   write(tuple)
-            # end
+            task_domain = Util.domain(
+              rule.expr.package.name,
+              rule.expr.name,
+              inputs,
+              caller.expr.params
+            )
 
             # copy input data from the handler domain to task domain
             copy_data_into_domain(inputs, task_domain)
 
-            # FIXME: params is not supportted now
-            task = Tuple[:task].new(rule.rule_path,
-                                    inputs,
-                                    [],
-                                    rule.features,
-                                    Util.uuid)
+            # make a task tuple and write it
+            task = Tuple[:task].new(
+              rule.rule_path,
+              inputs,
+              caller.expr.params,
+              rule.features,
+              Util.uuid
+            )
             write(task)
 
             # wait to finish the work
