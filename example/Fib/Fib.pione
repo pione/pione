@@ -1,6 +1,6 @@
 Rule Main
   output 'result.txt'
-  param {N: 10}
+  param {N: 4}
 Flow
 rule Fib.params({N: $N})
 rule Result.params({N: $N})
@@ -28,8 +28,8 @@ when 0
 when 1
   rule Fib1
 else
-  $P1 := $N - 1
-  $P2 := $N - 2
+  $P1 := $N - 2
+  $P2 := $N - 1
   rule Fib.params({N: $P1})
   rule Fib.params({N: $P2})
   rule Calc.params({N: $N, P1: $P1, P2: $P2})

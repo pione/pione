@@ -25,7 +25,7 @@ module Pione
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(@rule.body.eval(@variable_table).content)
         if Pione.debug_mode?
-          user_message ">>> #{file.path}"
+          user_message ">>> Action #{file.path}"
           user_message "SH-----------------------------------------------------"
           user_message @rule.body.eval(@variable_table).content
           user_message "-----------------------------------------------------SH"

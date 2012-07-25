@@ -6,6 +6,7 @@ module Pione
       def initialize(*args)
         super
         @data_finder = DataFinder.new(tuple_space_server, @domain)
+        @finished = []
       end
 
       # Process flow elements.
@@ -91,6 +92,30 @@ module Pione
       # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
         combinations.select do |caller, rule, inputs, vtable|
+          # task domain
+          task_domain = Util.domain(
+            rule.expr.package.name,
+            rule.expr.name,
+            inputs,
+            caller.expr.params
+          )
+          begin
+            unless @finished.find{|f| f.domain == task_domain}
+              if task_domain != @domain
+                finished = read(
+                  Tuple[:finished].new(
+                    domain: task_domain,
+                    status: :succeeded
+                  ),
+                  0
+                )
+                puts "##################################################"
+                p finished
+                copy_data_into_domain(finished.outputs, @domain)
+              end
+            end
+          rescue Rinda::RequestExpiredError
+          end
           outputs_combination = @data_finder.find(
             :output,
             rule.outputs.map{|output| output.eval(vtable)},
@@ -141,6 +166,7 @@ module Pione
             # copy data from task domain to this domain
             if finished.status == :succeeded
               # copy output data from task domain to the handler domain
+              @finished << finished
               copy_data_into_domain(finished.outputs, @domain)
             end
           end
