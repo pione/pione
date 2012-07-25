@@ -123,6 +123,16 @@ module Pione::Model
       self.class.new(vtable.expand(name), @modifier, @mode, exceptions)
     end
 
+    def include_variable?
+      VariableTable.check_include_variable(@name)
+    end
+
+    def task_id_string
+      "DataExpr<#{@name},#{@modifier},[%s]>" % [
+        @exceptions.map{|exc| exc.task_id_string}.join(",")
+      ]
+    end
+
     # Return true if the name has 'all' modifier.
     def all?
       @modifier == :all

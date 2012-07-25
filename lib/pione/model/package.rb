@@ -10,6 +10,10 @@ module Pione::Model
       TypePackage
     end
 
+    def task_id_string
+      "Package<#{@name}>"
+    end
+
     def +(other)
       raise ArgumentError.new(other) unless other.kind_of?(RuleExpr)
       "#{@name}:#{other.name}"

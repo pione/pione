@@ -70,13 +70,7 @@ module Pione
     end
 
     def apply(*args)
-      # p caller
-      # unless Thread.current[:current_package_name]
-      # p @current_package_name
-      #   Thread.current[:current_package_name] = @current_package_name
-      # end
       res = super
-      #Thread.current[:current_package_name] = nil
       return res
     end
 

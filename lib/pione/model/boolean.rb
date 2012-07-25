@@ -30,6 +30,10 @@ module Pione::Model
       TypeBoolean
     end
 
+    def task_id_string
+      "Boolean<#{@value}>"
+    end
+
     def true?
       @value == true
     end

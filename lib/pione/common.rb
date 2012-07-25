@@ -148,7 +148,9 @@ module Pione
       # FIXME: inputs.flatten?
       input_names = inputs.flatten.map{|t| t.name}
       is = input_names.join("\000")
-      ps = params.data.flatten(-1).join("\000")
+      ps = params.data.map do |key, val|
+        "%s:%s" % [key.task_id_string,val.task_id_string]
+      end.join("\000")
       Digest::MD5.hexdigest("#{is}\001#{ps}\001")
     end
 

@@ -43,6 +43,10 @@ module Pione::Model
       return true
     end
 
+    def include_variable?
+      @receiver.include_variable? or @arguments.any?{|arg| arg.include_variable?}
+    end
+
     alias :eql? :==
 
     def hash

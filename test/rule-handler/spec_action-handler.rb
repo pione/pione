@@ -1,41 +1,13 @@
 require_relative '../test-util'
 
-$document = Document.parse <<RULES
+$doc = Document.parse(<<-DOCUMENT)
 Rule Test
   input '*.a'
-  input '{$INPUT[1].MATCH[1]}.b'
-  output '{$INPUT[1].MATCH[1]}.c'
+  output '{$INPUT[1].MATCH[1]}.b'
 Action
-expr `cat {$INPUT[1]}` + `cat {$INPUT[2]}`
+nkf -w {$INPUT[1]} > {$OUTPUT[1]}
 End
-RULES
 
-describe 'ActionRule' do
-  before do
-    create_remote_tuple_space_server
-    @rule = $document["&main:Test"]
-  end
-
-  after do
-    tuple_space_server.terminate
-  end
-
-  it 'should make an action handler' do
-    dir = Dir.mktmpdir
-    uri_a = "local:#{dir}/1.a"
-    uri_b = "local:#{dir}/1.b"
-    Resource[uri_a].create("1")
-    Resource[uri_b].create("2")
-
-    inputs = [Tuple[:data].new(name: '1.a', uri: uri_a),
-              Tuple[:data].new(name: '1.b', uri: uri_b)]
-    params = Parameters.empty
-    handler = @rule.make_handler(tuple_space_server, inputs, params)
-    handler.should.be.kind_of(RuleHandler::ActionHandler)
-  end
-end
-
-doc = Document.parse(<<-DOCUMENT)
 Rule Shell1
   input '*.a'
   input '{$INPUT[1].*}.b'
@@ -71,18 +43,20 @@ DOCUMENT
 describe 'ActionHandler' do
   before do
     create_remote_tuple_space_server
-    @rule_sh1 = doc['&main:Shell1']
-    @rule_sh2 = doc['&main:Shell2']
-    @rule_ruby = doc['&main:Ruby']
+    @rule_test = $doc['&main:Test']
+    @rule_sh1 = $doc['&main:Shell1']
+    @rule_sh2 = $doc['&main:Shell2']
+    @rule_ruby = $doc['&main:Ruby']
 
-    dir = Dir.mktmpdir
-    uri_a = "local:#{dir}/1.a"
-    uri_b = "local:#{dir}/1.b"
+    @tmpdir = Dir.mktmpdir
+    uri_a = "local:#{@tmpdir}/1.a"
+    uri_b = "local:#{@tmpdir}/1.b"
     Resource[uri_a].create("1")
     Resource[uri_b].create("2")
 
-    @tuples = [ Tuple[:data].new(name: '1.a', uri: uri_a),
-                Tuple[:data].new(name: '1.b', uri: uri_b) ]
+    @tuple_a = Tuple[:data].new(name: '1.a', uri: uri_a)
+    @tuple_b = Tuple[:data].new(name: '1.b', uri: uri_b)
+    @tuples = [@tuple_a, @tuple_b]
     @tuples.each {|t| write(t) }
 
     @handler_sh1 = @rule_sh1.make_handler(
@@ -100,7 +74,15 @@ describe 'ActionHandler' do
     tuple_space_server.terminate
   end
 
-  it 'should make working directory with no process informations' do
+  it 'should be made from action rule' do
+    params = Parameters.empty
+    handler = @rule_test.make_handler(
+      tuple_space_server, [@tuple_a], params
+    )
+    handler.should.be.kind_of(RuleHandler::ActionHandler)
+  end
+
+  it 'should make working directory' do
     Dir.should.exist(@handler_sh1.working_directory)
     Dir.should.exist(@handler_sh2.working_directory)
     Dir.should.exist(@handler_ruby.working_directory)
@@ -116,6 +98,30 @@ describe 'ActionHandler' do
     path = handler.working_directory
     Dir.should.exist(path)
     path.should.include "#{process_name}_#{process_id}"
+  end
+
+  it 'should write a shell script' do
+    process_name = "test-process-123"
+    process_id = "xyz"
+    opts = {:process_name => process_name, :process_id => process_id}
+    handler = @rule_test.make_handler(
+      tuple_space_server, [@tuple_a], Parameters.empty
+    )
+    handler.send("write_shell_script") do |path|
+      File.should.exist(path)
+      File.should.executable(path)
+      File.read(path).should == "nkf -w 1.a > 1.b\n"
+    end
+  end
+
+  it 'should call shell script' do
+    handler = @rule_test.make_handler(
+      tuple_space_server, [@tuple_a], Parameters.empty
+    )
+    handler.send("write_shell_script") do |path|
+      handler.send("call_shell_script", path)
+      File.should.exist(File.join(handler.working_directory, "1.b"))
+    end
   end
 
   [:sh1, :sh2, :ruby].each do |sym|

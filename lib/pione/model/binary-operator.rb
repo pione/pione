@@ -24,6 +24,10 @@ module Pione::Model
       false
     end
 
+    def include_variable?
+      @left.include_variable? or @right.include_variable?
+    end
+
     def pione_model_type
       @left.pione_model_type.method_interface[@symbol].output
     end

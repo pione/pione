@@ -101,7 +101,8 @@ OPTS[:resource].times do
 end
 
 # execute
-root = Rule::RootRule.new(RuleExpr.new(Package.new('main'), 'Main'))
+$main = $doc["&main:Main"]
+$root = Rule::RootRule.new($main)
 
 class CommandExecuter
   def terminate
@@ -124,7 +125,7 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 $thread = Thread.start do
   Pione.debug_mode do
     while true do
-      handler = root.make_handler($tuple_space_server)
+      handler = $root.make_handler($tuple_space_server)
       outputs = handler.execute
       Dir.mkdir($output_dir) unless File.exist?($output_dir)
       outputs.first.each do |output|

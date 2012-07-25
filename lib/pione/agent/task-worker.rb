@@ -86,7 +86,7 @@ module Pione
 
       # State task_executing.
       def transit_to_task_executing(task, rule)
-        debug_message ">>> Start Task Execution by worker(#{@uuid})"
+        debug_message ">>> Start Task Execution #{rule.rule_path} by worker(#{uuid})"
 
         handler = rule.make_handler(
           tuple_space_server,
@@ -124,7 +124,7 @@ module Pione
 
         take(Tuple[:working].new(task.uuid), 0)
 
-        debug_message ">>> End Task Execution by worker(#{@uuid})"
+        debug_message ">>> End Task Execution #{rule.rule_path} by worker(#{uuid})"
 
         return task, handler, @__result_task_execution__
       end

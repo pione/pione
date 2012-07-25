@@ -89,6 +89,22 @@ module Pione::Model
       end
     end
 
+    # FIXME
+    def self.check_include_variable(str)
+      str = str.to_s
+      return true if /\{\$(.+?)\}/.match(str)
+      str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
+        expr = Transformer.new.apply(Parser.new.expr.parse($1))
+        return true if expr.include_variable?
+      end
+      return false
+    end
+
+    def include_variable?
+      # FIXME
+      @table.values.any?{|val| val.include_variable?}
+    end
+
     # Make input auto-variables
     # [+input_exprs+] input expressions
     # [+input_tuples+] input tuples

@@ -16,6 +16,10 @@ module Pione::Model
       self.class.new(vtable.expand(@content))
     end
 
+    def include_variable?
+      return VariableTable.check_include_variable(@content)
+    end
+
     def ==(other)
       return false unless other.kind_of?(self.class)
       @content == other.content
@@ -79,8 +83,12 @@ module Pione::Model
         elements = new_blocks.inject([]){|elts, block| elts += block.elements}
         FlowBlock.new(*(elements + next_blocks + call_rules)).eval(vtable)
       else
-        FlowBlock.new(*call_rules)
+        FlowBlock.new(*call_rules.map{|call_rule| call_rule.eval(vtable)})
       end
+    end
+
+    def include_variable?
+      @elements.any?{|elt| elt.include_variable?}
     end
 
     def ==(other)
@@ -148,6 +156,10 @@ module Pione::Model
       else
         return FlowBlock.new
       end
+    end
+
+    def include_variable?
+      @blocks.values.any?{|block| block.include_variable?}
     end
 
     def ==(other)

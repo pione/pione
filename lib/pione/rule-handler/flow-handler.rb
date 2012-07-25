@@ -14,20 +14,12 @@ module Pione
 
         # rule application
         apply_rules(@rule.body.eval(@variable_table).elements)
-
         # find outputs
         find_outputs
-
         # check output validation
-        if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
-          raise RuleExecutionError.new(self)
-        end
+        validate_outputs
 
-        if debug_mode?
-          debug_message "Flow Rule #{@rule.rule_path} Result:"
-          @outputs.each {|output| debug_message "  #{output}"}
-        end
-
+        debug_message "Flow Rule #{@rule.rule_path} Result: #{@outputs}"
         user_message ">>> End Flow Rule #{@rule.rule_path}"
 
         return @outputs
@@ -40,28 +32,6 @@ module Pione
       end
 
       private
-
-      # Find outputs from the domain of tuple space.
-      def find_outputs
-        outputs = []
-        @rule.outputs.each_with_index do |expr, i|
-          expr = expr.eval(@variable_table)
-          list = read_all(Tuple[:data].new(domain: @domain))
-          if expr.all?
-            # case all modifier
-            names = list.select {|elt| expr.match(elt.name)}
-            unless names.empty?
-              @outputs[i] = names
-            end
-          else
-            # case each modifier
-            name = list.find {|elt| expr.match(elt.name)}
-            if name
-              @outputs[i] = name
-            end
-          end
-        end
-      end
 
       # Apply target input data to rules.
       def apply_rules(callers)
@@ -76,8 +46,7 @@ module Pione
             # push task tuples into tuple space
             distribute_tasks(applications)
           else
-            # finish applications
-            break
+            break # finish applications
           end
         end
 
@@ -86,21 +55,24 @@ module Pione
 
       # Find applicable flow-element rules with inputs and variables.
       def find_applicable_rules(callers)
-        combinations = []
-        callers.each do |caller|
+        callers.inject([]) do |combinations, caller|
+          caller = caller.eval(@variable_table)
+          vtable = caller.expr.params.eval(@variable_table).as_variable_table
           # find element rule
-          rule = find_rule(caller)
+          rule = find_rule(caller).eval(vtable)
           # check rule status and find combinations
-          @data_finder.find(:input, rule.inputs).each do |res|
+          @data_finder.find(:input, rule.inputs, vtable).each do |res|
             combinations << [caller, rule, res.combination, res.variable_table]
           end
+          # find next
+          combinations
         end
-        return combinations
       end
 
       # Find the rule for the caller.
       def find_rule(caller)
         begin
+          caller = caller.eval(@variable_table)
           return read(Tuple[:rule].new(rule_path: caller.rule_path), 0).content
         rescue Rinda::RequestExpiredError
           debug_message "Request loading a rule #{caller.rule_path}"
@@ -118,17 +90,26 @@ module Pione
 
       # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
-        combinations.select do |caller, rule, inputs, variable_table|
-          outputs = @data_finder.find(:output, rule.outputs, variable_table).map{|r| r.combination }
-          UpdateCriteria.satisfy?(rule, inputs, outputs)
+        combinations.select do |caller, rule, inputs, vtable|
+          outputs_combination = @data_finder.find(
+            :output,
+            rule.outputs.map{|output| output.eval(vtable)},
+            vtable
+          ).map{|r| r.combination }
+          # no combinations is empty list
+          outputs_combination = [[]] if outputs_combination.empty?
+          # check update criterias
+          outputs_combination.any?{|outputs|
+            UpdateCriteria.satisfy?(rule, inputs, outputs, vtable)
+          }
         end
       end
 
       def distribute_tasks(applications)
+        user_message ">>> Start Task Distribution: #{@rule.rule_path}"
+
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
-
-        user_message ">>> Start Task Distribution: #{@rule.rule_path}"
 
         applications.each do |caller, rule, inputs, variable_table|
           thread = Thread.new do
@@ -173,16 +154,42 @@ module Pione
         user_message ">>> End Task Distribution: #{@rule.rule_path}"
       end
 
-      def finalize_rule_application(sync_monitor)
-        # stop sync monitor
-        sync_monitor.terminate
+      # Find outputs from the domain of tuple space.
+      def find_outputs
+        @rule.outputs.each_with_index do |output, i|
+          output = output.eval(@variable_table)
+          list = read_all(Tuple[:data].new(domain: @domain))
+          case output.modifier
+          when :all
+            @outputs[i] = list.select {|data| output.match(data.name)}
+          when :each
+            @outputs[i] = list.find {|data| output.match(data.name)}
+          end
+        end
+      end
+
+      # Validates outputs size.
+      def validate_outputs
+        # size check
+        if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
+          raise RuleExecutionError.new(self)
+        end
+        # nil check
+        if @outputs.any?{|tuple| tuple.nil?}
+          raise RuleExecutionError.new(self)
+        end
+
+        # empty list check
+        if @outputs.any?{|tuple| tuple.kind_of?(Array) && tuple.empty?}
+          raise RuleExecutionError.new(self)
+        end
       end
 
       # Copy data into specified domain
-      def copy_data_into_domain(orig_data, new_domain)
-        orig_data.flatten.each do |d|
+      def copy_data_into_domain(src_data, dist_domain)
+        src_data.flatten.each do |d|
           new_data = d.clone
-          new_data.domain = new_domain
+          new_data.domain = dist_domain
           write(new_data)
         end
       end

@@ -10,6 +10,10 @@ module Pione::Model
       TypeInteger
     end
 
+    def task_id_string
+      "Integer<#{@value}>"
+    end
+
     def to_ruby
       return @value
     end

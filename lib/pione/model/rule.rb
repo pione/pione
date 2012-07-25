@@ -14,6 +14,13 @@ module Pione::Model
       @features = features
     end
 
+    def include_variable?
+      @inputs.any?{|input| input.include_variable?} ||
+        @outputs.any?{|output| output.include_variable?} ||
+        @params.include_variable? ||
+        @features.include_variable?
+    end
+
     def ==(other)
       return false unless @inputs == other.inputs
       return false unless @outputs == other.outputs
@@ -40,8 +47,14 @@ module Pione::Model
       @body = body
     end
 
-    def rule_path(vtable=VariableTable.new)
-      @expr.eval(vtable).path
+    def rule_path
+      @expr.rule_path
+    end
+
+    def include_variable?
+      @expr.include_variable? ||
+        @condition.include_variable? ||
+        @body.include_variable?
     end
 
     def self.rule_type
@@ -128,16 +141,28 @@ module Pione::Model
     INPUT_DOMAIN = '/input'
     ROOT_DOMAIN = '/root'
 
+    attr_reader :main
+
     # Make new rule.
-    def initialize(expr)
+    def initialize(main)
+      @main = main
       condition = make_condition
-      super(expr, condition, FlowBlock.new(CallRule.new(expr)))
+      super(
+        RuleExpr.new(Package.new("root"), "Root"),
+        condition,
+        FlowBlock.new(CallRule.new(@main.expr))
+      )
       @domain = ROOT_DOMAIN
     end
 
     def make_condition
-      inputs  = [ DataExpr.all("*")]
-      outputs = [ DataExpr.all("*").except("{$INPUT[1]}") ]
+      inputs  = @main.inputs
+      outputs =
+        if inputs.empty?
+          [DataExpr.all("*")]
+        else
+          [DataExpr.all("*").except("{$INPUT[1]}")]
+        end
       RuleCondition.new(
         inputs,
         outputs,
@@ -148,12 +173,15 @@ module Pione::Model
 
     def make_handler(ts_server)
       finder = DataFinder.new(ts_server, INPUT_DOMAIN)
-      results = finder.find(:input, inputs)
-      return nil if results.empty?
+      results = finder.find(:input, inputs, VariableTable.new)
+      if results.empty? and not(@main.inputs.empty?)
+        return nil
+      end
+      inputs = @main.inputs.empty? ? [] : results.first.combination
       handler_class.new(
         ts_server,
         self,
-        results.first.combination,
+        inputs,
         Parameters.empty,
         {:domain => @domain}
       )

@@ -149,6 +149,10 @@ module Pione::Model
       true
     end
 
+    def include_variable?
+      false
+    end
+
     # Calls pione model object method.
     # @param [String] name method name
     # @param [Array] args method's arguments

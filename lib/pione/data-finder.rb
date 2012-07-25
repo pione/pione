@@ -25,25 +25,26 @@ module Pione
 
     # Find data tuple by data expression from a tuple space server.
     def find_by_expr(expr)
-      name = DataExpr.new(name) if name.kind_of?(String)
+      expr = DataExpr.new(expr) if expr.kind_of?(String)
       q = Tuple[:data].new(name: expr, domain: @domain)
       tuple_space_server.read_all(q)
     end
 
     # Find tuple combinations by data expressions from tuple space server.
-    def find(type, exprs, variable_table=VariableTable.new)
-      find_rec(type, exprs, 1, variable_table)
+    def find(type, exprs, vtable)
+      raise ArgumentError.new(vtable) unless vtable.kind_of?(VariableTable)
+      find_rec(type, exprs, 1, vtable)
     end
 
     private
 
     # Find input tuple combinatioins recursively.
-    def find_rec(type, exprs, index, variable_table)
+    def find_rec(type, exprs, index, vtable)
       # return empty when we reach the recuirsion end
-      return [DataFinderResult.new([], variable_table)] if exprs.empty?
+      return [DataFinderResult.new([], vtable)] if exprs.empty?
 
       # expand variables and compile to regular expression
-      head = exprs.first.eval(variable_table)
+      head = exprs.first.eval(vtable)
       tail = exprs.drop(1)
 
       # find an input data by name from tuple space server
@@ -53,17 +54,17 @@ module Pione
       prefix = (type == :input ? "INPUT" : "OUTPUT") + "[#{index}]"
       if head.all?
         # case all modifier
-        new_variable_table =
-          make_auto_variables_by_all(prefix, head, tuples, variable_table)
+        new_vtable =
+          make_auto_variables_by_all(prefix, head, tuples, vtable)
         unless tuples.empty?
-          return find_rec_sub(type, tail, index, tuples, new_variable_table)
+          return find_rec_sub(type, tail, index, tuples, new_vtable)
         end
       else
         # case each modifier
         return tuples.map {|tuple|
-          args = [prefix, head, tuple, variable_table]
-          new_variable_table = make_auto_variables_by_each(*args)
-          find_rec_sub(type, tail, index, tuple, new_variable_table)
+          args = [prefix, head, tuple, vtable]
+          new_vtable = make_auto_variables_by_each(*args)
+          find_rec_sub(type, tail, index, tuple, new_vtable)
         }.flatten
       end
 
@@ -71,50 +72,50 @@ module Pione
       return []
     end
 
-    def find_rec_sub(type, tail, index, data, variable_table)
-      find_rec(type, tail, index+1, variable_table).map do |res|
+    def find_rec_sub(type, tail, index, data, vtable)
+      find_rec(type, tail, index+1, vtable).map do |res|
         new_combination = res.combination.unshift(data)
-        new_variable_table = res.variable_table
-        DataFinderResult.new(new_combination, new_variable_table)
+        new_vtable = res.variable_table
+        DataFinderResult.new(new_combination, new_vtable)
       end
     end
 
     # Make auto-variables by the name modified 'all'.
-    def make_auto_variables_by_all(prefix, expr, tuples, variable_table)
-      new_variable_table = VariableTable.new(variable_table)
+    def make_auto_variables_by_all(prefix, expr, tuples, vtable)
+      new_vtable = VariableTable.new(vtable)
       list = tuples.map{|t| t.name}.join(DataExpr::SEPARATOR)
-      new_variable_table.set(
+      new_vtable.set(
         Variable.new(prefix),
         PioneString.new(list)
       )
-      return new_variable_table
+      return new_vtable
     end
 
     # Make auto-variables by the name modified 'each'.
-    def make_auto_variables_by_each(prefix, expr, tuple, variable_table)
-      new_variable_table = VariableTable.new(variable_table)
+    def make_auto_variables_by_each(prefix, expr, tuple, vtable)
+      new_vtable = VariableTable.new(vtable)
       md = expr.match(tuple.name)
-      new_variable_table.set(
+      new_vtable.set(
         Variable.new(prefix),
         PioneString.new(tuple.name)
       )
-      new_variable_table.set(
+      new_vtable.set(
         Variable.new("#{prefix}.URI"),
         PioneString.new(tuple.uri)
       )
       md.to_a.each_with_index do |str, i|
         if i == 1
-          new_variable_table.set(
+          new_vtable.set(
             Variable.new("#{prefix}.*"),
             PioneString.new(str)
           )
         end
-        new_variable_table.set(
+        new_vtable.set(
           Variable.new("#{prefix}.MATCH[#{i}]"),
           PioneString.new(str)
         )
       end
-      return new_variable_table
+      return new_vtable
     end
   end
 end

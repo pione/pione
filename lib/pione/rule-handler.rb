@@ -40,6 +40,7 @@ module Pione
       # [+opts+] optionals
       def initialize(ts_server, rule, inputs, params, opts={})
         # check arguments
+        raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
         raise ArgumentError.new(params) unless params.kind_of?(Parameters)
 
@@ -51,6 +52,7 @@ module Pione
         @inputs = inputs
         @outputs = []
         @params = @rule.params.merge(params)
+        @original_params = params
         @content = rule.body
         @working_directory = make_working_directory(opts)
         @domain = get_handling_domain(opts)
@@ -91,7 +93,7 @@ module Pione
           @rule.expr.package.name,
           @rule.expr.name,
           @inputs,
-          @params
+          @original_params
         )
       end
 

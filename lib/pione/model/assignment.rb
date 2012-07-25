@@ -24,6 +24,14 @@ module Pione::Model
       vtable.set(@variable, @expr)
     end
 
+    def atomic?
+      false
+    end
+
+    def include_variable?
+      @expr.include_variable?
+    end
+
     # Return true if other is a variable object which name is same as myself.
     def ==(other)
       return false unless other.kind_of?(self.class)

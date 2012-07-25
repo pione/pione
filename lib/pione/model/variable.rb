@@ -20,6 +20,14 @@ module Pione::Model
       return val
     end
 
+    def include_variable?
+      true
+    end
+
+    def task_id_string
+      "Variable<#{@name}>"
+    end
+
     # Return true if other is a variable object which name is same as myself.
     def ==(other)
       other.kind_of?(self.class) && @name == other.name

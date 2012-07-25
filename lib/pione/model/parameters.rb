@@ -4,6 +4,10 @@ module Pione::Model
 
     def initialize(data)
       raise ArgumentError.new(data) unless data.kind_of?(Hash)
+      data.each do |key, val|
+        raise ArgumentError.new(key) unless key.kind_of?(Variable)
+        raise ArugmentError.new(val) unless val.kind_of?(PioneModelObject)
+      end
       @data = data
     end
 
@@ -23,14 +27,14 @@ module Pione::Model
       TypeParameters
     end
 
-    def eval(vtable=VariableTable.new)
-      self.class.new(
-        Hash.new[
-          *@data.map do |key, val|
-            [key, val.eval(vtable)]
-          end.flatten(1)
-        ]
-      )
+    def eval(vtable)
+      return self.class.empty if empty?
+      data = @data.map{|key, val| [key, val.eval(vtable)]}.flatten(1)
+      self.class.new(Hash[*data])
+    end
+
+    def include_variable?
+      @data.any? {|_, val| val.include_variable?}
     end
 
     def get(name)
@@ -59,12 +63,20 @@ module Pione::Model
       self.class.new(@data.merge(other.data))
     end
 
+    def as_variable_table
+      VariableTable.new(@data)
+    end
+
     def values
       @data.keys.sort
     end
 
     def string_form
       "{" + @data.map{|k,v| "#{k}: #{v}"}.join(", ") + "}"
+    end
+
+    def to_json(*args)
+      @data.to_json(*args)
     end
 
     def ==(other)

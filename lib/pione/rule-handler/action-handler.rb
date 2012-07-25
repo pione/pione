@@ -4,11 +4,17 @@ module Pione
     class ActionHandler < BaseHandler
       # Execute the action.
       def execute
-        stdout = write_shell_script {|path| call_shell(path) }
-        write_stdout_as_output_file(stdout)
+        # prepare shell script
+        stdout = write_shell_script {|path| call_shell_script(path) }
+        # write output file if the handler is stdout mode
+        write_output_file_from_stdout(stdout)
+        # collect outputs
         collect_outputs
+        # write resouces
         write_output_resources
+        # write tuples
         write_output_tuples
+        # return tuples
         return @outputs
       end
 
@@ -18,33 +24,31 @@ module Pione
       def write_shell_script(&b)
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(@rule.body.eval(@variable_table).content)
-        if debug_mode?
+        if Pione.debug_mode?
           user_message ">>> #{file.path}"
           user_message "SH-----------------------------------------------------"
           user_message @rule.body.eval(@variable_table).content
           user_message "-----------------------------------------------------SH"
         end
         file.close
-        FileUtils.chmod(0700,file.path)
+        FileUtils.chmod(0700, file.path)
         return b.call(file.path)
       end
 
       # Call shell script of the path.
-      def call_shell(path)
+      def call_shell_script(path)
         scriptname = File.basename(path)
         `cd #{@working_directory}; ./#{scriptname}`
       end
 
-      # Write stdout data as output file
-      def write_stdout_as_output_file(stdout)
+      # Write stdout data as output file if the handler is stdout mode.
+      def write_output_file_from_stdout(stdout)
         @rule.outputs.each do |output|
           output = output.eval(@variable_table)
           if output.stdout?
             name = output.eval(@variable_table).name
-            filepath = File.join(@working_directory, name)
-            File.open(filepath, "w+") do |out|
-              out.write stdout
-            end
+            path = File.join(@working_directory, name)
+            File.open(path, "w+") {|out| out.write stdout }
             break
           end
         end
@@ -60,17 +64,15 @@ module Pione
       # Collect output data by names from working directory.
       def collect_outputs
         list = Dir.entries(@working_directory)
-        @rule.outputs.each_with_index do |expr, i|
-          expr = expr.eval(@variable_table)
-          case expr.modifier
+        @rule.outputs.each_with_index do |output, i|
+          output = output.eval(@variable_table)
+          case output.modifier
           when :all
-            list.select{|elt| expr.match(elt)}.each do |name|
-              unless name.empty?
-                @outputs[i] = make_output_tuple_with_time(name)
-              end
+            @outputs[i] = list.select{|name| output.match(name)}.map do |name|
+              make_output_tuple_with_time(name)
             end
           when :each
-            if name = list.find {|elt| expr.match(elt)}
+            if name = list.find {|name| output.match(name)}
               @outputs[i] = make_output_tuple_with_time(name)
             end
           end

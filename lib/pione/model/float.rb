@@ -10,6 +10,10 @@ module Pione::Model
       TypeFloat
     end
 
+    def task_id_string
+      "Float<#{@value}>"
+    end
+
     def to_ruby
       return @value
     end

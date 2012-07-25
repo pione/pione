@@ -43,6 +43,10 @@ module Pione::Model
 
     # SpecialFeature is a class for empty feature and boundless feature.
     class SpecialFeature < Expr
+      def task_id_string
+        "Feature::SpecialFeature<#{symbol}>"
+      end
+
       def ==(other)
         other.kind_of?(self.class)
       end
@@ -97,6 +101,10 @@ module Pione::Model
 
       def initialize(symbol)
         @symbol = symbol
+      end
+
+      def task_id_string
+        "Feature::UnaryOperator<#{self.operator},#{@symbol}>"
       end
 
       def as_string
@@ -202,6 +210,12 @@ module Pione::Model
         return true if @elements == Set.new([Feature.empty])
         return false unless @elements.size == 1
         return @elements.first.empty?
+      end
+
+      def task_id_string
+        "Feature::Connective<#{self.class.name},[%s]>" % [
+          @elements.map{|elt| elt.task_id_string}.join(",")
+        ]
       end
 
       def ==(other)

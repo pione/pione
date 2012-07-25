@@ -14,6 +14,14 @@ module Pione::Model
       self.class.new(vtable.expand(@value))
     end
 
+    def include_variable?
+      VariableTable.check_include_variable(@value)
+    end
+
+    def task_id_string
+      "String<#{@value}>"
+    end
+
     def to_ruby
       return @value
     end

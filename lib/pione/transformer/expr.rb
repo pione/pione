@@ -71,7 +71,7 @@ module Pione
           :key => simple(:key),
           :value => simple(:value)
         }) {
-        ParametersElement.new(key.to_s, value)
+        ParametersElement.new(Variable.new(key.to_s), value)
       }
     end
   end

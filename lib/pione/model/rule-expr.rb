@@ -24,11 +24,16 @@ module Pione::Model
 
     # FIXME
     def rule_path
-      path
+      raise UnboundVariableError.new(self) if @package.include_variable?
+      "&%s:%s" % [@package.name, @name]
     end
 
     def pione_model_type
       TypeRuleExpr
+    end
+
+    def task_id_string
+      "RuleExpr<%s,#{@name}>" % [@package.task_id_string]
     end
 
     # Return true if sync mode.
@@ -48,8 +53,17 @@ module Pione::Model
       return self.class.new(@package, @name, @sync_mode, params)
     end
 
-    def eval(vtable=VariableTable.new)
-      return self.class.new(@package, vtable.expand(@name), @sync_mode, @params)
+    def eval(vtable)
+      return self.class.new(
+        @package.eval(vtable),
+        @name,
+        @sync_mode,
+        @params.eval(vtable)
+      )
+    end
+
+    def include_variable?
+      @package.include_variable? or @params.include_variable?
     end
 
     def ==(other)

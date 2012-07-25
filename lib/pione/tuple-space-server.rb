@@ -101,6 +101,17 @@ module Pione
       read_all(tuple).size
     end
 
+    # Return all tuples of the tuple space.
+    def all_tuples
+      tuples = []
+      bag = @__ts__.instance_variable_get("@bag")
+      bag.instance_variable_get("@hash").values.each do |bin|
+        tuples += bin.instance_variable_get("@bin")
+      end
+      _tuples = tuples.map{|t| t.value}
+      return _tuples
+    end
+
     # Shutdown the server.
     def finalize
       @terminated = true

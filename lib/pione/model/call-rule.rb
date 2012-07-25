@@ -19,8 +19,15 @@ module Pione::Model
     end
 
     # Return a rule path string with expanding variables.
-    def rule_path(vtable=VariableTable.new)
-      @expr.eval(vtable).rule_path
+    def rule_path
+      if @expr.include_variable?
+        raise UnboundVariableError.new(@expr)
+      end
+      @expr.rule_path
+    end
+
+    def include_variable?
+      @expr.include_variable?
     end
 
     # Returns true if sync mode.
