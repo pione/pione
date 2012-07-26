@@ -8,10 +8,10 @@ require 'pione/agent/broker'
 Thread.abort_on_exception = true
 
 Pione.debug_mode = true
-Pione.set_signal_trap
+#Pione.set_signal_trap
 
 # tuple space receiver
-receiver = Pione::TupleSpaceReceiver.get
+receiver = Pione::TupleSpaceReceiver.instance
 
 # broker
 broker = Pione::Agent[:broker].new(task_worker_resource: 4)

@@ -1,18 +1,18 @@
 Rule Main
   input '*'.except('summary.txt').all
-  output 'summary.txt'
+  output '*.count'.all
+  output 'summary.txt'.all
 Flow
-  rule CountChar
-  rule Summarize
-  rule Terminate
+rule CountChar
+rule Summarize
 End
 
 Rule CountChar
   input '*.txt'.except('summary.txt')
   output '{$INPUT[1]}.count'
 Flow
-  rule ConvertToUtf8
-  rule CountUTF8Char
+rule ConvertToUtf8
+rule CountUTF8Char
 End
 
 Rule ConvertToUtf8
@@ -33,8 +33,8 @@ text = File.open("{$INPUT[1]}").read
 text.split("").each do |c|
   table[c] =  table.has_key?(c) ? table[c].succ : 1
 end
-table.each do |key, val|
-  puts "#{key.inspect[1..-2]}:#{val}"
+table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
+  puts "#{key.inspect[1..-2]}:#{table[key]}"
 end
 End
 
@@ -56,11 +56,4 @@ File.open("{$OUTPUT[1]}", "w+") do |out|
     puts "#{key.inspect[1..-2]}:#{table[key]}"
   end
 end
-End
-
-Rule Terminate
-  input 'terminate.cmd'
-  output 'terminate.cmd.done'
-Flow
-rule &System:Terminate
 End

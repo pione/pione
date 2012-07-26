@@ -2,34 +2,40 @@
 # -*- ruby -*-
 
 require 'pione'
+require 'pione/common'
+
 require 'pione/tuple-space-provider'
-require 'pione/simulator/input-generator'
 require 'pione/agent/logger'
 require 'pione/agent/process-manager'
-require 'pione/process-handler'
 require 'pione/document'
+
+include Pione
 
 Thread.abort_on_exception = true
 
-Pione.debug_mode
-Pione.set_signal_trap
+#Pione.debug_mode
+#Pione.set_signal_trap
 DRb.start_service
 
 # tuple space provider
-provider = Pione::TupleSpaceProvider.get
+provider = Pione::TupleSpaceProvider.instance
 
 # server
-server = Pione::TupleSpaceServer.new(task_worker_resource: 2)
+uri = "local:#{Dir.mktmpdir('pione-')}/"
+$tuple_space_server = TupleSpaceServer.new(task_worker_resource: 2, base_uri: uri)
+$tuple_space_server.write(Tuple[:process_info].new('standalone', 'Standalone'))
 
 # register tuple space server
-provider.add(server)
+provider.add($tuple_space_server)
 
 # logger
-Pione::Agent[:logger].new(server)
+Pione::Agent[:logger].new($tuple_space_server)
 
 # input generator
-generator = Pione::Simulator::SimpleInputGeneratorMethod.new("test-001".."test-100", "a", 1..100)
-Pione::Agent[:input_generator].new(server, generator)
+# start input generators
+generator_method = $stream ? :start_by_stream : :start_by_dir
+gen = Agent[:input_generator].send(generator_method, $tuple_space_server, $input_dir)
+sleep 0.1 while not(gen.counter > 0)
 
 # process definition document
 if ARGF.filename == "-"
