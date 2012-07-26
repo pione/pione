@@ -25,18 +25,16 @@ end
 
 desc 'count characters by stream'
 task 'example:CountCharStream' do
-  sh "ruby -I lib %s -i %s -s %s" % [
+  sh "ruby -I lib %s -s %s" % [
     $stand_alone,
-    "example/CountChar/text",
     "example/CountChar/CountCharStream.pione"
   ]
 end
 
 desc 'count characters by stream with debug mode'
 task 'example:CountCharStream:debug_mode' do
-  sh "ruby -I lib %s -i %s -s -d %s" % [
+  sh "ruby -I lib %s -s -d %s" % [
     $stand_alone,
-    "example/CountChar/text",
     "example/CountChar/CountCharStream.pione"
   ]
 end
