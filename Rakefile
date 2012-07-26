@@ -14,6 +14,33 @@ task 'example:CountChar' do
   ]
 end
 
+desc 'count characters in input direcotry with debug mode'
+task 'example:CountChar:debug_mode' do
+  sh "ruby -I lib %s -i %s -d %s" % [
+    $stand_alone,
+    "example/CountChar/text",
+    "example/CountChar/CountChar.pione"
+  ]
+end
+
+desc 'count characters by stream'
+task 'example:CountCharStream' do
+  sh "ruby -I lib %s -i %s -s %s" % [
+    $stand_alone,
+    "example/CountChar/text",
+    "example/CountChar/CountCharStream.pione"
+  ]
+end
+
+desc 'count characters by stream with debug mode'
+task 'example:CountCharStream:debug_mode' do
+  sh "ruby -I lib %s -i %s -s -d %s" % [
+    $stand_alone,
+    "example/CountChar/text",
+    "example/CountChar/CountCharStream.pione"
+  ]
+end
+
 desc 'sum numbers in file'
 task 'example:Sum' do
   sh "ruby -I lib %s -i %s %s" % [
@@ -23,9 +50,26 @@ task 'example:Sum' do
   ]
 end
 
+desc 'sum numbers in file with debug mode'
+task 'example:Sum:debug_mode' do
+  sh "ruby -I lib %s -i %s -d %s" % [
+    $stand_alone,
+    "example/Sum/input",
+    "example/Sum/Sum.pione"
+  ]
+end
+
 desc 'fib calc'
 task 'example:Fib' do
   sh "ruby -I lib %s %s" % [
+    $stand_alone,
+    "example/Fib/Fib.pione"
+  ]
+end
+
+desc 'fib calc with debug mode'
+task 'example:Fib:debug' do
+  sh "ruby -I lib %s -d %s" % [
     $stand_alone,
     "example/Fib/Fib.pione"
   ]

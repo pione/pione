@@ -59,7 +59,7 @@ module Pione
 
   def user_message(msg)
     if not(quiet_mode?)
-      puts "%s: %s" % [Terminal.red("user"), msg]
+      puts "%s: %s" % [Terminal.red("info"), msg]
     end
   end
 

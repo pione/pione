@@ -21,7 +21,7 @@ module Pione
         validate_outputs
 
         debug_message "Flow Rule #{@rule.rule_path} Result: #{@outputs}"
-        user_message ">>> End Flow Rule #{@rule.rule_path}"
+        user_message "<<< End Flow Rule #{@rule.rule_path}"
 
         return @outputs
       end
@@ -51,7 +51,7 @@ module Pione
           end
         end
 
-        user_message ">>> End Rule Application: #{@rule.rule_path}"
+        user_message "<<< End Rule Application: #{@rule.rule_path}"
       end
 
       # Find applicable flow-element rules with inputs and variables.
@@ -160,7 +160,7 @@ module Pione
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))
-            user_message "task finished: #{finished}"
+            user_message "task finished: #{finished.domain}"
 
             # copy data from task domain to this domain
             if finished.status == :succeeded
@@ -176,7 +176,7 @@ module Pione
         # wait to finish threads
         thgroup.list.each {|th| th.join}
 
-        user_message ">>> End Task Distribution: #{@rule.rule_path}"
+        user_message "<<< End Task Distribution: #{@rule.rule_path}"
       end
 
       # Find outputs from the domain of tuple space.

@@ -123,7 +123,7 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 # start rule handling
 #
 $thread = Thread.start do
-  Pione.debug_mode do
+#  Pione.debug_mode do
     while true do
       handler = $root.make_handler($tuple_space_server)
       outputs = handler.execute
@@ -142,6 +142,6 @@ $thread = Thread.start do
       break unless $stream
       sleep 5
     end
-  end
+#  end
 end
 $thread.join

@@ -24,12 +24,12 @@ module Pione
       def write_shell_script(&b)
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(@rule.body.eval(@variable_table).content)
-        if Pione.debug_mode?
-          user_message ">>> Action #{file.path}"
-          user_message "SH-----------------------------------------------------"
-          user_message @rule.body.eval(@variable_table).content
-          user_message "-----------------------------------------------------SH"
+        user_message "Action #{file.path}"
+        user_message "SH-----------------------------------------------------"
+        @rule.body.eval(@variable_table).content.split("\n").each do |line|
+          user_message line
         end
+        user_message "-----------------------------------------------------SH"
         file.close
         FileUtils.chmod(0700, file.path)
         return b.call(file.path)
