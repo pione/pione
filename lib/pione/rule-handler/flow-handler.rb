@@ -100,6 +100,7 @@ module Pione
             caller.expr.params
           )
           begin
+            # import finished tuples's data
             unless @finished.find{|f| f.domain == task_domain}
               if task_domain != @domain
                 finished = read(
@@ -109,8 +110,6 @@ module Pione
                   ),
                   0
                 )
-                puts "##################################################"
-                p finished
                 copy_data_into_domain(finished.outputs, @domain)
               end
             end
@@ -211,12 +210,13 @@ module Pione
         end
       end
 
-      # Copy data into specified domain
+      # Copy data into specified domain and return the tuple list
       def copy_data_into_domain(src_data, dist_domain)
-        src_data.flatten.each do |d|
+        src_data.flatten.map do |d|
           new_data = d.clone
           new_data.domain = dist_domain
           write(new_data)
+          new_data
         end
       end
     end

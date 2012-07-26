@@ -1,6 +1,6 @@
 Rule Main
   output 'result.txt'
-  param {N: 4}
+  param {N: 10}
 Flow
 rule Fib.params({N: $N})
 rule Result.params({N: $N})

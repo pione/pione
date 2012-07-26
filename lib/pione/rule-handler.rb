@@ -9,10 +9,11 @@ module Pione
       end
 
       def message
-        "Execution error when handling the rule '%s': inputs=%s, output=%s" % [
+        "Execution error when handling the rule '%s': inputs=%s, output=%s, params=%s" % [
           @handler.rule.rule_path,
           @handler.inputs,
-          @handler.outputs
+          @handler.outputs,
+          @handler.params.inspect
         ]
       end
     end

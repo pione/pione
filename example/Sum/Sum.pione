@@ -8,7 +8,7 @@ End
 
 Rule CalcEachLine
   input 'list.txt'
-  output 'line_sum*.txt'
+  output 'line_sum*.txt'.all
 Flow
 rule MakeHeadTail
 rule Sum
@@ -42,7 +42,11 @@ Rule Aggregation
   output 'sum.txt'.stdout
 Action
 #!/usr/bin/env ruby
+sum = 0
 '{$INPUT[1]}'.split(':').sort.each do |filename|
-  puts File.read(filename)
+  n = File.read(filename)
+  sum += n.to_i
+  puts n
 end
+puts "total: #{sum}"
 End
