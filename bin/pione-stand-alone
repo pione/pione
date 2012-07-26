@@ -20,6 +20,7 @@ $input_dir = "input"
 $output_dir = "output"
 $log_path = "log.txt"
 $stream = false
+$params = Parameters.empty
 
 OPTS = {}
 OPTS[:resource] = 1
@@ -46,6 +47,9 @@ option_parser = OptionParser.new do |opt|
       exit
     end
     Terminal.color_mode = bool
+  }
+  opt.on('--params="{Var:1,...}"') {|str|
+    $params = Transformer.new.apply(Parser.new.parameters.parse(str))
   }
 end
 
@@ -102,7 +106,7 @@ end
 
 # execute
 $main = $doc["&main:Main"]
-$root = Rule::RootRule.new($main)
+$root = Rule::RootRule.new($main, $params)
 
 class CommandExecuter
   def terminate

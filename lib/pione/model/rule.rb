@@ -144,13 +144,14 @@ module Pione::Model
     attr_reader :main
 
     # Make new rule.
-    def initialize(main)
+    def initialize(main, params=Parameters.empty)
       @main = main
+      @params = params
       condition = make_condition
       super(
         RuleExpr.new(Package.new("root"), "Root"),
         condition,
-        FlowBlock.new(CallRule.new(@main.expr))
+        FlowBlock.new(CallRule.new(@main.expr.set_params(@params)))
       )
       @domain = ROOT_DOMAIN
     end
@@ -182,7 +183,7 @@ module Pione::Model
         ts_server,
         self,
         inputs,
-        Parameters.empty,
+        @params,
         {:domain => @domain}
       )
     end
@@ -210,7 +211,7 @@ module Pione::Model
     end
   end
 
-  SYSTEM_TERMINATE = SystemRule.new('/System/Terminate') do |tuple_space_server|
+  SYSTEM_TERMINATE = SystemRule.new('Terminate') do |tuple_space_server|
     user_message "!!!!!!!!!!!!!!!!!"
     user_message "!!! Terminate !!!"
     user_message "!!!!!!!!!!!!!!!!!"
