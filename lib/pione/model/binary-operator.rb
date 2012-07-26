@@ -40,6 +40,10 @@ module Pione::Model
       left.call_pione_method(@symbol, right)
     end
 
+    def textize
+      "%s%s%s" % [@left.textize, @symbol.textize, @right.textize]
+    end
+
     def ==(other)
       return false unless other.kind_of?(self.class)
       return false unless @symbol == other.symbol

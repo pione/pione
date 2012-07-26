@@ -11,7 +11,11 @@ module Pione
 
       # Process flow elements.
       def execute
-        user_message ">>> Start Flow Rule #{@rule.rule_path}"
+        user_message ">>> Start Flow Rule %s<[%s],[%s]>" % [
+          @rule.rule_path,
+          @inputs.map{|i| i.name}.join(","),
+          @params.data.map{|k,v| "%s:%s" % [k.name, v.to_s]}.join(",")
+        ]
 
         # rule application
         apply_rules(@rule.body.eval(@variable_table).elements)

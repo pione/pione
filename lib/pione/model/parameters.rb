@@ -37,6 +37,11 @@ module Pione::Model
       @data.any? {|_, val| val.include_variable?}
     end
 
+    def textize
+      "{" + @data.map{|k,v| "%s:%s" % [k.textize, v.textize]}.join(", ") + "}"
+    end
+
+
     def get(name)
       @data[name]
     end

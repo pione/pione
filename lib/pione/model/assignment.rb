@@ -32,6 +32,10 @@ module Pione::Model
       @expr.include_variable?
     end
 
+    def textize
+      "%s:=%s" % [@variable.textize, @expr.textize]
+    end
+
     # Return true if other is a variable object which name is same as myself.
     def ==(other)
       return false unless other.kind_of?(self.class)

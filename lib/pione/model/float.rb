@@ -14,6 +14,10 @@ module Pione::Model
       "Float<#{@value}>"
     end
 
+    def textize
+      @value.to_s
+    end
+
     def to_ruby
       return @value
     end

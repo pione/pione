@@ -14,6 +14,10 @@ module Pione::Model
       "Integer<#{@value}>"
     end
 
+    def textize
+      @value.to_s
+    end
+
     def to_ruby
       return @value
     end

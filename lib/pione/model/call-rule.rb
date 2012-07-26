@@ -39,6 +39,10 @@ module Pione::Model
       self.class.new(@expr.eval(vtable))
     end
 
+    def textize
+      "call_rule(%s)" % [@expr.textize]
+    end
+
     def ==(other)
       @expr == other.expr
     end

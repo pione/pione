@@ -133,6 +133,12 @@ module Pione::Model
       ]
     end
 
+    def textize
+      "data_expr(\"#{@name}\",:#{@modifier},[%s]>" % [
+        @exceptions.map{|exc| exc.textize}.join(",")
+      ]
+    end
+
     # Return true if the name has 'all' modifier.
     def all?
       @modifier == :all

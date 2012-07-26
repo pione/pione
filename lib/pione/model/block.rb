@@ -20,6 +20,10 @@ module Pione::Model
       return VariableTable.check_include_variable(@content)
     end
 
+    def textize
+      "action_block(\"#{@content}\")"
+    end
+
     def ==(other)
       return false unless other.kind_of?(self.class)
       @content == other.content
@@ -91,6 +95,10 @@ module Pione::Model
       @elements.any?{|elt| elt.include_variable?}
     end
 
+    def textize
+      "flow_block(%s)" % [@elements.map{|elt| elt.textize}.join(",")]
+    end
+
     def ==(other)
       return false unless other.kind_of?(self.class)
       @elements == other.elements
@@ -160,6 +168,13 @@ module Pione::Model
 
     def include_variable?
       @blocks.values.any?{|block| block.include_variable?}
+    end
+
+    def textize
+      "conditional_block(%s,{%s})" % [
+        @condition.textize,
+        @blocks.map{|val, block| "%s=>%s" % [val,block]}.join(",")
+      ]
     end
 
     def ==(other)

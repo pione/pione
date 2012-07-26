@@ -14,6 +14,10 @@ module Pione::Model
       "Package<#{@name}>"
     end
 
+    def textize
+      "package(\"%s\")" % [@name]
+    end
+
     def +(other)
       raise ArgumentError.new(other) unless other.kind_of?(RuleExpr)
       "#{@name}:#{other.name}"

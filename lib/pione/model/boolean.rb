@@ -34,6 +34,10 @@ module Pione::Model
       "Boolean<#{@value}>"
     end
 
+    def textize
+      @value.to_s
+    end
+
     def true?
       @value == true
     end

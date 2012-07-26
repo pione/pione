@@ -47,6 +47,12 @@ module Pione::Model
       @receiver.include_variable? or @arguments.any?{|arg| arg.include_variable?}
     end
 
+    def textize
+      "message(\"%s\",%s,[%s])" % [
+        @name, @receiver.textize,@argument.textize
+      ]
+    end
+
     alias :eql? :==
 
     def hash

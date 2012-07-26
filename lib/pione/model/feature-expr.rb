@@ -47,6 +47,10 @@ module Pione::Model
         "Feature::SpecialFeature<#{symbol}>"
       end
 
+      def textize
+        "#{symbol}"
+      end
+
       def ==(other)
         other.kind_of?(self.class)
       end
@@ -105,6 +109,10 @@ module Pione::Model
 
       def task_id_string
         "Feature::UnaryOperator<#{self.operator},#{@symbol}>"
+      end
+
+      def textize
+        "%s%s" % [self.operator, @symbol]
       end
 
       def as_string
@@ -215,6 +223,12 @@ module Pione::Model
       def task_id_string
         "Feature::Connective<#{self.class.name},[%s]>" % [
           @elements.map{|elt| elt.task_id_string}.join(",")
+        ]
+      end
+
+      def textize
+        "#{self.class.name}(%s)" % [
+          @elements.map{|elt| elt.textize}.join(",")
         ]
       end
 
