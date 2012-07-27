@@ -11,11 +11,7 @@ module Pione
 
       # Process flow elements.
       def execute
-        user_message ">>> Start Flow Rule %s<[%s],[%s]>" % [
-          @rule.rule_path,
-          @inputs.map{|i| i.name}.join(","),
-          @params.data.map{|k,v| "%s:%s" % [k.name, v.to_s]}.join(",")
-        ]
+        user_message ">>> Start Flow Rule: %s" % [handler_digest]
 
         # rule application
         apply_rules(@rule.body.eval(@variable_table).elements)
@@ -25,7 +21,7 @@ module Pione
         validate_outputs
 
         debug_message "Flow Rule #{@rule.rule_path} Result: #{@outputs}"
-        user_message "<<< End Flow Rule #{@rule.rule_path}"
+        user_message "<<< End Flow Rule: %s" % [handler_digest]
 
         return @outputs
       end
@@ -38,9 +34,19 @@ module Pione
 
       private
 
+      def handler_digest
+        "%s([%s],[%s])" % [
+          @rule.rule_path,
+          @inputs.map{|i|
+            i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
+          }.join(","),
+          @params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
+        ]
+      end
+
       # Apply target input data to rules.
       def apply_rules(callers)
-        user_message ">>> Start Rule Application: #{@rule.rule_path}"
+        user_message ">>> Start Rule Application: %s" % [handler_digest]
 
         # apply flow-element rules
         while true do
@@ -55,7 +61,7 @@ module Pione
           end
         end
 
-        user_message "<<< End Rule Application: #{@rule.rule_path}"
+        user_message "<<< End Rule Application: %s" % [handler_digest]
       end
 
       # Find applicable flow-element rules with inputs and variables.
@@ -134,7 +140,7 @@ module Pione
       end
 
       def distribute_tasks(applications)
-        user_message ">>> Start Task Distribution: #{@rule.rule_path}"
+        user_message ">>> Start Task Distribution: %s" % [handler_digest]
 
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
@@ -180,7 +186,7 @@ module Pione
         # wait to finish threads
         thgroup.list.each {|th| th.join}
 
-        user_message "<<< End Task Distribution: #{@rule.rule_path}"
+        user_message "<<< End Task Distribution: %s" % [handler_digest]
       end
 
       # Find outputs from the domain of tuple space.

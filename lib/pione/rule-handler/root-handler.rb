@@ -4,7 +4,7 @@ module Pione
     class RootHandler < FlowHandler
       # :nodoc:
       def execute
-        puts ">>> Start Root Rule Execution" if debug_mode?
+        user_message ">>> Start Root Rule Execution: %s" % [handler_digest]
         # import inputs from input domain
         copy_data_into_domain(@inputs.flatten, @domain)
         # handling
@@ -12,7 +12,7 @@ module Pione
         # export outputs to output domain
         copy_data_into_domain(@outputs.flatten, '/output')
         # sync_output
-        puts ">>> End Root Rule Execution" if debug_mode?
+        user_message "<<< End Root Rule Execution: %s" % [handler_digest]
         return result
       end
     end

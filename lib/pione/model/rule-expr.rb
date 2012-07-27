@@ -36,7 +36,7 @@ module Pione::Model
       "RuleExpr<%s,#{@name}>" % [@package.task_id_string]
     end
 
-    def task_id_string
+    def textize
       "rule_expr(%s,\"%s\")" % [@package.textitze, @name]
     end
 

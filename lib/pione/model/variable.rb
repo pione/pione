@@ -28,6 +28,10 @@ module Pione::Model
       "Variable<#{@name}>"
     end
 
+    def textize
+      "$%s" % [@name]
+    end
+
     # Return true if other is a variable object which name is same as myself.
     def ==(other)
       other.kind_of?(self.class) && @name == other.name

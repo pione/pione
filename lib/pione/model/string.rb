@@ -22,6 +22,10 @@ module Pione::Model
       "String<#{@value}>"
     end
 
+    def textize
+      @value
+    end
+
     def to_ruby
       return @value
     end
