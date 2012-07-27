@@ -102,3 +102,10 @@ desc 'other test'
 task 'test:other' do
   sh "bacon -I lib -I test test/spec_*.rb"
 end
+
+desc 'clean'
+task 'clean' do
+  sh "rm -rf input/*"
+  sh "rm -rf output/*"
+  sh "rm log.txt"
+end
