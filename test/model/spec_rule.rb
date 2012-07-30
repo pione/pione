@@ -5,13 +5,13 @@ describe 'Model::RuleCondition' do
     a = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      Parameters.new("var" => "a".to_pione),
+      Parameters.new(Variable.new("var") => "a".to_pione),
       Feature.and(Feature::RequisiteExpr.new("a"))
     )
     b = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      Parameters.new("var" => "a".to_pione),
+      Parameters.new(Variable.new("var") => "a".to_pione),
       Feature.and(Feature::RequisiteExpr.new("a"))
     )
     a.should == b
@@ -21,13 +21,13 @@ describe 'Model::RuleCondition' do
     a = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      Parameters.new("var" => "a".to_pione),
+      Parameters.new(Variable.new("var") => "a".to_pione),
       Feature.and(Feature::RequisiteExpr.new("a"))
     )
     b = RuleCondition.new(
       [DataExpr.new("b")],
       [DataExpr.new("b")],
-      Parameters.new("var" => "b".to_pione),
+      Parameters.new(Variable.new("var") => "b".to_pione),
       Feature.and(Feature::RequisiteExpr.new("b"))
     )
     a.should.not == b
@@ -37,13 +37,13 @@ end
 condition_a = RuleCondition.new(
   [DataExpr.new("a")],
   [DataExpr.new("a")],
-  Parameters.new("var" => "a".to_pione),
+  Parameters.new(Variable.new("var") => "a".to_pione),
   Feature.and(Feature::RequisiteExpr.new("a"))
 )
 condition_b = RuleCondition.new(
   [DataExpr.new("b")],
   [DataExpr.new("b")],
-  Parameters.new("var" => "b".to_pione),
+  Parameters.new(Variable.new("var") => "b".to_pione),
   Feature.and(Feature::RequisiteExpr.new("b"))
 )
 

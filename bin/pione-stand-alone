@@ -86,7 +86,13 @@ provider.add($tuple_space_server)
 Agent[:logger].start($tuple_space_server, File.open($log_path, "w+"))
 
 # read process document
-$doc = Document.parse(ARGF.read)
+begin
+  $doc = Document.parse(ARGF.read)
+rescue Pione::Parser::ParserError => e
+  abort("Pione syntax error: " + e.message)
+rescue Pione::Model::PioneModelTypeError => e
+  abort("Pione model error: " + e.message)
+end
 
 # start rule provider
 rule_loader = Agent[:rule_provider].start($tuple_space_server)

@@ -79,7 +79,7 @@ describe 'DataFinder' do
       }
 
       # test
-      finder.find(:input,  query).map{|r| r.combination }.should == results
+      finder.find(:input,  query, VariableTable.new).map{|r| r.combination }.should == results
     end
   end
 end

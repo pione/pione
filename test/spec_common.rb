@@ -25,10 +25,10 @@ describe 'Common' do
       id1 = Util.task_id([], Parameters.empty)
       id2 = Util.task_id([DataExpr["1.a"]], Parameters.empty)
       id3 = Util.task_id([DataExpr["2.a"]], Parameters.empty)
-      id4 = Util.task_id([], Parameters.new({"var" => "1.a"}))
-      id5 = Util.task_id([], Parameters.new({"var" => "2.a"}))
-      id6 = Util.task_id([DataExpr["1.a"]], Parameters.new({"var" => "1.a"}))
-      id7 = Util.task_id([DataExpr["2.a"]], Parameters.new({"var" => "2.a"}))
+      id4 = Util.task_id([], {"var" => "1.a"}.to_params)
+      id5 = Util.task_id([], {"var" => "2.a"}.to_params)
+      id6 = Util.task_id([DataExpr["1.a"]], {"var" => "1.a"}.to_params)
+      id7 = Util.task_id([DataExpr["2.a"]], {"var" => "2.a"}.to_params)
       7.times do |i|
         eval "id#{i+1}.size.should == 32"
         7.times do |ii|
@@ -38,10 +38,10 @@ describe 'Common' do
       id1.should == Util.task_id([], Parameters.empty)
       id2.should == Util.task_id([DataExpr["1.a"]], Parameters.empty)
       id3.should == Util.task_id([DataExpr["2.a"]], Parameters.empty)
-      id4.should == Util.task_id([], Parameters.new({"var" => "1.a"}))
-      id5.should == Util.task_id([], Parameters.new({"var" => "2.a"}))
-      id6.should == Util.task_id([DataExpr["1.a"]], Parameters.new({"var" => "1.a"}))
-      id7.should == Util.task_id([DataExpr["2.a"]], Parameters.new({"var" => "2.a"}))
+      id4.should == Util.task_id([], {"var" => "1.a"}.to_params)
+      id5.should == Util.task_id([], {"var" => "2.a"}.to_params)
+      id6.should == Util.task_id([DataExpr["1.a"]], {"var" => "1.a"}.to_params)
+      id7.should == Util.task_id([DataExpr["2.a"]], {"var" => "2.a"}.to_params)
     end
   end
 end

@@ -25,9 +25,9 @@ class Pione::Parser
     rule(:rule_header) {
       ( keyword_Rule >>
         space >>
-        rule_name >>
+        ( rule_name | syntax_error("it should be rule name", :rule_name)) >>
         line_end
-        ).as(:rule_header)
+      ).as(:rule_header)
     }
 
     # rule_conditions
@@ -52,12 +52,11 @@ class Pione::Parser
       ( space? >>
         keyword_input >>
         space >>
-        (expr.as(:expr) |
-         syntax_error("expected expr in input_line context",
-                      [:expr])
-         ) >>
+        ( expr.as(:expr) |
+          syntax_error("it should be data_expr", :data_expr)
+        ) >>
         line_end
-        ).as(:input_line)
+      ).as(:input_line)
     }
 
     # output_line
@@ -65,12 +64,11 @@ class Pione::Parser
       ( space? >>
         keyword_output >>
         space >>
-        (expr.as(:expr) |
-         syntax_error("expected expr in output_line context",
-                      [:expr])
-         ) >>
+        ( expr.as(:expr) |
+          syntax_error("it should be data_expr", :data_expr)
+        ) >>
         line_end
-        ).as(:output_line)
+      ).as(:output_line)
     }
 
     # param_line
@@ -78,12 +76,11 @@ class Pione::Parser
       ( space? >>
         keyword_param >>
         space >>
-        (expr.as(:expr) |
-         syntax_error("expected expr in param_line context",
-                      [:expr])
-         ) >>
+        ( expr.as(:expr) |
+          syntax_error("it should be data_expr", :data_expr)
+        ) >>
         line_end
-        ).as(:param_line)
+      ).as(:param_line)
     }
 
     # feature_line
@@ -92,11 +89,10 @@ class Pione::Parser
         keyword_feature >>
         space >>
         ( expr.as(:expr) |
-          syntax_error("Need feature expression in feature_line context.",
-                       [:expr])
-          ) >>
+          syntax_error("it should be feature_expr", :feature_expr)
+        ) >>
         line_end
-        ).as(:feature_line)
+      ).as(:feature_line)
     }
   end
 end

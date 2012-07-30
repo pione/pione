@@ -9,7 +9,12 @@ module Pione
       end
 
       def message
-        "#{@str} #{cause}(expected: #{@expected.join(", ")}, #{@source.pos}"
+        line, column = @source.line_and_column
+        expected = @expected.join(", ")
+        left = @source.consume(@source.chars_left)
+        "%s(expected: %s, line: %s, column: %s):\n%s" % [
+          @str, expected, line, column, left
+        ]
       end
     end
 
@@ -29,9 +34,9 @@ module Pione
     end
 
     module SyntaxError
-      def syntax_error(msg, expect_elements)
-        # raise ParserError.new(msg, expect_elements)
-        SyntaxErrorAtom.new(msg)
+      # Shortcut for creating dummy atom.
+      def syntax_error(msg, *expect_elements)
+        SyntaxErrorAtom.new(msg, expect_elements)
       end
     end
   end

@@ -15,7 +15,7 @@ module Pione
       rule(:expr) {
         ( expr_operator_application |
           expr_element.as(:receiver) >> message.repeat.as(:messages)
-          ).as(:expr)
+        ).as(:expr)
       }
 
       # expr_element:
@@ -24,9 +24,9 @@ module Pione
       #   ("abc".index(1, 1))
       rule(:expr_element) {
         ((atomic_expr.as(:receiver) >>
-          message.repeat.as(:messages)) |
-         lparen >> expr >> rparen
-         ).as(:expr)
+            message.repeat.as(:messages)) |
+          lparen >> expr >> rparen
+        ).as(:expr)
       }
 
       # atomic_expr:
@@ -83,22 +83,22 @@ module Pione
       # expr_operator_application:
       #   X + X
       rule(:expr_operator_application) {
-        (expr_element.as(:left) >>
-         space? >>
-         expr_operator.as(:operator) >>
-         space? >>
-         expr.as(:right)
-         ).as(:expr_operator_application)
+        ( expr_element.as(:left) >>
+          space? >>
+          expr_operator.as(:operator) >>
+          space? >>
+          expr.as(:right)
+        ).as(:expr_operator_application)
       }
 
       # message:
       #   .params("-w")
       #   .sync
       rule(:message) {
-        (dot >>
-         identifier.as(:message_name) >>
-         message_parameters.maybe
-         ).as(:message)
+        ( dot >>
+          identifier.as(:message_name) >>
+          message_parameters.maybe
+        ).as(:message)
       }
 
       # message_parameters:

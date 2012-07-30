@@ -1,12 +1,32 @@
 module Pione::Model
   class Parameters < PioneModelObject
+    class InvalidParameter < TypeError
+      def initialize(key)
+        @key = key
+      end
+
+      def message
+        "invalid parameter was specified: %s" % [@key.inspect]
+      end
+    end
+
+    class InvalidArgument < TypeError
+      def initialize(val)
+        @val = val
+      end
+
+      def message
+        "invalid argument was specified: %s" % [@val.inspect]
+      end
+    end
+
     attr_reader :data
 
     def initialize(data)
-      raise ArgumentError.new(data) unless data.kind_of?(Hash)
+      raise TypeError.new(data) unless data.kind_of?(Hash)
       data.each do |key, val|
-        raise ArgumentError.new(key) unless key.kind_of?(Variable)
-        raise ArugmentError.new(val) unless val.kind_of?(PioneModelObject)
+        raise InvalidParameter.new(key) unless key.kind_of?(Variable)
+        raise InvalidArgument.new(val) unless val.kind_of?(PioneModelObject)
       end
       @data = data
     end
@@ -43,14 +63,18 @@ module Pione::Model
 
 
     def get(name)
+      raise InvalidParameter.new(name) unless name.kind_of?(Variable)
       @data[name]
     end
 
     def set(name, value)
+      raise InvalidParameter.new(name) unless name.kind_of?(Variable)
+      raise InvalidArgument.new(value) unless value.kind_of?(PioneModelObject)
       self.class.new(@data.merge({name => value}))
     end
 
     def delete(name)
+      raise InvalidParameter.new(name) unless name.kind_of?(Variable)
       new_data = @data.clone
       new_data.delete(name)
       self.class.new(new_data)
@@ -106,7 +130,7 @@ module Pione::Model
     end
 
     define_pione_method("get", [TypeString], TypeAny) do |rec, name|
-      rec.get(name.value)
+      rec.get(Variable.new(name.value))
     end
 
     define_pione_method(
@@ -114,7 +138,7 @@ module Pione::Model
       [TypeString, TypeAny],
       TypeParameters
     ) do |rec, name, val|
-      rec.set(name, val)
+      rec.set(Variable.new(name.value), val)
     end
 
     define_pione_method("clear", [], TypeParameters) do |rec|

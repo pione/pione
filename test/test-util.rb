@@ -143,6 +143,12 @@ class Hash
       hash[key.to_sym] = (val.kind_of?(Hash) ? val.symbolize_keys : val)
     end
   end
+
+  def to_params
+    Parameters.new(
+      Hash[map{|key, val| [Pione::Model::Variable.new(key), val.to_pione]}]
+    )
+  end
 end
 
 # Bacon::Context extension.

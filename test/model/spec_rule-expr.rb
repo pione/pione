@@ -71,7 +71,7 @@ describe 'Model::RuleExpr' do
 
   describe 'pione method params' do
     it 'should set parameters' do
-      params = Parameters.new({"a" => PioneBoolean.true})
+      params = Parameters.new({Variable.new("a") => PioneBoolean.true})
       @a.call_pione_method("params", params).should ==
         RuleExpr.new(Package.new("main"), "a", false, params)
     end

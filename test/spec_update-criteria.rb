@@ -11,9 +11,9 @@ Action---
 
 Rule OutputsRule
   input '*.a'
-  output '*'.except('{$INPUT[1]}')
+  output '*.b'
 Action
-echo -n "abc" > {$OUTPUT[1]}
+cat {$INPUT[1]} > {$OUTPUT[1]}
 End
 DOCUMENT
 $no_outputs_rule = document["&main:NoOutputsRule"]
@@ -23,9 +23,9 @@ $outputs_rule = document["&main:OutputsRule"]
 time1 = Time.now
 time2 = Time.now
 time3 = Time.now
-tuple1 = Tuple[:data].new('test', '1', nil, time1)
-tuple2 = Tuple[:data].new('test', '2', nil, time2)
-tuple3 = Tuple[:data].new('test', '3', nil, time2)
+tuple1 = Tuple[:data].new('test', '1.a', nil, time1)
+tuple2 = Tuple[:data].new('test', '2.a', nil, time2)
+tuple3 = Tuple[:data].new('test', '3.b', nil, time2)
 
 UC = UpdateCriteria
 
@@ -37,13 +37,23 @@ describe 'UpdateCriteria' do
       inputs = [tuple1, tuple2]
       outputs = [tuple3]
 
-      UC.no_output_rules?($no_outputs_rule, inputs, outputs).should.true
+      UC.no_output_rules?(
+        $no_outputs_rule,
+        inputs,
+        outputs,
+        VariableTable.new
+      ).should.true
     end
 
     it 'should not be updatable' do
       inputs = [tuple1, tuple2]
       outputs = [tuple3]
-      UC.no_output_rules?($outputs_rule, inputs, outputs).should.false
+      UC.no_output_rules?(
+        $outputs_rule,
+        inputs,
+        outputs,
+        VariableTable.new
+      ).should.false
     end
   end
 
@@ -51,13 +61,23 @@ describe 'UpdateCriteria' do
     it 'should be updatable' do
       inputs = [tuple1, tuple2]
       outputs = []
-      UC.not_exist_output?($outputs_rule, inputs, outputs).should.true
+      UC.not_exist_output?(
+        $outputs_rule,
+        inputs,
+        outputs,
+        VariableTable.new
+      ).should.true
     end
 
     it 'should be not updatable' do
       inputs = [tuple1]
       outputs = [tuple3]
-      UC.not_exist_output?($outputs_rule, inputs, outputs).should.false
+      UC.not_exist_output?(
+        $outputs_rule,
+        inputs,
+        outputs,
+        VariableTable.new
+      ).should.false
     end
   end
 end

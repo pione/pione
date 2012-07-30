@@ -17,13 +17,10 @@ describe 'Transformer::RuleDefinition' do
 
   transformer_spec("param_line", :param_line) do
     tc("param {var: 1}") do
-      ConditionLine.new(:param, Parameters.new({"var" => 1.to_pione}))
+      ConditionLine.new(:param, {"var" => 1}.to_params)
     end
     tc("param {var1: 1, var2: 2}") do
-      ConditionLine.new(
-        :param,
-        Parameters.new({"var1" => 1.to_pione, "var2" => 2.to_pione})
-      )
+      ConditionLine.new(:param, {"var1" => 1, "var2" => 2}.to_params)
     end
   end
 
@@ -102,7 +99,7 @@ STRING
                 DataExpr.new("*.txt"),
                 DataExpr.new("summary.txt"))],
             [DataExpr.new("summary.txt")],
-            Parameters.new({"ConvertCharSet" => PioneBoolean.true}),
+            Parameters.new({Variable.new("ConvertCharSet") => PioneBoolean.true}),
             Feature.empty
           ),
           FlowBlock.new(
