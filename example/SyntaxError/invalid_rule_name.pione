@@ -1,0 +1,6 @@
+Rule "aaa"
+  input '*.a'
+  output '*.b'
+Action
+cat {$I[1]} > {$O[1]}
+End

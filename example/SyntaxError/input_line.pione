@@ -1,0 +1,6 @@
+Rule ABC
+  input #####
+  output '*.b'
+Action
+cat {$I[1]} > {$O[1]}
+End
