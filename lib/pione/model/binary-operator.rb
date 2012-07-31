@@ -17,6 +17,7 @@ module Pione::Model
       @symbol = symbol
       @left = left
       @right = right
+      super()
     end
 
     # Returns false because Message is a complex form.

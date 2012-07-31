@@ -10,25 +10,34 @@ module Pione
       return res + str
     end
 
-    class Package
-      attr_reader :name
-      def initialize(name)
-        @name = name
-      end
-    end
-
     # Load a document and return rule table.
     def self.load(filepath)
       parse(File.read(filepath))
     end
 
     def self.parse(src)
+      # parse the document and build the model
       parser = Parser.new
       transformer = Transformer.new
-      rules = transformer.apply(parser.parse(src))
-      table = {}
+      toplevels = transformer.apply(parser.parse(src))
+
+      # rules and assignments
+      rules = toplevels.select{|elt| elt.kind_of?(Rule)}
+      assignments = toplevels.select{|elt| elt.kind_of?(Assignment)}
+
+      # make document parameters
+      params = assignments.inject(VariableTable.empty) do |vtable, a|
+        vtable.tap{|t| t.set(a.variable, a.expr)}
+      end.to_params
+
+      # set document parameters into rules
       rules.each do |rule|
-        table[rule.rule_path] = rule
+        rule.params.merge!(params)
+      end
+
+      # make rule table
+      table = rules.inject({}) do |tbl, rule|
+        tbl.tap{|x| x[rule.rule_path] = rule}
       end
       return new(table)
     end
@@ -42,6 +51,15 @@ module Pione
 
     def [](name)
       @rules[name]
+    end
+
+    # Returns main rule of main package.
+    def main
+      @rules["&main:Main"]
+    end
+
+    def root_rule(params)
+      Rule::RootRule.new(main, params)
     end
   end
 end

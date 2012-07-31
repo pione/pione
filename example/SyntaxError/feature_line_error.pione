@@ -1,0 +1,7 @@
+Rule ABC
+  input '*.a'
+  output '*.b'
+  feature GGGGG
+Action
+cat {$I[1]} > {$O[1]}
+End

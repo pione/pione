@@ -16,6 +16,7 @@ module Pione::Model
 
     def initialize(expr)
       @expr = expr
+      super()
     end
 
     # Return a rule path string with expanding variables.

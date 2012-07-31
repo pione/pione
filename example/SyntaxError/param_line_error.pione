@@ -1,0 +1,7 @@
+Rule ABC
+  input '*.a'
+  output '*.b'
+  param 1
+Action
+cat {$I[1]} > {$O[1]}
+End

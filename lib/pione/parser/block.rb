@@ -25,10 +25,10 @@ module Pione
 
       # action_block
       rule(:action_block) {
-        (action_block_begin_line >>
-         (block_end_line.absent? >> any).repeat.as(:content) >>
-         block_end_line
-         ).as(:action_block)
+        ( action_block_begin_line >>
+          (block_end_line.absent? >> any).repeat.as(:content) >>
+          block_end_line
+        ).as(:action_block)
       }
 
       # flow_block_begin_line
@@ -40,7 +40,7 @@ module Pione
       # action_block_begin_line
       #   Action
       rule(:action_block_begin_line) {
-        space? >> keyword_Action >> str('-').repeat >> line_end
+        space? >> keyword_Action.as(:key) >> str('-').repeat >> line_end
       }
 
       # block_end_line

@@ -12,6 +12,7 @@ module Pione::Model
       @outputs = outputs
       @params = params
       @features = features
+      super()
     end
 
     def include_variable?

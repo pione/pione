@@ -1,6 +1,8 @@
 require_relative 'test-util'
 
 src = <<DOCUMENT
+$X := 1
+
 Rule Main
   input '*.txt'
   output '*.result'
@@ -53,5 +55,22 @@ describe 'Document' do
     doc["&main:RuleA"].should.kind_of(Model::Rule)
     doc["&main:RuleB"].should.kind_of(Model::Rule)
     doc["&main:RuleC"].should.kind_of(Model::Rule)
+  end
+
+  it 'should have global variable' do
+    doc = Document.parse(src)
+    doc["&main:Main"].params["X"].should == 1.to_pione
+    doc["&main:RuleA"].params["X"].should == 1.to_pione
+    doc["&main:RuleB"].params["X"].should == 1.to_pione
+    doc["&main:RuleC"].params["X"].should == 1.to_pione
+  end
+
+  it 'should raise variable binding error' do
+    should.raise(VariableBindingError) do
+      Document.parse <<-PIONE
+        $X := 1
+        $X := 2
+      PIONE
+    end
   end
 end

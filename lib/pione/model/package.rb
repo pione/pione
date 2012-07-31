@@ -4,6 +4,7 @@ module Pione::Model
 
     def initialize(name)
       @name = name
+      super()
     end
 
     def pione_model_type

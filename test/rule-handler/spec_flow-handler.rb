@@ -48,19 +48,26 @@ Rule Test
   input '*.a'
   input '{$INPUT[1].*}.b'
   output '{$INPUT[1].*}.c'
-Flow---
+Flow
 rule Shell
----End
+End
 
 Rule Shell
   input '*.a'
   input '{$INPUT[1].*}.b'
   output '{$INPUT[1].*}.c'
-Action---
+Action
 VAL1=`cat {$INPUT[1]}`;
 VAL2=`cat {$INPUT[2]}`;
 expr $VAL1 + $VAL2 > {$OUTPUT[1]}
----End
+End
+
+Rule VariableBindingErrorTest
+  input '*.a'
+  output '*.b'
+Flow
+
+End
 DOCUMENT
 
 describe 'FlowHandler' do

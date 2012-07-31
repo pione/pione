@@ -56,13 +56,14 @@ end
 begin
   option_parser.parse!(ARGV)
 rescue OptionParser::InvalidOption => e
-  e.args.each {|arg| puts "unknown option: #{arg}" }
-  exit
+  e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
+  abort
 end
 
+# process definition document is not found.
 if ARGF.filename == "-"
-  puts "no process definition document"
-  exit
+  puts "There are no process definition documents."
+  abort
 end
 
 #
@@ -90,7 +91,7 @@ begin
   $doc = Document.parse(ARGF.read)
 rescue Pione::Parser::ParserError => e
   abort("Pione syntax error: " + e.message)
-rescue Pione::Model::PioneModelTypeError => e
+rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e
   abort("Pione model error: " + e.message)
 end
 
@@ -98,6 +99,7 @@ end
 rule_loader = Agent[:rule_provider].start($tuple_space_server)
 rule_loader.read_document($doc)
 rule_loader.wait_till(:request_waiting)
+
 $tuple_space_server.write(Tuple[:process_info].new('standalone', 'Standalone'))
 
 # start input generators
@@ -109,10 +111,6 @@ sleep 0.1 while not(gen.counter > 0)
 OPTS[:resource].times do
   Agent[:task_worker].start($tuple_space_server)
 end
-
-# execute
-$main = $doc["&main:Main"]
-$root = Rule::RootRule.new($main, $params)
 
 class CommandExecuter
   def terminate
@@ -134,7 +132,7 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 #
 $thread = Thread.start do
   while true do
-    if handler = $root.make_handler($tuple_space_server)
+    if handler = $doc.root_rule($params).make_handler($tuple_space_server)
       outputs = handler.execute
       Dir.mkdir($output_dir) unless File.exist?($output_dir)
       outputs.first.each do |output|

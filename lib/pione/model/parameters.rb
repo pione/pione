@@ -29,6 +29,7 @@ module Pione::Model
         raise InvalidArgument.new(val) unless val.kind_of?(PioneModelObject)
       end
       @data = data
+      super()
     end
 
     def self.empty
@@ -61,6 +62,9 @@ module Pione::Model
       "{" + @data.map{|k,v| "%s:%s" % [k.textize, v.textize]}.join(", ") + "}"
     end
 
+    def [](name)
+      @data[Variable.new(name)]
+    end
 
     def get(name)
       raise InvalidParameter.new(name) unless name.kind_of?(Variable)
@@ -88,8 +92,14 @@ module Pione::Model
       @data.empty?
     end
 
+    # Updates parameters with the argument and return new parameters with it.
     def merge(other)
       self.class.new(@data.merge(other.data))
+    end
+
+    # Updates parameters with the argument destructively.
+    def merge!(other)
+      @data.merge!(other.data)
     end
 
     def as_variable_table

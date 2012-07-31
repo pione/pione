@@ -6,6 +6,7 @@ module Pione::Model
 
     def initialize(name)
       @name = name.to_s
+      super()
     end
 
     def pione_model_type

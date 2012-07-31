@@ -91,6 +91,8 @@ module Pione::Model
       @modifier = modifier
       @mode = mode
       @exceptions = exceptions
+
+      super()
     end
 
     def pione_model_type

@@ -13,20 +13,27 @@ module Pione::Model
     end
   end
 
-  # VariableBindingError represents a error that you try to bind different value
+  # VariableBindingError represents an error that you try to bind different value
   # to a variable.
   class VariableBindingError < StandardError
-    attr_reader :name
-    attr_reader :value
-    attr_reader :old
+    attr_reader :variable
+    attr_reader :new_value
+    attr_reader :old_value
 
-    def initialize(name, value, old)
-      @name = name
-      @value = value
-      @old = old
-      message =
-        "Try to bind the value '#{value}' as variable '#{name}'," +
-        "but already bound the value '#{old}'"
+    def initialize(variable, new_value, old_value)
+      @variable = variable
+      @new_value = new_value
+      @old_value = old_value
+      args = [
+        @new_value.textize,
+        @variable.name,
+        @old_value.textize,
+        @variable.line,
+        @variable.column
+      ]
+      message = <<MSG % args
+Try to bind the value '%s' as variable %s, but already bound the value '%s'(line: %s, column: %s)
+MSG
       super(message)
     end
   end
@@ -36,11 +43,22 @@ module Pione::Model
     # Make an auto vairable table.
     def initialize(table={})
       @table = table.to_hash.dup
+      super()
+    end
+
+    # Returns empty variable table
+    def self.empty
+      new
     end
 
     # Return the variable table as hash.
     def to_hash
       @table
+    end
+
+    # Returns the parameters form.
+    def to_params
+      Parameters.new(to_hash)
     end
 
     # Return true if the table is empty.
@@ -63,13 +81,13 @@ module Pione::Model
     end
 
     # Set a new variable.
-    def set(variable, val=nil)
-      raise ArgumentError.new(variable) unless variable.kind_of?(Variable)
-      raise ArgumentError.new(val) unless val.kind_of?(PioneModelObject)
-      if old = @table[variable] and not(val == old)
-        raise VariableBindingError.new(variable, val, old)
+    def set(variable, new_value)
+      raise TypeError.new(variable) unless variable.kind_of?(Variable)
+      raise TypeError.new(new_value) unless new_value.kind_of?(PioneModelObject)
+      if old_value = @table[variable] and not(new_value == old_value)
+        raise VariableBindingError.new(variable, new_value, old_value)
       end
-      @table[variable] = val
+      @table[variable] = new_value
     end
 
     # Expand variables in the string.

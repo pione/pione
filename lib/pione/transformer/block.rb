@@ -10,9 +10,13 @@ module Pione
 
       # action_block:
       rule(:action_block =>
-        { :content => simple(:content) }
+        { :key => simple(:keyword_Action),
+          :content => simple(:content) }
       ) {
-        ActionBlock.new(content)
+        line_and_column = keyword_Action.line_and_column
+        ActionBlock.new(content) do
+          set_line_and_column(line_and_column)
+        end
       }
     end
   end

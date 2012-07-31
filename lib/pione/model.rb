@@ -10,8 +10,13 @@ module Pione::Model
     end
 
     def message
-      args = [@type.type_string, @obj.pione_model_type.type_string]
-      "expected %s, but got %s" % args
+      args = [
+        @type.type_string,
+        @obj.pione_model_type.type_string,
+        @obj.line,
+        @obj.column
+      ]
+      "expected %s, but got %s(line: %s, column: %s)" % args
     end
   end
 
@@ -43,7 +48,7 @@ module Pione::Model
     end
 
     def match(other)
-      @type_string == other.type_string
+      other == TypeAny || @type_string == other.type_string
     end
 
     # Defines pione model object methods.
@@ -59,9 +64,10 @@ module Pione::Model
       @method_body[name] = b
     end
 
+    # Returns true if the data has the type.
     def check(data)
       unless match(data.pione_model_type)
-        raise PioneModelTypeError.new(data, @type_string)
+        raise PioneModelTypeError.new(data, self)
       end
     end
   end
@@ -137,6 +143,10 @@ module Pione::Model
   end
 
   class PioneModelObject < Pione::PioneObject
+    def initialize(&b)
+      instance_eval(&b) if block_given?
+    end
+
     # Returns self.
     # @param [VariableTable] vtable variable table for evaluation
     # @return [PioneModelObject]
@@ -151,6 +161,22 @@ module Pione::Model
 
     def include_variable?
       false
+    end
+
+    def set_document_path(path)
+      @__document_path__ = path
+    end
+
+    def set_line_and_column(line_and_column)
+      @__line__, @__column__ = line_and_column
+    end
+
+    def line
+      @__line__
+    end
+
+    def column
+      @__column__
     end
 
     # Calls pione model object method.

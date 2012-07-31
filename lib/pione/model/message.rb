@@ -16,6 +16,7 @@ module Pione::Model
       @name = name
       @receiver = receiver
       @arguments = arguments
+      super()
     end
 
     # Returns false because Message is a complex form.

@@ -10,6 +10,7 @@ module Pione
 
       # call_rule
       rule(:call_rule => subtree(:rule_expr)) {
+        TypeRuleExpr.check(rule_expr)
         CallRule.new(rule_expr)
       }
 

@@ -10,7 +10,15 @@ class Pione::Parser
 
     # rule_definitions
     rule(:rule_definitions) {
-      (space? >> rule_definition >> empty_lines?).repeat
+      (space? >> toplevel_element >> empty_lines?).repeat
+    }
+
+    # toplevel_element
+    #   Rule abc ...
+    #   $X := 1
+    rule(:toplevel_element) {
+      rule_definition |
+      assignment
     }
 
     # rule_definition

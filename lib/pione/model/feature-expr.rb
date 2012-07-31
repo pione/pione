@@ -105,6 +105,7 @@ module Pione::Model
 
       def initialize(symbol)
         @symbol = symbol
+        super()
       end
 
       def task_id_string
@@ -174,6 +175,7 @@ module Pione::Model
       def initialize(*elements)
         @elements = Set.new
         elements.each {|elt| add(elt) }
+        super()
       end
 
       # Adds the element from the connective set and unifies by it.
@@ -641,6 +643,7 @@ module Pione::Model
       def initialize(provider, request)
         @provider = AndExpr.new(provider.simplify)
         @request = AndExpr.new(request.simplify)
+        super()
       end
 
       # Return true if the provider expression can respond to the request.

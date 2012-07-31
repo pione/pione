@@ -16,6 +16,7 @@ module Pione::Model
       raise ArgumentError.new(expr) unless expr.kind_of?(PioneModelObject)
       @variable = variable
       @expr = expr
+      super()
     end
 
     # Evaluates value and update the variable table with it.

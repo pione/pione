@@ -15,6 +15,7 @@ module Pione::Model
       @name = name
       @sync_mode = sync_mode
       @params = params
+      super()
     end
 
     # Returns rule path form.

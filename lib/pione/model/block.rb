@@ -9,6 +9,7 @@ module Pione::Model
 
     def initialize(content)
       @content = content
+      super()
     end
 
     # Expands variables.
