@@ -66,7 +66,7 @@ Rule VariableBindingErrorTest
   input '*.a'
   output '*.b'
 Flow
-
+rule Test
 End
 DOCUMENT
 

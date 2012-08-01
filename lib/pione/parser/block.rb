@@ -17,17 +17,21 @@ module Pione
 
       # flow_block
       rule(:flow_block) {
-        (flow_block_begin_line >>
-         flow_element.repeat >>
-         block_end_line
+        ( flow_block_begin_line >>
+          (flow_element.repeat(1) |
+            syntax_error("empty flow block", [:flow_element])) >>
+          (block_end_line |
+            syntax_error("block end not found", [:keyword_End]))
          ).as(:flow_block)
       }
 
       # action_block
       rule(:action_block) {
         ( action_block_begin_line >>
-          (block_end_line.absent? >> any).repeat.as(:content) >>
-          block_end_line
+          ( (block_end_line.absent? >> any).repeat(1).as(:content) |
+            syntax_error("empty action block", [])) >>
+          ( block_end_line |
+            syntax_error("block end not found", [:keyword_End]))
         ).as(:action_block)
       }
 

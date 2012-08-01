@@ -101,39 +101,45 @@ describe 'ActionHandler' do
   end
 
   it 'should write a shell script' do
-    process_name = "test-process-123"
-    process_id = "xyz"
-    opts = {:process_name => process_name, :process_id => process_id}
-    handler = @rule_test.make_handler(
-      tuple_space_server, [@tuple_a], Parameters.empty
-    )
-    handler.send("write_shell_script") do |path|
-      File.should.exist(path)
-      File.should.executable(path)
-      File.read(path).should == "nkf -w 1.a > 1.b\n"
+    quiet_mode do
+      process_name = "test-process-123"
+      process_id = "xyz"
+      opts = {:process_name => process_name, :process_id => process_id}
+      handler = @rule_test.make_handler(
+        tuple_space_server, [@tuple_a], Parameters.empty
+      )
+      handler.send("write_shell_script") do |path|
+        File.should.exist(path)
+        File.should.executable(path)
+        File.read(path).should == "nkf -w 1.a > 1.b\n"
+      end
     end
   end
 
   it 'should call shell script' do
-    handler = @rule_test.make_handler(
-      tuple_space_server, [@tuple_a], Parameters.empty
-    )
-    handler.send("write_shell_script") do |path|
-      handler.send("call_shell_script", path)
-      File.should.exist(File.join(handler.working_directory, "1.b"))
+    quiet_mode do
+      handler = @rule_test.make_handler(
+        tuple_space_server, [@tuple_a], Parameters.empty
+      )
+      handler.send("write_shell_script") do |path|
+        handler.send("call_shell_script", path)
+        File.should.exist(File.join(handler.working_directory, "1.b"))
+      end
     end
   end
 
   [:sh1, :sh2, :ruby].each do |sym|
     it "should execute an action: #{sym}" do
-      # execute and get result
-      handler = eval("@handler_#{sym}")
-      outputs = handler.execute
-      res = outputs.first
-      res.name.should == '1.c'
-      Resource[res.uri].read.chomp.should == "3"
-      should.not.raise do
-        read(Tuple[:data].new(name: '1.c', domain: handler.domain))
+      quiet_mode do
+        # execute and get result
+        handler = eval("@handler_#{sym}")
+        outputs = handler.execute
+        res = outputs.first
+        res.name.should == '1.c'
+        Resource[res.uri].read.chomp.should == "3"
+        should.not.raise do
+          read(Tuple[:data].new(name: '1.c', domain: handler.domain))
+        end
       end
     end
   end

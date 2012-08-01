@@ -55,6 +55,7 @@ module Pione
       WhenBlock.new(value, FlowBlock.new(*elements))
     }
 
+    # assignment
     rule(:assignment =>
       { :symbol => simple(:symbol),
         :value => simple(:value) }

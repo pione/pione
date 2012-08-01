@@ -76,3 +76,10 @@ flow_block:
           rule Test4
         end
       End
+  invalid:
+    - |
+      Flow
+      End
+    - |
+      Flow
+        rule Test

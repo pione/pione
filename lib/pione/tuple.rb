@@ -4,7 +4,23 @@ module Pione
   module Tuple
     TABLE = Hash.new
 
-    class FormatError < ArgumentError; end
+    class FormatError < ArgumentError
+    end
+
+    # Type represents tuple's field data type which has or-relation.
+    class Type
+      def self.or(*args)
+        new(*args)
+      end
+
+      def initialize(*args)
+        @types = args
+      end
+
+      def ===(other)
+        @types.find {|t| t === other}
+      end
+    end
 
     class TupleObject < PioneObject
 
@@ -66,7 +82,9 @@ module Pione
             raise FormatError.new(key) unless format_keys.include?(key)
             # type check
             if _data[key] && not(format_table[key].nil?)
-              raise FormatError.new(_data[key]) unless _data[key].kind_of?(format_table[key])
+              unless format_table[key] === _data[key]
+                raise FormatError.new(_data[key])
+              end
             end
           end
           @data = _data
@@ -75,7 +93,7 @@ module Pione
           # type check
           data.each_with_index do |key, i|
             if format[i+1].kind_of?(Array)
-              unless data[i].kind_of?(format[i+1][1])
+              unless format[i+1][1] === data[i] or data[i].nil?
                 raise FormatError.new(data[i])
               end
             end
@@ -187,8 +205,12 @@ module Pione
     #   name   : data name
     #   uri    : resource location
     #   time   : data created time
-    define_format [:data, :domain, :name, :uri, :time]
-    #define_format [:data, :domain, :name, :uri, :time]
+    define_format [:data,
+      [:domain, String],
+      [:name, Type.or(String, Model::DataExpr)],
+      [:uri, String],
+      [:time, Time]
+    ]
 
     # rule application task with inputs, outpus and parameters
     #   rule_path : string     : rule location path
@@ -197,11 +219,12 @@ module Pione
     #   features  : feature    : request features
     #   uuid      : string     : task id
     define_format [:task,
-                   [:rule_path, String],
-                   [:inputs, Array],
-                   [:params, Model::Parameters],
-                   [:features, Model::Feature::Expr],
-                   [:uuid, String]]
+      [:rule_path, String],
+      [:inputs, Array],
+      [:params, Model::Parameters],
+      [:features, Model::Feature::Expr],
+      [:uuid, String]
+    ]
 
     # working information
     #   domain  : caller domain

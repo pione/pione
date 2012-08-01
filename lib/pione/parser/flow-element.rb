@@ -13,21 +13,17 @@ module Pione
         if_block |
         case_block |
         assignment
-        #|
-        #error('Found a bad flow element',
-        #      ['rule_call_line',
-        #       'condition_block'])
       }
 
       # call_rule_line:
       #   rule Test
       rule(:call_rule_line) {
-        (space? >>
-         keyword_rule >>
-         space? >>
-         expr >>
-         line_end
-         ).as(:call_rule)
+        ( space? >>
+          keyword_rule >>
+          space? >>
+          expr >>
+          line_end
+        ).as(:call_rule)
       }
 
       # if_block:
@@ -41,7 +37,7 @@ module Pione
           flow_element.repeat.as(:if_true_elements) >>
           else_block.maybe.as(:if_else_block) >>
           conditional_block_end
-          ).as(:if_block)
+        ).as(:if_block)
       }
 
       # if_block_begin:
@@ -64,7 +60,7 @@ module Pione
           keyword_else >>
           line_end >>
           flow_element.repeat.as(:elements)
-          ).as(:else_block)
+        ).as(:else_block)
       }
 
       # conditional_block_end
@@ -83,11 +79,11 @@ module Pione
       #     rule Test3
       #   end
       rule(:case_block) {
-        (case_block_begin >>
-         when_block.repeat.as(:when_blocks) >>
-         else_block.maybe.as(:case_else_block) >>
-         conditional_block_end
-         ).as(:case_block)
+        ( case_block_begin >>
+          when_block.repeat.as(:when_blocks) >>
+          else_block.maybe.as(:case_else_block) >>
+          conditional_block_end
+        ).as(:case_block)
       }
 
       # case_block_begin:
@@ -108,7 +104,7 @@ module Pione
       rule(:when_block) {
         ( when_block_begin >>
           flow_element.repeat.as(:elements)
-          ).as(:when_block)
+        ).as(:when_block)
       }
 
       # when_block_begin:
@@ -130,7 +126,8 @@ module Pione
           colon >> equals >>
           space? >>
           expr.as(:value) >>
-          line_end).as(:assignment)
+          line_end
+        ).as(:assignment)
       }
     end
   end

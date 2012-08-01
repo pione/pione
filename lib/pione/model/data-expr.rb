@@ -202,6 +202,10 @@ module Pione::Model
       return name
     end
 
+    def to_s
+      "#<#<#{self.class.name}> #{@name}>"
+    end
+
     # Return true if name, modifier, mode, and exceptions are the same.
     def ==(other)
       return false unless other.kind_of?(self.class)
