@@ -11,15 +11,14 @@ module Pione
       # block
       rule(:block) {
         flow_block |
-        action_block #|
-        #error("Found bad block.", ['flow block', 'action block'])
+        action_block
       }
 
       # flow_block
       rule(:flow_block) {
         ( flow_block_begin_line >>
           (flow_element.repeat(1) |
-            syntax_error("empty flow block", [:flow_element])) >>
+            syntax_error("flow elements not found", [:flow_element])) >>
           (block_end_line |
             syntax_error("block end not found", [:keyword_End]))
          ).as(:flow_block)
