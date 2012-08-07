@@ -65,6 +65,12 @@ module Pione
         setup_working_directory
       end
 
+      def setenv(env)
+        env.each do |key, value|
+          @variable_table.set(Variable.new("ENV_" + key), PioneString.new(value))
+        end
+      end
+
       def execute
         raise NotImplementError
       end

@@ -44,6 +44,9 @@ module Pione
         raise ArgumentError.new(features) unless features.kind_of?(Feature::Expr)
         @features = features
         super(tuple_space_server)
+
+        # ENV
+        @env = ENV.clone
       end
 
       # Transition method for the state +task_waiting+. The agent takes a +task+
@@ -93,6 +96,7 @@ module Pione
           task.inputs,
           task.params
         )
+        handler.setenv(ENV)
         @__result_task_execution__ = nil
 
         th = Thread.new do
