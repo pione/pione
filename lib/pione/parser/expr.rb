@@ -12,9 +12,11 @@ module Pione
       #   (1 + 1).next
       #   true
       #   '*.txt'.as_string
+      #   abc[1]
       rule(:expr) {
         ( expr_operator_application |
-          expr_element.as(:receiver) >> message.repeat.as(:messages)
+          (expr_element.as(:receiver) >> message.repeat.as(:messages)) |
+          (expr_element.as(:receiver) >> index)
         ).as(:expr)
       }
 
@@ -24,7 +26,7 @@ module Pione
       #   ("abc".index(1, 1))
       rule(:expr_element) {
         ((atomic_expr.as(:receiver) >>
-            message.repeat.as(:messages)) |
+            (message.repeat.as(:messages) | index)) |
           lparen >> expr >> rparen
         ).as(:expr)
       }
@@ -84,9 +86,9 @@ module Pione
       #   X + X
       rule(:expr_operator_application) {
         ( expr_element.as(:left) >>
-          space? >>
+          pad? >>
           expr_operator.as(:operator) >>
-          space? >>
+          pad? >>
           expr.as(:right)
         ).as(:expr_operator_application)
       }
@@ -106,9 +108,9 @@ module Pione
       #   (true, false)
       rule(:message_parameters) {
         lparen >>
-        space? >>
+        pad? >>
         message_parameters_elements.maybe.as(:message_parameters) >>
-        space? >>
+        pad? >>
         rparen
       }
 
@@ -122,33 +124,71 @@ module Pione
       # message_paramters_elements_rest:
       #   , true
       rule(:message_parameters_elements_rest) {
-        space? >> comma >> space? >> expr
+        pad? >> comma >> pad? >> expr
       }
 
       # parameters
+      #   {abc: "a"}
+      #   {a: 1, b: 2, c: 3}
       rule(:parameters) {
         lbrace >>
-        space? >>
+        pad? >>
         parameters_elements.maybe.as(:parameters) >>
-        space? >>
+        pad? >>
         rbrace
       }
 
+      # parameters_elements
+      #   a: 1, b: 2, c: 3
       rule(:parameters_elements) {
         parameters_element >> parameters_elements_rest.repeat
       }
 
+      # parameters_element
+      #   a: 1
+      #   b: 2
+      #   c: 3
       rule(:parameters_element) {
         ( identifier.as(:key) >>
-          space? >>
+          pad? >>
           colon >>
-          space? >>
+          pad? >>
           expr.as(:value)
         ).as(:parameters_element)
       }
 
+      # parameters_elements_rest
+      #   , a: 1
       rule(:parameters_elements_rest) {
-        space? >> comma >> space? >> parameters_element
+        pad? >> comma >> pad? >> parameters_element
+      }
+
+      # index
+      #   [1]
+      #   [1,1]
+      #   [1,2,3]
+      rule(:index) {
+        ( lsbracket >>
+          space? >>
+          ( index_arguments.as(:index_arguments) |
+            syntax_error("it should be index arguments")) >>
+          space? >>
+          rsbracket
+        ).as(:index)
+      }
+
+      # index_arguments
+      #   1
+      #   1,1
+      #   1,2,3
+      rule(:index_arguments) {
+        expr >> space? >> index_arguments_rest.repeat
+      }
+
+      # index_arguments_rest
+      #  ,1
+      rule(:index_arguments_rest) {
+        space? >> comma >> space? >> expr
       }
     end
   end

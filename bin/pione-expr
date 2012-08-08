@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+
+require 'optparse'
+require 'pione/common'
+require 'pione/agent/input-generator'
+require 'pione/agent/task-worker'
+require 'pione/agent/rule-provider'
+require 'pione/agent/logger'
+
+include Pione
+
+str = ARGV[0]
+p Parser.new.expr.parse(str)

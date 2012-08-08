@@ -34,7 +34,9 @@ module Pione
         :percent => '%',
         :atmark => '@',
         :hat => '^',
-        :sharp => '#'
+        :sharp => '#',
+        :lsbracket => '[',
+        :rsbracket => ']'
       }
 
       # make symbols
@@ -96,6 +98,12 @@ module Pione
 
       # space?
       rule(:space?) { space.maybe }
+
+      # pad
+      rule(:pad) { match("[ \t\n]").repeat(1) }
+
+      # pad?
+      rule(:pad?) { pad.maybe }
 
       # line_end
       rule(:line_end) { space? >> (str("\n") | any.absent?) }

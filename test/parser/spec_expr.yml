@@ -53,6 +53,19 @@ parameters:
     - "{var: \"abc\"}"
     - "{var1: 1, var2: 2}"
     - "{var1: 1, var2: 2, var3: 3}"
+    - "{\n}"
+    - "{var:\n 1}"
+    - "{var: \n1}"
+    - "{\n var1: \n 1, \nvar2: \n 2\n }"
+index:
+  valid:
+    - "[1]"
+    - "[1,1]"
+    - "[1,2,3]"
+    - "[1, 2, 3]"
+  invalid:
+    - "[]"
+    - "[1,\n2]"
 expr:
   valid:
     - "1"
@@ -65,3 +78,5 @@ expr:
     - ($Var1 == "a") || $Var2
     - ($Var1 == ($Var2 == "a"))
     - true == true == true
+    - "abc[1]"
+    - "1[1]"
