@@ -1,52 +1,56 @@
 Rule Main
   output 'result.txt'
-  param {N: 10}
+  param $NUM
 Flow
-rule Fib.params({N: $N})
-rule Result.params({N: $N})
+  rule Fib
+  rule Result
 End
 
 Rule Fib0
   output 'fib0.txt'
 Action
-echo -n '0' > fib0.txt
+  echo -n '0' > fib0.txt
 End
 
 Rule Fib1
   output 'fib1.txt'
 Action
-echo -n '1' > fib1.txt
+  echo -n '1' > fib1.txt
 End
 
 Rule Fib
-  output 'fib{$N}.txt'
-  param {N: 10}
+  output 'fib{$NUM}.txt'
+  param $NUM
 Flow
-case $N
-when 0
-  rule Fib0
-when 1
-  rule Fib1
-else
-  $P1 := $N - 2
-  $P2 := $N - 1
-  rule Fib.params({N: $P1})
-  rule Fib.params({N: $P2})
-  rule Calc.params({N: $N, P1: $P1, P2: $P2})
-end
+  case $NUM
+  when 0
+    rule Fib0
+  when 1
+    rule Fib1
+  else
+    $P1 := $NUM - 2
+    $P2 := $NUM - 1
+    rule Fib.params({NUM: $P1})
+    rule Fib.params({NUM: $P2})
+    rule Calc.params({NUM: $NUM, P1: $P1, P2: $P2})
+  end
 End
 
 Rule Calc
   input 'fib{$P1}.txt'
   input 'fib{$P2}.txt'
-  output 'fib{$N}.txt'
+  output 'fib{$NUM}.txt'
+  param $NUM
+  param $P1
+  param $P2
 Action
-expr `cat {$INPUT[1]}` + `cat {$INPUT[2]}` > {$OUTPUT[1]}
+  expr `cat {$I[1]}` + `cat {$I[2]}` > {$O[1]}
 End
 
 Rule Result
-  input 'fib{$N}.txt'
+  input 'fib{$NUM}.txt'
   output 'result.txt'
+  param $NUM
 Action
-cat {$INPUT[1]} > {$OUTPUT[1]}
+cat {$I[1]} > {$O[1]}
 End
