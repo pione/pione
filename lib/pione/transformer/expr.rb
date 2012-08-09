@@ -18,20 +18,12 @@ module Pione
 
       # expr
       rule(:expr => simple(:obj)) { obj }
-      rule(:expr =>
-           { :receiver => simple(:receiver),
+
+      # receiver
+      rule({ :receiver => simple(:receiver),
              :messages => sequence(:messages) }) {
         obj = receiver
         messages.each do |msg|
-          obj = Model::Message.new(msg.name, obj, *msg.parameters)
-        end
-        obj
-      }
-      rule(:expr =>
-           { :receiver => simple(:receiver),
-             :indexes => sequence(:indexes) }) {
-        obj = receiver
-        indexes.each do |msg|
           obj = Model::Message.new(msg.name, obj, *msg.parameters)
         end
         obj

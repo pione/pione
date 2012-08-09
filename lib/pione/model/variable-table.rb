@@ -40,6 +40,8 @@ MSG
 
   # VariableTable represents variable table for rule and data finder.
   class VariableTable < PioneModelObject
+    set_pione_model_type TypeVariableTable
+
     # Make an auto vairable table.
     def initialize(table={})
       @table = table.to_hash.dup
@@ -185,5 +187,17 @@ MSG
         end
       end
     end
+
+    #
+    # pione methods
+    #
+
+    define_pione_method("get", [TypeString], TypeAny) do |name|
+      get(Variable.new(name.value))
+    end
+
+    #define_pione_method("keys", [], TypeList) do
+    #  PioneList.new(@table.keys)
+    #end
   end
 end

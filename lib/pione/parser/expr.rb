@@ -15,8 +15,8 @@ module Pione
       #   abc[1]
       rule(:expr) {
         ( expr_operator_application |
-          (expr_element.as(:receiver) >> indexes) |
-          (expr_element.as(:receiver) >> messages) |
+          (expr_element.as(:receiver) >>
+            (index | message).repeat(1).as(:messages)) |
           expr_element
         ).as(:expr)
       }

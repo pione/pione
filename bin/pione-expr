@@ -3,15 +3,17 @@
 
 require 'optparse'
 require 'pione/common'
-require 'pione/agent/input-generator'
-require 'pione/agent/task-worker'
-require 'pione/agent/rule-provider'
-require 'pione/agent/logger'
+require 'pp'
 
 include Pione
 
+#
+# options
+#
+$readline_mode = true
 option_parser = OptionParser.new do |opt|
   opt.on('-t', '--transform') { $transform = true }
+  opt.on('--disable-readline-mode') { $readline_mode = fale }
 end
 
 begin
@@ -21,18 +23,57 @@ rescue OptionParser::InvalidOption => e
   abort
 end
 
-str = ARGV[0]
-
-begin
-  puts "syntax:"
-  stree = Parser.new.expr.parse(str)
-  p stree
-  if $transform
-    puts "model:"
-    p Transformer.new.apply(stree)
+#
+# print parsing result of the string
+#
+def print_result(str)
+  begin
+    puts Terminal.green("syntax:")
+    stree = Parser.new.expr.parse(str)
+    pp stree
+    if $transform
+      puts Terminal.green("model:")
+      pp Transformer.new.apply(stree)
+    end
+  rescue Pione::Parser::ParserError, Parslet::UnconsumedInput, Parslet::ParseFailed => e
+    msg = "Pione syntax error: %s (%s)" % [e.message, e.class.name]
+    $readline_mode ? puts(msg) : abort(msg)
+  rescue Pione::Model::PioneModelTypeError,
+    Pione::Model::VariableBindingError => e
+    msg = "Pione model error: %s (%s)" % [e.message, e.class.name]
+    $readline_mode ? puts(msg) : abort(msg)
   end
-rescue Pione::Parser::ParserError => e
-  abort("Pione syntax error: " + e.message)
-rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e
-  abort("Pione model error: " + e.message)
+end
+
+$history = File.join(ENV["HOME"], ".pione", "pione-history")
+unless Dir.exist?(File.join(ENV["HOME"], ".pione"))
+  Dir.mkdir(File.join(ENV["HOME"], ".pione"))
+end
+
+trap("INT") do
+  File.open($history, "w+") do |file|
+    lines = Readline::HISTORY.to_a.reverse
+    100.times do
+      file.puts lines.pop
+    end
+  end
+  exit
+end
+
+#
+# readline
+#
+if $readline_mode
+  require 'readline'
+  File.readlines($history).each do |line|
+    Readline::HISTORY.push line.chomp
+  end
+
+  while buf = Readline.readline(Terminal.red("> "), true)
+    if /[^\s]/.match(buf)
+      print_result(buf)
+    end
+  end
+else
+  print_result(ARGV[0])
 end

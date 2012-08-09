@@ -133,6 +133,7 @@ module Pione::Model
   TypeRuleExpr = Type.new("rule-expr")
   TypeParameters = Type.new("parameters")
   TypeAssignment = Type.new("assignment")
+  TypeVariableTable = Type.new("variable-table")
 
   TypeAny = Type.new("any")
   def TypeAny.match(other)
@@ -154,13 +155,20 @@ module Pione::Model
   end
 
   class PioneModelObject < Pione::PioneObject
+    # Set pione model type of the model.
     def self.set_pione_model_type(type)
       raise ArgumentError unless type.kind_of?(Type)
       @pione_model_type = type
     end
 
+    # Returns the pione model type of the model.
     def self.pione_model_type
       @pione_model_type
+    end
+
+    # Defines a pione method.
+    def self.define_pione_method(*args, &b)
+      @pione_model_type.define_pione_method(*args, &b)
     end
 
     def initialize(&b)
@@ -191,14 +199,17 @@ module Pione::Model
       @__document_path__ = path
     end
 
+    # Returns line and column number of the definition.
     def set_line_and_column(line_and_column)
       @__line__, @__column__ = line_and_column
     end
 
+    # Returns line number of the model.
     def line
       @__line__
     end
 
+    # Returns coloumn number of the model.
     def column
       @__column__
     end
