@@ -27,6 +27,15 @@ module Pione
         end
         obj
       }
+      rule(:expr =>
+           { :receiver => simple(:receiver),
+             :indexes => sequence(:indexes) }) {
+        obj = receiver
+        indexes.each do |msg|
+          obj = Model::Message.new(msg.name, obj, *msg.parameters)
+        end
+        obj
+      }
 
       # message
       rule(:message => {:message_name => simple(:name)}) {
@@ -72,6 +81,10 @@ module Pione
           :value => simple(:value)
         }) {
         ParametersElement.new(Variable.new(key.to_s), value)
+      }
+
+      rule(:index => sequence(:args)) {
+        MessageArgument.new("[]", args)
       }
     end
   end

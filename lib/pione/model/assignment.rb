@@ -11,6 +11,8 @@ module Pione::Model
     attr_reader :variable
     attr_reader :expr
 
+    set_pione_model_type TypeAssignment
+
     def initialize(variable, expr)
       raise ArgumentError.new(variable) unless variable.kind_of?(Variable)
       raise ArgumentError.new(expr) unless expr.kind_of?(PioneModelObject)

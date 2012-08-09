@@ -10,5 +10,29 @@ require 'pione/agent/logger'
 
 include Pione
 
+option_parser = OptionParser.new do |opt|
+  opt.on('-t', '--transform') { $transform = true }
+end
+
+begin
+  option_parser.parse!(ARGV)
+rescue OptionParser::InvalidOption => e
+  e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
+  abort
+end
+
 str = ARGV[0]
-p Parser.new.expr.parse(str)
+
+begin
+  puts "syntax:"
+  stree = Parser.new.expr.parse(str)
+  p stree
+  if $transform
+    puts "model:"
+    p Transformer.new.apply(stree)
+  end
+rescue Pione::Parser::ParserError => e
+  abort("Pione syntax error: " + e.message)
+rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e
+  abort("Pione model error: " + e.message)
+end

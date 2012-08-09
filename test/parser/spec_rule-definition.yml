@@ -13,7 +13,9 @@ output_line:
 param_line:
   valid:
     - param $abc
-    - param $a
+    - param $Var
+    - param $Var := 1
+    - "param {Var: 1}"
   invalid:
     - param $
 feature_line:

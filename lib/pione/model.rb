@@ -20,6 +20,7 @@ module Pione::Model
     end
   end
 
+  # MethodNotFound is an exception class for the case of method missing.
   class MethodNotFound < StandardError
     attr_reader :name
     attr_reader :obj
@@ -47,8 +48,17 @@ module Pione::Model
       @method_body = {}
     end
 
+    # Return true if the type or the pione model object matches.
+    # @param [other] type or object for match test target
     def match(other)
-      other == TypeAny || @type_string == other.type_string
+      case other
+      when Type
+        other == TypeAny || @type_string == other.type_string
+      when PioneModelObject
+        match(other.pione_model_type)
+      else
+        raise ArgumentError.new(other)
+      end
     end
 
     # Defines pione model object methods.
@@ -122,6 +132,7 @@ module Pione::Model
   TypeFeature = Type.new("feature")
   TypeRuleExpr = Type.new("rule-expr")
   TypeParameters = Type.new("parameters")
+  TypeAssignment = Type.new("assignment")
 
   TypeAny = Type.new("any")
   def TypeAny.match(other)
@@ -143,8 +154,21 @@ module Pione::Model
   end
 
   class PioneModelObject < Pione::PioneObject
+    def self.set_pione_model_type(type)
+      raise ArgumentError unless type.kind_of?(Type)
+      @pione_model_type = type
+    end
+
+    def self.pione_model_type
+      @pione_model_type
+    end
+
     def initialize(&b)
       instance_eval(&b) if block_given?
+    end
+
+    def pione_model_type
+      self.class.pione_model_type
     end
 
     # Returns self.

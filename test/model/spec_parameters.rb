@@ -112,6 +112,13 @@ describe 'Model::Parameters' do
     end
   end
 
+  describe 'pione method []' do
+    it 'should get a value' do
+      @params_a.call_pione_method("[]", "a".to_pione).should ==
+        "A".to_pione
+    end
+  end
+
   describe 'pione method get' do
     it 'should get a value' do
       @params_a.call_pione_method("get", "a".to_pione).should ==

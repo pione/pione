@@ -84,8 +84,9 @@ class Pione::Parser
       ( space? >>
         keyword_param >>
         space >>
-        ( expr.as(:expr) |
-          syntax_error("it should be data_expr", :data_expr)
+        ( assignment.as(:assignment) |
+          expr.as(:expr) |
+          syntax_error("it should be assignment or expr", :assignment, :expr)
         ) >>
         line_end
       ).as(:param_line)

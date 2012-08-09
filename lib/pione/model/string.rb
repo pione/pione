@@ -7,7 +7,7 @@ module Pione::Model
       super()
     end
 
-    def pione_model_type
+    def set_pione_model_type
       TypeString
     end
 

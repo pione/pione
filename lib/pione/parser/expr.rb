@@ -15,8 +15,9 @@ module Pione
       #   abc[1]
       rule(:expr) {
         ( expr_operator_application |
-          (expr_element.as(:receiver) >> message.repeat.as(:messages)) |
-          (expr_element.as(:receiver) >> index)
+          (expr_element.as(:receiver) >> indexes) |
+          (expr_element.as(:receiver) >> messages) |
+          expr_element
         ).as(:expr)
       }
 
@@ -25,10 +26,11 @@ module Pione
       #   (1 + 1)
       #   ("abc".index(1, 1))
       rule(:expr_element) {
-        ((atomic_expr.as(:receiver) >>
-            (message.repeat.as(:messages) | index)) |
+        ( (atomic_expr.as(:receiver) >> indexes) |
+          (atomic_expr.as(:receiver) >> messages) |
+          atomic_expr |
           lparen >> expr >> rparen
-        ).as(:expr)
+        )
       }
 
       # atomic_expr:
@@ -65,7 +67,7 @@ module Pione
       }
 
       # expr_operator:
-      #   :=, ==, !=, >=, >, <=, <, &&, ||, +, -, *, /, %
+      #   :=, ==, !=, >=, >, <=, <, &&, ||, +, -, *, /, %, or, and
       rule(:expr_operator) {
         equals >> equals |
         exclamation >> equals |
@@ -79,7 +81,9 @@ module Pione
         minus |
         asterisk |
         slash |
-        percent
+        percent |
+        keyword_or |
+        keyword_and
       }
 
       # expr_operator_application:
@@ -91,6 +95,12 @@ module Pione
           pad? >>
           expr.as(:right)
         ).as(:expr_operator_application)
+      }
+
+      # messages:
+      #   .params("-w").sync
+      rule(:messages) {
+        message.repeat(1).as(:messages)
       }
 
       # message:
@@ -163,29 +173,35 @@ module Pione
         pad? >> comma >> pad? >> parameters_element
       }
 
-      # index
+      # indexes:
+      #   [1][2][3]
+      rule(:indexes) {
+        index.repeat(1).as(:indexes)
+      }
+
+      # index:
       #   [1]
       #   [1,1]
       #   [1,2,3]
       rule(:index) {
         ( lsbracket >>
           space? >>
-          ( index_arguments.as(:index_arguments) |
+          ( index_arguments.as(:index) |
             syntax_error("it should be index arguments")) >>
           space? >>
           rsbracket
-        ).as(:index)
+        )
       }
 
-      # index_arguments
+      # index_arguments:
       #   1
       #   1,1
       #   1,2,3
       rule(:index_arguments) {
-        expr >> space? >> index_arguments_rest.repeat
+        expr.repeat(1,1) >> space? >> index_arguments_rest.repeat
       }
 
-      # index_arguments_rest
+      # index_arguments_rest:
       #  ,1
       rule(:index_arguments_rest) {
         space? >> comma >> space? >> expr

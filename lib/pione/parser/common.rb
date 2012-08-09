@@ -73,7 +73,9 @@ module Pione
         :keyword_package => 'package',
         :keyword_require => 'require',
         :keyword_true => 'true',
-        :keyword_false => 'false'
+        :keyword_false => 'false',
+        :keyword_and => 'and',
+        :keyword_or => 'or'
       }
 
       # make keywords

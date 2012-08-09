@@ -6,7 +6,7 @@ module Pione::Model
       end
 
       def message
-        "invalid parameter was specified: %s" % [@key.inspect]
+        "invalid parameter key: %s" % [@key.inspect]
       end
     end
 
@@ -16,11 +16,12 @@ module Pione::Model
       end
 
       def message
-        "invalid argument was specified: %s" % [@val.inspect]
+        "invalid argument value: %s" % [@val.inspect]
       end
     end
 
     attr_reader :data
+    set_pione_model_type TypeParameters
 
     def initialize(data)
       raise TypeError.new(data) unless data.kind_of?(Hash)
@@ -137,6 +138,10 @@ module Pione::Model
 
     define_pione_method("!=", [TypeParameters], TypeBoolean) do |rec, other|
       PioneBoolean.not(rec.call_pione_method("==", other))
+    end
+
+    define_pione_method("[]", [TypeString], TypeAny) do |rec, name|
+      rec.get(Variable.new(name.value))
     end
 
     define_pione_method("get", [TypeString], TypeAny) do |rec, name|

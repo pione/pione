@@ -45,7 +45,9 @@ class Pione::Transformer
 
     # param_line
     rule(:param_line => simple(:param)) {
-      TypeParameters.check(param)
+      unless TypeAssignment.match(param) or TypeParameters.match(param)
+        raise PioneModelTypeError.new(param, TypeAssignment)
+      end
       ConditionLine.new(:param, param)
     }
 
