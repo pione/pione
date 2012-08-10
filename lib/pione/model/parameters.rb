@@ -95,7 +95,14 @@ module Pione::Model
 
     # Updates parameters with the argument and return new parameters with it.
     def merge(other)
-      self.class.new(@data.merge(other.data))
+      case other
+      when Parameters
+        self.class.new(@data.merge(other.data))
+      when Variable
+        self.class.new(@data.merge({other => nil}))
+      when Assginement
+        self.class.new(@data.merge({other.variable => other.expr}))
+      end
     end
 
     # Updates parameters with the argument destructively.
