@@ -1,14 +1,11 @@
 module Pione::Model
   class Package < PioneModelObject
     attr_reader :name
+    set_pione_model_type TypePackage
 
     def initialize(name)
       @name = name
       super()
-    end
-
-    def pione_model_type
-      TypePackage
     end
 
     def task_id_string

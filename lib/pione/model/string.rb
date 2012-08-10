@@ -1,14 +1,11 @@
 module Pione::Model
   class PioneString < PioneModelObject
+    set_pione_model_type TypeString
     attr_reader :value
 
     def initialize(value)
       @value = value
       super()
-    end
-
-    def set_pione_model_type
-      TypeString
     end
 
     def eval(vtable=VariableTable.new)
@@ -24,7 +21,7 @@ module Pione::Model
     end
 
     def textize
-      @value
+      "\"%s\"" % [@value]
     end
 
     def to_ruby

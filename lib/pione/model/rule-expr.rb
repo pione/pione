@@ -38,7 +38,7 @@ module Pione::Model
     end
 
     def textize
-      "rule_expr(%s,\"%s\")" % [@package.textitze, @name]
+      "rule_expr(%s,\"%s\")" % [@package.textize, @name]
     end
 
     # Return true if sync mode.

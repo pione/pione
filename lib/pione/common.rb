@@ -8,6 +8,7 @@ require 'rinda/rinda'
 require 'rinda/tuplespace'
 require 'json'
 require 'tempfile'
+require 'pione'
 
 module Pione
   @@debug_mode = false

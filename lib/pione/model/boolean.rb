@@ -1,6 +1,7 @@
 module Pione::Model
   class PioneBoolean < PioneModelObject
     attr_reader :value
+    set_pione_model_type TypeBoolean
 
     def self.true
       new(true)
@@ -25,10 +26,6 @@ module Pione::Model
     def initialize(value)
       @value = value
       super()
-    end
-
-    def pione_model_type
-      TypeBoolean
     end
 
     def task_id_string
@@ -61,9 +58,11 @@ module Pione::Model
     def hash
       @value.hash
     end
-  end
 
-  TypeBoolean.instance_eval do
+    #
+    # pione methods
+    #
+
     define_pione_method("==", [TypeBoolean], TypeBoolean) do |rec, other|
       PioneBoolean.new(rec.value == other.value)
     end
@@ -78,6 +77,14 @@ module Pione::Model
 
     define_pione_method("||", [TypeBoolean], TypeBoolean) do |rec, other|
       PioneBoolean.new(rec.value || other.value)
+    end
+
+    define_pione_method("and", [TypeBoolean], TypeBoolean) do |rec, other|
+      rec.call_pione_method("&&", other)
+    end
+
+    define_pione_method("or", [TypeBoolean], TypeBoolean) do |rec, other|
+      rec.call_pione_method("||", other)
     end
 
     define_pione_method("as_string", [], TypeString) do |rec|

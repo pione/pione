@@ -56,6 +56,8 @@ module Pione::Model
         other == TypeAny || @type_string == other.type_string
       when PioneModelObject
         match(other.pione_model_type)
+      when nil
+        # do nothing
       else
         raise ArgumentError.new(other)
       end
@@ -134,6 +136,7 @@ module Pione::Model
   TypeParameters = Type.new("parameters")
   TypeAssignment = Type.new("assignment")
   TypeVariableTable = Type.new("variable-table")
+  TypePackage = Type.new("package")
 
   TypeAny = Type.new("any")
   def TypeAny.match(other)
