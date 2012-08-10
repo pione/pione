@@ -143,7 +143,9 @@ module Pione
       rule(:parameters) {
         lbrace >>
         pad? >>
-        parameters_elements.maybe.as(:parameters) >>
+        ( parameters_elements.maybe.as(:parameters) |
+          syntax_error("it should be parameter key", :identifier)
+        ) >>
         pad? >>
         rbrace
       }
@@ -163,14 +165,21 @@ module Pione
           pad? >>
           colon >>
           pad? >>
-          expr.as(:value)
+          ( expr.as(:value) |
+            syntax_error("it should be parameter value", :expr)
+          )
         ).as(:parameters_element)
       }
 
       # parameters_elements_rest
       #   , a: 1
       rule(:parameters_elements_rest) {
-        pad? >> comma >> pad? >> parameters_element
+        pad? >>
+        comma >>
+        pad? >>
+        ( parameters_element |
+          syntax_error("it should be parameter key", :identifier)
+        )
       }
 
       # indexes:
@@ -187,7 +196,7 @@ module Pione
         ( lsbracket >>
           space? >>
           ( index_arguments.as(:index) |
-            syntax_error("it should be index arguments")) >>
+            syntax_error("it should be index arguments", :expr)) >>
           space? >>
           rsbracket
         )
@@ -204,7 +213,12 @@ module Pione
       # index_arguments_rest:
       #  ,1
       rule(:index_arguments_rest) {
-        space? >> comma >> space? >> expr
+        space? >>
+        comma >>
+        space? >>
+        ( expr |
+          syntax_error("it should be expr", :expr)
+        )
       }
     end
   end

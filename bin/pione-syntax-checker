@@ -12,8 +12,8 @@ include Pione
 #
 $readline_mode = true
 option_parser = OptionParser.new do |opt|
+  opt.on('-e', '--expr=expr') {|e| $expr = e; $readline_mode = fale }
   opt.on('-t', '--transform') { $transform = true }
-  opt.on('--disable-readline-mode') { $readline_mode = fale }
 end
 
 begin
@@ -45,35 +45,59 @@ def print_result(str)
   end
 end
 
+#
+# History
+#
 $history = File.join(ENV["HOME"], ".pione", "pione-history")
+# make pione directory if it is absent
 unless Dir.exist?(File.join(ENV["HOME"], ".pione"))
   Dir.mkdir(File.join(ENV["HOME"], ".pione"))
 end
 
+#
+# Ctr+C
+#
 trap("INT") do
+  # save history
+  i = 0
   File.open($history, "w+") do |file|
-    lines = Readline::HISTORY.to_a.reverse
-    100.times do
-      file.puts lines.pop
+    Readline::HISTORY.to_a.reverse.each do |line|
+      break if i >= 100
+      file.puts(line) if /\S/.match(line)
     end
   end
+  # quit
   exit
 end
 
 #
-# readline
+# readline loop
 #
 if $readline_mode
   require 'readline'
-  File.readlines($history).each do |line|
-    Readline::HISTORY.push line.chomp
+
+  # restore history
+  if File.exist?($history)
+    File.readlines($history).reverse.each do |line|
+      Readline::HISTORY.push line.chomp
+    end
   end
 
+  # start loop
   while buf = Readline.readline(Terminal.red("> "), true)
     if /[^\s]/.match(buf)
+      # don't record if previous line is the same
+      if Readline::HISTORY[-2] == buf
+        Readline::HISTORY.pop
+      end
+      # print parsing result
       print_result(buf)
+    else
+      # don't record if it is an empty line
+      Readline::HISTORY.pop
     end
   end
 else
-  print_result(ARGV[0])
+  # print parsing result
+  print_result($expr)
 end
