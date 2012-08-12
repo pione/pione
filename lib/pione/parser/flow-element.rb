@@ -12,7 +12,7 @@ module Pione
         call_rule_line |
         if_block |
         case_block |
-        assignment
+        assignment_line
       }
 
       # call_rule_line:
@@ -117,17 +117,12 @@ module Pione
         line_end
       }
 
-      # assignment:
+      # assignment_line:
       #   $X := 1
-      rule(:assignment) {
-        ( space? >>
-          variable.as(:symbol) >>
-          space? >>
-          colon >> equals >>
-          space? >>
-          expr.as(:value) >>
-          line_end
-        ).as(:assignment)
+      rule(:assignment_line) {
+        space? >>
+        assignment >>
+        line_end
       }
     end
   end

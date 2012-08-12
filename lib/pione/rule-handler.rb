@@ -3,6 +3,7 @@ require 'pione/agent/sync-monitor'
 
 module Pione
   module RuleHandler
+    # Exception class for rule execution failure.
     class RuleExecutionError < StandardError
       def initialize(handler)
         @handler = handler

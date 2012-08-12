@@ -1,6 +1,6 @@
 Rule Main
   output 'result.txt'
-  param $NUM
+  param $NUM := 1
 Flow
   rule Fib
   rule Result

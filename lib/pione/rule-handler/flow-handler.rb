@@ -34,6 +34,7 @@ module Pione
 
       private
 
+      # Returns digest string of the handler for displaying it.
       def handler_digest
         "%s([%s],[%s])" % [
           @rule.rule_path,
@@ -45,13 +46,13 @@ module Pione
       end
 
       # Apply target input data to rules.
-      def apply_rules(callers)
+      def apply_rules(callees)
         user_message ">>> Start Rule Application: %s" % [handler_digest]
 
         # apply flow-element rules
         while true do
           # find updatable rule applications
-          applications = select_updatables(find_applicable_rules(callers))
+          applications = select_updatables(find_applicable_rules(callees))
 
           unless applications.empty?
             # push task tuples into tuple space
@@ -65,36 +66,57 @@ module Pione
       end
 
       # Find applicable flow-element rules with inputs and variables.
-      def find_applicable_rules(callers)
-        callers.inject([]) do |combinations, caller|
-          caller = caller.eval(@variable_table)
-          vtable = caller.expr.params.eval(@variable_table).as_variable_table
-          # find element rule
-          rule = find_rule(caller).eval(vtable)
+      def find_applicable_rules(callees)
+        callees.inject([]) do |combinations, callee|
+          # eval callee expr by handling rule context
+          callee = callee.eval(@variable_table)
+
+          # find callee rule
+          rule = find_callee_rule(callee)
+
+          # update callee parameters
+          @variable_table.variables.each do |var|
+            val = @variable_table.get(var)
+            unless val == UndefinedValue.new
+              if rule.params.keys.include?(var)
+                callee.expr.params.set!(var, val)
+              end
+            end
+          end
+
+          # eval callee rule by callee context
+          vtable = callee.expr.params.eval(@variable_table).as_variable_table
+          rule = rule.eval(vtable)
+
           # check rule status and find combinations
           @data_finder.find(:input, rule.inputs, vtable).each do |res|
-            combinations << [caller, rule, res.combination, res.variable_table]
+            combinations << [
+              callee,
+              rule,
+              res.combination,
+              res.variable_table
+            ]
           end
+
           # find next
           combinations
         end
       end
 
-      # Find the rule for the caller.
-      def find_rule(caller)
+      # Find the rule of the callee.
+      def find_callee_rule(callee)
         begin
-          caller = caller.eval(@variable_table)
-          return read(Tuple[:rule].new(rule_path: caller.rule_path), 0).content
+          return read(Tuple[:rule].new(rule_path: callee.rule_path), 0).content
         rescue Rinda::RequestExpiredError
-          debug_message "Request loading a rule #{caller.rule_path}"
-          write(Tuple[:request_rule].new(caller.rule_path))
-          tuple = read(Tuple[:rule].new(rule_path: caller.rule_path))
+          debug_message "Request loading a rule #{callee.rule_path}"
+          write(Tuple[:request_rule].new(callee.rule_path))
+          tuple = read(Tuple[:rule].new(rule_path: callee.rule_path))
 
           # check whether known or unknown
           if tuple.status == :known
             return tuple.content
           else
-            raise UnknownRule.new(caller.rule_path)
+            raise UnknownRule.new(callee.rule_path)
           end
         end
       end

@@ -1,6 +1,8 @@
 module Pione::Model
   # Rule representation in the flow element context.
   class RuleExpr < PioneModelObject
+    set_pione_model_type TypeRuleExpr
+
     attr_reader :package
     attr_reader :name
     attr_reader :sync_mode
@@ -27,10 +29,6 @@ module Pione::Model
     def rule_path
       raise UnboundVariableError.new(self) if @package.include_variable?
       "&%s:%s" % [@package.name, @name]
-    end
-
-    def pione_model_type
-      TypeRuleExpr
     end
 
     def task_id_string

@@ -177,5 +177,4 @@ assignment:
     - "$X := $Y"
     - "$X := 1 + 1"
     - "$X := true || false || true"
-  invalid:
     - "$X := ($Y := 1)"

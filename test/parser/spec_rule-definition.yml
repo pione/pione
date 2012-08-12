@@ -12,9 +12,11 @@ output_line:
     - output @@@
 param_line:
   valid:
-    - param $abc
-    - param $Var
-    - param $Var := 1
+    - "param $abc"
+    - "param $Var"
+    - "param $Var := 1"
+    - "param $NUM := 1.0"
+    - "param $STR := \"abc\""
     - "param {Var: 1}"
   invalid:
     - param $
@@ -81,4 +83,11 @@ rule_definition:
       Flow
       rule TestA
       rule TestB.sync
+      End
+    - |
+      Rule Test
+        output 'test.txt'
+        param $N := 1
+      Flow
+        rule TestA
       End

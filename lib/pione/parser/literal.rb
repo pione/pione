@@ -2,7 +2,6 @@ module Pione
   class Parser
     module Literal
       include Parslet
-      include Common
 
       # boolean
       rule(:boolean) {
@@ -57,8 +56,50 @@ module Pione
         identifier.as(:rule_name)
       }
 
-      # parameters is a part of literal syntax but defined in Expr module
-      # because it includes expr.
+      # parameters
+      #   {abc: "a"}
+      #   {a: 1, b: 2, c: 3}
+      rule(:parameters) {
+        lbrace >>
+        pad? >>
+        ( parameters_elements.maybe.as(:parameters) |
+          syntax_error("it should be parameter key", :identifier)
+        ) >>
+        pad? >>
+        rbrace
+      }
+
+      # parameters_elements
+      #   a: 1, b: 2, c: 3
+      rule(:parameters_elements) {
+        parameters_element >> parameters_elements_rest.repeat
+      }
+
+      # parameters_element
+      #   a: 1
+      #   b: 2
+      #   c: 3
+      rule(:parameters_element) {
+        ( identifier.as(:key) >>
+          pad? >>
+          colon >>
+          pad? >>
+          ( expr.as(:value) |
+            syntax_error("it should be parameter value", :expr)
+          )
+        ).as(:parameters_element)
+      }
+
+      # parameters_elements_rest
+      #   , a: 1
+      rule(:parameters_elements_rest) {
+        pad? >>
+        comma >>
+        pad? >>
+        ( parameters_element |
+          syntax_error("it should be parameter key", :identifier)
+        )
+      }
     end
   end
 end

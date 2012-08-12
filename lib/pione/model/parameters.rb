@@ -78,6 +78,12 @@ module Pione::Model
       self.class.new(@data.merge({name => value}))
     end
 
+    def set!(name, value)
+      raise InvalidParameter.new(name) unless name.kind_of?(Variable)
+      raise InvalidArgument.new(value) unless value.kind_of?(PioneModelObject)
+      @data.merge!({name => value})
+    end
+
     def delete(name)
       raise InvalidParameter.new(name) unless name.kind_of?(Variable)
       new_data = @data.clone
@@ -99,8 +105,8 @@ module Pione::Model
       when Parameters
         self.class.new(@data.merge(other.data))
       when Variable
-        self.class.new(@data.merge({other => nil}))
-      when Assginement
+        self.class.new(@data.merge({other => UndefinedValue.new}))
+      when Assignment
         self.class.new(@data.merge({other.variable => other.expr}))
       end
     end
@@ -114,7 +120,7 @@ module Pione::Model
       VariableTable.new(@data)
     end
 
-    def values
+    def keys
       @data.keys.sort
     end
 

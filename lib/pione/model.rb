@@ -137,6 +137,7 @@ module Pione::Model
   TypeAssignment = Type.new("assignment")
   TypeVariableTable = Type.new("variable-table")
   TypePackage = Type.new("package")
+  TypeUndefinedValue = Type.new("undefined-value")
 
   TypeAny = Type.new("any")
   def TypeAny.match(other)
@@ -234,6 +235,7 @@ module Pione::Model
     end
   end
 
+  require 'pione/model/undefined-value'
   require 'pione/model/list'
   require 'pione/model/boolean'
   require 'pione/model/integer'

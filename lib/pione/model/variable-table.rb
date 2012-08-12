@@ -86,8 +86,10 @@ MSG
     def set(variable, new_value)
       raise TypeError.new(variable) unless variable.kind_of?(Variable)
       raise TypeError.new(new_value) unless new_value.kind_of?(PioneModelObject)
-      if old_value = @table[variable] and not(new_value == old_value)
-        raise VariableBindingError.new(variable, new_value, old_value)
+      if old_value = @table[variable]
+        unless old_value.kind_of?(UndefinedValue) or new_value == old_value
+          raise VariableBindingError.new(variable, new_value, old_value)
+        end
       end
       @table[variable] = new_value
     end
@@ -107,6 +109,11 @@ MSG
         expr = Transformer.new.apply(Parser.new.expr.parse($1))
         expr.eval(self).call_pione_method("as_string").to_ruby
       end
+    end
+
+    # Returns key variables of the table.
+    def variables
+      @table.keys
     end
 
     # FIXME

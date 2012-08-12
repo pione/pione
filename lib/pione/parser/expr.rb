@@ -10,11 +10,12 @@ module Pione
       # expr:
       #   1 + 1
       #   (1 + 1).next
+      #   ("abc" + "def")[1]
       #   true
       #   '*.txt'.as_string
-      #   abc[1]
       rule(:expr) {
         ( expr_operator_application |
+          assignment |
           (expr_element.as(:receiver) >>
             (index | message).repeat(1).as(:messages)) |
           expr_element
@@ -23,6 +24,8 @@ module Pione
 
       # expr_element:
       #   true
+      #   "abc"[0]
+      #   'abc'.as_string
       #   (1 + 1)
       #   ("abc".index(1, 1))
       rule(:expr_element) {
@@ -97,6 +100,17 @@ module Pione
         ).as(:expr_operator_application)
       }
 
+      # assignment:
+      #   $X := 1
+      rule(:assignment) {
+        ( variable.as(:symbol) >>
+          space? >>
+          colon >> equals >>
+          pad? >>
+          expr.as(:value)
+        ).as(:assignment)
+      }
+
       # messages:
       #   .params("-w").sync
       rule(:messages) {
@@ -135,51 +149,6 @@ module Pione
       #   , true
       rule(:message_parameters_elements_rest) {
         pad? >> comma >> pad? >> expr
-      }
-
-      # parameters
-      #   {abc: "a"}
-      #   {a: 1, b: 2, c: 3}
-      rule(:parameters) {
-        lbrace >>
-        pad? >>
-        ( parameters_elements.maybe.as(:parameters) |
-          syntax_error("it should be parameter key", :identifier)
-        ) >>
-        pad? >>
-        rbrace
-      }
-
-      # parameters_elements
-      #   a: 1, b: 2, c: 3
-      rule(:parameters_elements) {
-        parameters_element >> parameters_elements_rest.repeat
-      }
-
-      # parameters_element
-      #   a: 1
-      #   b: 2
-      #   c: 3
-      rule(:parameters_element) {
-        ( identifier.as(:key) >>
-          pad? >>
-          colon >>
-          pad? >>
-          ( expr.as(:value) |
-            syntax_error("it should be parameter value", :expr)
-          )
-        ).as(:parameters_element)
-      }
-
-      # parameters_elements_rest
-      #   , a: 1
-      rule(:parameters_elements_rest) {
-        pad? >>
-        comma >>
-        pad? >>
-        ( parameters_element |
-          syntax_error("it should be parameter key", :identifier)
-        )
       }
 
       # indexes:
