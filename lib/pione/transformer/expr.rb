@@ -28,6 +28,14 @@ module Pione
         end
         obj
       }
+      rule({ :receiver => simple(:receiver),
+             :indexes => sequence(:indexes) }) {
+        obj = receiver
+        indexes.each do |msg|
+          obj = Model::Message.new("[]", obj, *msg.parameters)
+        end
+        obj
+      }
 
       # message
       rule(:message => {:message_name => simple(:name)}) {

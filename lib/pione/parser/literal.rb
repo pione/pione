@@ -35,7 +35,7 @@ module Pione
       # variable
       rule(:variable) {
         doller >>
-        identifier.as(:variable)
+        (asterisk | identifier).as(:variable)
       }
 
       # data_name

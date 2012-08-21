@@ -31,7 +31,11 @@ module Pione::Model
     end
 
     def message
-      str = @obj.call_pione_method("as_string")
+      str = begin
+              @obj.call_pione_method("as_string")
+            rescue => e
+              @obj.to_s
+            end
       "method \"%s\" is not found in %s" % [@name, str]
     end
   end
@@ -84,9 +88,27 @@ module Pione::Model
     end
   end
 
+  class VariableType
+    def initialize(name)
+      @name = name
+    end
+  end
+
   # TypeList represetnts list type of element type.
   class TypeList < Type
     attr_reader :element_type
+
+    @table = {}
+
+    def self.[](type)
+      if @table.has_key?(type)
+        return @table[type]
+      else
+        t = new(type)
+        @table[type] = t
+        return t
+      end
+    end
 
     def initialize(element_type)
       @element_type = element_type
@@ -96,6 +118,22 @@ module Pione::Model
     def match(other)
       return false unless other.kind_of?(TypeList)
       @element_type.match(other.element_type)
+    end
+
+    def method_body
+      if self == self.class[TypeAny]
+        @method_body
+      else
+        self.class[TypeAny].method_body
+      end
+    end
+
+    def method_interface
+      if self == self.class[TypeAny]
+        @method_interface
+      else
+        self.class[TypeAny].method_interface
+      end
     end
   end
 
@@ -138,6 +176,8 @@ module Pione::Model
   TypeVariableTable = Type.new("variable-table")
   TypePackage = Type.new("package")
   TypeUndefinedValue = Type.new("undefined-value")
+  TypeRuleIOList = Type.new("rule-io-list")
+  TypeRuleIOElement = Type.new("rule-io-element")
 
   TypeAny = Type.new("any")
   def TypeAny.match(other)
@@ -254,4 +294,5 @@ module Pione::Model
   require 'pione/model/assignment'
   require 'pione/model/block'
   require 'pione/model/rule'
+  require 'pione/model/rule-io'
 end

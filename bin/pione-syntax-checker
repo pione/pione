@@ -12,7 +12,7 @@ include Pione
 #
 $readline_mode = true
 option_parser = OptionParser.new do |opt|
-  opt.on('-e', '--expr=expr') {|e| $expr = e; $readline_mode = fale }
+  opt.on('-e', '--expr=expr') {|e| $expr = e; $readline_mode = false }
   opt.on('-t', '--transform') { $transform = true }
   opt.on('--version') { puts "Pione version: %s" % [Pione.version]; exit }
 end
@@ -30,7 +30,7 @@ end
 def print_result(str)
   begin
     puts Terminal.green("syntax:")
-    stree = Parser.new.expr.parse(str)
+    stree = Parser.new.parse(str).first
     pp stree
     if $transform
       puts Terminal.green("model:")

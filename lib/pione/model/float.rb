@@ -1,14 +1,12 @@
 module Pione::Model
   class PioneFloat < PioneModelObject
+    set_pione_model_type TypeFloat
+
     attr_reader :value
 
     def initialize(value)
       @value = value
       super()
-    end
-
-    def pione_model_type
-      TypeFloat
     end
 
     def task_id_string

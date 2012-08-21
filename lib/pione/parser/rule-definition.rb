@@ -18,7 +18,8 @@ class Pione::Parser
     #   $X := 1
     rule(:toplevel_element) {
       rule_definition |
-      assignment
+      assignment |
+      expr
     }
 
     # rule_definition

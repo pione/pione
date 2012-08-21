@@ -12,8 +12,9 @@ include Pione
 #
 $readline_mode = true
 $verbose = false
+$expr = []
 option_parser = OptionParser.new do |opt|
-  opt.on('-e', '--expr=expr') {|e| $expr = e; $readline_mode = fale }
+  opt.on('-e', '--expr=expr') {|e| $expr << e; $readline_mode = false }
   opt.on('-v', '--verbose') { $verbose = true }
   opt.on('--version') { puts "Pione version: %s" % [Pione.version]; exit }
 end
@@ -30,7 +31,7 @@ end
 #
 def print_result(str)
   begin
-    puts Transformer.new.apply(Parser.new.expr.parse(str)).eval($vtable).textize
+    puts Transformer.new.apply(Parser.new.parse(str))[0].eval($vtable).textize
   rescue Pione::Parser::ParserError, Parslet::UnconsumedInput, Parslet::ParseFailed => e
     error("Pione syntax error", e)
   rescue Pione::Model::PioneModelTypeError,
@@ -106,5 +107,5 @@ if $readline_mode
   end
 else
   # print parsing result
-  print_result($expr)
+  $expr.each {|e| print_result(e) }
 end

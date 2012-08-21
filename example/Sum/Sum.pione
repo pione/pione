@@ -31,8 +31,8 @@ End
 
 Rule Sum
   input 'head*.txt'
-  input 'tail{$INPUT[1].MATCH[1]}.txt'
-  output 'line_sum{$INPUT[1].MATCH[1]}.txt'.stdout
+  input 'tail{$*}.txt'
+  output 'line_sum{$*}.txt'.stdout
 Action
 expr `cat {$INPUT[1]}` + `cat {$INPUT[2]}`
 End
