@@ -34,7 +34,7 @@ module Pione
 
       private
 
-      # Returns digest string of the handler for displaying it.
+      # Returns digest string of this handler.
       def handler_digest
         "%s([%s],[%s])" % [
           @rule.rule_path,
@@ -42,6 +42,17 @@ module Pione
             i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
           }.join(","),
           @params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
+        ]
+      end
+
+      # Returns digest string of the task.
+      def task_digest(task)
+        "%s([%s],[%s])" % [
+          task.rule_path,
+          task.inputs.map{|i|
+            i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
+          }.join(","),
+          task.params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
         ]
       end
 
@@ -79,7 +90,7 @@ module Pione
             val = @variable_table.get(var)
             unless val == UndefinedValue.new
               if rule.params.keys.include?(var)
-                callee.expr.params.set!(var, val)
+                callee.expr.params.set_safety!(var, val)
               end
             end
           end
@@ -177,28 +188,39 @@ module Pione
               caller.expr.params
             )
 
-            # copy input data from the handler domain to task domain
-            copy_data_into_domain(inputs, task_domain)
-
             # make a task tuple and write it
             task = Tuple[:task].new(
               rule.rule_path,
               inputs,
               caller.expr.params,
               rule.features,
-              Util.uuid
+              task_domain
             )
-            write(task)
 
-            # wait to finish the work
-            finished = read(Tuple[:finished].new(domain: task_domain))
-            user_message "task finished: #{finished.domain}"
+            # check if same task exists
+            begin
+              read(task, 0)
+              puts "### cancel %s" % task_digest(task)
+            rescue Rinda::RequestExpiredError
 
-            # copy data from task domain to this domain
-            if finished.status == :succeeded
-              # copy output data from task domain to the handler domain
-              @finished << finished
-              copy_data_into_domain(finished.outputs, @domain)
+              # copy input data from the handler domain to task domain
+              copy_data_into_domain(inputs, task_domain)
+
+              # write the task
+              write(task)
+
+              user_message "    distributed task %s" % task_digest(task)
+
+              # wait to finish the work
+              finished = read(Tuple[:finished].new(domain: task_domain))
+              user_message "task finished: #{finished.domain}"
+
+              # copy data from task domain to this domain
+              if finished.status == :succeeded
+                # copy output data from task domain to the handler domain
+                @finished << finished
+                copy_data_into_domain(finished.outputs, @domain)
+              end
             end
           end
 

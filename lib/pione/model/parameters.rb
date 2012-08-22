@@ -60,13 +60,15 @@ module Pione::Model
     end
 
     def textize
-      "{" + @data.map{|k,v| "%s:%s" % [k.textize, v.textize]}.join(", ") + "}"
+      "{" + @data.map{|k,v| "%s:%s" % [k.textize[1..-1], v.textize]}.join(", ") + "}"
     end
 
     def [](name)
       @data[Variable.new(name)]
     end
 
+    # Returns the value corresponding to the parameter name. Raises an error
+    # when the parameter name is kind of a variable.
     def get(name)
       raise InvalidParameter.new(name) unless name.kind_of?(Variable)
       @data[name]
@@ -82,6 +84,18 @@ module Pione::Model
       raise InvalidParameter.new(name) unless name.kind_of?(Variable)
       raise InvalidArgument.new(value) unless value.kind_of?(PioneModelObject)
       @data.merge!({name => value})
+    end
+
+    def set_safety(name, value)
+      if not(@data.has_key?(name)) or @data[name].kind_of?(UndefinedValue)
+        set(name, value)
+      end
+    end
+
+    def set_safety!(name, value)
+      if not(@data.has_key?(name)) or @data[name].kind_of?(UndefinedValue)
+        set!(name, value)
+      end
     end
 
     def delete(name)
@@ -108,12 +122,23 @@ module Pione::Model
         self.class.new(@data.merge({other => UndefinedValue.new}))
       when Assignment
         self.class.new(@data.merge({other.variable => other.expr}))
+      else
+        raise TypeError.new(other)
       end
     end
 
     # Updates parameters with the argument destructively.
     def merge!(other)
-      @data.merge!(other.data)
+      case other
+      when Parameters
+        @data.merge!(other.data)
+      when Variable
+        @data.merge!({other => UndefinedValue.new})
+      when Assignment
+        @data.merge!({other.variable => other.expr})
+      else
+        raise TypeError.new(other)
+      end
     end
 
     def as_variable_table

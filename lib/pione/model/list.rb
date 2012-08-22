@@ -77,7 +77,7 @@ module Pione::Model
     end
 
     define_pione_method("[]", [TypeInteger], TypeAny) do |rec, i|
-      rec.values[i.value-1]
+      rec.values[i.value]
     end
 
     define_pione_method("as_string", [], TypeString) do |rec|

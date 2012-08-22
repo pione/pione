@@ -1,6 +1,6 @@
 Rule Main
   output 'result.txt'
-  param $NUM := 1
+  param $NUM := 3
 Flow
   rule Fib
   rule Result
@@ -52,5 +52,5 @@ Rule Result
   output 'result.txt'
   param $NUM
 Action
-cat {$I[1]} > {$O[1]}
+  cat {$I[1]} > {$O[1]}
 End

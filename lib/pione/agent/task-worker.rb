@@ -53,7 +53,7 @@ module Pione
       # tuple and writes a +working+ tuple.
       def transit_to_task_waiting
         task = take(Tuple[:task].new(features: @features))
-        write(Tuple[:working].new(task.uuid))
+        write(Tuple[:working].new(task.domain))
         return task
       end
 
@@ -126,7 +126,7 @@ module Pione
         # Sleep unless execution thread will be terminated
         th.join
 
-        take(Tuple[:working].new(task.uuid), 0)
+        take(Tuple[:working].new(task.domain), 0)
 
         debug_message ">>> End Task Execution #{rule.rule_path} by worker(#{uuid})"
 

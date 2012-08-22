@@ -40,11 +40,11 @@ module Pione::Model
     end
 
     define_pione_method("match", [], TypeList.new(TypeString)) do |rec, other|
-      PioneList.new(*@match)
+      PioneList.new(*rec.match)
     end
 
     define_pione_method("MATCH", [], TypeList.new(TypeString)) do |rec, other|
-      PioneList.new(*@match)
+      rec.call_pione_method("match")
     end
 
     define_pione_method("as_string", [], TypeString) do |rec|

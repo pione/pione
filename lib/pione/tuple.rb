@@ -217,19 +217,18 @@ module Pione
     #   inputs    : data list  : input data list
     #   params    : parameters : parameter list
     #   features  : feature    : request features
-    #   uuid      : string     : task id
+    #   domain      : string     : task domain
     define_format [:task,
       [:rule_path, String],
       [:inputs, Array],
       [:params, Model::Parameters],
       [:features, Model::Feature::Expr],
-      [:uuid, String]
+      [:domain, String]
     ]
 
     # working information
     #   domain  : caller domain
-    #   task_id : task id
-    define_format [:working, :uuid]
+    define_format [:working, :domain]
 
     # task finished notifier
     #   domain  : uuid of the task

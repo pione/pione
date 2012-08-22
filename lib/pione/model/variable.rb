@@ -33,6 +33,14 @@ module Pione::Model
       "$%s" % [@name]
     end
 
+    # Comparisons with other variable.
+    def <=>(other)
+      unless other.kind_of?(self.class)
+        raise ArgumentError.new(other)
+      end
+      @name <=> other.name
+    end
+
     # Return true if other is a variable object which name is same as myself.
     def ==(other)
       other.kind_of?(self.class) && @name == other.name

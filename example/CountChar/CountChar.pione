@@ -3,23 +3,23 @@ Rule Main
   output '*.count'.all
   output 'summary.txt'.all
 Flow
-rule CountChar
-rule Summarize
+  rule CountChar
+  rule Summarize
 End
 
 Rule CountChar
   input '*.txt'.except('summary.txt')
   output '{$INPUT[1]}.count'
 Flow
-rule ConvertToUtf8
-rule CountUTF8Char
+  rule ConvertToUtf8
+  rule CountUTF8Char
 End
 
 Rule ConvertToUtf8
   input '*.txt'.except('summary.txt')
   output '{$INPUT[1]}.utf8'
 Action
-nkf -w {$INPUT[1]} > {$OUTPUT[1]}
+  nkf -w {$INPUT[1]} > {$OUTPUT[1]}
 End
 
 Rule CountUTF8Char
@@ -28,14 +28,14 @@ Rule CountUTF8Char
 Action
 #!/usr/bin/env ruby
 # coding: utf-8
-table = {}
-text = File.open("{$INPUT[1]}").read
-text.split("").each do |c|
-  table[c] =  table.has_key?(c) ? table[c].succ : 1
-end
-table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
-  puts "#{key.inspect[1..-2]}:#{table[key]}"
-end
+  table = {}
+  text = File.open("{$INPUT[1]}").read
+  text.split("").each do |c|
+    table[c] =  table.has_key?(c) ? table[c].succ : 1
+  end
+  table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
+    puts "#{key.inspect[1..-2]}:#{table[key]}"
+  end
 End
 
 Rule Summarize
@@ -44,16 +44,16 @@ Rule Summarize
 Action
 #!/usr/bin/env ruby
 # coding: utf-8
-table = {}
-"{$INPUT[1]}".split(":").each do |path|
-  File.read(path).split("\n").map do |line|
-    c, number = line.split(":")
-    table[c] = (table.has_key?(c) ? table[c] : 0) + number.to_i
+  table = {}
+  "{$INPUT[1]}".split(":").each do |path|
+    File.read(path).split("\n").map do |line|
+      c, number = line.split(":")
+      table[c] = (table.has_key?(c) ? table[c] : 0) + number.to_i
+    end
   end
-end
-File.open("{$OUTPUT[1]}", "w+") do |out|
-  table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
-    puts "#{key.inspect[1..-2]}:#{table[key]}"
+  File.open("{$OUTPUT[1]}", "w+") do |out|
+    table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
+      puts "#{key.inspect[1..-2]}:#{table[key]}"
+    end
   end
-end
 End
