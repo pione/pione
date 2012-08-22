@@ -52,15 +52,26 @@ module Pione
   end
   module_function :quiet_mode?
 
+  MessageQueue = Queue.new
+  Thread.new {
+    while msg = MessageQueue.pop
+      puts msg
+    end
+  }
+
   def debug_message(msg)
     if debug_mode? and not(quiet_mode?)
-      puts "%s: %s" % [Terminal.magenta("debug"), msg]
+      MessageQueue.push "%s: %s" % [Terminal.magenta("debug"), msg]
     end
+  end
+
+  def show(msg)
+    MessageQueue.push "%s: %s" % [Terminal.red("show"), msg]
   end
 
   def user_message(msg)
     if not(quiet_mode?)
-      puts "%s: %s" % [Terminal.green("info"), msg]
+      MessageQueue.push "%s: %s" % [Terminal.green("info"), msg]
     end
   end
 

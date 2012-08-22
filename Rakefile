@@ -59,7 +59,7 @@ end
 
 desc 'fib calc'
 task 'example:Fib' do
-  sh "ruby -I lib %s %s %s" % [
+  sh "ruby -I lib %s %s" % [
     $stand_alone,
     "example/Fib/Fib.pione",
   ]

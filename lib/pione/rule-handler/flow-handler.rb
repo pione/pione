@@ -110,7 +110,7 @@ module Pione
           end
 
           # find next
-          combinations
+          combinations.uniq
         end
       end
 
@@ -200,7 +200,7 @@ module Pione
             # check if same task exists
             begin
               read(task, 0)
-              puts "### cancel %s" % task_digest(task)
+              show "cancel task %s" % task_digest(task)
             rescue Rinda::RequestExpiredError
 
               # copy input data from the handler domain to task domain
