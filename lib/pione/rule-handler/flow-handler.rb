@@ -178,7 +178,8 @@ module Pione
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
 
-        applications.each do |caller, rule, inputs, variable_table|
+        applications.uniq.each do |caller, rule, inputs, variable_table|
+
           thread = Thread.new do
             # task domain
             task_domain = Util.domain(
@@ -198,11 +199,7 @@ module Pione
             )
 
             # check if same task exists
-            begin
-              read(task, 0)
-              show "cancel task %s" % task_digest(task)
-            rescue Rinda::RequestExpiredError
-
+            if need_task?(task)
               # copy input data from the handler domain to task domain
               copy_data_into_domain(inputs, task_domain)
 
@@ -210,17 +207,19 @@ module Pione
               write(task)
 
               user_message "    distributed task %s" % task_digest(task)
+            else
+              show "cancel task %s" % task_digest(task)
+            end
 
-              # wait to finish the work
-              finished = read(Tuple[:finished].new(domain: task_domain))
-              user_message "task finished: #{finished.domain}"
+            # wait to finish the work
+            finished = read(Tuple[:finished].new(domain: task_domain))
+            user_message "task finished: #{finished.domain}"
 
-              # copy data from task domain to this domain
-              if finished.status == :succeeded
-                # copy output data from task domain to the handler domain
-                @finished << finished
-                copy_data_into_domain(finished.outputs, @domain)
-              end
+            # copy data from task domain to this domain
+            if finished.status == :succeeded
+              # copy output data from task domain to the handler domain
+              @finished << finished
+              copy_data_into_domain(finished.outputs, @domain)
             end
           end
 
@@ -231,6 +230,32 @@ module Pione
         thgroup.list.each {|th| th.join}
 
         user_message "<<< End Task Distribution: %s" % [handler_digest]
+      end
+
+      def need_task?(task)
+        if exist_task?(task) or working?(task)
+          return false
+        else
+          return true
+        end
+      end
+
+      def exist_task?(task)
+        begin
+          read(task, 0)
+          return true
+        rescue Rinda::RequestExpiredError
+          return false
+        end
+      end
+
+      def working?(task)
+        begin
+          read(Tuple[:working].new(task.domain), 0)
+          return true
+        rescue Rinda::RequestExpiredError
+          return false
+        end
       end
 
       # Find outputs from the domain of tuple space.

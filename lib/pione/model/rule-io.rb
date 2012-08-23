@@ -14,7 +14,7 @@ module Pione::Model
 
     def ==(other)
       return false unless other.kind_of?(self.class)
-      @name == other.name && @uri == other.url && @match == other.match
+      @name == other.name && @uri == other.uri && @match == other.match
     end
 
     alias :eql? :==

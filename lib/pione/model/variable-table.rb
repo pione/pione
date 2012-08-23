@@ -162,6 +162,18 @@ MSG
       end
     end
 
+    def ==(other)
+      return false unless other.kind_of?(self.class)
+      @table == other.to_hash
+    end
+
+    alias :eql? :==
+
+    def hash
+      @table.hash
+    end
+
+
     private
 
     # Make input or output auto variables.
