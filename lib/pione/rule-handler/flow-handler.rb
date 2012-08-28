@@ -2,6 +2,10 @@ module Pione
   module RuleHandler
     # FlowHandler represents a handler for flow actions.
     class FlowHandler < BaseHandler
+      def self.message_name
+        "Flow"
+      end
+
       # :nodoc:
       def initialize(*args)
         super
@@ -9,10 +13,8 @@ module Pione
         @finished = []
       end
 
-      # Process flow elements.
+      # Starts to process flow elements.
       def execute
-        user_message ">>> Start Flow Rule: %s" % [handler_digest]
-
         # rule application
         apply_rules(@rule.body.eval(@variable_table).elements)
         # find outputs
@@ -20,8 +22,6 @@ module Pione
         # check output validation
         validate_outputs
 
-        debug_message "Flow Rule #{@rule.rule_path} Result: #{@outputs}"
-        user_message "<<< End Flow Rule: %s" % [handler_digest]
 
         return @outputs
       end
@@ -33,17 +33,6 @@ module Pione
       end
 
       private
-
-      # Returns digest string of this handler.
-      def handler_digest
-        "%s([%s],[%s])" % [
-          @rule.rule_path,
-          @inputs.map{|i|
-            i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
-          }.join(","),
-          @params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
-        ]
-      end
 
       # Returns digest string of the task.
       def task_digest(task)
@@ -58,7 +47,7 @@ module Pione
 
       # Apply target input data to rules.
       def apply_rules(callees)
-        user_message ">>> Start Rule Application: %s" % [handler_digest]
+        user_message_begin("Start Rule Application: %s" % handler_digest)
 
         # apply flow-element rules
         while true do
@@ -73,7 +62,7 @@ module Pione
           end
         end
 
-        user_message "<<< End Rule Application: %s" % [handler_digest]
+        user_message_end("End Rule Application: %s" % handler_digest)
       end
 
       # Find applicable flow-element rules with inputs and variables.
@@ -142,8 +131,8 @@ module Pione
             inputs,
             caller.expr.params
           )
+          # import finished tuples's data
           begin
-            # import finished tuples's data
             unless @finished.find{|f| f.domain == task_domain}
               if task_domain != @domain
                 finished = read(
@@ -163,7 +152,7 @@ module Pione
             rule.outputs.map{|output| output.eval(vtable)},
             vtable
           ).map{|r| r.combination }
-          # no combinations is empty list
+          # no outputs combination means empty list
           outputs_combination = [[]] if outputs_combination.empty?
           # check update criterias
           outputs_combination.any?{|outputs|
@@ -173,7 +162,7 @@ module Pione
       end
 
       def distribute_tasks(applications)
-        user_message ">>> Start Task Distribution: %s" % [handler_digest]
+        user_message_begin("Start Task Distribution: %s" % handler_digest)
 
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
@@ -195,7 +184,8 @@ module Pione
               inputs,
               caller.expr.params,
               rule.features,
-              task_domain
+              task_domain,
+              @call_stack + [@domain]
             )
 
             # check if same task exists
@@ -206,14 +196,14 @@ module Pione
               # write the task
               write(task)
 
-              user_message "    distributed task %s" % task_digest(task)
+              user_message("distributed task %s" % task_digest(task), 1)
             else
               show "cancel task %s" % task_digest(task)
             end
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))
-            user_message "task finished: #{finished.domain}"
+            user_message("task finished: #{finished.domain}", 1)
 
             # copy data from task domain to this domain
             if finished.status == :succeeded
@@ -229,7 +219,7 @@ module Pione
         # wait to finish threads
         thgroup.list.each {|th| th.join}
 
-        user_message "<<< End Task Distribution: %s" % [handler_digest]
+        user_message_end("End Task Distribution: %s" % handler_digest)
       end
 
       def need_task?(task)

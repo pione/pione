@@ -223,7 +223,8 @@ module Pione
       [:inputs, Array],
       [:params, Model::Parameters],
       [:features, Model::Feature::Expr],
-      [:domain, String]
+      [:domain, String],
+      [:call_stack, Array]
     ]
 
     # working information

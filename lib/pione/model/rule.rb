@@ -89,8 +89,8 @@ module Pione::Model
     end
 
     # Make task handler object for the rule.
-    def make_handler(ts_server, inputs, params, opts={})
-      handler_class.new(ts_server, self, inputs, params, opts)
+    def make_handler(ts_server, inputs, params, call_stack, opts={})
+      handler_class.new(ts_server, self, inputs, params, call_stack, opts)
     end
 
     def handler_class
@@ -140,7 +140,7 @@ module Pione::Model
   #   End
   class RootRule < FlowRule
     INPUT_DOMAIN = '/input'
-    ROOT_DOMAIN = '/root'
+    ROOT_DOMAIN = 'root'
 
     attr_reader :main
 
@@ -185,6 +185,7 @@ module Pione::Model
         self,
         inputs,
         @params,
+        [],
         {:domain => @domain}
       )
     end

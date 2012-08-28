@@ -1,5 +1,4 @@
 require 'pione/common'
-require 'pione/agent/sync-monitor'
 
 module Pione
   module RuleHandler
@@ -34,13 +33,14 @@ module Pione
       attr_reader :task_id
       attr_reader :domain
       attr_reader :variable_table
+      attr_reader :call_stack
 
       # Create a new handler for rule.
       # [+ts_server+] tuple space server
       # [+rule+] rule instance
       # [+inputs+] input tuples
       # [+opts+] optionals
-      def initialize(ts_server, rule, inputs, params, opts={})
+      def initialize(ts_server, rule, inputs, params, call_stack, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
@@ -61,6 +61,7 @@ module Pione
         @variable_table = VariableTable.new(@params.data)
         @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
         @task_id = Util.task_id(@inputs, @params)
+        @call_stack = call_stack
 
         setup_variable_table
         setup_working_directory
@@ -71,6 +72,37 @@ module Pione
         env.each do |key, value|
           @variable_table.set(Variable.new("ENV_" + key), PioneString.new(value))
         end
+      end
+
+      # Handles the rule.
+      def handle
+        name = self.class.message_name
+
+        # show begin message
+        user_message_begin("Start %s Rule: %s" % [name, handler_digest])
+        # call stack
+        debug_message("call stack:")
+        @call_stack.each_with_index do |domain, i|
+          debug_message("%s:%s" % [i, domain], 1)
+        end
+
+        outputs = execute
+
+        # show output list
+        debug_message("%s Rule %s Result:" % [name, handler_digest])
+        @outputs.each_with_index do |output, i|
+          if output.kind_of?(Array)
+            output.each_with_index do |o, ii|
+              debug_message("%s,%s:%s" % [i, ii, o.name], 1)
+            end
+          else
+            debug_message("%s:%s" % [i, output.name], 1)
+          end
+        end
+        # show end message
+        user_message_end "End %s Rule: %s" % [name, handler_digest]
+
+        return outputs
       end
 
       # Executes the rule.
@@ -110,19 +142,20 @@ module Pione
       # Make a working directory.
       def make_working_directory(opts)
         # build directory path
-        process_name = opts[:process_name] || "no-process-name"
-        process_id = opts[:process_id] || "no-process-id"
+        process_name = opts[:process_name] || "no-pname"
+        process_id = opts[:process_id] || "no-pid"
         process_dirname = "#{process_name}_#{process_id}"
-        task_dirname = "%s-%s_%s" % [
+        task_dirname = Util.domain(
           @rule.expr.package.name,
           @rule.expr.name,
-          Util.task_id(@inputs, @params)
-        ]
-        tmpdir = Dir.tmpdir
+          @inputs,
+          @original_params
+        )
+        tmpdir = CONFIG[:working_dir] ? CONFIG[:working_dir] : Dir.tmpdir
         basename = File.join(tmpdir, process_dirname, task_dirname)
         # create a directory
         FileUtils.makedirs(basename)
-        Dir.mktmpdir(nil, basename)
+        return basename
       end
 
       def make_resource_uri(base_uri)
@@ -166,6 +199,18 @@ module Pione
           end
         end
       end
+
+      # Returns digest string of this handler.
+      def handler_digest
+        "%s([%s],[%s])" % [
+          @rule.rule_path,
+          @inputs.map{|i|
+            i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
+          }.join(","),
+          @params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
+        ]
+      end
+
     end
   end
 end

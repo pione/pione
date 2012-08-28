@@ -2,6 +2,10 @@ module Pione
   module RuleHandler
     # ActionHandler handles ActionRule.
     class ActionHandler < BaseHandler
+      def self.message_name
+        "Action"
+      end
+
       # Execute the action.
       def execute
         # prepare shell script
@@ -24,12 +28,12 @@ module Pione
       def write_shell_script(&b)
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(@rule.body.eval(@variable_table).content)
-        user_message "Action #{file.path}"
-        user_message "SH-----------------------------------------------------"
+        debug_message("Action #{file.path}")
+        user_message("-----------------------------------------------------", 0, "SH")
         @rule.body.eval(@variable_table).content.split("\n").each do |line|
-          user_message line
+          user_message(line, 0, "SH")
         end
-        user_message "-----------------------------------------------------SH"
+        user_message("-----------------------------------------------------", 0, "SH")
         file.close
         FileUtils.chmod(0700, file.path)
         return b.call(file.path)

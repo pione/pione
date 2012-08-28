@@ -89,18 +89,19 @@ module Pione
 
       # State task_executing.
       def transit_to_task_executing(task, rule)
-        debug_message ">>> Start Task Execution #{rule.rule_path} by worker(#{uuid})"
+        debug_message_begin("Start Task Execution #{rule.rule_path} by worker(#{uuid})")
 
         handler = rule.make_handler(
           tuple_space_server,
           task.inputs,
-          task.params
+          task.params,
+          task.call_stack
         )
         handler.setenv(ENV)
         @__result_task_execution__ = nil
 
         th = Thread.new do
-          @__result_task_execution__ = handler.execute
+          @__result_task_execution__ = handler.handle
         end
 
         # make sub workers if flow rule
@@ -128,7 +129,7 @@ module Pione
 
         take(Tuple[:working].new(task.domain), 0)
 
-        debug_message ">>> End Task Execution #{rule.rule_path} by worker(#{uuid})"
+        debug_message_end "End Task Execution #{rule.rule_path} by worker(#{uuid})"
 
         return task, handler, @__result_task_execution__
       end

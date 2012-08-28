@@ -133,7 +133,7 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 $thread = Thread.start do
   while true do
     if handler = $doc.root_rule($params).make_handler($tuple_space_server)
-      outputs = handler.execute
+      outputs = handler.handle
       Dir.mkdir($output_dir) unless File.exist?($output_dir)
       outputs.first.each do |output|
         path = File.join($output_dir, output.name)

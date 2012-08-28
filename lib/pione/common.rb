@@ -9,6 +9,7 @@ require 'rinda/tuplespace'
 require 'json'
 require 'tempfile'
 require 'pione'
+require 'yaml'
 
 module Pione
   @@debug_mode = false
@@ -59,20 +60,40 @@ module Pione
     end
   }
 
-  def debug_message(msg)
+  def message(type, color, msg)
+    MessageQueue.push "%s %s" % [Terminal.color(color, "%5s" % type), msg]
+  end
+
+  def debug_message(msg, level=0, type="debug")
     if debug_mode? and not(quiet_mode?)
-      MessageQueue.push "%s: %s" % [Terminal.magenta("debug"), msg]
+      message(type, :magenta, "  "*level + msg)
     end
+  end
+
+  def debug_message_begin(msg)
+    debug_message(msg, 0, ">>>")
+  end
+
+  def debug_message_end(msg)
+    debug_message(msg, 0, "<<<")
   end
 
   def show(msg)
-    MessageQueue.push "%s: %s" % [Terminal.red("show"), msg]
+    message("show", :red, msg)
   end
 
-  def user_message(msg)
+  def user_message(msg, level=0, type="info")
     if not(quiet_mode?)
-      MessageQueue.push "%s: %s" % [Terminal.green("info"), msg]
+      message(type, :green, "  "*level + msg)
     end
+  end
+
+  def user_message_begin(msg)
+    user_message(msg, 0, ">>>")
+  end
+
+  def user_message_end(msg)
+    user_message(msg, 0, "<<<")
   end
 
   # Start finalization process for Pione world.
@@ -94,6 +115,20 @@ module Pione
     end
     module_function :color_mode=
 
+    def color(color, str)
+      case color
+      when :red
+        red(str)
+      when :green
+        green(str)
+      when :magenta
+        magenta(str)
+      else
+        str
+      end
+    end
+    module_function :color
+
     def red(str)
       colorize(str, "\x1b[31m", "\x1b[39m")
     end
@@ -114,6 +149,19 @@ module Pione
     end
     module_function :colorize
   end
+
+  # Config represents a PIONE system configuration.
+  class Config < Hash
+    def self.load(path)
+      CONFIG.merge!(YAML.load(File.read(path)))
+    end
+
+    def initialize(data={})
+      merge!(data)
+    end
+  end
+
+  CONFIG = Config.new
 
   # Basic object class of pione system.
   class PioneObject
