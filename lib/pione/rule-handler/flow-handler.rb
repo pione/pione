@@ -162,8 +162,6 @@ module Pione
       end
 
       def distribute_tasks(applications)
-        user_message_begin("Start Task Distribution: %s" % handler_digest)
-
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
 
@@ -189,6 +187,7 @@ module Pione
             )
 
             # check if same task exists
+            canceled = false
             if need_task?(task)
               # copy input data from the handler domain to task domain
               copy_data_into_domain(inputs, task_domain)
@@ -199,11 +198,14 @@ module Pione
               user_message("distributed task %s" % task_digest(task), 1)
             else
               show "cancel task %s" % task_digest(task)
+              canceled = true
             end
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))
-            user_message("task finished: #{finished.domain}", 1)
+            unless canceled
+              user_message("task finished: #{finished.domain}", 1)
+            end
 
             # copy data from task domain to this domain
             if finished.status == :succeeded
@@ -218,8 +220,6 @@ module Pione
 
         # wait to finish threads
         thgroup.list.each {|th| th.join}
-
-        user_message_end("End Task Distribution: %s" % handler_digest)
       end
 
       def need_task?(task)
