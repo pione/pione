@@ -123,13 +123,13 @@ module Pione
 
       # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
-        combinations.select do |caller, rule, inputs, vtable|
+        combinations.select do |callee, rule, inputs, vtable|
           # task domain
           task_domain = Util.domain(
             rule.expr.package.name,
             rule.expr.name,
             inputs,
-            caller.expr.params
+            callee.expr.params
           )
           # import finished tuples's data
           begin
@@ -165,7 +165,7 @@ module Pione
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
 
-        applications.uniq.each do |caller, rule, inputs, variable_table|
+        applications.uniq.each do |callee, rule, inputs, variable_table|
 
           thread = Thread.new do
             # task domain
@@ -173,14 +173,14 @@ module Pione
               rule.expr.package.name,
               rule.expr.name,
               inputs,
-              caller.expr.params
+              callee.expr.params
             )
 
             # make a task tuple and write it
             task = Tuple[:task].new(
               rule.rule_path,
               inputs,
-              caller.expr.params,
+              callee.expr.params,
               rule.features,
               task_domain,
               @call_stack + [@domain]

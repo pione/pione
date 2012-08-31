@@ -221,6 +221,7 @@ module Pione
   end
 end
 
+require 'pione/rinda-patch'
 require 'pione/model'
 require 'pione/agent'
 require 'pione/tuple-space-server-interface'
