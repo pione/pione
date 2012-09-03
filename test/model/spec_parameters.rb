@@ -15,6 +15,14 @@ describe 'Model::Parameters' do
         Variable.new("b") => PioneString.new("B"),
         Variable.new("c") => PioneString.new("C")
       })
+    set = Set.new
+    set.add(@params_a)
+    set.add(Parameters.new({
+          Variable.new("a") => PioneString.new("A"),
+          Variable.new("b") => PioneString.new("B"),
+          Variable.new("c") => PioneString.new("C")
+        }))
+    set.size.should == 1
   end
 
   it 'should be not equal' do

@@ -84,7 +84,7 @@ module Pione
             end
           end
 
-          # eval callee rule by callee context
+          # eval callee rule by the context
           vtable = callee.expr.params.eval(@variable_table).as_variable_table
           rule = rule.eval(vtable)
 
@@ -165,6 +165,8 @@ module Pione
         # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
 
+        user_message_begin("Start Task Distribution: %s" % handler_digest)
+
         applications.uniq.each do |callee, rule, inputs, variable_table|
 
           thread = Thread.new do
@@ -195,16 +197,18 @@ module Pione
               # write the task
               write(task)
 
-              user_message("distributed task %s" % task_digest(task), 1)
+              user_message("distributed task %s on %s" % [task.digest, handler_digest], 1)
             else
-              show "cancel task %s" % task_digest(task)
+              show "cancel task %s on %s" % [task.digest, handler_digest]
               canceled = true
             end
 
             # wait to finish the work
             finished = read(Tuple[:finished].new(domain: task_domain))
             unless canceled
-              user_message("task finished: #{finished.domain}", 1)
+              user_message("finished task %s on %s" % [
+                  finished.domain, handler_digest
+                ], 1)
             end
 
             # copy data from task domain to this domain
@@ -220,6 +224,8 @@ module Pione
 
         # wait to finish threads
         thgroup.list.each {|th| th.join}
+
+        user_message_end("End Task Distribution: %s" % handler_digest)
       end
 
       def need_task?(task)
@@ -241,7 +247,7 @@ module Pione
 
       def working?(task)
         begin
-          read(Tuple[:working].new(task.domain), 0)
+          read(Tuple[:working].new(:domain => task.domain), 0)
           return true
         rescue Rinda::RequestExpiredError
           return false

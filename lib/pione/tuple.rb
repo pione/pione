@@ -217,7 +217,7 @@ module Pione
     #   inputs    : data list  : input data list
     #   params    : parameters : parameter list
     #   features  : feature    : request features
-    #   domain      : string     : task domain
+    #   domain    : string     : task domain
     define_format [:task,
       [:rule_path, String],
       [:inputs, Array],
@@ -228,14 +228,24 @@ module Pione
     ]
 
     # working information
-    #   domain  : caller domain
-    define_format [:working, :domain]
+    #   domain : string : caller domain
+    #   digest : string : rule handler digest
+    define_format [:working,
+      [:domain, String],
+      [:digest, String]
+    ]
 
     # task finished notifier
-    #   domain  : uuid of the task
-    #   status  : status of the task processing
-    #   outputs : outputs
-    define_format [:finished, :domain, :status, :outputs]
+    #   domain  : string    : task domain
+    #   status  : symbol    : status of the task processing
+    #   outputs : data list : outputs
+    #   digest  : string    : rule handler digest
+    define_format [:finished,
+      [:domain, String],
+      [:status, Symbol],
+      [:outputs, Array],
+      [:digest, String]
+    ]
 
     # agent connection notifier in the tuple space server
     #   uuid       : uuid of the agent
@@ -286,5 +296,17 @@ module Pione
     #   name : data name
     define_format [:sync_target, :src, :dest, :name]
 
+    class Task
+      # Returns digest string of the task.
+      def digest
+        "%s([%s],[%s])" % [
+          rule_path,
+          inputs.map{|i|
+            i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
+          }.join(","),
+          params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
+        ]
+      end
+    end
   end
 end
