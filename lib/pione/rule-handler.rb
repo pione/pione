@@ -171,7 +171,9 @@ module Pione
             break
           end
         end
-        URI(@base_uri) + ("./.%s/%s" % [domain, name])
+        rule_name = domain.split("_")[0..-2].join("_")
+        digest = domain.split("_").last
+        URI(@base_uri) + ("./.%s/%s/%s" % [rule_name, digest, name])
       end
 
       # Make output tuple by name.
