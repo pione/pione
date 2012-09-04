@@ -1,5 +1,3 @@
-require 'hamster'
-
 module Rinda
   class Tuple
     def ==(other)
@@ -18,36 +16,42 @@ module Rinda
   class TupleBag
     class TaskTupleBin < TupleBin
       def initialize
-        @bin = Hamster.hash
+        @bin = {}
       end
 
       def add(tuple)
-        @bin = @bin.put(key(tuple), tuple)
+        @bin[key(tuple)] = tuple
       end
 
       def delete(tuple)
-        @bin = @bin.delete(key(tuple))
+        @bin.delete(key(tuple))
       end
 
       def delete_if
         return @bin unless block_given?
-        @bin = @bin.filter {|key, val| !yield(val)}
+        @bin.delete_if {|key, val| yield(val)}
       end
 
+      # Finds a tuple by the template. This method searches by index when the
+      # template has the domain, otherwise by liner.
       def find(template, &b)
         if key = key(template)
-          return @bin.get(key)
+          return @bin[key]
         else
           @bin.values.each do |x|
             return x if yield(x)
           end
         end
-        nil
+        return nil
       end
 
-      def find_all(&b)
-        return @bin unless block_given?
-        @bin.filter {|key, val| yield(key, val)}
+      def find_all(template, &b)
+        return @bin.values unless block_given?
+        if key = key(template)
+          return [@bin[key]]
+        else
+          @bin.select{|_, val| yield(val)}.values
+        end
       end
 
       def each(*args)
@@ -63,57 +67,96 @@ module Rinda
     end
 
     # DataTupleBin is a set of domains.
-    class DataTupleBin
+    class DataTupleBin < TupleBin
       def initialize
-        @bin = Hamster.hash
+        @bin = {}
       end
 
       def add(tuple)
-        set = @bin.get(domain(tuple)) || Hamster.set
-        @bin = @bin.put(domain(tuple), set.add(tuple))
+        prepare_table(domain(tuple))
+        @bin[domain(tuple)][name(tuple)] = tuple
       end
 
       def delete(tuple)
-        set = @bin.get(domain(tuple)) || Hamster.set
-        @bin = @bin.puts(domain(tuple), set.delete(tuple))
+        prepare_table(domain(tuple))
+        @bin[domain(tuple)].delete(name(tuple))
       end
 
       def delete_if
-        return @bin unless block_given?
-        @bin = @bin.filter {|key, val| !yield(val)}
+        if block_given?
+          @bin.values.each do |table|
+            table.delete_if {|_, val| yield(val)}
+          end
+        end
+        return @bin
       end
 
       def find(template, &b)
-        if key = key(template)
-          return @bin.get(key)
+        domain = domain(template)
+        name = name(template)
+        prepare_table(domain)
+        if domain
+          @bin[domain].values.each do |tuple|
+            return tuple if yield(tuple)
+          end
         else
-          @bin.values.each do |x|
-            return x if yield(x)
+          @bin.values.each do |table|
+            table.values.each do |tuple|
+              return tuple if yield(tuple)
+            end
           end
         end
-        nil
+        return nil
       end
 
-      def find_all(&b)
-        return @bin unless block_given?
-        set = @bin.values.inject(Hamster.set){|res, elt| res + elt}
-        set.filter {|elt| yield(elt)}
+      def find_all(template, &b)
+        domain = domain(template)
+        name = name(template)
+        prepare_table(domain)
+
+        if domain
+          if block_given?
+            return @bin[domain].values.select {|tuple| yield(tuple)}
+          else
+            return @bin[domain].values
+          end
+        else
+          if block_given?
+            return @bin.values.map{|table| table.values}.flatten.select{|tuple|
+              yield(tuple)
+            }
+          else
+            return @bin.values.map{|table| table.values}.flatten
+          end
+        end
       end
 
       def each(*args)
-        set = @bin.values.inject(Hamster.set){|res, elt| res + elt}
-        set.each(*args)
+        @bin.values.map{|table| table.values}.flatten.each(*args)
       end
 
       private
 
-      # Returns domain position.
+      def prepare_table(domain)
+        if domain
+          @bin[domain] = {} unless @bin[domain]
+        end
+      end
+
+      # Returns the domain.
       def domain(tuple)
-        tuple.value[1]
+        return tuple.value[1]
+      end
+
+      # Returns the name.
+      def name(tuple)
+        return tuple.value[2]
       end
     end
 
-    attr_accessor :special_bin
+    def set_special_bin(special_bin)
+      @special_bin = special_bin
+    end
 
     def push(tuple)
       key = bin_key(tuple)
@@ -129,22 +172,36 @@ module Rinda
 
     def bin_class(key)
       return TupleBin unless @special_bin
-      return (key == :task ? TaskTupleBin : TupleBin)
+      return @special_bin[key] ? @special_bin[key] : TupleBin
     end
 
     alias :orig_find :find
+    alias :orig_find_all :find_all
 
     public
 
     def find(template)
       key = bin_key(template)
-      if key == :task
+      if @special_bin[key]
         prepare_table(key)
         @hash[key].find(template) do |tuple|
           tuple.alive? && template.match(tuple)
         end
       else
         orig_find(template)
+      end
+    end
+
+    def find_all(template)
+      key = bin_key(template)
+      if @special_bin[key]
+        prepare_table(key)
+        vals = @hash[key].find_all(template) do |tuple|
+          tuple.alive? && template.match(tuple)
+        end
+        return vals
+      else
+        orig_find_all(template)
       end
     end
   end
@@ -154,7 +211,10 @@ module Rinda
 
     def initialize(period=60)
       orig_initialize(period)
-      @bag.special_bin = true
+      @bag.set_special_bin(
+        :task => TupleBag::TaskTupleBin,
+        :data => TupleBag::DataTupleBin
+      )
     end
   end
 end

@@ -218,6 +218,13 @@ module Pione
     def self.domain(package_name, rule_name, inputs, params)
       "%s-%s_%s" % [package_name, rule_name, task_id(inputs, params)]
     end
+
+    def self.domain3(rule, inputs, callee)
+      package_name = rule.expr.package.name
+      rule_name = rule.expr.name
+      params = callee.expr.params
+      return domain(package_name, rule_name, inputs, params)
+    end
   end
 end
 

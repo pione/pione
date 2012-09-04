@@ -22,28 +22,10 @@ module Pione
         # check output validation
         validate_outputs
 
-
         return @outputs
       end
 
-      # Return true if the handler is waiting finished tuple.
-      def finished_waiting?
-        # FIXME
-        false
-      end
-
       private
-
-      # Returns digest string of the task.
-      def task_digest(task)
-        "%s([%s],[%s])" % [
-          task.rule_path,
-          task.inputs.map{|i|
-            i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
-          }.join(","),
-          task.params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
-        ]
-      end
 
       # Apply target input data to rules.
       def apply_rules(callees)
@@ -105,19 +87,17 @@ module Pione
 
       # Find the rule of the callee.
       def find_callee_rule(callee)
-        begin
-          return read(Tuple[:rule].new(rule_path: callee.rule_path), 0).content
-        rescue Rinda::RequestExpiredError
-          debug_message "Request loading a rule #{callee.rule_path}"
-          write(Tuple[:request_rule].new(callee.rule_path))
-          tuple = read(Tuple[:rule].new(rule_path: callee.rule_path))
+        return read(Tuple[:rule].new(rule_path: callee.rule_path), 0).content
+      rescue Rinda::RequestExpiredError
+        debug_message "Request loading a rule #{callee.rule_path}"
+        write(Tuple[:request_rule].new(callee.rule_path))
+        tuple = read(Tuple[:rule].new(rule_path: callee.rule_path))
 
-          # check whether known or unknown
-          if tuple.status == :known
-            return tuple.content
-          else
-            raise UnknownRule.new(callee.rule_path)
-          end
+        # check whether known or unknown
+        if tuple.status == :known
+          return tuple.content
+        else
+          raise UnknownRule.new(callee.rule_path)
         end
       end
 
@@ -125,35 +105,21 @@ module Pione
       def select_updatables(combinations)
         combinations.select do |callee, rule, inputs, vtable|
           # task domain
-          task_domain = Util.domain(
-            rule.expr.package.name,
-            rule.expr.name,
-            inputs,
-            callee.expr.params
-          )
+          task_domain = Util.domain3(rule, inputs, callee)
+
           # import finished tuples's data
-          begin
-            unless @finished.find{|f| f.domain == task_domain}
-              if task_domain != @domain
-                finished = read(
-                  Tuple[:finished].new(
-                    domain: task_domain,
-                    status: :succeeded
-                  ),
-                  0
-                )
-                copy_data_into_domain(finished.outputs, @domain)
-              end
-            end
-          rescue Rinda::RequestExpiredError
-          end
+          import_finished_outputs(task_domain)
+
+          # find outputs combination
           outputs_combination = @data_finder.find(
             :output,
             rule.outputs.map{|output| output.eval(vtable)},
             vtable
           ).map{|r| r.combination }
+
           # no outputs combination means empty list
           outputs_combination = [[]] if outputs_combination.empty?
+
           # check update criterias
           outputs_combination.any?{|outputs|
             UpdateCriteria.satisfy?(rule, inputs, outputs, vtable)
@@ -162,23 +128,16 @@ module Pione
       end
 
       def distribute_tasks(applications)
-        # FIXME: rewrite by using fiber
         thgroup = ThreadGroup.new
-
         user_message_begin("Start Task Distribution: %s" % handler_digest)
 
         applications.uniq.each do |callee, rule, inputs, variable_table|
 
           thread = Thread.new do
             # task domain
-            task_domain = Util.domain(
-              rule.expr.package.name,
-              rule.expr.name,
-              inputs,
-              callee.expr.params
-            )
+            task_domain = Util.domain3(rule, inputs, callee)
 
-            # make a task tuple and write it
+            # make a task tuple
             task = Tuple[:task].new(
               rule.rule_path,
               inputs,
@@ -197,14 +156,20 @@ module Pione
               # write the task
               write(task)
 
-              user_message("distributed task %s on %s" % [task.digest, handler_digest], 1)
+              user_message(
+                "distributed task %s on %s" % [task.digest, handler_digest], 1
+              )
             else
               show "cancel task %s on %s" % [task.digest, handler_digest]
               canceled = true
             end
 
             # wait to finish the work
-            finished = read(Tuple[:finished].new(domain: task_domain))
+            template = Tuple[:finished].new(
+              domain: task_domain,
+              status: :succeeded
+            )
+            finished = read(template)
             unless canceled
               user_message("finished task %s on %s" % [
                   finished.domain, handler_digest
@@ -212,11 +177,8 @@ module Pione
             end
 
             # copy data from task domain to this domain
-            if finished.status == :succeeded
-              # copy output data from task domain to the handler domain
-              @finished << finished
-              copy_data_into_domain(finished.outputs, @domain)
-            end
+            @finished << finished
+            copy_data_into_domain(finished.outputs, @domain)
           end
 
           thgroup.add(thread)
@@ -229,32 +191,24 @@ module Pione
       end
 
       def need_task?(task)
-        if exist_task?(task) or working?(task)
-          return false
-        else
-          return true
-        end
+        not(exist_task?(task) or working?(task))
       end
 
       def exist_task?(task)
-        begin
-          read(task, 0)
-          return true
-        rescue Rinda::RequestExpiredError
-          return false
-        end
+        read(task, 0)
+        return true
+      rescue Rinda::RequestExpiredError
+        return false
       end
 
       def working?(task)
-        begin
-          read(Tuple[:working].new(:domain => task.domain), 0)
-          return true
-        rescue Rinda::RequestExpiredError
-          return false
-        end
+        read(Tuple[:working].new(:domain => task.domain), 0)
+        return true
+      rescue Rinda::RequestExpiredError
+        return false
       end
 
-      # Find outputs from the domain of tuple space.
+      # Find outputs from the domain.
       def find_outputs
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
@@ -283,6 +237,19 @@ module Pione
         if @outputs.any?{|tuple| tuple.kind_of?(Array) && tuple.empty?}
           raise RuleExecutionError.new(self)
         end
+      end
+
+      # Imports finished tuple's outputs.
+      def import_finished_outputs(task_domain)
+        return if @finished.any?{|t| t.domain == task_domain}
+        if task_domain != @domain
+          template = Tuple[:finished].new(
+            domain: task_domain, status: :succeeded
+          )
+          finished = read0(template)
+          copy_data_into_domain(finished.outputs, @domain)
+        end
+      rescue Rinda::RequestExpiredError
       end
 
       # Copy data into specified domain and return the tuple list

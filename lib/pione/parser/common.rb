@@ -9,7 +9,6 @@ module Pione
 
       SYMBOLS = {
         :squote => '\'',
-        :squote => '\'',
         :dquote => '"',
         :backslash => "\\",
         :dot => '.',

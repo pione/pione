@@ -3,9 +3,10 @@ require 'pione/common'
 module Pione
   # DataFinder finds data from tuple space server.
   class DataFinder < PioneObject
-    # DataFinderResult represents result elements of
-    # DataFinder#find. +combination+ is rule inputs and +variable_table+ is
-    # found variable's table.
+
+    # DataFinderResult represents an element of DataFinder#find results. The
+    # attribute +combination+ is a rule inputs combination and +variable_table+
+    # is a variable's table including variables for found date set.
     class DataFinderResult < Struct.new(:combination, :variable_table)
       # Return true if the combination is empty.
       def empty?
@@ -15,7 +16,7 @@ module Pione
 
     include TupleSpaceServerInterface
 
-    # Create a new finder.
+    # Creates a new finder.
     # [+ts_server+] tuple space server
     # [+domain+] target data domain to find
     def initialize(ts_server, domain)
@@ -23,22 +24,32 @@ module Pione
       @domain = domain
     end
 
-    # Find data tuple by data expression from a tuple space server.
+    # Finds all data tuples by the expression from a tuple space server.
+    # [expr] data-expr
     def find_by_expr(expr)
       expr = DataExpr.new(expr) if expr.kind_of?(String)
       q = Tuple[:data].new(name: expr, domain: @domain)
-      tuple_space_server.read_all(q)
+      return tuple_space_server.read_all(q)
     end
 
     # Find tuple combinations by data expressions from tuple space server.
+    # [type] :input or :output
+    # [exprs] data-expr list
+    # [vtable] variabel table
     def find(type, exprs, vtable)
       raise ArgumentError.new(vtable) unless vtable.kind_of?(VariableTable)
+
+      # variable table
       new_vtable = VariableTable.new(vtable)
-      if type == :input
+      case type
+      when :input
+        # alias for I
         new_vtable.set(Variable.new("INPUT"), Variable.new("I"))
-      else
+      when :output
+        # alias for O
         new_vtable.set(Variable.new("OUTPUT"), Variable.new("O"))
       end
+
       find_rec(type, exprs, 1, new_vtable)
     end
 

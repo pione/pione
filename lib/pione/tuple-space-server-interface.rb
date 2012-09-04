@@ -18,6 +18,16 @@ module Pione
     tuple_space_operation :count_tuple
     tuple_space_operation :notify
 
+    # Reads a tuple without waiting.
+    def read0(tuple)
+      read(tuple, 0)
+    end
+
+    # Takes a tuple without wainting.
+    def take0(tuple)
+      read(tuple, 0)
+    end
+
     # Log a message.
     def log
       msg = Log.new
