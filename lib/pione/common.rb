@@ -242,6 +242,9 @@ require 'pione/update-criteria'
 require 'pione/rule-handler'
 require 'pione/agent/command-listener'
 require 'pione/agent/task-worker'
+require 'pione/agent/input-generator'
+require 'pione/agent/rule-provider'
+require 'pione/agent/logger'
 
 module Pione
   include Pione::Model

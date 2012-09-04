@@ -144,7 +144,8 @@ module Pione
               callee.expr.params,
               rule.features,
               task_domain,
-              @call_stack + [@domain]
+              @call_stack + [@domain],
+              @resource_hints + [make_resource_hint]
             )
 
             # check if same task exists
@@ -250,6 +251,15 @@ module Pione
           copy_data_into_domain(finished.outputs, @domain)
         end
       rescue Rinda::RequestExpiredError
+      end
+
+      # Makes the resource hint.
+      def make_resource_hint
+        domain = self.kind_of?(RootHandler) ? "" : @domain
+        Resource::Hint.new(
+          domain,
+          @rule.outputs.map{|output| output.eval(@variable_table)}
+        )
       end
 
       # Copy data into specified domain and return the tuple list

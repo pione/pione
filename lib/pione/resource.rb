@@ -17,6 +17,8 @@ module Pione
       @@schemes[uri.scheme].new(uri)
     end
 
+    Hint = Struct.new(:domain, :outputs)
+
     class Base
       def create(data)
         raise NotImplementedError

@@ -29,11 +29,11 @@ module Pione
         file = File.open(File.join(@working_directory,"sh"), "w+")
         file.print(@rule.body.eval(@variable_table).content)
         debug_message("Action #{file.path}")
-        user_message("-----------------------------------------------------", 0, "SH")
+        user_message("-"*60, 0, "SH")
         @rule.body.eval(@variable_table).content.split("\n").each do |line|
           user_message(line, 0, "SH")
         end
-        user_message("-----------------------------------------------------", 0, "SH")
+        user_message("-"*60, 0, "SH")
         file.close
         FileUtils.chmod(0700, file.path)
         return b.call(file.path)
@@ -61,7 +61,7 @@ module Pione
       # Make output tuple by name.
       def make_output_tuple_with_time(name)
         time = File.mtime(File.join(@working_directory, name))
-        uri = (@resource_uri + name).to_s
+        uri = make_output_resource_uri(name).to_s
         Tuple[:data].new(name: name, domain: @domain, uri: uri, time: time)
       end
 
@@ -93,7 +93,7 @@ module Pione
 
       # Write output tuples into the tuple space server.
       def write_output_tuples
-        @outputs.flatten.each {|output| write(output) }
+        @outputs.flatten.each {|output| write(output)}
       end
     end
   end

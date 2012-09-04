@@ -213,18 +213,21 @@ module Pione
     ]
 
     # rule application task with inputs, outpus and parameters
-    #   rule_path : string     : rule location path
-    #   inputs    : data list  : input data list
-    #   params    : parameters : parameter list
-    #   features  : feature    : request features
-    #   domain    : string     : task domain
+    #   rule_path      : string               : rule location path
+    #   inputs         : data list            : input data list
+    #   params         : parameters           : parameter list
+    #   features       : feature              : request features
+    #   domain         : string               : task domain
+    #   call_stack     : string array         : call stack(domain list)
+    #   resource_hints : Resource::Hint array : resource hints for output
     define_format [:task,
       [:rule_path, String],
       [:inputs, Array],
       [:params, Model::Parameters],
       [:features, Model::Feature::Expr],
       [:domain, String],
-      [:call_stack, Array]
+      [:call_stack, Array],
+      [:resource_hints, Array]
     ]
 
     # working information

@@ -3,34 +3,33 @@
 
 require 'optparse'
 require 'pione/common'
-require 'pione/agent/input-generator'
-require 'pione/agent/task-worker'
-require 'pione/agent/rule-provider'
-require 'pione/agent/logger'
 
 include Pione
-
 Thread.abort_on_exception = true
 
 #
 # parse options
 #
 
-$input_dir = "input"
-$output_dir = "output"
-$log_path = "log.txt"
-$stream = false
-$params = Parameters.empty
+option = Struct.new(
+  :input_dir, :output_dir, :log_path, :stream, :params, :base_uri
+).new
+option.input_dir = "input"
+option.output_dir = "output"
+option.log_path = "log.txt"
+option.stream = false
+option.params = Parameters.empty
 
 OPTS = {}
 OPTS[:resource] = 1
 
-option_parser = OptionParser.new do |opt|
-  opt.on('-i dir', '--input-dir=dir') {|dir| $input_dir = dir }
-  opt.on('-o dir', '--output-dir=dir') {|dir| $output_dir = dir}
-  opt.on('-l log', '--log=file') {|path| $log_path = path }
-  opt.on('-s', '--stream') { $stream = true }
-  opt.on('-r n''--resource=n') {|n|
+parser = OptionParser.new do |opt|
+  opt.on('-i dir', '--input-dir=dir') {|dir| option.input_dir = dir }
+  opt.on('-o dir', '--output-dir=dir') {|dir| option.output_dir = dir}
+  opt.on('-b uri', '--base-uri=uri') {|uri| option.base_uri = uri}
+  opt.on('-l path', '--log=path') {|path| option.log_path = path }
+  opt.on('-s', '--stream') { option.stream = true }
+  opt.on('-r n', '--resource=n') {|n|
     OPTS[:resource] = n.to_i
     unless OPTS[:resource] > 0
       puts "invalid resource size: #{OPTS[:resource]}"
@@ -49,12 +48,12 @@ option_parser = OptionParser.new do |opt|
     Terminal.color_mode = bool
   }
   opt.on('--params="{Var:1,...}"') {|str|
-    $params = Transformer.new.apply(Parser.new.parameters.parse(str))
+    option.params = Transformer.new.apply(Parser.new.parameters.parse(str))
   }
 end
 
 begin
-  option_parser.parse!(ARGV)
+  parser.parse!(ARGV)
 rescue OptionParser::InvalidOption => e
   e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
   abort
@@ -74,17 +73,19 @@ end
 $dir = File.dirname(File.expand_path(__FILE__))
 
 # base uri
-uri = "local:#{Dir.mktmpdir('pione-')}/"
+unless option.base_uri
+  option.base_uri = "local:#{Dir.mktmpdir('pione-')}/"
+end
 
 # make drb server and it's connection
-$tuple_space_server = TupleSpaceServer.new(task_worker_resource: 1, base_uri: uri)
+$tuple_space_server = TupleSpaceServer.new(task_worker_resource: 1, base_uri: option.base_uri)
 provider = Pione::TupleSpaceProvider.instance
 provider.add($tuple_space_server)
 # $remote_drb_server = DRb::DRbServer.new(nil, $tuple_space_server)
 # $remote_server = DRbObject.new(nil, $remote_drb_server.uri)
 
 # make logger
-Agent[:logger].start($tuple_space_server, File.open($log_path, "w+"))
+Agent[:logger].start($tuple_space_server, File.open(option.log_path, "w+"))
 
 # read process document
 begin
@@ -103,8 +104,10 @@ rule_loader.wait_till(:request_waiting)
 $tuple_space_server.write(Tuple[:process_info].new('standalone', 'Standalone'))
 
 # start input generators
-generator_method = $stream ? :start_by_stream : :start_by_dir
-gen = Agent[:input_generator].send(generator_method, $tuple_space_server, $input_dir)
+generator_method = option.stream ? :start_by_stream : :start_by_dir
+gen = Agent[:input_generator].send(
+  generator_method, $tuple_space_server, option.input_dir
+)
 sleep 0.1 while not(gen.counter > 0)
 
 # add workers
@@ -132,26 +135,18 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 #
 $thread = Thread.start do
   while true do
-    if handler = $doc.root_rule($params).make_handler($tuple_space_server)
+    if handler = $doc.root_rule(option.params).make_handler($tuple_space_server)
       outputs = handler.handle
-      Dir.mkdir($output_dir) unless File.exist?($output_dir)
+      Dir.mkdir(option.output_dir) unless File.exist?(option.output_dir)
       outputs.first.each do |output|
-        path = File.join($output_dir, output.name)
+        path = File.join(option.output_dir, output.name)
         File.open(path, "w+"){|out| out.write(Resource[output.uri].read)}
-      end
-
-      if Pione.debug_mode?
-        tuples = []
-        bag = $tuple_space_server.tuple_space.instance_variable_get("@bag")
-        bag.instance_variable_get("@hash").values.each do |bin|
-          tuples += bin.instance_variable_get("@bin")
-        end
       end
     else
       user_message "no inputs"
     end
 
-    break unless $stream
+    break unless option.stream
     sleep 5
     user_message "check new inputs"
   end

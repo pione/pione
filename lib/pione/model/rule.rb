@@ -186,6 +186,7 @@ module Pione::Model
         inputs,
         @params,
         [],
+        [],
         {:domain => @domain}
       )
     end

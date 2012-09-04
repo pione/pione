@@ -95,7 +95,8 @@ module Pione
           tuple_space_server,
           task.inputs,
           task.params,
-          task.call_stack
+          task.call_stack,
+          task.resource_hints
         )
         handler.setenv(ENV)
         @__result_task_execution__ = nil

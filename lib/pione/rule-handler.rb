@@ -29,18 +29,19 @@ module Pione
       attr_reader :outputs
       attr_reader :params
       attr_reader :working_directory
-      attr_reader :resource_uri
+      attr_reader :base_uri
       attr_reader :task_id
       attr_reader :domain
       attr_reader :variable_table
       attr_reader :call_stack
+      attr_reader :resource_hints
 
       # Create a new handler for rule.
       # [+ts_server+] tuple space server
       # [+rule+] rule instance
       # [+inputs+] input tuples
       # [+opts+] optionals
-      def initialize(ts_server, rule, inputs, params, call_stack, opts={})
+      def initialize(ts_server, rule, inputs, params, call_stack, resource_hints, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
@@ -59,7 +60,8 @@ module Pione
         @working_directory = make_working_directory(opts)
         @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new(@params.data)
-        @resource_uri = make_resource_uri(read(Tuple[:base_uri].any).uri)
+        @base_uri = read(Tuple[:base_uri].any).uri
+        @resource_hints = resource_hints
         @task_id = Util.task_id(@inputs, @params)
         @call_stack = call_stack
 
@@ -80,6 +82,7 @@ module Pione
 
         # show begin message
         user_message_begin("Start %s Rule: %s" % [name, handler_digest])
+
         # call stack
         debug_message("call stack:")
         @call_stack.each_with_index do |domain, i|
@@ -158,13 +161,22 @@ module Pione
         return basename
       end
 
-      def make_resource_uri(base_uri)
-        URI(base_uri) + "./#{@domain}/"
+      # Makes resource uri with resource hint.
+      def make_output_resource_uri(name)
+        domain = @domain
+        hints = @resource_hints.reverse.each do |hint|
+          if hint.outputs.any? {|expr| expr.match(name)}
+            domain = hint.domain
+          else
+            break
+          end
+        end
+        URI(@base_uri) + ("./.%s/%s" % [domain, name])
       end
 
       # Make output tuple by name.
       def make_output_tuple(name)
-        uri = (@resource_uri + name).to_s
+        uri = make_output_resource_uri(name).to_s
         Tuple[:data].new(name: name, domain: @domain, uri: uri, time: nil)
       end
 
