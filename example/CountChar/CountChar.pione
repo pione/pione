@@ -3,20 +3,13 @@ Rule Main
   output '*.count'.all
   output 'summary.txt'
 Flow
-  rule CountCharAll
+  rule CountChar
   rule Summarize
 End
 
-Rule CountCharAll
+Rule CountChar
   input '*.txt'.except('summary.txt').all
   output '*.count'.all
-Flow
-  rule CountChar
-End
-
-Rule CountChar
-  input '*.txt'
-  output '{$*}.count'
 Flow
   rule ConvertToUtf8
   rule CountUTF8Char

@@ -131,7 +131,7 @@ module Pione
         thgroup = ThreadGroup.new
         user_message_begin("Start Task Distribution: %s" % handler_digest)
 
-        applications.uniq.each do |callee, rule, inputs, variable_table|
+        applications.uniq.each do |callee, rule, inputs, vtable|
 
           thread = Thread.new do
             # task domain
@@ -145,7 +145,7 @@ module Pione
               rule.features,
               task_domain,
               @call_stack + [@domain],
-              @resource_hints + [make_resource_hint]
+              @resource_hints + [make_resource_hint(rule, vtable)]
             )
 
             # check if same task exists
@@ -254,11 +254,11 @@ module Pione
       end
 
       # Makes the resource hint.
-      def make_resource_hint
+      def make_resource_hint(rule, vtable)
         domain = self.kind_of?(RootHandler) ? "" : @domain
         Resource::Hint.new(
           domain,
-          @rule.outputs.map{|output| output.eval(@variable_table)}
+          rule.outputs.map{|output| output.eval(vtable)}
         )
       end
 

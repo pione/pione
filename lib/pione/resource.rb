@@ -35,6 +35,14 @@ module Pione
       def delete
         raise NotImplementedError
       end
+
+      def copy_to(dist)
+        raise NotImplementedError
+      end
+
+      def copy_from(dist)
+        raise NotImplementedError
+      end
     end
 
     class Local < Base
@@ -68,6 +76,24 @@ module Pione
 
       def delete
         File.delete(@path)
+      end
+
+      def copy_to(dist)
+        FileUtil.symlink(@path, dist)
+      end
+
+      def copy_from(src)
+        swap(src)
+      end
+
+      # Swaps the source file and the resource file. This method moves the
+      # other file to the resource path and creates a symbolic link from
+      # distination to source.
+      def swap(other)
+        dir = File.dirname(@path)
+        FileUtils.makedirs(dir) unless Dir.exist?(dir)
+        FileUtils.mv(other, @path)
+        FileUtils.symlink(@path, other)
       end
     end
 
@@ -123,6 +149,10 @@ module Pione
         Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
           ftp.delete(@path)
         end
+      end
+
+      def copy_to(dist)
+        FileUtil.symlink(@path, dist)
       end
 
       private
