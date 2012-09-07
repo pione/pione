@@ -78,11 +78,13 @@ module Pione
         File.delete(@path)
       end
 
-      def copy_to(dist)
-        FileUtil.symlink(@path, dist)
+      # Makes symbolic link from the resource to the destination.
+      def link_to(dest)
+        FileUtils.symlink(@path, dest)
       end
 
-      def copy_from(src)
+      # Moves the source to the resource and makes reverse link.
+      def link_from(src)
         swap(src)
       end
 

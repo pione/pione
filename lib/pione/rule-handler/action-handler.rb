@@ -6,8 +6,18 @@ module Pione
         "Action"
       end
 
+      attr_reader :working_directory
+
+      def initialize(*args)
+        super(*args)
+        @working_directory = make_working_directory
+        setup_variable_table
+      end
+
       # Execute the action.
       def execute
+        # prepare input files
+        setup_working_directory
         # prepare shell script
         stdout = write_shell_script {|path| call_shell_script(path) }
         # write output file if the handler is stdout mode
@@ -24,9 +34,54 @@ module Pione
 
       private
 
+      # Setup the variable table with working directory in addition.
+      def setup_variable_table
+        unless @working_directory
+          super
+        else
+          @variable_table.set(
+            Variable.new("WORKING_DIRECTORY"),
+            PioneString.new(@working_directory)
+          )
+          @variable_table.set(
+            Variable.new("PWD"),
+            PioneString.new(@working_directory)
+          )
+        end
+      end
+
+      # Make a working directory.
+      def make_working_directory
+        # build directory path
+        task_dirname = Util.domain(
+          @rule.expr.package.name,
+          @rule.expr.name,
+          @inputs,
+          @original_params
+        )
+        tmpdir = CONFIG[:working_dir] ? CONFIG[:working_dir] : Dir.tmpdir
+        path = File.join(tmpdir, task_dirname)
+
+        # create a directory
+        FileUtils.makedirs(path)
+
+        return path
+      end
+
+      # Synchronize input data into working directory.
+      def setup_working_directory
+        @inputs.flatten.each do |input|
+          # get file path in working directory
+          path = File.join(@working_directory, input.name)
+          # create a link to cache
+          cache_path = FileCache.get(input.uri)
+          FileUtils.symlink(cache_path, path, {:force => true})
+        end
+      end
+
       # Write the data to the tempfile as shell script.
       def write_shell_script(&b)
-        file = File.open(File.join(@working_directory,"sh"), "w+")
+        file = File.open(File.join(@working_directory,".pione-action"), "w+")
         file.print(@rule.body.eval(@variable_table).content)
         debug_message("Action #{file.path}")
         user_message("-"*60, 0, "SH")
@@ -52,7 +107,7 @@ module Pione
           if output.stdout?
             name = output.eval(@variable_table).name
             path = File.join(@working_directory, name)
-            File.open(path, "w+") {|out| out.write stdout }
+            IO.copy_stream(stdout, path)
             break
           end
         end
@@ -61,7 +116,7 @@ module Pione
       # Make output tuple by name.
       def make_output_tuple_with_time(name)
         time = File.mtime(File.join(@working_directory, name))
-        uri = make_output_resource_uri(name).to_s
+        uri = make_output_resource_uri(name, @resource_hints).to_s
         Tuple[:data].new(name: name, domain: @domain, uri: uri, time: time)
       end
 
@@ -86,8 +141,19 @@ module Pione
       # Write resources for output data.
       def write_output_resources
         @outputs.flatten.each do |output|
-          val = File.read(File.join(@working_directory, output.name))
-          Resource[output.uri].create(val)
+          path = File.join(@working_directory, output.name)
+          FileCache.put(path, output.uri)
+        end
+      end
+
+      # Writes resources for other intermediate files.
+      def write_other_resources
+        Dir.new(@working_directory).each do |name|
+          path = File.join(@working_directory, name)
+          if File.ftype(path) == "file"
+            uri = make_output_resource_uri(name, [])
+            FileCache.put(path, uri)
+          end
         end
       end
 

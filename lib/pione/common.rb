@@ -10,6 +10,7 @@ require 'json'
 require 'tempfile'
 require 'pione'
 require 'yaml'
+require 'singleton'
 
 module Pione
   @@debug_mode = false
@@ -240,6 +241,7 @@ require 'pione/data-finder'
 require 'pione/document'
 require 'pione/update-criteria'
 require 'pione/rule-handler'
+require 'pione/file-cache'
 require 'pione/agent/command-listener'
 require 'pione/agent/task-worker'
 require 'pione/agent/input-generator'
