@@ -19,7 +19,8 @@ module Pione
 
       # Return the server's provider.
       def provider
-        TupleSpaceProvider.instance(@provider_options)
+        # TupleSpaceProvider.instance(@provider_options)
+        TupleSpaceProvider.instance
       end
 
       def transit_to_updating_lifetime

@@ -37,6 +37,10 @@ module Pione::Model
       self.class.new(@values + [elt])
     end
 
+    def textize
+      "[%s]" % @values.map{|val| val.textize}.join(",")
+    end
+
     def ==(other)
       return false unless other.kind_of?(self.class)
       @value == other.value

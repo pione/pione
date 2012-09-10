@@ -160,6 +160,14 @@ module Pione
     def initialize(data={})
       merge!(data)
     end
+
+    def working_directory
+      unless @working_directory
+        tmpdir = CONFIG[:working_dir] || Dir.tmpdir
+        @working_directory = Dir.mktmpdir("", tmpdir)
+      end
+      return @working_directory
+    end
   end
 
   CONFIG = Config.new

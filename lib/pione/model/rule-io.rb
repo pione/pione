@@ -12,6 +12,10 @@ module Pione::Model
       @match = PioneList.new()
     end
 
+    def textize
+      "ioelement(%s,%s,%s)" % [@name.to_ruby, @uri.textize, @match.textize]
+    end
+
     def ==(other)
       return false unless other.kind_of?(self.class)
       @name == other.name && @uri == other.uri && @match == other.match
@@ -75,6 +79,12 @@ module Pione::Model
         raise ArgumentError.new(elt)
       end
       @elements << elt
+    end
+
+    def textize
+      "rule-io-list(%s)" % @elements.map{|elt|
+        elt.textize
+      }.join(DataExpr::SEPARATOR)
     end
 
     def ==(other)

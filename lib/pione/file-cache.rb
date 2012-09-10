@@ -49,7 +49,6 @@ module Pione
           path = prepare_cache_path
 
           # link the resource file to cache path
-          FileUtils.rm(path)
           Resource[uri].link_to(path)
           @table[uri] = path
         end
@@ -59,9 +58,6 @@ module Pione
 
       # Puts the data to uri resource and caches it in local.
       def put(src, uri)
-        p src
-        p uri
-
         # prepare cache path
         path = prepare_cache_path
 
@@ -82,7 +78,7 @@ module Pione
       def prepare_cache_path
         cache = Tempfile.new("", @tmpdir)
         path = cache.path
-        cache.close(false)
+        cache.close(true)
         return path
       end
     end

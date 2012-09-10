@@ -202,7 +202,7 @@ MSG
       list = RuleIOList.new unless list
       elt = RuleIOElement.new(PioneString.new(tuple.name))
       elt.uri = PioneString.new(tuple.uri)
-      elt.match = md.map{|d| PioneString.new(d)}
+      elt.match = PioneList.new(*md.map{|d| PioneString.new(d)})
 
       # update the list
       set!(var, list.add(elt))
@@ -231,7 +231,9 @@ MSG
       tuples.each do |tuple, i|
         elt = RuleIOElement.new(PioneString.new(tuple.name))
         elt.uri = PioneString.new(tuple.uri)
-        elt.match = expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
+        elt.match = PioneList.new(
+          *expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
+        )
         io_list.add!(elt)
       end
 

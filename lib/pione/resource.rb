@@ -80,6 +80,8 @@ module Pione
 
       # Makes symbolic link from the resource to the destination.
       def link_to(dest)
+        dir = File.dirname(dest)
+        FileUtils.makedirs(dir) unless Dir.exist?(dir)
         FileUtils.symlink(@path, dest)
       end
 

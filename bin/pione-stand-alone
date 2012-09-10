@@ -11,14 +11,12 @@ Thread.abort_on_exception = true
 # parse options
 #
 
-option = Struct.new(
+Option = Struct.new(
   :input_dir, :output_dir, :log_path, :stream, :params, :base_uri
-).new
-option.input_dir = "input"
-option.output_dir = "output"
-option.log_path = "log.txt"
-option.stream = false
-option.params = Parameters.empty
+)
+option = Option.new(
+  "input", "output", "log.txt", false, Parameters.empty
+)
 
 OPTS = {}
 OPTS[:resource] = 1
@@ -26,7 +24,14 @@ OPTS[:resource] = 1
 parser = OptionParser.new do |opt|
   opt.on('-i dir', '--input-dir=dir') {|dir| option.input_dir = dir }
   opt.on('-o dir', '--output-dir=dir') {|dir| option.output_dir = dir}
-  opt.on('-b uri', '--base-uri=uri') {|uri| option.base_uri = uri}
+  opt.on('-b uri', '--base-uri=uri') {|uri|
+    base_uri = ::URI.parse(uri)
+    if base_uri.scheme == "local"
+      FileUtils.makedirs(base_uri.path)
+      base_uri = base_uri.absolute
+    end
+    option.base_uri = base_uri.to_s
+  }
   opt.on('-l path', '--log=path') {|path| option.log_path = path }
   opt.on('-s', '--stream') { option.stream = true }
   opt.on('-r n', '--resource=n') {|n|
@@ -78,7 +83,10 @@ unless option.base_uri
 end
 
 # make drb server and it's connection
-$tuple_space_server = TupleSpaceServer.new(task_worker_resource: 1, base_uri: option.base_uri)
+$tuple_space_server = TupleSpaceServer.new(
+  task_worker_resource: 1,
+  base_uri: option.base_uri
+)
 provider = Pione::TupleSpaceProvider.instance
 provider.add($tuple_space_server)
 # $remote_drb_server = DRb::DRbServer.new(nil, $tuple_space_server)

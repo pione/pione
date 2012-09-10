@@ -19,15 +19,18 @@ module Pione
         # prepare input files
         setup_working_directory
         # prepare shell script
-        stdout = write_shell_script {|path| call_shell_script(path) }
-        # write output file if the handler is stdout mode
-        write_output_file_from_stdout(stdout)
+        write_shell_script {|path| call_shell_script(path) }
         # collect outputs
         collect_outputs
         # write resouces
         write_output_resources
         # write tuples
         write_output_tuples
+        # write environment info
+        write_env_info
+        # write other resources
+        write_other_resources
+
         # return tuples
         return @outputs
       end
@@ -59,10 +62,9 @@ module Pione
           @inputs,
           @original_params
         )
-        tmpdir = CONFIG[:working_dir] ? CONFIG[:working_dir] : Dir.tmpdir
-        path = File.join(tmpdir, task_dirname)
 
         # create a directory
+        path = File.join(CONFIG.working_directory, task_dirname)
         FileUtils.makedirs(path)
 
         return path
@@ -81,7 +83,10 @@ module Pione
 
       # Write the data to the tempfile as shell script.
       def write_shell_script(&b)
-        file = File.open(File.join(@working_directory,".pione-action"), "w+")
+        file = File.open(
+          File.join(@working_directory,"__pione-action__.sh"),
+          "w+"
+        )
         file.print(@rule.body.eval(@variable_table).content)
         debug_message("Action #{file.path}")
         user_message("-"*60, 0, "SH")
@@ -97,20 +102,16 @@ module Pione
       # Call shell script of the path.
       def call_shell_script(path)
         scriptname = File.basename(path)
-        `cd #{@working_directory}; ./#{scriptname}`
-      end
 
-      # Write stdout data as output file if the handler is stdout mode.
-      def write_output_file_from_stdout(stdout)
-        @rule.outputs.each do |output|
-          output = output.eval(@variable_table)
-          if output.stdout?
-            name = output.eval(@variable_table).name
-            path = File.join(@working_directory, name)
-            IO.copy_stream(stdout, path)
-            break
-          end
-        end
+        # stdout & stderr
+        stdout = @rule.outputs.map {|output|
+          output.eval(@variable_table)
+        }.find {|output| output.stdout?}
+        out = stdout ? stdout.name : ".stdout"
+        err = ".stderr"
+
+        # execute command
+        `cd #{@working_directory}; ./#{scriptname} > #{out} 2> #{err}`
       end
 
       # Make output tuple by name.
@@ -146,13 +147,23 @@ module Pione
         end
       end
 
+      def write_env_info
+        path = File.join(@working_directory, ".pione-env")
+        File.open(path, "w+") do |out|
+          @variable_table.variables.each do |var|
+            val = @variable_table.get(var)
+            out.puts "%s: %s" % [var.name, val.textize]
+          end
+        end
+      end
+
       # Writes resources for other intermediate files.
       def write_other_resources
         Dir.new(@working_directory).each do |name|
           path = File.join(@working_directory, name)
           if File.ftype(path) == "file"
             uri = make_output_resource_uri(name, [])
-            FileCache.put(path, uri)
+            Resource[uri].link_from(path)
           end
         end
       end

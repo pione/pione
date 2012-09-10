@@ -18,6 +18,10 @@ module Pione
       def file?
         not(directory?)
       end
+
+      def absolute
+        ::URI.parse("%s:%s/" % [scheme, File.realpath(path)])
+      end
     end
   end
 end
