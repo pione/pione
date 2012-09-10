@@ -14,7 +14,7 @@ module Rinda
   end
 
   class TupleBag
-    class TaskTupleBin < TupleBin
+    class DomainTupleBin < TupleBin
       def initialize
         @bin = {}
       end
@@ -212,7 +212,7 @@ module Rinda
     def initialize(period=60)
       orig_initialize(period)
       @bag.set_special_bin(
-        :task => TupleBag::TaskTupleBin,
+        :task => TupleBag::DomainTupleBin,
         :data => TupleBag::DataTupleBin
       )
     end

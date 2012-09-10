@@ -74,7 +74,9 @@ module Pione
 
         format = self.class.format
         format_keys = format.map{|key,_| key}
-        format_table = Hash[*format[1..-1].select{|item| item.kind_of?(Array)}.flatten(1)]
+        format_table = Hash[*format[1..-1].select{|item|
+            item.kind_of?(Array)
+          }.flatten(1)]
         if data.first.kind_of?(Hash)
           _data = data.first
           _data.keys.each do |key|
