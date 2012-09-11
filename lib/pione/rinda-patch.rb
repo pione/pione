@@ -14,17 +14,18 @@ module Rinda
   end
 
   class TupleBag
+    # DomainTupleBin is a domain based TupleBin class.
     class DomainTupleBin < TupleBin
       def initialize
         @bin = {}
       end
 
       def add(tuple)
-        @bin[key(tuple)] = tuple
+        @bin[domain(tuple)] = tuple
       end
 
       def delete(tuple)
-        @bin.delete(key(tuple))
+        @bin.delete(domain(tuple))
       end
 
       def delete_if
@@ -32,25 +33,28 @@ module Rinda
         @bin.delete_if {|key, val| yield(val)}
       end
 
-      # Finds a tuple by the template. This method searches by index when the
-      # template has the domain, otherwise by liner.
+      # Finds a tuple matched by the template. This method searches by index
+      # when the template has the domain, otherwise by liner.
       def find(template, &b)
-        if key = key(template)
+        if key = domain(template)
+          # indexed search
           return @bin[key]
         else
-          @bin.values.each do |x|
-            return x if yield(x)
-          end
+          # liner search
+          return @bin.values.find {|val| yield(val)}
         end
-        return nil
       end
 
+      # Finds all tuples matched by the template. This method searches by index
+      # when the template has the domain, otherwise by liner.
       def find_all(template, &b)
         return @bin.values unless block_given?
-        if key = key(template)
+        if key = domain(template)
+          # indexed search
           return [@bin[key]]
         else
-          @bin.select{|_, val| yield(val)}.values
+          # liner search
+          return @bin.select{|_, val| yield(val)}.values
         end
       end
 
@@ -61,8 +65,10 @@ module Rinda
       private
 
       # Returns domain position.
-      def key(tuple)
-        tuple.value[5]
+      def domain(tuple)
+        identifier = tuple.value[0]
+        pos = Pione::Tuple[identifier].domain_position
+        tuple.value[pos]
       end
     end
 
@@ -154,6 +160,7 @@ module Rinda
       end
     end
 
+    # Sets special bin class table by identifier.
     def set_special_bin(special_bin)
       @special_bin = special_bin
     end
@@ -213,8 +220,14 @@ module Rinda
       orig_initialize(period)
       @bag.set_special_bin(
         :task => TupleBag::DomainTupleBin,
+        :finished => TupleBag::DomainTupleBin,
+        :working => TupleBag::DomainTupleBin,
         :data => TupleBag::DataTupleBin
       )
+    end
+
+    def replace_uri(old_uri, new_uri)
+      
     end
   end
 end

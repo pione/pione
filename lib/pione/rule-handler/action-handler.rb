@@ -117,7 +117,7 @@ module Pione
       # Make output tuple by name.
       def make_output_tuple_with_time(name)
         time = File.mtime(File.join(@working_directory, name))
-        uri = make_output_resource_uri(name, @resource_hints).to_s
+        uri = make_output_resource_uri(name).to_s
         Tuple[:data].new(name: name, domain: @domain, uri: uri, time: time)
       end
 
@@ -147,6 +147,7 @@ module Pione
         end
       end
 
+      # Writes action environment information file.
       def write_env_info
         path = File.join(@working_directory, ".pione-env")
         File.open(path, "w+") do |out|
@@ -168,7 +169,7 @@ module Pione
         end
       end
 
-      # Write output tuples into the tuple space server.
+      # Writes output tuples into the tuple space server.
       def write_output_tuples
         @outputs.flatten.each {|output| write(output)}
       end

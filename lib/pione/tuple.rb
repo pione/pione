@@ -4,7 +4,17 @@ module Pione
   module Tuple
     TABLE = Hash.new
 
-    class FormatError < ArgumentError
+    class FormatError < StandardError
+      def initialize(invalid_data, identifier=nil)
+        @invalid_data = invalid_data
+        @identifier = identifier
+      end
+
+      def message
+        msg = @invalid_data.inspect
+        msg += " in %s" % @identifier if @identifier
+        return msg
+      end
     end
 
     # Type represents tuple's field data type which has or-relation.
@@ -24,32 +34,26 @@ module Pione
 
     class TupleObject < PioneObject
 
-      # Define a tuple class and return its class.
+      # Defines a new tuple class and returns it.
       def self.define(format)
-        klass = Class.new(self) do
-          set_format format
-        end
+        klass = Class.new(self) {set_format format}
         Tuple.const_set(klass.classname, klass)
         return klass
       end
 
-      # Return class name of the tuple format.
+      # Returns the class name from the tuple format.
       def self.classname
         identifier.to_s.capitalize.gsub(/_(.)/){ $1.upcase }
       end
 
-      # Set tuple's format.
+      # Set the tuple's format.
       def self.set_format(definition)
         @format = definition
 
         # create accessors
         @format.each do |key, _|
-          define_method(key) do
-            @data[key]
-          end
-          define_method("#{key}=") do |val|
-            @data[key] = val
-          end
+          define_method(key) {@data[key]}
+          define_method("%s=" % key) {|val| @data[key] = val}
         end
       end
 
@@ -61,6 +65,14 @@ module Pione
       # Return the identifier.
       def self.identifier
         @format.first
+      end
+
+      def self.domain_position
+        @format.each_with_index do |key, i|
+          key = key.kind_of?(Array) ? key.first : key
+          return i if key == :domain
+        end
+        return nil
       end
 
       # Return a respresentation for matching any tuples of same type.
@@ -81,22 +93,28 @@ module Pione
           _data = data.first
           _data.keys.each do |key|
             # key check
-            raise FormatError.new(key) unless format_keys.include?(key)
+            unless format_keys.include?(key)
+              raise FormatError.new(key, format.first)
+            end
             # type check
             if _data[key] && not(format_table[key].nil?)
               unless format_table[key] === _data[key]
-                raise FormatError.new(_data[key])
+                raise FormatError.new(_data[key], format.first)
               end
             end
           end
           @data = _data
         else
-          raise FormatError.new(data) unless data.size == format.size - 1
+          # length check
+          unless data.size == format.size - 1
+            raise FormatError.new(data, format.identifier)
+          end
           # type check
           data.each_with_index do |key, i|
             if format[i+1].kind_of?(Array)
+              # type specified
               unless format[i+1][1] === data[i] or data[i].nil?
-                raise FormatError.new(data[i])
+                raise FormatError.new(data[i], format.first)
               end
             end
           end
@@ -156,11 +174,15 @@ module Pione
 
       # check arguments
       # format is a list of symbols
-      format.each {|name, _| raise FormatError.new(name) unless Symbol === name}
-      # fobid to define same identifier and different format
+      format.each do |name, _|
+        unless Symbol === name
+          raise FormatError.new(name, identifier)
+        end
+      end
+      # forbid to define same identifier and different format
       if TABLE.has_key?(identifier)
         if not(TABLE[identifier].format == format)
-          raise FormatError.new(identifier)
+          raise FormatError.new(format, identifier)
         else
           return TABLE[identifier]
         end
@@ -196,7 +218,9 @@ module Pione
       TABLE[identifier].new(*args)
     end
 
-    # -- define tuples --
+    #
+    # define tuples
+    #
 
     # signal representation
     #   type : command string, currently "terminate" only
@@ -221,15 +245,13 @@ module Pione
     #   features       : feature              : request features
     #   domain         : string               : task domain
     #   call_stack     : string array         : call stack(domain list)
-    #   resource_hints : Resource::Hint array : resource hints for output
     define_format [:task,
       [:rule_path, String],
       [:inputs, Array],
       [:params, Model::Parameters],
       [:features, Model::Feature::Expr],
       [:domain, String],
-      [:call_stack, Array],
-      [:resource_hints, Array]
+      [:call_stack, Array]
     ]
 
     # working information
@@ -295,14 +317,16 @@ module Pione
     #   pid  : process id
     define_format [:process_info, :name, :process_id]
 
-    # sync target information
-    #   src  : sync source domain
-    #   dest : sync destinaiton domain
-    #   name : data name
-    define_format [:sync_target, :src, :dest, :name]
+    # resource shift information
+    #   old_uri : String : old uri
+    #   new_uri : String : new uri
+    define_format [:shift,
+      [:old_uri, String],
+      [:new_uri, String]
+    ]
 
     class Task
-      # Returns digest string of the task.
+      # Returns the digest string of the task.
       def digest
         "%s([%s],[%s])" % [
           rule_path,
@@ -312,6 +336,10 @@ module Pione
           params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
         ]
       end
+    end
+
+    class Data
+      attr_accessor :old_uri
     end
   end
 end

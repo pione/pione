@@ -26,11 +26,18 @@ module Pione
     end
 
     class FileCacheMethod
+      # Gets the cache location path of the URI.
       def get(uri)
         raise NotImplementedError
       end
 
+      # Puts the file into cache with the URI.
       def put(src, uri)
+        raise NotImplementedError
+      end
+
+      # Shitfs the URI.
+      def shift(old_uri, new_uri)
         raise NotImplementedError
       end
     end
@@ -70,6 +77,10 @@ module Pione
         # copy from cache to the resource file
         @table[uri] = path
         Resource[uri].link_from(path)
+      end
+
+      def shift(old_uri, new_uri)
+        @table[new_uri] = @table[old_uri]
       end
 
       private

@@ -33,14 +33,13 @@ module Pione
       attr_reader :domain
       attr_reader :variable_table
       attr_reader :call_stack
-      attr_reader :resource_hints
 
       # Create a new handler for rule.
       # [+ts_server+] tuple space server
       # [+rule+] rule instance
       # [+inputs+] input tuples
       # [+opts+] optionals
-      def initialize(ts_server, rule, inputs, params, call_stack, resource_hints, opts={})
+      def initialize(ts_server, rule, inputs, params, call_stack, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
         raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
@@ -59,7 +58,6 @@ module Pione
         @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new(@params.data)
         @base_uri = read(Tuple[:base_uri].any).uri
-        @resource_hints = resource_hints
         @task_id = Util.task_id(@inputs, @params)
         @call_stack = call_stack
 
@@ -139,24 +137,23 @@ module Pione
         )
       end
 
-      # Makes resource uri with resource hint.
-      def make_output_resource_uri(name, resource_hints)
-        domain = @domain
-        hints = resource_hints.reverse.each do |hint|
-          if hint.outputs.any? {|expr| expr.match(name)}
-            domain = hint.domain
-          else
-            break
-          end
-        end
+      # Makes resource uri.
+      def make_output_resource_uri(name)
+        # get parent domain or root domain
+        domain = @call_stack.last || @domain
+
+        # make relative path
         rule_name = domain.split("_")[0..-2].join("_")
         digest = domain.split("_").last
-        URI(@base_uri) + ("./.%s/%s/%s" % [rule_name, digest, name])
+        path = "./.%s/%s/%s" % [rule_name, digest, name]
+
+        # make uri
+        URI(@base_uri) + path
       end
 
       # Make output tuple by name.
       def make_output_tuple(name)
-        uri = make_output_resource_uri(name, @resource_hints).to_s
+        uri = make_output_resource_uri(name).to_s
         Tuple[:data].new(name: name, domain: @domain, uri: uri, time: nil)
       end
 

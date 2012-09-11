@@ -23,15 +23,21 @@ module Pione
         ::URI.parse("%s:%s/" % [scheme, File.realpath(path)])
       end
     end
+
+    class Dropbox < ::URI::Generic
+      COMPONENT = [:scheme, :path]
+    end
   end
 end
 
 module URI
   @@schemes['LOCAL'] = Pione::URI::Local
+  @@schemes['DROPBOX'] = Pione::URI::Dropbox
 
   class Parser
     alias :orig_split :split
 
+    # special split method for local scheme.
     def split(uri)
       if uri.split(":").first == "local"
         scheme = "local"

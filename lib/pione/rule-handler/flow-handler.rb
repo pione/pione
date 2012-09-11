@@ -19,6 +19,8 @@ module Pione
         apply_rules(@rule.body.eval(@variable_table).elements)
         # find outputs
         find_outputs
+        # shift resource
+        shift_output_resources
         # check output validation
         validate_outputs
 
@@ -213,12 +215,24 @@ module Pione
       def find_outputs
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
-          list = read_all(Tuple[:data].new(domain: @domain))
+          tuples = read_all(Tuple[:data].new(domain: @domain))
           case output.modifier
           when :all
-            @outputs[i] = list.select {|data| output.match(data.name)}
+            @outputs[i] = tuples.find_all {|data| output.match(data.name)}
           when :each
-            @outputs[i] = list.find {|data| output.match(data.name)}
+            @outputs[i] = tuples.find {|data| output.match(data.name)}
+          end
+        end
+      end
+
+      # Shifts output resource locations.
+      def shift_output_resources
+        @outputs.flatten.each do |output|
+          unless output.uri == output.old_uri
+            # shift resource
+            Resource[output.uri].shift_from(output.old_uri)
+            # shift cache
+            FileCache.shift(output.old_uri, output.uri)
           end
         end
       end
@@ -253,20 +267,13 @@ module Pione
       rescue Rinda::RequestExpiredError
       end
 
-      # Makes the resource hint.
-      def make_resource_hint(rule, vtable)
-        domain = self.kind_of?(RootHandler) ? "" : @domain
-        Resource::Hint.new(
-          domain,
-          rule.outputs.map{|output| output.eval(vtable)}
-        )
-      end
-
       # Copy data into specified domain and return the tuple list
       def copy_data_into_domain(src_data, dest_domain)
         src_data.flatten.map do |d|
           new_data = d.clone
           new_data.domain = dest_domain
+          new_data.old_uri = d.uri
+          new_data.uri = make_output_resource_uri(d.name)
           write(new_data)
           new_data
         end
