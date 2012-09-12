@@ -138,17 +138,24 @@ module Pione
       end
 
       # Makes resource uri.
+      def make_resource_uri(name, domain)
+        if domain == "root" || domain.nil?
+          return URI(@base_uri) + "./%s" % name
+        else
+          # make relative path
+          rule_name = domain.split("_")[0..-2].join("_")
+          digest = domain.split("_").last
+          path = "./.%s/%s/%s" % [rule_name, digest, name]
+
+          # make uri
+          return URI(@base_uri) + path
+        end
+      end
+
+      # Makes output resource uri.
       def make_output_resource_uri(name)
         # get parent domain or root domain
-        domain = @call_stack.last || @domain
-
-        # make relative path
-        rule_name = domain.split("_")[0..-2].join("_")
-        digest = domain.split("_").last
-        path = "./.%s/%s/%s" % [rule_name, digest, name]
-
-        # make uri
-        URI(@base_uri) + path
+        make_resource_uri(name, @call_stack.last)
       end
 
       # Make output tuple by name.

@@ -33,7 +33,6 @@ module Pione
     end
 
     class TupleObject < PioneObject
-
       # Defines a new tuple class and returns it.
       def self.define(format)
         klass = Class.new(self) {set_format format}
@@ -71,6 +70,14 @@ module Pione
         @format.each_with_index do |key, i|
           key = key.kind_of?(Array) ? key.first : key
           return i if key == :domain
+        end
+        return nil
+      end
+
+      def self.uri_position
+        @format.each_with_index do |key, i|
+          key = key.kind_of?(Array) ? key.first : key
+          return i if key == :uri
         end
         return nil
       end
@@ -202,9 +209,14 @@ module Pione
       end
     end
 
-    # Return a class corresponding to a tuple identifier.
+    # Returns a class corresponding to a tuple identifier.
     def self.[](identifier)
       TABLE[identifier]
+    end
+
+    # Returns identifiers.
+    def self.identifiers
+      TABLE.keys
     end
 
     # Return a tuple data object converted from an array.
@@ -336,10 +348,6 @@ module Pione
           params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
         ]
       end
-    end
-
-    class Data
-      attr_accessor :old_uri
     end
   end
 end

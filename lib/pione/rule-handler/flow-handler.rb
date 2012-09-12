@@ -146,8 +146,7 @@ module Pione
               callee.expr.params,
               rule.features,
               task_domain,
-              @call_stack + [@domain],
-              @resource_hints + [make_resource_hint(rule, vtable)]
+              @call_stack + [@domain]
             )
 
             # check if same task exists
@@ -228,11 +227,15 @@ module Pione
       # Shifts output resource locations.
       def shift_output_resources
         @outputs.flatten.each do |output|
-          unless output.uri == output.old_uri
+          old_uri = output.uri.to_s
+          new_uri = make_output_resource_uri(output.name).to_s
+          unless new_uri == old_uri
             # shift resource
-            Resource[output.uri].shift_from(output.old_uri)
+            Resource[new_uri].shift_from(Resource[old_uri])
             # shift cache
-            FileCache.shift(output.old_uri, output.uri)
+            FileCache.shift(old_uri, new_uri)
+            # write shift tuple
+            write(Tuple[:shift].new(old_uri, new_uri))
           end
         end
       end
@@ -272,8 +275,6 @@ module Pione
         src_data.flatten.map do |d|
           new_data = d.clone
           new_data.domain = dest_domain
-          new_data.old_uri = d.uri
-          new_data.uri = make_output_resource_uri(d.name)
           write(new_data)
           new_data
         end

@@ -160,6 +160,62 @@ module Rinda
       end
     end
 
+    class HashTupleBin
+      def initialize
+        @bin = {}
+      end
+
+      def add(tuple)
+        @bin[key(tuple)] = tuple
+      end
+
+      def delete(tuple)
+        @bin.delete(key(tuple))
+      end
+
+      def delete_if
+        if block_given?
+          @bin.delete_if {|_, val| yield(val)}
+        end
+        return @bin
+      end
+
+      def find(template, &b)
+        if key(template) && @bin.has_key?(key(template))
+          tuple = @bin[key(template)]
+          return tuple if yield(tuple)
+        else
+          @bin.values.each do |tuple|
+            return tuple if yield(tuple)
+          end
+        end
+        return nil
+      end
+
+      def find_all(template, &b)
+        if key(template) && @bin.has_key?(key(template))
+          tuple = @bin[key(template)]
+          return tuple if yield(tuple)
+        else
+          return @bin.values.find_all {|tuple|
+            yield(tuple)
+          }
+        end
+      end
+
+      def each(*args)
+        @bin.values.each(*args)
+      end
+
+      private
+
+      # Returns the key.
+      def key(tuple)
+        # 0:identifier, 1:key, 2:value
+        return tuple.value[1]
+      end
+    end
+
     # Sets special bin class table by identifier.
     def set_special_bin(special_bin)
       @special_bin = special_bin
@@ -216,18 +272,53 @@ module Rinda
   class TupleSpace
     alias :orig_initialize :initialize
 
-    def initialize(period=60)
-      orig_initialize(period)
+    def initialize(*args)
+      orig_initialize(*args)
       @bag.set_special_bin(
         :task => TupleBag::DomainTupleBin,
         :finished => TupleBag::DomainTupleBin,
         :working => TupleBag::DomainTupleBin,
-        :data => TupleBag::DataTupleBin
+        :data => TupleBag::DataTupleBin,
+        :shift => TupleBag::HashTupleBin
       )
     end
 
-    def replace_uri(old_uri, new_uri)
-      
+    alias :orig_read :read
+    def read(tuple, sec=nil)
+      shift_tuple(orig_read(tuple, sec))
+    end
+
+    alias :orig_read_all :read_all
+    def read_all(tuple)
+      orig_read_all(tuple).map do |res|
+        shift_tuple(res)
+      end
+    end
+
+    private
+
+    def shift_tuple(tuple)
+      if pos = Pione::Tuple[tuple.first].uri_position
+        if new_uri = shift_uri(tuple[pos])
+          tuple = tuple.clone
+          tuple[pos] = new_uri
+        end
+      end
+      return tuple
+    end
+
+    def shift_uri(uri, old=[])
+      return nil if old.include?(uri)
+
+      template = TemplateEntry.new([:shift, uri, nil])
+      if shift_tuple = @bag.find(template)
+        next_uri = shift_tuple[2]
+        if last_uri = shift_uri(next_uri, old + [uri])
+          next_uri = last_uri
+        end
+        return next_uri
+      end
+      return nil
     end
   end
 end

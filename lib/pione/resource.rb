@@ -20,6 +20,8 @@ module Pione
     Hint = Struct.new(:domain, :outputs)
 
     class Base
+      attr_reader :path
+
       def create(data)
         raise NotImplementedError
       end
@@ -94,10 +96,18 @@ module Pione
       # other file to the resource path and creates a symbolic link from
       # distination to source.
       def swap(other)
+        unless File.ftype(other) == "file"
+          raise ArgumentError.new(other)
+        end
         dir = File.dirname(@path)
         FileUtils.makedirs(dir) unless Dir.exist?(dir)
         FileUtils.mv(other, @path)
         FileUtils.symlink(@path, other)
+      end
+
+      def shift_from(other)
+        raise ArgumentError.new(other) unless other.kind_of?(self.class)
+        swap(other.path)
       end
     end
 

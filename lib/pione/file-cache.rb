@@ -25,6 +25,10 @@ module Pione
       instance.put(src, uri)
     end
 
+    def self.shift(old_uri, new_uri)
+      instance.shift(old_uri, new_uri)
+    end
+
     class FileCacheMethod
       # Gets the cache location path of the URI.
       def get(uri)
@@ -57,10 +61,10 @@ module Pione
 
           # link the resource file to cache path
           Resource[uri].link_to(path)
-          @table[uri] = path
+          @table[uri.to_s] = path
         end
 
-        return @table[uri]
+        return @table[uri.to_s]
       end
 
       # Puts the data to uri resource and caches it in local.
@@ -75,12 +79,12 @@ module Pione
         FileUtils.symlink(path, src)
 
         # copy from cache to the resource file
-        @table[uri] = path
+        @table[uri.to_s] = path
         Resource[uri].link_from(path)
       end
 
       def shift(old_uri, new_uri)
-        @table[new_uri] = @table[old_uri]
+        @table[new_uri.to_s] = @table[old_uri.to_s]
       end
 
       private

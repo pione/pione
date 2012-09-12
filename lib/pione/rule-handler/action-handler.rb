@@ -163,7 +163,7 @@ module Pione
         Dir.new(@working_directory).each do |name|
           path = File.join(@working_directory, name)
           if File.ftype(path) == "file"
-            uri = make_output_resource_uri(name, [])
+            uri = make_resource_uri(name, @domain)
             Resource[uri].link_from(path)
           end
         end
