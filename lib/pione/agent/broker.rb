@@ -1,4 +1,3 @@
-require 'pione/common'
 require 'pione/agent'
 require 'pione/agent/task-worker'
 require 'pione/agent/broker-task-worker-life-checker'

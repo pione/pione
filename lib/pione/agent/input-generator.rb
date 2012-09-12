@@ -1,7 +1,3 @@
-require 'pione/common'
-require 'pione/uri'
-require 'pione/resource'
-
 module Pione
   module Agent
     class InputGenerator < TupleSpaceClient

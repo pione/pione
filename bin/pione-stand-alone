@@ -2,7 +2,7 @@
 # -*- ruby -*-
 
 require 'optparse'
-require 'pione/common'
+require 'pione'
 
 include Pione
 Thread.abort_on_exception = true
