@@ -19,11 +19,29 @@ module Pione
   VERSION = 0
 
   def version
-    "%s" % [VERSION]
+    "%s" % VERSION
   end
   module_function :version
+
+  # Basic object class for PIONE system.
+  class PioneObject
+    # Returns this object's uuid.
+    # @return [String] UUID string
+    def uuid
+      @__uuid__ ||= generate_uuid
+    end
+
+    # Finalizes this object.
+    # @return [void]
+    def finalize
+      # do nothing
+    end
+  end
 end
 
+require 'pione/util/terminal'
+require 'pione/util/config'
+require 'pione/util/message'
 require 'pione/rinda-patch'
 require 'pione/common'
 require 'pione/model'
@@ -41,5 +59,8 @@ require 'pione/file-cache'
 require 'pione/agent'
 
 module Pione
+  include Pione::Util
   include Pione::Model
+
+  CONFIG = Config.new
 end

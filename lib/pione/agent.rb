@@ -1,14 +1,22 @@
 module Pione
   module Agent
+    # @api private
     @table = Hash.new
 
     class << self
       # Returns a class corresponding to the agent type.
+      # @param [Symbol] type
+      #   agent type
+      # @return [Pione::Agent::Base]
+      #   agent class
       def [](type)
         @table[type]
       end
 
       # Sets an agent of the system.
+      # @param [Pione::Agent::Base] klass
+      #   agent class
+      # @return [void]
       def set_agent(klass)
         @table[klass.agent_type] = klass
       end

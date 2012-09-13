@@ -2,7 +2,8 @@ module Pione
   module Agent
     # StateTransitionSingleMethod provides state transition singleton methods.
     module StateTransitionSingletonMethod
-      # Set pre-defined states when the module is extended by others.
+      # Sets pre-defined states when the module is extended by others.
+      # @api private
       def self.extended(mod)
         mod.define_state :initialized
         mod.define_state :terminated
@@ -11,7 +12,10 @@ module Pione
         mod.define_state_transition :error => :terminated
       end
 
-      # Define new agent state.
+      # Defines new agent state.
+      # @param [Symbol] name
+      #   state name
+      # @return [void]
       def define_state(name)
         @states ||= []
         unless @states.include?(name)
@@ -29,34 +33,43 @@ module Pione
         end
       end
 
-      # Return all states.
+      # Returns all states.
+      # @return [Array<Symbol>]
+      #   state name list
       def states
         @states
       end
 
-      # Return state transition table.
+      # Returns state transition table.
+      # @return [Hash{Symbol => Symbol}]
+      #   state transition table
       def state_transition_table
         @__state_transition_table__ ||= {nil => :initialized}
       end
 
-      # Define a state transition.
+      # Defines a state transition.
+      # @param [Hash{Symbol => Symbol}] data
+      #   state transition as the key value pair of from-state and to-state
+      # @return [void]
       def define_state_transition(data)
         table = state_transition_table
         table.merge!(data)
       end
 
-      # Return exception handler table.
+      # Returns exception handler table.
+      # @return [Hash{Symbol => Symbol}]
+      #   exception handler table
       def exception_handler_table
         @__exception_handler_table__ ||= {}
       end
 
-      # Define a state for handling exceptions.
+      # Defines a state for handling exceptions.
       def define_exception_handler(data)
         table = exception_handler_table
         table.merge!(data)
       end
 
-      # Create a agent and start it.
+      # Creates an agent and start it.
       def start(*args, &b)
         agent = new(*args)
         b.call(self) if block_given?
