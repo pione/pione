@@ -1,5 +1,3 @@
-require 'pione/common'
-
 module Pione
   module TupleSpaceServerInterface
 
@@ -18,23 +16,6 @@ module Pione
     tuple_space_operation :count_tuple
     tuple_space_operation :notify
 
-    # Reads a tuple without waiting.
-    def read0(tuple)
-      read(tuple, 0)
-    end
-
-    # Takes a tuple without wainting.
-    def take0(tuple)
-      read(tuple, 0)
-    end
-
-    # Log a message.
-    def log
-      msg = Log.new
-      yield msg
-      write(Tuple[:log].new(msg))
-    end
-
     # Return the tuple space server.
     def tuple_space_server
       @__tuple_space_server__
@@ -42,7 +23,28 @@ module Pione
 
     private
 
+    # Reads a tuple without waiting.
+    # @return [Tuple]
+    def read0(tuple)
+      read(tuple, 0)
+    end
+
+    # Takes a tuple without wainting.
+    # @return [Tuple]
+    def take0(tuple)
+      read(tuple, 0)
+    end
+
+    # Log a message.
+    # @return [void]
+    def log
+      msg = Log.new
+      yield msg
+      write(Tuple[:log].new(msg))
+    end
+
     # Set tuple space server which provides operations.
+    # @return [void]
     def set_tuple_space_server(server)
       @__tuple_space_server__ = server
 

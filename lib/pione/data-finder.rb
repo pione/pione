@@ -1,14 +1,14 @@
-require 'pione/common'
-
 module Pione
-  # DataFinder finds data from tuple space server.
+  # DataFinder finds data tuples from tuple space server.
   class DataFinder < PioneObject
 
     # DataFinderResult represents an element of DataFinder#find results. The
     # attribute +combination+ is a rule inputs combination and +variable_table+
-    # is a variable's table including variables for found date set.
+    # is a variable table including variables for found date set.
     class DataFinderResult < Struct.new(:combination, :variable_table)
-      # Return true if the combination is empty.
+      # Returns true if the combination is empty.
+      # @return [Boolean]
+      #   true if the result is empty
       def empty?
         self[:combination].empty?
       end
@@ -17,25 +17,24 @@ module Pione
     include TupleSpaceServerInterface
 
     # Creates a new finder.
-    # [+ts_server+] tuple space server
-    # [+domain+] target data domain to find
+    # @param [TupleSpaceServer] ts_server
+    #   tuple space server
+    # @param [String] domain
+    #   target data domain to find
     def initialize(ts_server, domain)
       set_tuple_space_server(ts_server)
       @domain = domain
     end
 
-    # Finds all data tuples by the expression from a tuple space server.
-    # [expr] data-expr
-    def find_by_expr(expr)
-      expr = DataExpr.new(expr) if expr.kind_of?(String)
-      q = Tuple[:data].new(name: expr, domain: @domain)
-      return tuple_space_server.read_all(q)
-    end
-
     # Find tuple combinations by data expressions from tuple space server.
-    # [type] :input or :output
-    # [exprs] data-expr list
-    # [vtable] variabel table
+    # @param [Symbol] type
+    #   :input if target date is for input or :output
+    # @param [DataExpr] exprs
+    #   data-expr list
+    # @param [VariableTable] vtable
+    #   variabel table
+    # @return [DataFinderResult]
+    #   result data set
     def find(type, exprs, vtable)
       raise ArgumentError.new(vtable) unless vtable.kind_of?(VariableTable)
 
@@ -54,6 +53,18 @@ module Pione
     end
 
     private
+
+    # Finds all data tuples by the expression from a tuple space server.
+    # @param [DataExpr] expr
+    #   query expression of data
+    # @return [DataFinderResult]
+    #   query result
+    # @api private
+    def find_by_expr(expr)
+      expr = DataExpr.new(expr) if expr.kind_of?(String)
+      query = Tuple[:data].new(name: expr, domain: @domain)
+      return tuple_space_server.read_all(query)
+    end
 
     # Find input tuple combinatioins recursively.
     def find_rec(type, exprs, index, vtable)
@@ -89,6 +100,7 @@ module Pione
       return []
     end
 
+    # @api private
     def find_rec_sub(type, tail, index, data, vtable)
       find_rec(type, tail, index+1, vtable).map do |res|
         new_combination = res.combination.unshift(data)
@@ -98,6 +110,7 @@ module Pione
     end
 
     # Make auto-variables by the name modified 'all'.
+    # @api private
     def make_auto_variables_by_all(prefix, expr, tuples, vtable)
       # create new table
       new_vtable = VariableTable.new(vtable)
@@ -124,6 +137,7 @@ module Pione
     end
 
     # Make auto-variables by the name modified 'each'.
+    # @api private
     def make_auto_variables_by_each(prefix, expr, tuple, vtable, index)
       # create new table
       new_vtable = VariableTable.new(vtable)

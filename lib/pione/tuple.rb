@@ -1,15 +1,25 @@
-require 'pione/common'
-
 module Pione
   module Tuple
+    # tuple type table
+    # @api private
     TABLE = Hash.new
 
+    # FormatError is raised when tuple format is invalid.
     class FormatError < StandardError
+      # Creates an error.
+      # @param [Array<Object>] invalid_data
+      #   invalid data
+      # @param [Symbol] identifier
+      #   tuple identifier
       def initialize(invalid_data, identifier=nil)
         @invalid_data = invalid_data
         @identifier = identifier
       end
 
+      # Returns a message of this error.
+      # @return [String]
+      #   message string with invalid data and tuple identifier
+      # @api private
       def message
         msg = @invalid_data.inspect
         msg += " in %s" % @identifier if @identifier
@@ -17,76 +27,137 @@ module Pione
       end
     end
 
-    # Type represents tuple's field data type which has or-relation.
+    # Type represents tuple's field data type. Type has simple and complex form,
+    # the latter is consisted by types or-relation. The method +===+ is used by
+    # matching field data and type.
+    # @example
+    #   # create simple type
+    #   simple_type = Type.new(String)
+    #   simple_type === "abc" #=> true
+    #   # create complex type
+    #   complex_type = Type.new(String, Symbol)
+    #   complex_type === "abc" #=> true
+    #   complex_type === :abc  #=> true
     class Type
-      def self.or(*args)
-        new(*args)
+      class << self
+        alias :or :new
       end
 
-      def initialize(*args)
-        @types = args
+      # Creates a tuple field type.
+      # @param [Array<Object>] types
+      #   tuple field types
+      def initialize(*types)
+        raise ArgumentError.new(types) unless types.size > 0
+        @types = types
       end
 
+      # Returns true if the type is simple.
+      # @return [Boolean]
+      #   true if the type is simple, or false
+      def simple?
+        @types.size == 1
+      end
+
+      # Returns true if the type is complex.
+      # @return [Boolean]
+      #   true if the type is complex, or false
+      def complex?
+        not(simple?)
+      end
+
+      # @api private
       def ===(other)
         @types.find {|t| t === other}
       end
     end
 
+    # TupleObject is a superclass for all tuple classes.
     class TupleObject < PioneObject
-      # Defines a new tuple class and returns it.
-      def self.define(format)
-        klass = Class.new(self) {set_format format}
-        Tuple.const_set(klass.classname, klass)
-        return klass
-      end
+      class << self
+        # Defines a new tuple class and returns it.
+        # @param [Array] format
+        #   tuple format
+        # @return [TupleObject]
+        #   new tuple object class which has the format
+        def define(format)
+          klass = Class.new(self) {set_format format}
+          Tuple.const_set(klass.classname, klass)
+          return klass
+        end
 
-      # Returns the class name from the tuple format.
-      def self.classname
-        identifier.to_s.capitalize.gsub(/_(.)/){ $1.upcase }
-      end
+        # Returns the class name from the tuple format.
+        # @return [String]
+        #   class name string
+        def classname
+          identifier.to_s.capitalize.gsub(/_(.)/){ $1.upcase }
+        end
 
-      # Set the tuple's format.
-      def self.set_format(definition)
-        @format = definition
+        # Sets the tuple format and creates accessor methods.
+        # @param [Array] definition
+        #   tuple format
+        # @return [void]
+        def set_format(definition)
+          @format = definition
 
-        # create accessors
-        @format.each do |key, _|
-          define_method(key) {@data[key]}
-          define_method("%s=" % key) {|val| @data[key] = val}
+          # create accessors
+          @format.each do |key, _|
+            define_method(key) {@data[key]}
+            define_method("%s=" % key) {|val| @data[key] = val}
+          end
+        end
+
+        # Returns tuple's format.
+        # @return [Array]
+        #   tuple's format
+        def format
+          @format
+        end
+
+        # Returns the identifier.
+        # @return [Symbol]
+        #   identifier of the tuple
+        def identifier
+          @format.first
+        end
+
+        # Returns a respresentation for matching any tuples of same type.
+        # @return [TupleObject]
+        #   a query tuple that matches any tuples has the identifier
+        def any
+          new
+        end
+
+        # Returns domain position of the format.
+        # @return [Integer, nil]
+        #   position number of domain field, or nil
+        # @api private
+        def domain_position
+          position_of(:domain)
+        end
+
+        # Returns uri position of the format.
+        # @return [Integer, nil]
+        #   position number of URI field, or nil
+        # @api private
+        def uri_position
+          position_of(:uri)
+        end
+
+        private
+
+        # @api private
+        def position_of(name)
+          @format.each_with_index do |key, i|
+            key = key.kind_of?(Array) ? key.first : key
+            return i if key == name
+          end
+          return nil
         end
       end
 
-      # Return tuple's format.
-      def self.format
-        @format
-      end
-
-      # Return the identifier.
-      def self.identifier
-        @format.first
-      end
-
-      def self.domain_position
-        @format.each_with_index do |key, i|
-          key = key.kind_of?(Array) ? key.first : key
-          return i if key == :domain
-        end
-        return nil
-      end
-
-      def self.uri_position
-        @format.each_with_index do |key, i|
-          key = key.kind_of?(Array) ? key.first : key
-          return i if key == :uri
-        end
-        return nil
-      end
-
-      # Return a respresentation for matching any tuples of same type.
-      def self.any
-        new
-      end
-
+      # Creates new tuple object.
+      # @param [Hash] data
+      #   tuple data
       def initialize(*data)
         @data = {}
         return if data.empty?
@@ -129,6 +200,7 @@ module Pione
         end
       end
 
+      # @api private
       def ==(other)
         case other
         when TupleObject
@@ -138,36 +210,51 @@ module Pione
         end
       end
 
-      alias :eql? :==
+      alias :eql? :"=="
 
+      # @api private
       def hash
         @data.hash
       end
 
-      # Return the identifier.
+      # Returns the identifier.
+      # @return [Symbol]
+      #   tuple identifier
       def identifier
         self.class.identifier
       end
 
-      # Convert to string form.
+      # Converts the tuple to string form.
+      # @api private
       def to_s
         "#<#<#{self.class.name}> #{to_tuple_space_form.to_s}>"
       end
 
       # Convert to plain tuple form.
+      # @return [Array<Object>]
+      #   tuple data array for Rinda's tuple space
       def to_tuple_space_form
         self.class.format[1..-1].map{|key, _| @data[key]}.unshift(identifier)
       end
 
+      # Converts the tuple to json form.
+      # @return [String]
+      #   json form of the tuple
       def to_json(*a)
         @data.merge({"tuple" => self.class.identifier}).to_json(*a)
       end
 
-      # Return the value of the specified position.
+      # Returns the value of the specified position.
+      # @param [Integer] i
+      #   field position to get
+      # @return
+      #   the value
       def value(i = 0)
         @data[i]
       end
 
+      # Returns true if the field writable.
+      # @return [Boolean]
       def writable?
         self.class.format.map do |symbol|
           @data.has_key?(symbol)
@@ -175,59 +262,69 @@ module Pione
       end
     end
 
-    # Define a tuple format and create a class representing it.
-    def self.define_format(format)
-      identifier = format.first
+    class << self
+      # Defines a tuple format and create a class representing it.
+      # @return [void]
+      def define_format(format)
+        identifier = format.first
 
-      # check arguments
-      # format is a list of symbols
-      format.each do |name, _|
-        unless Symbol === name
-          raise FormatError.new(name, identifier)
+        # check arguments: format is a list of symbols
+        format.each do |name, _|
+          unless Symbol === name
+            raise FormatError.new(name, identifier)
+          end
+        end
+
+        # forbid to define same identifier and different format
+        if TABLE.has_key?(identifier)
+          if not(TABLE[identifier].format == format)
+            raise FormatError.new(format, identifier)
+          else
+            return TABLE[identifier]
+          end
+        end
+
+        # make a class and set it in a table
+        klass = TupleObject.define(format)
+        TABLE[identifier] = klass
+      end
+
+      # Deletes a tuple format definition.
+      # @return [void]
+      def delete_format(identifier)
+        if TABLE.has_key?(identifier)
+          name = TABLE[identifier].name.split('::').last
+          TABLE.delete(identifier)
+          remove_const(name)
         end
       end
-      # forbid to define same identifier and different format
-      if TABLE.has_key?(identifier)
-        if not(TABLE[identifier].format == format)
-          raise FormatError.new(format, identifier)
-        else
-          return TABLE[identifier]
-        end
+
+      # Returns a tuple class corresponding to a tuple identifier.
+      # @return [Class]
+      #   tuple class
+      def [](identifier)
+        TABLE[identifier]
       end
 
-      # make a class and set it in a table
-      klass = TupleObject.define(format)
-      TABLE[identifier] = klass
-    end
-
-    # Delete a tuple format definition.
-    def self.delete_format(identifier)
-      if TABLE.has_key?(identifier)
-        name = TABLE[identifier].name.split('::').last
-        TABLE.delete(identifier)
-        remove_const(name)
+      # Returns identifiers.
+      # @return [Array<Symbol>]
+      #   all tuple identifiers in PIONE system.
+      def identifiers
+        TABLE.keys
       end
-    end
 
-    # Returns a class corresponding to a tuple identifier.
-    def self.[](identifier)
-      TABLE[identifier]
-    end
-
-    # Returns identifiers.
-    def self.identifiers
-      TABLE.keys
-    end
-
-    # Return a tuple data object converted from an array.
-    def self.from_array(ary)
-      raise FormatError.new(ary) unless ary.size > 0
-      raise FormatError.new(ary) unless ary.kind_of?(Enumerable)
-      _ary = ary.to_a
-      identifier = _ary.first
-      raise FormatError.new(identifier) unless TABLE.has_key?(identifier)
-      args = _ary[1..-1]
-      TABLE[identifier].new(*args)
+      # Return a tuple data object converted from an array.
+      # @return [TupleObject]
+      #   tuple object
+      def from_array(ary)
+        raise FormatError.new(ary) unless ary.size > 0
+        raise FormatError.new(ary) unless ary.kind_of?(Enumerable)
+        _ary = ary.to_a
+        identifier = _ary.first
+        raise FormatError.new(identifier) unless TABLE.has_key?(identifier)
+        args = _ary[1..-1]
+        TABLE[identifier].new(*args)
+      end
     end
 
     #
@@ -337,8 +434,11 @@ module Pione
       [:new_uri, String]
     ]
 
+    # Task is tuple class for representing job of workers.
     class Task
       # Returns the digest string of the task.
+      # @return [String]
+      #   task digest string
       def digest
         "%s([%s],[%s])" % [
           rule_path,

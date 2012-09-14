@@ -2,7 +2,7 @@ $stand_alone = "bin/pione-stand-alone"
 
 desc 'generate HTML API documentation'
 task :html do
-  sh "yard doc -o html --hide-void-return --no-api"
+  sh "yard doc -o html --hide-void-return --no-api --private"
 end
 
 desc 'count characters in input direcotry'

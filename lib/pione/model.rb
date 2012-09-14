@@ -1,7 +1,8 @@
 module Pione::Model
 
-  # PioneModelTypeError represents type mismatch error in PIONE model world.
+  # PioneModelTypeError represents type mismatch error in PIONE modle object system.
   class PioneModelTypeError < StandardError
+    # Creates an exception.
     # @param [PioneModelObject] obj PIONE model object
     # @param [Type] type expected type
     def initialize(obj, type)
@@ -9,6 +10,7 @@ module Pione::Model
       @type = type
     end
 
+    # @api private
     def message
       args = [
         @type.type_string,
@@ -25,11 +27,13 @@ module Pione::Model
     attr_reader :name
     attr_reader :obj
 
+    # Creates an exception.
     def initialize(name, obj)
       @name = name
       @obj = obj
     end
 
+    # @api private
     def message
       str = begin
               @obj.call_pione_method("as_string")
@@ -46,6 +50,9 @@ module Pione::Model
     attr_reader :method_interface
     attr_reader :method_body
 
+    # Creates a type for PIONE model object.
+    # @param [Symbol] type_string
+    #   PIONE model type
     def initialize(type_string)
       @type_string = type_string
       @method_interface = {}
@@ -53,7 +60,10 @@ module Pione::Model
     end
 
     # Return true if the type or the pione model object matches.
-    # @param [other] type or object for match test target
+    # @param [Type, PioneModelObject] other
+    #   type or object for match test target
+    # @return [Boolean]
+    #   true if it matches, or false
     def match(other)
       case other
       when Type
@@ -67,8 +77,14 @@ module Pione::Model
       end
     end
 
-    # Defines pione model object methods.
-    # @param [String] name method name
+    # Defines PIONE model object methods.
+    # @param [String] name
+    #   method name
+    # @param [Array<Type>] inputs
+    #   input types of the method
+    # @param [Type] output
+    #   output type of the method
+    # @param [Proc] b
     # @return [void]
     def define_pione_method(name, inputs, output, &b)
       raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
@@ -81,6 +97,7 @@ module Pione::Model
     end
 
     # Returns true if the data has the type.
+    # @return [void]
     def check(data)
       unless match(data.pione_model_type)
         raise PioneModelTypeError.new(data, self)
@@ -98,15 +115,18 @@ module Pione::Model
   class TypeList < Type
     attr_reader :element_type
 
+    # @api private
     @table = {}
 
-    def self.[](type)
-      if @table.has_key?(type)
-        return @table[type]
-      else
-        t = new(type)
-        @table[type] = t
-        return t
+    class << self
+      def [](type)
+        if @table.has_key?(type)
+          return @table[type]
+        else
+          t = new(type)
+          @table[type] = t
+          return t
+        end
       end
     end
 
@@ -142,14 +162,18 @@ module Pione::Model
     attr_reader :inputs
     attr_reader :output
 
-    # @param [[Type]] inputs inputs type definition
-    # @pram [Type] output type definition
+    # Creates an interface for a pione method.
+    # @param [Array<Type>] inputs
+    #   inputs type definition
+    # @param [Type] output
+    #   ouutput type definition
     def initialize(inputs, output)
       @inputs = inputs
       @output = output
     end
 
     # Validates inputs data types for the method.
+    # @return [void]
     def validate_inputs(*args)
       @inputs.each_with_index do |input, i|
         unless input.match(args[i].pione_model_type)
@@ -159,27 +183,57 @@ module Pione::Model
     end
 
     # Validates output data type for the method.
+    # @return [void]
     def validate_output(value)
       @output.match(value.pione_model_type)
     end
   end
 
+  # boolean type for PIONE system
   TypeBoolean = Type.new("boolean")
+
+  # integer type for PIONE system
   TypeInteger = Type.new("integer")
+
+  # float type for PIONE system
   TypeFloat = Type.new("float")
+
+  # string type for PIONE system
   TypeString = Type.new("string")
+
+  # data expression type for PIONE system
   TypeDataExpr = Type.new("data-expr")
+
+  # feature type for PIONE system
   TypeFeature = Type.new("feature")
+
+  # rule expression type for PIONE system
   TypeRuleExpr = Type.new("rule-expr")
+
+  # parameters type for PIONE system
   TypeParameters = Type.new("parameters")
+
+  # assignment type for PIONE system
   TypeAssignment = Type.new("assignment")
+
+  # variable table type for PIONE system
   TypeVariableTable = Type.new("variable-table")
+
+  # package type for PIONE system
   TypePackage = Type.new("package")
+
+  # undefined value type for PIONE system
   TypeUndefinedValue = Type.new("undefined-value")
+
+  # rule io list type for PIONE system
   TypeRuleIOList = Type.new("rule-io-list")
+
+  # rule io element type for PIONE system
   TypeRuleIOElement = Type.new("rule-io-element")
 
+  # any type for PIONE system
   TypeAny = Type.new("any")
+
   def TypeAny.match(other)
     true
   end
@@ -198,70 +252,100 @@ module Pione::Model
     end
   end
 
+  # This is a class for pione model object.
   class PioneModelObject < Pione::PioneObject
-    # Set pione model type of the model.
-    def self.set_pione_model_type(type)
-      raise ArgumentError unless type.kind_of?(Type)
-      @pione_model_type = type
+    class << self
+      # Sets pione model type of the model.
+      # @param [Symbol] type
+      #   pione model type
+      # @return [void]
+      def set_pione_model_type(type)
+        raise ArgumentError unless type.kind_of?(Type)
+        @pione_model_type = type
+      end
+
+      # Returns the pione model type of the model.
+      # @return [Symbol]
+      #   pione model type
+      def pione_model_type
+        @pione_model_type
+      end
+
+      # Defines a pione method.
+      # @return [void]
+      def define_pione_method(*args, &b)
+        @pione_model_type.define_pione_method(*args, &b)
+      end
     end
 
-    # Returns the pione model type of the model.
-    def self.pione_model_type
-      @pione_model_type
-    end
-
-    # Defines a pione method.
-    def self.define_pione_method(*args, &b)
-      @pione_model_type.define_pione_method(*args, &b)
-    end
-
+    # Creates a model object.
     def initialize(&b)
       instance_eval(&b) if block_given?
     end
 
+    # Returns pione model type.
+    # @return [Symbol]
+    #   pione model type
     def pione_model_type
       self.class.pione_model_type
     end
 
-    # Returns self.
-    # @param [VariableTable] vtable variable table for evaluation
+    # Evaluates the model object in the variable table.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
     # @return [PioneModelObject]
+    #   evaluated object
     def eval(vtable=VariableTable.new)
       return self
     end
 
-    # Return true if the object is atomic.
+    # Returns true if the object is atomic.
+    # @return [Boolean]
+    #   true if the object is atom, or false.
     def atomic?
       true
     end
 
+    # Returns true if the object has pione variables.
+    # @return [Boolean]
+    #   true if the object has pione variables, or false
     def include_variable?
       false
     end
 
+    # Returns rule definition document path.
+    # @return [void]
     def set_document_path(path)
       @__document_path__ = path
     end
 
-    # Returns line and column number of the definition.
+    # Sets line and column number of the definition.
+    # @return [void]
     def set_line_and_column(line_and_column)
       @__line__, @__column__ = line_and_column
     end
 
-    # Returns line number of the model.
+    # Returns line number of the model in definition document.
+    # @return [Integer]
+    #   line number
     def line
       @__line__
     end
 
-    # Returns coloumn number of the model.
+    # Returns coloumn number of the model in definition document.
+    # @return [Integer]
+    #   column number
     def column
       @__column__
     end
 
     # Calls pione model object method.
-    # @param [String] name method name
-    # @param [Array] args method's arguments
-    # @return [Object] method's result
+    # @param [String] name
+    #   method name
+    # @param [Array] args
+    #   method's arguments
+    # @return [Object]
+    #   method's result
     def call_pione_method(name, *args)
       name = name.to_s
       if method = pione_model_type.method_interface[name]

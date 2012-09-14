@@ -1,10 +1,35 @@
 module Pione::Model
+  # RuleCondition represents rule condition.
   class RuleCondition < PioneModelObject
+    # Returns the value of attribute inputs.
+    # @return [Array<DataExpr, Array<DataExpr>>]
+    #   rule inputs condition
     attr_reader :inputs
+
+    # Returns the value of attribute outputs.
+    # @return [Array<DataExpr, Array<DataExpr>>]
+    #  rule outputs condition
     attr_reader :outputs
+
+    # Returns the value of attribute params.
+    # @return [Parameters]
+    #   rule parameters table
     attr_reader :params
+
+    # Returns the value of attribute features.
+    # @return [Feature]
+    #   rule feature condition
     attr_reader :features
 
+    # Creates a rule condition.
+    # @param [Array<DataExpr, Array<DataExpr>>] inputs
+    #   rule inputs
+    # @param [Array<DataExpr, Array<DataExpr>>] outputs
+    #   rule outputs
+    # @param [Parameters] params
+    #   rule parameters
+    # @param [Feature] features
+    #   rule features
     def initialize(inputs, outputs, params, features)
       raise ArgumentError.new(params) unless params.kind_of?(Parameters)
       raise ArgumentError.new(features) unless features.kind_of?(Feature::Expr)
@@ -15,13 +40,18 @@ module Pione::Model
       super()
     end
 
+    # Returns true if the condition includes variable.
+    # @return [Boolean]
+    #   true if the condition includes variable, or false
     def include_variable?
-      @inputs.any?{|input| input.include_variable?} ||
-        @outputs.any?{|output| output.include_variable?} ||
-        @params.include_variable? ||
+      [ @inputs.any? {|input| input.include_variable?},
+        @outputs.any? {|output| output.include_variable?},
+        @params.include_variable?,
         @features.include_variable?
+      ].any?
     end
 
+    # @api private
     def ==(other)
       return false unless @inputs == other.inputs
       return false unless @outputs == other.outputs
@@ -30,24 +60,46 @@ module Pione::Model
       return true
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @inputs.hash + @outputs.hash + @params.hash + @features.hash
     end
   end
 
+  # Rule is a class for PIONE rule model.
   class Rule < PioneModelObject
+    extend Forwardable
+
+    def self.rule_type
+      @rule_type
+    end
+
+    # Returns the value of attribute expr.
+    # @return [Array<DataExpr, Array<DataExpr>>]
+    #   rule inputs condition
     attr_reader :expr
+
     attr_reader :condition
     attr_reader :body
 
+    # Creates a rule.
+    # @param [RuleExpr] expr
+    #   rule expression
+    # @param [RuleCondition] condition
+    #   rule condition
+    # @param [Block] body
+    #   rule body block
     def initialize(expr, condition, body)
       @expr = expr
       @condition = condition
       @body = body
     end
 
+    # Returns the rule path.
+    # @return [String]
+    #   rule path
     def rule_path
       @expr.rule_path
     end
@@ -58,45 +110,35 @@ module Pione::Model
         @body.include_variable?
     end
 
-    def self.rule_type
-      @rule_type
-    end
+    def_delegators :@condition, :inputs, :outputs, :params, :features
 
-    def inputs
-      @condition.inputs
-    end
-
-    def outputs
-      @condition.outputs
-    end
-
-    def params
-      @condition.params
-    end
-
-    def features
-      @condition.features
-    end
-
-    # Return true.
+    # Returns true if this is a kind of action rule.
+    # @return [Boolean]
+    #   true if this is a kind of action rule, or false
     def action?
       self.class.rule_type == :action
     end
 
-    # Return false.
+    # Returns true if this is a kind of flow rule.
+    # @return [Boolean]
+    #   true if this is a kind of flow rule, or false
     def flow?
       self.class.rule_type == :flow
     end
 
     # Make task handler object for the rule.
+    # @return [RuleHandler]
+    #   rule handler object
     def make_handler(ts_server, inputs, params, call_stack, opts={})
       handler_class.new(ts_server, self, inputs, params, call_stack, opts)
     end
 
+    # @api private
     def handler_class
       raise NotImplementedError
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       return false unless @expr == other.expr
@@ -105,8 +147,9 @@ module Pione::Model
       return true
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @expr.hash + @condition.hash + @body.hash
     end
@@ -131,20 +174,22 @@ module Pione::Model
     end
   end
 
-  # RootRule is a hidden toplevel rule like the following:
+  # RootRule is a hidden toplevel flow rule like the following:
   #   Rule Root
-  #     input-all  '*'
-  #     output-all '*'.except('{$INPUT[1]}')
+  #     input  '*'.all
+  #     output '*'.all.except('{$INPUT[1]}')
   #   Flow
-  #     rule /Main
+  #     rule &main:Main
   #   End
   class RootRule < FlowRule
     INPUT_DOMAIN = '/input'
+
+    # root domain has no digest and no package
     ROOT_DOMAIN = 'root'
 
     attr_reader :main
 
-    # Make new rule.
+    # Makes a rule.
     def initialize(main, params=Parameters.empty)
       @main = main
       @params = params
@@ -157,6 +202,9 @@ module Pione::Model
       @domain = ROOT_DOMAIN
     end
 
+    private
+
+    # @api private
     def make_condition
       inputs  = @main.inputs
       outputs =
@@ -173,6 +221,7 @@ module Pione::Model
       )
     end
 
+    # @api private
     def make_handler(ts_server)
       finder = DataFinder.new(ts_server, INPUT_DOMAIN)
       results = finder.find(:input, inputs, VariableTable.new)
@@ -190,29 +239,41 @@ module Pione::Model
       )
     end
 
+    # @api private
     def handler_class
       RuleHandler::RootHandler
     end
   end
 
-  # SystemRule represents built-in rule definition.
+  # SystemRule represents built-in rule definition. System rules belong to
+  # 'system' package.
   class SystemRule < ActionRule
+    # Creates a system rule model.
+    # @param [String] name
+    #   rule name
+    # @param [Proc] b
+    #   rule process
     def initialize(name, &b)
       expr = RuleExpr.new(Package.new('system'), name)
       condition = make_condition
       super(expr, condition, b)
     end
 
+    private
+
+    # @api private
     def make_condition
       inputs = [DataExpr.new('*')]
       RuleCondition.new(inputs, [], Parameters.empty, Feature::EmptyFeature.new)
     end
 
+    # @api private
     def handler_class
       RuleHandler::SystemHandler
     end
   end
 
+  # &System:Terminate rule
   SYSTEM_TERMINATE = SystemRule.new('Terminate') do |tuple_space_server|
     user_message "!!!!!!!!!!!!!!!!!"
     user_message "!!! Terminate !!!"
