@@ -1,5 +1,6 @@
 module Pione
   class Parser
+    # Expr is a set of parser atoms for PIONE expressions.
     module Expr
       include Parslet
       include SyntaxError
@@ -7,12 +8,19 @@ module Pione
       include Literal
       include FeatureExpr
 
-      # expr:
-      #   1 + 1
-      #   (1 + 1).next
-      #   ("abc" + "def")[1]
-      #   true
-      #   '*.txt'.as_string
+      # @!attribute [r] expr
+      #   +expr+ matches all expressions in PIONE document.
+      #   @return [Parslet::Atoms::Entity] +expr+ atom
+      #   @example
+      #     1 + 1
+      #   @example
+      #     (1 + 1).next
+      #   @example
+      #     ("abc" + "def")[1]
+      #   @example
+      #     true
+      #   @example
+      #     '*.txt'.as_string
       rule(:expr) {
         ( expr_operator_application |
           assignment |
@@ -22,12 +30,19 @@ module Pione
         ).as(:expr)
       }
 
-      # expr_element:
-      #   true
-      #   "abc"[0]
-      #   'abc'.as_string
-      #   (1 + 1)
-      #   ("abc".index(1, 1))
+      # @!attribute [r] expr_element
+      #   +expr_element+ matches simple expressions.
+      #   @return [Parslet::Atoms::Entity] +expr_element+ atom
+      #   @example
+      #     true
+      #   @example
+      #     "abc"[0]
+      #   @example
+      #     'abc'.as_string
+      #   @example
+      #     (1 + 1)
+      #   @example
+      #     ("abc".index(1, 1))
       rule(:expr_element) {
         ( (atomic_expr.as(:receiver) >> indexes) |
           (atomic_expr.as(:receiver) >> messages) |
@@ -36,16 +51,27 @@ module Pione
         )
       }
 
-      # atomic_expr:
-      #   true
-      #   0.1
-      #   1
-      #   "abc"
-      #   $var
-      #   '*.txt'
-      #   {var: 1}
-      #   $abc:test
-      #   abc
+      # @!attribute [r] atomic_expr
+      #   +expr+ matches atomic expressions.
+      #   @return [Parslet::Atoms::Entity] +atomic_expr+ atom
+      #   @example
+      #     true
+      #   @example
+      #     0.1
+      #   @example
+      #     1
+      #   @example
+      #     "abc"
+      #   @example
+      #     $var
+      #   @example
+      #     '*.txt'
+      #   @example
+      #     {var: 1}
+      #   @example
+      #     $abc:test
+      #   @example
+      #     abc
       rule(:atomic_expr) {
         boolean |
         float |
@@ -58,10 +84,15 @@ module Pione
         variable
       }
 
-      # rule_expr:
-      #   &abc:test
-      #   :test
-      #   test
+      # @!attribute [r] rule_expr
+      #   +rule_expr+ matches rule expressions.
+      #   @return [Parslet::Atoms::Entity] +rule_expr+ atom
+      #   @example
+      #     &abc:test
+      #   @example
+      #     :test
+      #   @example
+      #     test
       rule(:rule_expr) {
         ( package_name.as(:package) >> colon >> rule_name.as(:expr) |
           colon >> rule_name |
@@ -69,8 +100,11 @@ module Pione
         ).as(:rule_expr)
       }
 
-      # expr_operator:
-      #   :=, ==, !=, >=, >, <=, <, &&, ||, +, -, *, /, %, or, and
+      # @!attribute [r] expr_operator
+      #   +expr_operator+ matches expression operators.
+      #   @return [Parslet::Atoms::Entity] +expr_operator+ atom
+      #   @example
+      #     :=, ==, !=, >=, >, <=, <, &&, ||, +, -, *, /, %, or, and
       rule(:expr_operator) {
         equals >> equals |
         exclamation >> equals |
@@ -89,8 +123,11 @@ module Pione
         keyword_and
       }
 
-      # expr_operator_application:
-      #   X + X
+      # @!attribute [r] expr_operator_application
+      #   +expr_operator_application+ matches operator application.
+      #   @return [Parslet::Atoms::Entity] +expr_operator_application+ atom
+      #   @example
+      #     X + X
       rule(:expr_operator_application) {
         ( expr_element.as(:left) >>
           pad? >>
@@ -100,8 +137,11 @@ module Pione
         ).as(:expr_operator_application)
       }
 
-      # assignment:
-      #   $X := 1
+      # @!attribute [r] assignment
+      #   +assignment+ matches variable assignment.
+      #   @return [Parslet::Atoms::Entity] +assignment+ atom
+      #   @example
+      #     $X := 1
       rule(:assignment) {
         ( variable.as(:symbol) >>
           space? >>
@@ -111,15 +151,24 @@ module Pione
         ).as(:assignment)
       }
 
-      # messages:
-      #   .params("-w").sync
+      # @!attribute [r] messages
+      #   +messages+ matches message list.
+      #   @return [Parslet::Atoms::Entity] +messages+ atom
+      #   @example
+      #     .params("-w").sync
       rule(:messages) {
         message.repeat(1).as(:messages)
       }
 
-      # message:
-      #   .params("-w")
-      #   .sync
+      # @!attribute [r] message
+      #   +message+ matches message sending.
+      #   @return [Parslet::Atoms::Entity] +message+ atom
+      #   @example
+      #     # message with no arguments
+      #     .to_string
+      #   @example
+      #     # message with arguments
+      #     .params("-w")
       rule(:message) {
         ( dot >>
           identifier.as(:message_name) >>
@@ -127,9 +176,13 @@ module Pione
         ).as(:message)
       }
 
-      # message_parameters:
-      #   ("-w")
-      #   (true, false)
+      # @!attribute [r] message_parameters
+      #   +message_parameters+ matches message parameters.
+      #   @return [Parslet::Atoms::Entity] +message_parameters+ atom
+      #   @example
+      #     ("-w")
+      #   @example
+      #     (true, false)
       rule(:message_parameters) {
         lparen >>
         pad? >>
@@ -138,29 +191,42 @@ module Pione
         rparen
       }
 
-      # message_parameters_elements:
-      #   (true)
-      #   (true, true, true)
+      # @!attribute [r] message_parameters_elements
+      #   +message_parameters_elements+ matches message parameters.
+      #   @return [Parslet::Atoms::Entity] +message_parameters_elements+ atom
+      #   @example
+      #     (true)
+      #   @example
+      #     (true, true, true)
       rule(:message_parameters_elements) {
         expr >> message_parameters_elements_rest.repeat
       }
 
-      # message_paramters_elements_rest:
-      #   , true
+      # @!attribute [r] message_paramters_elements_rest
+      #   +message_parameters_elements+ matches message parameters rest.
+      #   @return [Parslet::Atoms::Entity] +message_paramters_elements_rest+ atom
+      #   @example
+      #     , true
       rule(:message_parameters_elements_rest) {
         pad? >> comma >> pad? >> expr
       }
 
-      # indexes:
-      #   [1][2][3]
+      # @!attribute [r] indexes
+      #   +indexes+ matches object index list.
+      #   @return [Parslet::Atoms::Entity] +indexes+ atom
+      #   @example
+      #     [1][2][3]
       rule(:indexes) {
         index.repeat(1).as(:indexes)
       }
 
-      # index:
-      #   [1]
-      #   [1,1]
-      #   [1,2,3]
+      # @!attribute [r] index
+      #   +index+ matches object index.
+      #   @return [Parslet::Atoms::Entity] +index+ atom
+      #   @example
+      #     [1]
+      #     [1,1]
+      #     [1,2,3]
       rule(:index) {
         ( lsbracket >>
           space? >>
@@ -171,16 +237,22 @@ module Pione
         )
       }
 
-      # index_arguments:
-      #   1
-      #   1,1
-      #   1,2,3
+      # @!attribute [r] index_arguments
+      #   +index_arguments+ matches arguments of object index.
+      #   @return [Parslet::Atoms::Entity] +index_arguments+ atom
+      #   @example
+      #     1
+      #     1,1
+      #     1,2,3
       rule(:index_arguments) {
         expr.repeat(1,1) >> space? >> index_arguments_rest.repeat
       }
 
-      # index_arguments_rest:
-      #  ,1
+      # @!attribute [r] index_arguments_rest
+      #   +index_arguments_rest+ matches argument tail of object index.
+      #   @return [Parslet::Atoms::Entity] +index_arguments_rest+ atom
+      #   @example
+      #     ,1
       rule(:index_arguments_rest) {
         space? >>
         comma >>

@@ -1,38 +1,63 @@
 # -*- coding: utf-8 -*-
-require 'pione/common'
 
 module Pione::Model
+  # Feature is selection system between task and task worker.
   module Feature
-    def self.and(*exprs)
-      AndExpr.new(*exprs)
-    end
+    class << self
+      # Returns feature conjunction.
+      # @param [Array<Expr>] exprs
+      #   feature expression list
+      # @return [Expr]
+      #   conjuncted expression
+      def and(*exprs)
+        AndExpr.new(*exprs)
+      end
 
-    def self.or(*exprs)
-      OrExpr.new(*exprs)
-    end
+      # Returns feature disjunction.
+      # @param [Array<Expr>] exprs
+      #   feature expression list
+      # @return [Expr]
+      #   disjuncted expression
+      def or(*exprs)
+        OrExpr.new(*exprs)
+      end
 
-    def self.empty
-      EmptyFeature.new
-    end
+      # Returns empty feature.
+      # @return [Expr]
+      #    empty feature
+      def empty
+        EmptyFeature.new
+      end
 
-    def self.boundless
-      BoundlessFeature.new
+      # Returns boundless feature
+      # @return [Expr]
+      #   boundless feature
+      def boundless
+        BoundlessFeature.new
+      end
     end
 
     # Expr is a super class for all feature expressions.
     class Expr < PioneModelObject
-      def pione_model_type
-        TypeFeature
-      end
+      set_pione_model_type TypeFeature
 
+      # Returns itself.
+      # @return [Expr]
+      #   itself
       def simplify
         return self
       end
 
+      # Returns true if the feature is empty.
+      # @return [Boolean]
+      #   false
       def empty?
         return false
       end
 
+      # Returns true if the other matches the feature.
+      # @return [Boolean]
+      #   true if the other matches the feature
       def match(other)
         raise ArgumentError.new(other) unless other.kind_of?(Expr)
         Sentence.new(self, other).decide
@@ -43,21 +68,24 @@ module Pione::Model
 
     # SpecialFeature is a class for empty feature and boundless feature.
     class SpecialFeature < Expr
+      # @api private
       def task_id_string
         "Feature::SpecialFeature<#{symbol}>"
       end
 
+      # @api private
       def textize
         "#{symbol}"
       end
 
+      # @api private
       def ==(other)
         other.kind_of?(self.class)
       end
 
       alias :eql? :==
 
-      # Return hash value.
+      # @api private
       def hash
         true.hash
       end
@@ -68,14 +96,21 @@ module Pione::Model
     # ability in provider expression and the task has no specific request in
     # request expression.
     class EmptyFeature < SpecialFeature
+      # Returns "*".
+      # return [Boolean]
+      #   "*"
       def symbol
         "*"
       end
 
+      # Returns true because empty feature is empty.
+      # @return [Boolean]
+      #   true
       def empty?
         true
       end
 
+      # @api private
       def ==(other)
         return false unless other.kind_of?(Expr)
         other.empty?
@@ -92,41 +127,66 @@ module Pione::Model
       end
     end
 
-    # Operator
+    # Operator is superclass of all operator classes.
     class Operator < Expr; end
 
-    # UnaryOperator is a class for provider opeators and request operator
+    # UnaryOperator is a class for provider opeators and request operator.
     class UnaryOperator < Operator
       attr_reader :symbol
 
+      # Returns the operator symbol.
+      # @return [String]
+      #   operator symbol
+      # @example
+      #   # requisite feature
+      #   +
+      # @example
+      #   # blocking feature
+      #   -
+      # @example
+      #   # preferred feature
+      #   ?
+      # @example
+      #   # possible operator
+      #   ^
+      # @example
+      #   # restrictive opeator
+      #   !
       def self.operator
         @operator
       end
 
+      # Creates a new operator.
+      # @param [Symbol] symbol
+      #   feature symbol
       def initialize(symbol)
         @symbol = symbol
         super()
       end
 
+      # @api private
       def task_id_string
         "Feature::UnaryOperator<#{self.operator},#{@symbol}>"
       end
 
+      # @api private
       def textize
         "%s%s" % [self.operator, @symbol]
       end
 
+      # @api private
       def as_string
         self.class.operator + @symbol.to_s
       end
 
+      # @api private
       def ==(other)
         other.kind_of?(self.class) and @symbol == other.symbol
       end
 
       alias :eql? :==
 
-      # Return hash value.
+      # @api private
       def hash
         @symbol.hash
       end
@@ -143,6 +203,8 @@ module Pione::Model
     end
 
     # RestrictiveExpr is a class for restrictive feature expression.
+    # @example
+    #   !X
     class RestrictiveExpr < ProviderExpr
       @operator = "!"
     end
@@ -153,6 +215,8 @@ module Pione::Model
     # Requisite Operator is a class for requisite feature expressions. Requisite
     # Feature are written like as "+X", these represent feature's requiste
     # ability.
+    # @example
+    #   +X
     class RequisiteExpr < RequestExpr
       @operator = "+"
     end
@@ -160,18 +224,27 @@ module Pione::Model
     # BlockingExpr is a class for blocking feature expressions. Blocking Feature
     # are written like as "-X", these represent the ability that block to
     # execute the task.
+    # @example
+    #   -X
     class BlockingExpr < RequestExpr
       @operator = "-"
     end
 
+    # PreferredExpr is a class for preferred feature expressions. Preferred
+    # Feature are written like as "?X", these represent that task workers what
+    # the feature have take the task.
     class PreferredExpr < RequestExpr
       @operator = "?"
     end
 
+    # Connective is a superclass of AndExpr and OrExpr. This represents
+    # connection of some features.
     class Connective < Expr
       attr_reader :elements
 
       # Creates a new connective.
+      # @param [Array<Expr>] elements
+      #   feature list
       def initialize(*elements)
         @elements = Set.new
         elements.each {|elt| add(elt) }
@@ -179,6 +252,9 @@ module Pione::Model
       end
 
       # Adds the element from the connective set and unifies by it.
+      # @param [Expr] elt
+      #   feature element
+      # @return [void]
       def add(elt)
         if elt.kind_of?(self.class)
           elt.elements.each {|e| unify(e) }
@@ -188,6 +264,9 @@ module Pione::Model
       end
 
       # Deletes the element from the connective set.
+      # @param [Expr] elt
+      #   feature element
+      # @return [void]
       def delete(elt)
         @elements.delete(elt)
         if @elements.empty?
@@ -196,6 +275,9 @@ module Pione::Model
       end
 
       # Unifies connective set by the element.
+      # @param [Expr] elt
+      #   feature element
+      # @return [void]
       def unify(elt)
         unless self.class::UNIFICATIONS.any?{|name| __send__(name, elt)}
           @elements.add(elt)
@@ -203,6 +285,8 @@ module Pione::Model
       end
 
       # Simplifies the connective by unifing and up-rising single element.
+      # @return [Expr]
+      #   simplified feature
       def simplify
         if @elements.size == 1
           return @elements.first.simplify
@@ -215,6 +299,8 @@ module Pione::Model
       end
 
       # Returns true if the connective set is empty.
+      # @return [Boolean]
+      #   true if the connective set is empty
       def empty?
         return true if @elements.empty?
         return true if @elements == Set.new([Feature.empty])
@@ -222,18 +308,21 @@ module Pione::Model
         return @elements.first.empty?
       end
 
+      # @api private
       def task_id_string
         "Feature::Connective<#{self.class.name},[%s]>" % [
           @elements.map{|elt| elt.task_id_string}.join(",")
         ]
       end
 
+      # @api private
       def textize
         "#{self.class.name}(%s)" % [
           @elements.map{|elt| elt.textize}.join(",")
         ]
       end
 
+      # @api private
       def ==(other)
         return true if empty? and other.kind_of?(Expr) and other.empty?
         other.kind_of?(self.class) and @elements == other.elements
@@ -241,12 +330,13 @@ module Pione::Model
 
       alias :eql? :==
 
-      # Return hash value.
+      # @api private
       def hash
         @elements.hash
       end
 
       # Clone with cloning the elements set.
+      # @api private
       def clone
         obj = super
         elements = @elements.clone

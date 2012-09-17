@@ -14,6 +14,7 @@ require 'singleton'
 require 'timeout'
 require 'thread'
 require 'monitor'
+require 'parslet'
 
 module Pione
   VERSION = 0

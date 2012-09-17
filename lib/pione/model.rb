@@ -28,6 +28,10 @@ module Pione::Model
     attr_reader :obj
 
     # Creates an exception.
+    # @param [String, Symbol] name
+    #   method name
+    # @param [PioneModelObject] obj
+    #   method reciever
     def initialize(name, obj)
       @name = name
       @obj = obj
@@ -35,11 +39,12 @@ module Pione::Model
 
     # @api private
     def message
-      str = begin
-              @obj.call_pione_method("as_string")
-            rescue => e
-              @obj.to_s
-            end
+      str = nil
+      begin
+        str = @obj.call_pione_method("as_string")
+      rescue => e
+        str = @obj.to_s
+      end
       "method \"%s\" is not found in %s" % [@name, str]
     end
   end

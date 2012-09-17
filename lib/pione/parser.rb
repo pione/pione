@@ -1,7 +1,5 @@
-require 'pione/common'
-require 'parslet'
-
 module Pione
+  # Parser is a parser for PIONE rule document.
   class Parser < Parslet::Parser
     require 'pione/parser/syntax-error'
     require 'pione/parser/common'

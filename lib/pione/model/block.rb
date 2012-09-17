@@ -1,30 +1,43 @@
 module Pione::Model
   # ActionBlock represents content script of action.
+  # @example
   #   Action
-  #   echo "abc"
+  #     echo "abc"
   #   End
-  #   => ActionBlock.new("  echo \"abc\"")
+  #   #=> ActionBlock.new("  echo \"abc\"")
   class ActionBlock < PioneModelObject
     attr_reader :content
 
+    # Creates a action block.
+    # @param [String] content
+    #   action content of shell script
     def initialize(content)
       @content = content
       super()
     end
 
-    # Expands variables.
+    # Evaluates the object.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   evaluation result
     def eval(vtable)
       self.class.new(vtable.expand(@content))
     end
 
+    # Returns true if the content includes variables.
+    # @return [Boolean]
+    #   true if the content includes variables
     def include_variable?
       return VariableTable.check_include_variable(@content)
     end
 
+    # @api private
     def textize
       "action_block(\"#{@content}\")"
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @content == other.content
@@ -32,24 +45,28 @@ module Pione::Model
 
     alias :eql? :==
 
-    # Returns hash value.
+    # @api private
     def hash
       @content.hash
     end
   end
 
   # FlowBlock represents flow element sequence.
+  # @example
   #   Flow
   #     rule Test1
   #     rule Test2
   #     rule Test3
   #   End
-  #   => Block.new([ CallRule.new('Test1'),
-  #                  CallRule.new('Test2'),
-  #                  CallRule.new('Test3') ])
+  #   #=> Block.new([ CallRule.new('Test1'),
+  #                   CallRule.new('Test2'),
+  #                   CallRule.new('Test3') ])
   class FlowBlock < PioneModelObject
     attr_reader :elements
 
+    # Create a flow block.
+    # @param [Array<PioneModelObject>] elements
+    #   flow elements
     def initialize(*elements)
       unless elements.all? {|elt| elt.kind_of?(PioneModelObject)}
         raise ArgumentError.new(elements)
@@ -58,6 +75,10 @@ module Pione::Model
     end
 
     # Evaluates each elements and return it.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   evaluation result
     def eval(vtable)
       assignments = @elements.select{|elt| elt.kind_of?(Assignment)}
       conditional_blocks = @elements.select{|elt| elt.kind_of?(ConditionalBlock)}
@@ -92,14 +113,19 @@ module Pione::Model
       end
     end
 
+    # Returns true if the elements include variables.
+    # @return [Boolean]
+    #   true if the elements include variables
     def include_variable?
       @elements.any?{|elt| elt.include_variable?}
     end
 
+    # @api private
     def textize
       "flow_block(%s)" % [@elements.map{|elt| elt.textize}.join(",")]
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @elements == other.elements
@@ -107,25 +133,26 @@ module Pione::Model
 
     alias :eql? :==
 
-    # Returns hash value.
+    # @api private
     def hash
       @elements.hash
     end
   end
 
   # ConditionalBlock represents conditional flow applications.
-  # For example of /if/ statement:
+  # @example
+  #   # if statement
   #   if $X == "a"
   #     rule Test1
   #   else
   #     rule Test2
   #   end
-  #   => ConditionalBlock.new(
-  #        BinaryOperator::Equals.new(Variable.new('X'), 'a'),
-  #                           { true => [CallRule.new('Test1')],
-  #                             :else => [CallRule.new('Test2')] })
-  #
-  # For example of case statement:
+  #   #=> ConditionalBlock.new(
+  #         BinaryOperator::Equals.new(Variable.new('X'), 'a'),
+  #         { true => [CallRule.new('Test1')],
+  #           :else => [CallRule.new('Test2')] })
+  # @example
+  #   # case statement
   #   case $X
   #   when "a"
   #     rule Test1
@@ -134,16 +161,20 @@ module Pione::Model
   #   else
   #     rule Test3
   #   end
-  #   => ConditionalBlock.new(
-  #        Variable.new('X'),
-  #        { 'a' => FlowBlock.new(CallRule.new('Test1')),
-  #          'b' => FlowBlock.new(CallRule.new('Test2')),
-  #          :else => FlowBlock.new(CallRule.new('Test3')) })
-  #
+  #   # => ConditionalBlock.new(
+  #          Variable.new('X'),
+  #          { 'a' => FlowBlock.new(CallRule.new('Test1')),
+  #            'b' => FlowBlock.new(CallRule.new('Test2')),
+  #            :else => FlowBlock.new(CallRule.new('Test3')) })
   class ConditionalBlock < PioneModelObject
     attr_reader :condition
     attr_reader :blocks
 
+    # Creates a conditional block.
+    # @param [PioneModelObject] condition
+    #    condition value
+    # @param [Hash{PioneModelObject => FlowBlock}] blocks
+    #    condition key and block
     def initialize(condition, blocks={})
       unless blocks.all?{|key,val|
           (key.kind_of?(PioneModelObject) or key == :else) &&
@@ -156,6 +187,10 @@ module Pione::Model
     end
 
     # Evaluates the condition and returns the flow block.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   evaluation result
     def eval(vtable)
       value = @condition.eval(vtable)
       if block = @blocks.find {|key, _| key == value}
@@ -167,10 +202,14 @@ module Pione::Model
       end
     end
 
+    # Returns ture if blocks include variables.
+    # @return [Boolean]
+    #   ture if blocks include variables
     def include_variable?
       @blocks.values.any?{|block| block.include_variable?}
     end
 
+    # @api private
     def textize
       "conditional_block(%s,{%s})" % [
         @condition.textize,
@@ -178,6 +217,7 @@ module Pione::Model
       ]
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @condition == other.condition && @blocks == other.blocks
@@ -185,7 +225,7 @@ module Pione::Model
 
     alias :eql? :==
 
-    # Returns hash value.
+    # @api private
     def hash
       @condition.hash + @blocks.hash
     end

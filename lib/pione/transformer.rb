@@ -1,5 +1,3 @@
-require 'pione/common'
-
 module Pione
   class Document
     class UnknownAttribution < StandardError

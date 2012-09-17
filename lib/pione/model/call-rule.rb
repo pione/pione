@@ -1,25 +1,31 @@
 module Pione::Model
   # CallRule represents the application of a rule.
-  # For example of simple rule calling:
+  # @example
+  #   # simple rule calling:
   #   rule r1
-  #   => CallRule.new(RuleExpr.new('r1'))
-  #
-  # For example with absolute path:
+  #   #=> CallRule.new(RuleExpr.new('r1'))
+  # @example
+  #   # with absolute path:
   #   rule /abc:a
-  #   => CallRule.new(RuleExpr.new('/abc:a'))
-  #
-  # For example with variable:
+  #   #=> CallRule.new(RuleExpr.new('/abc:a'))
+  # @example
+  #   # with variable:
   #   rule $X
-  #   => CallRule.new(Variable.new('X'))
+  #   #=> CallRule.new(Variable.new('X'))
   class CallRule < PioneModelObject
     attr_reader :expr
 
+    # Creates a callee rule.
+    # @param [PioneModelObject] expr
+    #   callee rule
     def initialize(expr)
       @expr = expr
       super()
     end
 
-    # Return a rule path string with expanding variables.
+    # Returns a rule path string with expanding variables.
+    # @return [String]
+    #   rule path(package name and rule name)
     def rule_path
       if @expr.include_variable?
         raise UnboundVariableError.new(@expr)
@@ -27,30 +33,35 @@ module Pione::Model
       @expr.rule_path
     end
 
+    # Returns true if the expression has variables.
+    # @return [Boolean]
+    #   true if the expression has variables
     def include_variable?
       @expr.include_variable?
     end
 
-    # Returns true if sync mode.
-    def sync_mode?
-      @expr.sync_mode?
-    end
-
+    # Evaluates the expression.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   evaluation result
     def eval(vtable)
       self.class.new(@expr.eval(vtable))
     end
 
+    # @api private
     def textize
       "call_rule(%s)" % [@expr.textize]
     end
 
+    # @api private
     def ==(other)
       @expr == other.expr
     end
 
     alias :eql? :==
 
-    # Returns hash value.
+    # @api private
     def hash
       @expr.hash
     end

@@ -1,53 +1,92 @@
 module Pione::Model
+  # PioneBoolean representes truth value in PIONE system.
   class PioneBoolean < PioneModelObject
-    attr_reader :value
     set_pione_model_type TypeBoolean
 
-    def self.true
-      new(true)
+    # Returns the value in ruby.
+    attr_reader :value
+
+    class << self
+      # Returns true value in PIONE system.
+      # @return [PioneBoolean]
+      #   true value
+      def true
+        new(true)
+      end
+
+      # Returns false value in PIONE system.
+      # @return [PioneBoolean]
+      #   false value
+      def false
+        new(false)
+      end
+
+      # Returns inverse value of it.
+      # @param [Boolean] boolean
+      #   target value
+      # @return [PioneBoolean]
+      #   true if the param is false, or false
+      def not(boolean)
+        new(not(boolean.value))
+      end
+
+      # Returns true value if arguments include true value.
+      # @param [Array<PioneBoolean>] args
+      # @return [PioneBoolean]
+      #   true value if arguments include true value
+      def or(*args)
+        new(args.any?{|arg| arg.true?})
+      end
+
+      # Returns true value if all arguments has true value.
+      # @param [Array<PioneBoolean>] args
+      # @return [PioneBoolean]
+      #   true value if all arguments has true value
+      def and(*args)
+        new(args.all?{|arg| arg.true?})
+      end
     end
 
-    def self.false
-      new(false)
-    end
-
-    def self.not(boolean)
-      new(not(boolean.value))
-    end
-
-    def self.or(*args)
-      new(args.any?{|arg| arg.true?})
-    end
-
-    def self.and(*args)
-      new(args.all?{|arg| arg.true?})
-    end
-
+    # Creates a value.
+    # @param [Boolean] value
+    #   true or false
     def initialize(value)
       @value = value
       super()
     end
 
+    # @api private
     def task_id_string
       "Boolean<#{@value}>"
     end
 
+    # @api private
     def textize
       @value.to_s
     end
 
+    # Returns true if the value is true.
+    # @return [Boolean]
+    #   true if the value is true
     def true?
       @value == true
     end
 
+    # Returns true if the value is false.
+    # @return [Boolean]
+    #   true if the value is false
     def false?
       @value == false
     end
 
+    # Returns ruby's boolean value.
+    # @return [Boolean]
+    #   ruby's boolean value
     def to_ruby
       return @value
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @value == other.value
@@ -55,6 +94,7 @@ module Pione::Model
 
     alias :eql? :==
 
+    # @api private
     def hash
       @value.hash
     end

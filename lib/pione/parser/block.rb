@@ -1,5 +1,6 @@
 module Pione
   class Parser
+    # Block is a set of parser atoms for rule block.
     module Block
       include Parslet
       include SyntaxError
@@ -8,13 +9,24 @@ module Pione
       include Expr
       include FlowElement
 
-      # block
+      # @!attribute [r] block
+      #   +block+ matches flow block or action block.
+      #   @return [Parslet::Atoms::Entity] +block+ atom
       rule(:block) {
         flow_block |
         action_block
       }
 
-      # flow_block
+      # @!attribute [r] flow_block
+      #   +flow_block+ matches flow block.
+      #   @return [Parslet::Atoms::Entity] +flow_block+ atom
+      #   @example
+      #     Flow
+      #       rule A
+      #       if $X
+      #         rule B
+      #       end
+      #     End
       rule(:flow_block) {
         ( flow_block_begin_line >>
           (flow_element.repeat(1) |
@@ -24,7 +36,13 @@ module Pione
          ).as(:flow_block)
       }
 
-      # action_block
+      # @!attribute [r] action_block
+      #   +action_block+ matches action block.
+      #   @return [Parslet::Atoms::Entity] +action_block+ atom
+      #   @example
+      #     Action
+      #       echo "abc" > out.txt
+      #     End
       rule(:action_block) {
         ( action_block_begin_line >>
           ( (block_end_line.absent? >> any).repeat(1).as(:content) |
@@ -34,20 +52,29 @@ module Pione
         ).as(:action_block)
       }
 
-      # flow_block_begin_line
-      #   Begin
+      # @!attribute [r] flow_block_begin_line
+      #   +flow_block_begin_line+ matches flow block heading.
+      #   @return [Parslet::Atoms::Entity] +flow_block_begin_line+ atom
+      #   @example
+      #     Flow
       rule(:flow_block_begin_line) {
         space? >> keyword_Flow >> str('-').repeat >> line_end
       }
 
-      # action_block_begin_line
-      #   Action
+      # @!attribute [r] action_block_begin_line
+      #   +flow_block_begin_line+ matches action block heading.
+      #   @return [Parslet::Atoms::Entity] +action_block_begin_line+ atom
+      #   @example
+      #     Action
       rule(:action_block_begin_line) {
         space? >> keyword_Action.as(:key) >> str('-').repeat >> line_end
       }
 
-      # block_end_line
-      #   End
+      # @!attribute [r] block_end_line
+      #   +block_end_line+ matches block end keyword.
+      #   @return [Parslet::Atoms::Entity] +block_end_line+ atom
+      #   @example
+      #     End
       rule(:block_end_line) {
         space? >> str('-').repeat >> keyword_End >> line_end
       }
