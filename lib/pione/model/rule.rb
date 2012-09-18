@@ -159,6 +159,7 @@ module Pione::Model
   class ActionRule < Rule
     @rule_type = :action
 
+    # @api private
     def handler_class
       RuleHandler::ActionHandler
     end
@@ -169,6 +170,7 @@ module Pione::Model
   class FlowRule < Rule
     @rule_type = :flow
 
+    # @api private
     def handler_class
       RuleHandler::FlowHandler
     end

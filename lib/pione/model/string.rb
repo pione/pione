@@ -1,40 +1,59 @@
 module Pione::Model
+  # PioneString is a string value in PIONE system.
   class PioneString < PioneModelObject
     set_pione_model_type TypeString
     attr_reader :value
 
+    # Creates a string with the value.
+    # @param [String] value
+    #   string value
     def initialize(value)
       @value = value
       super()
     end
 
-    def eval(vtable=VariableTable.new)
+    # Evaluates the object with the variable table.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   evaluation result
+    def eval(vtable)
       self.class.new(vtable.expand(@value))
     end
 
+    # Returns true if the value includes variables.
+    # @return [Boolean]
+    #   true if the value includes variables
     def include_variable?
       VariableTable.check_include_variable(@value)
     end
 
+    # @api private
     def task_id_string
       "String<#{@value}>"
     end
 
+    # @api private
     def textize
       "\"%s\"" % [@value]
     end
 
+    # Returns ruby's value.
+    # @return [String]
+    #   the value in ruby
     def to_ruby
       return @value
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @value == other.value
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @value.hash
     end
@@ -81,7 +100,11 @@ module Pione::Model
   end
 end
 
+# String extention for PIONE system.
 class String
+  # Returns PIONE's value.
+  # @return [PioneString]
+  #   PIONE's value
   def to_pione
     PioneString.new(self)
   end

@@ -15,6 +15,7 @@ require 'timeout'
 require 'thread'
 require 'monitor'
 require 'parslet'
+require 'uri'
 
 module Pione
   VERSION = 0

@@ -1,11 +1,12 @@
-require 'pione/common'
-
 module Pione::Model
 
   # UnboundVariableError represents an unknown variable reference.
   class UnboundVariableError < StandardError
     attr_reader :variable
 
+    # Creates an error.
+    # @param [Variable] variable
+    #   unbound variable
     def initialize(variable)
       @variable = variable
       msg = "Refferred unbound variable '%s' in the context."
@@ -20,6 +21,13 @@ module Pione::Model
     attr_reader :new_value
     attr_reader :old_value
 
+    # Creates an error.
+    # @param [Variable] variable
+    #   double bound variable
+    # @param [PioneModelObject] new_value
+    #   new value
+    # @param [PioneModelObject] old_value
+    #   old value
     def initialize(variable, new_value, old_value)
       @variable = variable
       @new_value = new_value
@@ -40,35 +48,49 @@ MSG
 
   # VariableTable represents variable table for rule and data finder.
   class VariableTable < PioneModelObject
+    # Returns empty variable table.
+    # @return [VariableTable]
+    #   empty variable table
+    def self.empty
+      new
+    end
+
     set_pione_model_type TypeVariableTable
 
-    # Make an auto vairable table.
+    # Creates a vairable table.
+    # @param [Hash] table
+    #    initial variable table values
     def initialize(table={})
       @table = table.to_hash.dup
       super()
     end
 
-    # Returns empty variable table
-    def self.empty
-      new
-    end
-
-    # Return the variable table as hash.
+    # Returns the variable table as hash.
+    # @return [Hash{Variable => PioneModelObject}]
+    #   hash form
     def to_hash
       @table
     end
 
     # Returns the parameters form.
+    # @return [Parameters]
+    #   parameters form
     def to_params
       Parameters.new(to_hash)
     end
 
-    # Return true if the table is empty.
+    # Returns true if the table is empty.
+    # @return [Boolean]
+    #   true if the table is empty
     def empty?
       @table.empty?
     end
 
-    # Get the variable value.
+    # Gets the variable value.
+    # @param [Variable] var
+    #   table key to get the value
+    # @return [PioneModelObject]
+    #   the value
     def get(var)
       raise ArgumentError.new(var) unless var.kind_of?(Variable)
       val = @table[var]
@@ -84,6 +106,12 @@ MSG
 
     # Sets a new variable. This method raises an exception when the variable has
     # its value already.
+    # @param [Variable] variable
+    #   table key
+    # @param [PioneModelObject] new_value
+    #   new value
+    # @return [VariableTable]
+    #   new variable table
     def set(variable, new_value)
       raise TypeError.new(variable) unless variable.kind_of?(Variable)
       raise TypeError.new(new_value) unless new_value.kind_of?(PioneModelObject)
@@ -96,13 +124,18 @@ MSG
     end
 
     # Sets a variable. This method overrides old variable value.
+    # @param [Variable] variable
+    #   table key
+    # @param [PioneModelObject] new_value
+    #   new value
+    # @return [void]
     def set!(variable, new_value)
       raise TypeError.new(variable) unless variable.kind_of?(Variable)
       raise TypeError.new(new_value) unless new_value.kind_of?(PioneModelObject)
       @table[variable] = new_value
     end
 
-    # Expand variables in the string.
+    # Expands variables in the string.
     def expand(str)
       variables = to_hash
       new_str = str.to_s.gsub(/\{(\$.+?)\}/) do
@@ -122,11 +155,18 @@ MSG
     end
 
     # Returns key variables of the table.
+    # @return [Array<Variable>]
+    #   variable as table keys
     def variables
       @table.keys
     end
 
     # FIXME
+    # Returns true if the string includes variables.
+    # @param [String] str
+    #   target string
+    # @return [Boolean]
+    #   true if the string includes variables
     def self.check_include_variable(str)
       str = str.to_s
       return true if /\{\$(.+?)\}/.match(str)
@@ -137,14 +177,20 @@ MSG
       return false
     end
 
+    # Returns true if table's values include variables.
+    # @return [Boolean]
+    #   true if table's values include variables
     def include_variable?
       # FIXME
       @table.values.any?{|val| val.include_variable?}
     end
 
     # Make input auto-variables
-    # [+input_exprs+] input expressions
-    # [+input_tuples+] input tuples
+    # @param [Array<DataExpr>] input_exprs
+    #   input expressions
+    # @param [Array<Expr>] input_tuples
+    #   input tuples
+    # @return [void]
     def make_input_auto_variables(input_exprs, input_tuples)
       set(Variable.new("INPUT"), Variable.new("I"))
       input_exprs.each_with_index do |expr, index|
@@ -153,8 +199,11 @@ MSG
     end
 
     # Make output auto-variables.
-    # [+output_exprs+] output expressions
-    # [+output_tuples+] output tuples
+    # @param [Array<DataExpr>] output_exprs
+    #   output expressions
+    # @param [Array<DataExpr>] output_tuples
+    #   output tuples
+    # @return [void]
     def make_output_auto_variables(output_exprs, output_tuples)
       set(Variable.new("OUTPUT"), Variable.new("O"))
       output_exprs.each_with_index do |expr, index|
@@ -162,21 +211,23 @@ MSG
       end
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @table == other.to_hash
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @table.hash
     end
 
-
     private
 
     # Make input or output auto variables.
+    # @api private
     def make_io_auto_variables(type, expr, data, index)
       expr = expr.eval(self)
       prefix = (type == :input ? "I" : "O")
@@ -190,6 +241,7 @@ MSG
 
     # Make input or output auto variables for 'exist' modified data name
     # expression.
+    # @api private
     def make_io_auto_variables_by_each(prefix, expr, tuple, index)
       return if tuple.nil?
       # variable
@@ -215,6 +267,7 @@ MSG
 
     # Make input or output auto variables for 'all' modified data name
     # expression.
+    # @api private
     def make_io_auto_variables_by_all(type, prefix, expr, tuples)
       # FIXME: output
       return if type == :output

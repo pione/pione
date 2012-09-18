@@ -1,35 +1,44 @@
 module Pione::Model
+  # PioneInteger represents integer value in PIONE system.
   class PioneInteger < PioneModelObject
+    set_pione_model_type TypeInteger
+
     attr_reader :value
 
+    # Creates a integer value in PIONE system.
+    # @param [Integer] value
+    #   value in ruby
     def initialize(value)
       @value = value
       super()
     end
 
-    def pione_model_type
-      TypeInteger
-    end
-
+    # @api private
     def task_id_string
       "Integer<#{@value}>"
     end
 
+    # @api private
     def textize
       @value.to_s
     end
 
+    # Returns the ruby's value.
+    # @return [Integer]
+    #   ruby's value
     def to_ruby
       return @value
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @value == other.value
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @value.hash
     end
@@ -114,7 +123,9 @@ module Pione::Model
   end
 end
 
+# Integer extention for PIONE.
 class Integer
+  # Returns the PIONE's value.
   def to_pione
     PioneInteger.new(self)
   end

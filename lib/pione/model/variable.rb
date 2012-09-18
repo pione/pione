@@ -4,36 +4,47 @@ module Pione::Model
   class Variable < PioneModelObject
     attr_reader :name
 
+    set_pione_model_type TypeAny
+
+    # Creates a variable with name.
+    # @param [String] name
+    #   variable name
     def initialize(name)
       @name = name.to_s
       super()
     end
 
-    def pione_model_type
-      TypeAny
-    end
-
     # Evaluates self variable name in the table and returns it. Return self if
     # the variable name is unbound in the table.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   evaluation result
     def eval(vtable)
       val = vtable.get(self)
       raise UnboundVariableError.new(self) if val.nil?
       return val
     end
 
+    # Returns true because variable is a variable.
+    # @return [Boolean]
+    #   true
     def include_variable?
       true
     end
 
+    # @api private
     def task_id_string
       "Variable<#{@name}>"
     end
 
+    # @api private
     def textize
       "$%s" % [@name]
     end
 
     # Comparisons with other variable.
+    # @api private
     def <=>(other)
       unless other.kind_of?(self.class)
         raise ArgumentError.new(other)
@@ -42,13 +53,14 @@ module Pione::Model
     end
 
     # Return true if other is a variable object which name is same as myself.
+    # @api private
     def ==(other)
       other.kind_of?(self.class) && @name == other.name
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
-    # Returns hash value.
+    # @api private
     def hash
       @name.hash
     end

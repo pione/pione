@@ -1,6 +1,7 @@
 require 'pione/common'
 
 module Pione
+  # RuleHandler is a handler for rule execution.
   module RuleHandler
     # Exception class for rule execution failure.
     class RuleExecutionError < StandardError

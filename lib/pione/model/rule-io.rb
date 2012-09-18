@@ -1,4 +1,5 @@
 module Pione::Model
+  # RuleIOElement is a special PIONE model object for matched data name result.
   class RuleIOElement < PioneModelObject
     set_pione_model_type TypeRuleIOElement
 
@@ -6,23 +7,29 @@ module Pione::Model
     attr_accessor :uri
     attr_accessor :match
 
+    # Creates a element with the name.
+    # @param [PioneString, String] name
+    #   element name
     def initialize(name)
       @name = name.kind_of?(PioneString) ? name : PioneString.new(name)
       @uri = PioneString.new("")
       @match = PioneList.new()
     end
 
+    # @api private
     def textize
       "ioelement(%s,%s,%s)" % [@name.to_ruby, @uri.textize, @match.textize]
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @name == other.name && @uri == other.uri && @match == other.match
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @value.hash
     end
@@ -56,16 +63,24 @@ module Pione::Model
     end
   end
 
+  # RuleIOList is a list object for RuleIOElement.
   class RuleIOList < PioneModelObject
     set_pione_model_type TypeRuleIOList
 
     attr_accessor :elements
 
+    # Creates a list object.
+    # @param [Array<RuleIOElement>] elts
+    #   list elements
     def initialize(elts = [])
       @elements = elts
     end
 
     # Returns new list which appended the element.
+    # @param [RuleIOElement] elt
+    #   target element
+    # @return [RuleIOList]
+    #   new list object that added the element
     def add(elt)
       unless elt.kind_of?(RuleIOElement) || elt.kind_of?(self.class)
         raise ArgumentError.new(elt)
@@ -74,6 +89,9 @@ module Pione::Model
     end
 
     # Adds the element to this list.
+    # @param [RuleIOElement] elt
+    #   target element
+    # @return [void]
     def add!(elt)
       unless elt.kind_of?(RuleIOElement) || elt.kinf_of?(self.class)
         raise ArgumentError.new(elt)
@@ -81,19 +99,22 @@ module Pione::Model
       @elements << elt
     end
 
+    # @api private
     def textize
       "rule-io-list(%s)" % @elements.map{|elt|
         elt.textize
       }.join(DataExpr::SEPARATOR)
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @elements == other.elements
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @elements.hash
     end

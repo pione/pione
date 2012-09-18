@@ -21,6 +21,8 @@ module Pione::Model
     end
 
     # Returns rule path form.
+    # @return [String]
+    #   rule path string
     def path
       "&%s:%s" % [@package.name, @name]
     end
@@ -31,31 +33,39 @@ module Pione::Model
       "&%s:%s" % [@package.name, @name]
     end
 
+    # @api private
     def task_id_string
       "RuleExpr<%s,#{@name}>" % [@package.task_id_string]
     end
 
+    # @api private
     def textize
       "rule_expr(%s,\"%s\")" % [@package.textize, @name]
     end
 
-    # Return true if sync mode.
-    def sync_mode?
-      @sync_mode
-    end
-
-    def sync(truth)
-      return self.class.new(@package, @name, truth, @params)
-    end
-
+    # Sets a package name and returns a new expression.
+    # @param [String] package
+    #   package name
+    # @return [RuleExpr]
+    #   new rule expression with the package name
     def set_package(package)
       return self.class.new(package, @name, @sync_mode, @params)
     end
 
+    # Sets parameters and returns a new expression.
+    # @param [Parameters] params
+    #   parameters
+    # @return [RuleExpr]
+    #   new rule expression with the parameters
     def set_params(params)
       return self.class.new(@package, @name, @sync_mode, params)
     end
 
+    # Evaluates the object with the variable table.
+    # @param [VariableTable] vtable
+    #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   evaluation result
     def eval(vtable)
       return self.class.new(
         @package.eval(vtable),
@@ -65,10 +75,14 @@ module Pione::Model
       )
     end
 
+    # Returns true if the package or parameters include variables.
+    # @return [Boolean]
+    #   true if the package or parameters include variables
     def include_variable?
       @package.include_variable? or @params.include_variable?
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       return false unless @package = other.package
@@ -78,8 +92,10 @@ module Pione::Model
       return true
     end
 
-    alias :eql? :==
+    # @api private
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @package.hash + @name.hash + @params.hash + @sync_mode.hash
     end
