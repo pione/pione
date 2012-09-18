@@ -64,12 +64,19 @@ module Pione
       end
 
       # Defines a state for handling exceptions.
+      # @param [Hash{Exception => Symbol}] data
+      #   exception handler definition
+      # @return [void]
+      # @example
+      #   define_exception_handler(StopIetration => :end_process)
       def define_exception_handler(data)
         table = exception_handler_table
         table.merge!(data)
       end
 
-      # Creates an agent and start it.
+      # Creates an agent and starts it.
+      # @param [Array<Object>] args
+      #   arguments of state change
       def start(*args, &b)
         agent = new(*args)
         b.call(self) if block_given?
@@ -77,6 +84,9 @@ module Pione
         return agent
       end
 
+      # Returns list of exceptions
+      # @return [Array<Exception>]
+      #   exceptions
       def known_exceptions
         exception_handler_table.keys
       end
@@ -88,6 +98,7 @@ module Pione
       attr_reader :running_thread
 
       # Start agent activity.
+      # @return the agent
       def start
         raise TransitionError.new(current_state) if current_state == :terminated
 
@@ -96,12 +107,15 @@ module Pione
         return self
       end
 
-      # Return the current agent's state.
+      # Return state of current agent.
+      # @return [Symbol]
+      #   state of current agent
       def current_state
         @__current_state__ ||= nil
       end
 
-      # Transit to next state.
+      # Transits to next state.
+      # @return [void]
       def transit
         # raise error if the current state is terminated
         if current_state == :terminated
