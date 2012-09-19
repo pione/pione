@@ -34,15 +34,17 @@ module Pione
   # Generates UUID.
   # @return [String]
   #   generated UUID string
+  # @note
+  #   we use uuidtools gem for generating UUID
   def self.generate_uuid
     UUIDTools::UUID.random_create.to_s
   end
 
-  # Returns hostname of the machine.
+  # Returns the hostname of the machine.
   # @return [String]
   #   hostname
-  def hostname
+  def get_hostname
     Socket.gethostname
   end
-  module_function :hostname
+  module_function :get_hostname
 end

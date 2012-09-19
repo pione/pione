@@ -1,6 +1,12 @@
 module Pione::Model
 
   # DataExpr is a class for data name expressions of rule input and output.
+  # @example
+  #   # complete name
+  #   DataExpr.new("test.txt")
+  # @example
+  #   # incomplete name
+  #   DataExpr.new("*.txt")
   class DataExpr < PioneModelObject
 
     # separator symbol for all modifier

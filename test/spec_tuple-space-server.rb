@@ -21,13 +21,13 @@ describe "TupleSpaceServer" do
 
   it "should count workers" do
     @server.current_task_worker_size.should == 0
-    t1 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util.uuid)
+    t1 = Tuple[:agent].new(agent_type: :task_worker, uuid: Pione.generate_uuid)
     @server.write(t1)
     @server.current_task_worker_size.should == 1
-    t2 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util.uuid)
+    t2 = Tuple[:agent].new(agent_type: :task_worker, uuid: Pione.generate_uuid)
     @server.write(t2)
     @server.current_task_worker_size.should == 2
-    t3 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util.uuid)
+    t3 = Tuple[:agent].new(agent_type: :task_worker, uuid: Pione.generate_uuid)
     @server.write(t3)
     @server.current_task_worker_size.should == 3
     @server.take(t1)

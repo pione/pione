@@ -281,6 +281,12 @@ module Pione::Model
       def define_pione_method(*args, &b)
         @pione_model_type.define_pione_method(*args, &b)
       end
+
+      def inherited(subclass)
+        if @pione_model_type
+          subclass.set_pione_model_type @pione_model_type
+        end
+      end
     end
 
     # Creates a model object.
@@ -361,6 +367,12 @@ module Pione::Model
       else
         raise MethodNotFound.new(name, self)
       end
+    end
+
+    # Returns itself.
+    # @return [PioneModelObject]
+    def to_pione
+      self
     end
   end
 

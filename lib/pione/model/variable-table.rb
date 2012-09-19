@@ -136,17 +136,16 @@ MSG
     end
 
     # Expands variables in the string.
+    # @param [String] str
+    #   string
+    # @return [String]
+    #   expanded string
     def expand(str)
       variables = to_hash
       new_str = str.to_s.gsub(/\{(\$.+?)\}/) do
         expr = Transformer.new.apply(Parser.new.expr.parse($1))
+        p expr
         expr.eval(self).call_pione_method("as_string").to_ruby
-        # var = Variable.new($1)
-        # if variables.has_key?(var)
-        #   variables[var].to_ruby
-        # else
-        #   raise UnboundVariableError.new(Variable.new($1))
-        # end
       end
       new_str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
         expr = Transformer.new.apply(Parser.new.expr.parse($1))

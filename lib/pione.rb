@@ -16,6 +16,7 @@ require 'thread'
 require 'monitor'
 require 'parslet'
 require 'uri'
+require 'pathname'
 
 module Pione
   VERSION = 0
@@ -30,7 +31,7 @@ module Pione
     # Returns this object's uuid.
     # @return [String] UUID string
     def uuid
-      @__uuid__ ||= generate_uuid
+      @__uuid__ ||= Pione.generate_uuid
     end
 
     # Finalizes this object.
@@ -44,8 +45,10 @@ end
 require 'pione/util/terminal'
 require 'pione/util/config'
 require 'pione/util/message'
-require 'pione/rinda-patch'
 require 'pione/common'
+require 'pione/object'
+require 'pione/identifier'
+require 'pione/rinda-patch'
 require 'pione/model'
 require 'pione/tuple-space-server-interface'
 require 'pione/tuple-space-server'
@@ -62,7 +65,8 @@ require 'pione/agent'
 
 module Pione
   include Pione::Util
+  include Pione::Util::Message
   include Pione::Model
 
-  CONFIG = Config.new
+  CONFIG = Config.instance
 end

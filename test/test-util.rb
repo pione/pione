@@ -1,9 +1,7 @@
 require 'tmpdir'
 require 'bacon'
 require 'yaml'
-require 'pione/common'
-require 'pione/agent'
-require 'pione/agent/input-generator'
+require 'pione'
 
 module TestUtil
   include Pione::TupleSpaceServerInterface

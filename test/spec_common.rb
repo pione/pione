@@ -1,48 +1,14 @@
 require_relative 'test-util'
 
 describe 'Common' do
-  describe "PioneObject" do
-    it "should get uuid" do
-      obj1 = PioneObject.new
-      obj2 = PioneObject.new
-      obj1.uuid.should == obj1.uuid
-      obj1.uuid.should.not == obj2.uuid
+  it 'should ignore exception' do
+    should.not.raise(Exception) do
+      ignore_exception { raise Exception }
     end
   end
 
-  describe 'Util' do
-    it 'should ignore exception' do
-      should.not.raise(Exception) do
-        Util.ignore_exception { raise Exception }
-      end
-    end
-
-    it 'should get hostname' do
-      Util.hostname.should == `hostname`.chomp
-    end
-
-    it 'should get task_id' do
-      id1 = Util.task_id([], Parameters.empty)
-      id2 = Util.task_id([DataExpr["1.a"]], Parameters.empty)
-      id3 = Util.task_id([DataExpr["2.a"]], Parameters.empty)
-      id4 = Util.task_id([], {"var" => "1.a"}.to_params)
-      id5 = Util.task_id([], {"var" => "2.a"}.to_params)
-      id6 = Util.task_id([DataExpr["1.a"]], {"var" => "1.a"}.to_params)
-      id7 = Util.task_id([DataExpr["2.a"]], {"var" => "2.a"}.to_params)
-      7.times do |i|
-        eval "id#{i+1}.size.should == 32"
-        7.times do |ii|
-          eval "id#{i+1}.should.not == id#{ii+1}" unless i == ii
-        end
-      end
-      id1.should == Util.task_id([], Parameters.empty)
-      id2.should == Util.task_id([DataExpr["1.a"]], Parameters.empty)
-      id3.should == Util.task_id([DataExpr["2.a"]], Parameters.empty)
-      id4.should == Util.task_id([], {"var" => "1.a"}.to_params)
-      id5.should == Util.task_id([], {"var" => "2.a"}.to_params)
-      id6.should == Util.task_id([DataExpr["1.a"]], {"var" => "1.a"}.to_params)
-      id7.should == Util.task_id([DataExpr["2.a"]], {"var" => "2.a"}.to_params)
-    end
+  it 'should get hostname' do
+    get_hostname.should == `hostname`.chomp
   end
 end
 

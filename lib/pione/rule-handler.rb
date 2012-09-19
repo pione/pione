@@ -59,7 +59,7 @@ module Pione
         @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new(@params.data)
         @base_uri = read(Tuple[:base_uri].any).uri
-        @task_id = Util.task_id(@inputs, @params)
+        @task_id = ID.task_id(@inputs, @params)
         @call_stack = call_stack
 
         setup_variable_table
@@ -130,7 +130,7 @@ module Pione
 
       # Return the domain.
       def get_handling_domain(opts)
-        opts[:domain] || Util.domain(
+        opts[:domain] || ID.domain_id(
           @rule.expr.package.name,
           @rule.expr.name,
           @inputs,

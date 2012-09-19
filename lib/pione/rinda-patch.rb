@@ -1,9 +1,11 @@
+# @api private
 module Rinda
   class Tuple
     def ==(other)
       return false unless other.kind_of?(Tuple)
       value == other.value
     end
+    alias :eql? :"=="
   end
 
   class TupleEntry
@@ -11,23 +13,39 @@ module Rinda
       return false unless other.kind_of?(TupleEntry)
       value == other.value
     end
+    alias :eql? :"=="
   end
 
   class TupleBag
     # DomainTupleBin is a domain based TupleBin class.
+    # @note
+    #   DomainTupleBin should take tuples that have it's domain only.
     class DomainTupleBin < TupleBin
+      # Creates a new bin.
       def initialize
         @bin = {}
       end
 
+      # Adds the tuple.
+      # @param [Array] tuple
+      #   the tuple
+      # @return [void]
       def add(tuple)
         @bin[domain(tuple)] = tuple
       end
 
+      # Deletes the tuple.
+      # @param [Array] tuple
+      #   the tuple
+      # @return [void]
       def delete(tuple)
         @bin.delete(domain(tuple))
       end
 
+      # Deletes tuples that match the block.
+      # @yield [Array]
+      #   each tuple
+      # @return [void]
       def delete_if
         return @bin unless block_given?
         @bin.delete_if {|key, val| yield(val)}
@@ -35,6 +53,12 @@ module Rinda
 
       # Finds a tuple matched by the template. This method searches by index
       # when the template has the domain, otherwise by liner.
+      # @param [TemplateEntry] template
+      #   template tuple
+      # @yield [Array]
+      #   match condition block
+      # @return [Array]
+      #   a matched tuple
       def find(template, &b)
         if key = domain(template)
           # indexed search
@@ -47,6 +71,12 @@ module Rinda
 
       # Finds all tuples matched by the template. This method searches by index
       # when the template has the domain, otherwise by liner.
+      # @param [TemplateEntry] template
+      #   template tuple
+      # @yield [Array]
+      #   match condition block
+      # @return [Array<Array>]
+      #   matched tuples
       def find_all(template, &b)
         return @bin.values unless block_given?
         if key = domain(template)
@@ -58,6 +88,9 @@ module Rinda
         end
       end
 
+      # Returns an iterator of the values.
+      # @return [Enumerator]
+      #   iterator of the values
       def each(*args)
         @bin.values.each(*args)
       end
@@ -65,6 +98,10 @@ module Rinda
       private
 
       # Returns domain position.
+      # @param [Array] tuple
+      #   the tuple
+      # @return [String]
+      #   the domain
       def domain(tuple)
         identifier = tuple.value[0]
         pos = Pione::Tuple[identifier].domain_position
@@ -78,6 +115,10 @@ module Rinda
         @bin = {}
       end
 
+      # Adds the tuple.
+      # @param [Array] tuple
+      #   the tuple
+      # @return [void]
       def add(tuple)
         prepare_table(domain(tuple))
         @bin[domain(tuple)][name(tuple)] = tuple
@@ -160,6 +201,7 @@ module Rinda
       end
     end
 
+    # HashTupleBin is a double hash base bin class.
     class HashTupleBin
       def initialize
         @bin = {}
@@ -269,6 +311,7 @@ module Rinda
     end
   end
 
+  # @api private
   class TupleSpace
     alias :orig_initialize :initialize
 
@@ -298,10 +341,12 @@ module Rinda
     private
 
     def shift_tuple(tuple)
-      if pos = Pione::Tuple[tuple.first].uri_position
-        if new_uri = shift_uri(tuple[pos])
-          tuple = tuple.clone
-          tuple[pos] = new_uri
+      if Pione::Tuple[tuple.first]
+        if pos = Pione::Tuple[tuple.first].uri_position
+          if new_uri = shift_uri(tuple[pos])
+            tuple = tuple.clone
+            tuple[pos] = new_uri
+          end
         end
       end
       return tuple

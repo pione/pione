@@ -28,9 +28,10 @@ describe 'Model::PioneString' do
   end
 
   it 'should expand an expression' do
-    PioneString.new("1 + 1 = <?1 + 1?>").eval.should ==
+    vtable = VariableTable.new
+    PioneString.new("1 + 1 = <?1 + 1?>").eval(vtable).should ==
       PioneString.new("1 + 1 = 2")
-    PioneString.new("1 + 2 = <? 1 + 2 ?>").eval.should ==
+    PioneString.new("1 + 2 = <? 1 + 2 ?>").eval(vtable).should ==
       PioneString.new("1 + 2 = 3")
   end
 

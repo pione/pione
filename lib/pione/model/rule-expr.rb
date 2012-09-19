@@ -5,17 +5,15 @@ module Pione::Model
 
     attr_reader :package
     attr_reader :name
-    attr_reader :sync_mode
     attr_reader :params
 
     # Create a rule expression.
     # @param [String] package pione package name
     # @param [String] name rule name
     # @param [Parameters] params parameters
-    def initialize(package, name, sync_mode=false, params=Parameters.empty)
+    def initialize(package, name, params=Parameters.empty)
       @package = package
       @name = name
-      @sync_mode = sync_mode
       @params = params
       super()
     end
@@ -49,7 +47,7 @@ module Pione::Model
     # @return [RuleExpr]
     #   new rule expression with the package name
     def set_package(package)
-      return self.class.new(package, @name, @sync_mode, @params)
+      return self.class.new(package, @name, @params)
     end
 
     # Sets parameters and returns a new expression.
@@ -58,7 +56,7 @@ module Pione::Model
     # @return [RuleExpr]
     #   new rule expression with the parameters
     def set_params(params)
-      return self.class.new(@package, @name, @sync_mode, params)
+      return self.class.new(@package, @name, params)
     end
 
     # Evaluates the object with the variable table.
@@ -70,7 +68,6 @@ module Pione::Model
       return self.class.new(
         @package.eval(vtable),
         @name,
-        @sync_mode,
         @params.eval(vtable)
       )
     end
@@ -87,7 +84,6 @@ module Pione::Model
       return false unless other.kind_of?(self.class)
       return false unless @package = other.package
       return false unless @name == other.name
-      return false unless sync_mode? == other.sync_mode?
       return false unless @params == other.params
       return true
     end
@@ -97,7 +93,7 @@ module Pione::Model
 
     # @api private
     def hash
-      @package.hash + @name.hash + @params.hash + @sync_mode.hash
+      @package.hash + @name.hash + @params.hash
     end
   end
 
@@ -106,16 +102,11 @@ module Pione::Model
       PioneBoolean.new(
         rec.package == other.package &&
         rec.name == other.name &&
-        rec.sync_mode? == other.sync_mode? &&
         rec.params == other.params)
     end
 
     define_pione_method("!=", [TypeRuleExpr], TypeBoolean) do |rec, other|
       PioneBoolean.not(rec.call_pione_method("==", other))
-    end
-
-    define_pione_method("sync", [TypeBoolean], TypeRuleExpr) do |rec, b|
-      rec.sync(b.value)
     end
 
     define_pione_method("params", [TypeParameters], TypeRuleExpr) do |rec, params|

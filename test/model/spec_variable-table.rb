@@ -50,43 +50,50 @@ describe 'Model::VariableTable' do
   end
 
   it 'should have input auto variables' do
-    input_exprs = [ DataExpr.new('*.a'),
-                    DataExpr.new('*.b').all ]
-    input_tuples = [Tuple[:data].new(name: '1.a', uri: 'test'),
-                    [Tuple[:data].new(name: '1.b', uri: 'test1'),
-                     Tuple[:data].new(name: '2.b', uri: 'test2'),
-                     Tuple[:data].new(name: '3.b', uri: 'test3')]]
+    input_exprs = [
+      DataExpr.new('*.a'),
+      DataExpr.new('*.b').all
+    ]
+    input_tuples = [
+      Tuple[:data].new(name: '1.a', uri: 'test'),
+      [ Tuple[:data].new(name: '1.b', uri: 'test1'),
+        Tuple[:data].new(name: '2.b', uri: 'test2'),
+        Tuple[:data].new(name: '3.b', uri: 'test3')]
+    ]
+
     @table.make_input_auto_variables(input_exprs, input_tuples)
-    @table.get(Variable.new('INPUT[1]')).should ==
-      PioneString.new('1.a')
-    @table.get(Variable.new('INPUT[1].*')).should ==
-      PioneString.new('1')
-    @table.get(Variable.new('INPUT[1].MATCH[1]')).should ==
-      PioneString.new('1')
-    @table.get(Variable.new('INPUT[1].URI')).should ==
-      PioneString.new('test')
-    @table.get(Variable.new('INPUT[2]')).should ==
-      PioneString.new('1.b:2.b:3.b')
-    @table.get(Variable.new('INPUT[2].*')).should.nil
-    @table.get(Variable.new('INPUT[2].MATCH[1]')).should.nil
-    @table.get(Variable.new('INPUT[2].URI')).should.nil
-    @table.get(Variable.new('INPUT[2][1]')).should ==
-      PioneString.new('1.b')
-    @table.get(Variable.new('INPUT[2][1].*')).should ==
-      PioneString.new('1')
-    @table.get(Variable.new('INPUT[2][1].MATCH[1]')).should ==
-      PioneString.new('1')
-    @table.get(Variable.new('INPUT[2][2]')).should ==
-      PioneString.new('2.b')
-    @table.get(Variable.new('INPUT[2][2].*')).should ==
-      PioneString.new('2')
-    @table.get(Variable.new('INPUT[2][2].MATCH[1]')).should ==
-      PioneString.new('2')
-    @table.get(Variable.new('INPUT[2][3]')).should ==
-      PioneString.new('3.b')
-    @table.get(Variable.new('INPUT[2][3].*')).should ==
-      PioneString.new('3')
-    @table.get(Variable.new('INPUT[2][3].MATCH[1]')).should ==
-      PioneString.new('3')
+
+    input = @table.get(Variable.new('I'))
+    input.should.kind_of(RuleIOList)
+    input.should == @table.get(Variable.new('INPUT'))
+
+    input1 = input[0]
+    input1.should.kind_of(RuleIOElement)
+    input1.name.should == "1.a".to_pione
+    input1.match.size.should == 2
+    input1.match[0] == "1.a".to_pione
+    input1.match[1] == "1".to_pione
+    input1.uri = "test"
+
+    input2 = input[1]
+    input2.should.kind_of(RuleIOList)
+    input2.size.should == 3
+    input2[0].should.kind_of(RuleIOElement)
+    input2[0].name.should == "1.b".to_pione
+    input2[0].match.size.should == 2
+    input2[0].match[0].should == "1.b".to_pione
+    input2[0].match[1].should == "1".to_pione
+    input2[1].should.kind_of(RuleIOElement)
+    input2[1].name.should == "2.b".to_pione
+    input2[1].match.size.should == 2
+    input2[1].match[0].should == "2.b".to_pione
+    input2[1].match[1].should == "2".to_pione
+    input2[2].should.kind_of(RuleIOElement)
+    input2[2].name.should == "3.b".to_pione
+    input2[2].match.size.should == 2
+    input2[2].match[0].should == "3.b".to_pione
+    input2[2].match[1].should == "3".to_pione
+
+    @table.get(Variable.new('*')).should == PioneString.new('1')
   end
 end

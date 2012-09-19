@@ -18,7 +18,12 @@ module Pione::Model
 
     # @api private
     def textize
-      "ioelement(%s,%s,%s)" % [@name.to_ruby, @uri.textize, @match.textize]
+      "rule-io-element(%s,%s,%s)" % [@name.to_ruby, @uri.textize, @match.textize]
+    end
+
+    # @api private
+    def uri=(uri)
+      @uri = uri.to_pione
     end
 
     # @api private
@@ -65,9 +70,12 @@ module Pione::Model
 
   # RuleIOList is a list object for RuleIOElement.
   class RuleIOList < PioneModelObject
+    extend Forwardable
+
     set_pione_model_type TypeRuleIOList
 
     attr_accessor :elements
+    def_delegators :@elements, :[], :size, :length
 
     # Creates a list object.
     # @param [Array<RuleIOElement>] elts

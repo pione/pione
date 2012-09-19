@@ -69,13 +69,6 @@ describe 'Model::Parameters' do
     params.get(Variable.new("a")).should == "A".to_pione
   end
 
-  it 'should clear parameters' do
-    params = @params_a
-    new_params = params.clear
-    new_params.should == Parameters.new({})
-    params.get(Variable.new("a")).should == "A".to_pione
-  end
-
   it 'should be empty' do
     Parameters.new({}).should.be.empty
   end
@@ -143,13 +136,6 @@ describe 'Model::Parameters' do
     it 'should overwrite a parameter' do
       new_params = @params_a.call_pione_method("set", "a".to_pione, "X".to_pione)
       new_params.get(Variable.new("a")).should == "X".to_pione
-    end
-  end
-
-  describe 'pione method clear' do
-    it 'should clear' do
-      new_params = @params_a.call_pione_method("clear")
-      new_params.should.be.empty
     end
   end
 

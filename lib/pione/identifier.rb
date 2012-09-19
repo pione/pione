@@ -1,4 +1,5 @@
 module Pione
+  # Identifier is a set of generators for id.
   module Identifier
     # Makes task id by input data names.
     # @param [Array<Pione::Tuple::Data>] inputs
@@ -52,4 +53,7 @@ module Pione
     end
     module_function :domain_id3
   end
+
+  # Short name for Identifier.
+  ID = Identifier
 end

@@ -271,10 +271,6 @@ module Pione::Model
       rec.set(Variable.new(name.value), val)
     end
 
-    define_pione_method("clear", [], TypeParameters) do |rec|
-      rec.clear
-    end
-
     define_pione_method("empty?", [], TypeBoolean) do |rec|
       PioneBoolean.new(rec.empty?)
     end

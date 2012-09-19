@@ -105,7 +105,7 @@ describe 'Model::ActionRule' do
     Resource[uri_a].create("1")
     inputs = [Tuple[:data].new(name: '1.a', uri: uri_a)]
     params = Parameters.empty
-    handler = rule.make_handler(tuple_space_server, inputs, params)
+    handler = rule.make_handler(tuple_space_server, inputs, params, [])
     handler.should.be.kind_of(RuleHandler::ActionHandler)
     tuple_space_server.terminate
   end

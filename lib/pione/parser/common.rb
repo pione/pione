@@ -1,4 +1,4 @@
-module Pione::Parser
+class Pione::Parser
   # Common is a set of common parsers: symbols, keywords, and utility parsers.
   module Common
     include Parslet

@@ -16,6 +16,7 @@ module Pione
 
       # @api private
       @@debug_mode = false
+
       # @api private
       @@quiet_mode = false
 
@@ -38,7 +39,7 @@ module Pione
       def debug_mode=(mode)
         @@debug_mode = mode
       end
-      module_function :debug_mode=
+      module_function :"debug_mode="
 
       # Return true if the system is debug mode.
       # @return [bool]
@@ -66,7 +67,7 @@ module Pione
       def quiet_mode=(mode)
         @@quiet_mode = mode
       end
-      module_function :quiet_mode=
+      module_function :"quiet_mode="
 
       # Return true if the system is quiet mode.
       # @return [bool]
@@ -149,6 +150,4 @@ module Pione
       end
     end
   end
-
-  include Message
 end

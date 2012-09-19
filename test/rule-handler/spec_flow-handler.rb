@@ -35,10 +35,13 @@ describe 'FlowRule' do
     Resource[uri_a].create("1")
     Resource[uri_b].create("2")
 
-    inputs = [Tuple[:data].new(name: '1.a', uri: uri_a),
-              Tuple[:data].new(name: '1.b', uri: uri_b)]
+    inputs = [
+      Tuple[:data].new(name: '1.a', uri: uri_a),
+      Tuple[:data].new(name: '1.b', uri: uri_b)
+    ]
+
     params = Parameters.empty
-    handler = @rule.make_handler(tuple_space_server, inputs, params)
+    handler = @rule.make_handler(tuple_space_server, inputs, params, [])
     handler.should.be.kind_of(RuleHandler::FlowHandler)
   end
 end
@@ -54,7 +57,7 @@ End
 
 Rule Shell
   input '*.a'
-  input '{$INPUT[1].*}.b'
+  input '{$I[1].*}.b'
   output '{$INPUT[1].*}.c'
 Action
 VAL1=`cat {$INPUT[1]}`;
@@ -82,14 +85,19 @@ describe 'FlowHandler' do
     Resource[uri_a].create("1")
     Resource[uri_b].create("2")
 
-    @tuples = [ Tuple[:data].new('test', '1.a', uri_a, Time.now),
-                Tuple[:data].new('test', '1.b', uri_b, Time.now) ]
+    @tuples = [
+      Tuple[:data].new('test', '1.a', uri_a, Time.now),
+      Tuple[:data].new('test', '1.b', uri_b, Time.now)
+    ]
     @tuples.each {|t| write(t) }
 
-    @handler = @rule.make_handler(tuple_space_server,
-                                  @tuples,
-                                  Parameters.empty,
-                                  {:domain => 'test'})
+    @handler = @rule.make_handler(
+      tuple_space_server,
+      @tuples,
+      Parameters.empty,
+      [],
+      {:domain => 'test'}
+    )
   end
 
   after do

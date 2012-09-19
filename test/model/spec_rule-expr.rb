@@ -14,11 +14,6 @@ describe 'Model::RuleExpr' do
     @a.should.not == @b
   end
 
-  it 'should get sync mode' do
-    @a.should.not.sync_mode
-    @a.sync(true).should.sync_mode
-  end
-
   describe 'pione method ==' do
     it 'should true' do
       @a.call_pione_method(
@@ -28,7 +23,6 @@ describe 'Model::RuleExpr' do
 
     it 'should false' do
       @a.call_pione_method("==", @b).should.not.true
-      @a.call_pione_method("==", @a.sync(true)).should.not.true
     end
 
     it 'should raise type error' do
@@ -62,18 +56,11 @@ describe 'Model::RuleExpr' do
     end
   end
 
-  describe 'pione method sync' do
-    it 'should set sync mode' do
-      @a.call_pione_method("sync", PioneBoolean.true).should.sync_mode
-      @a.call_pione_method("sync", PioneBoolean.false).should.not.sync_mode
-    end
-  end
-
   describe 'pione method params' do
     it 'should set parameters' do
       params = Parameters.new({Variable.new("a") => PioneBoolean.true})
       @a.call_pione_method("params", params).should ==
-        RuleExpr.new(Package.new("main"), "a", false, params)
+        RuleExpr.new(Package.new("main"), "a", params)
     end
   end
 end

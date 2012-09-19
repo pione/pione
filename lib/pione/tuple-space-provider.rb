@@ -1,14 +1,15 @@
 require 'pione/common'
 
 module Pione
+  # TupleSpaceProvider provides tuple space server's location.
   class TupleSpaceProvider < PioneObject
     include DRbUndumped
     include MonitorMixin
 
-    UDP_PORT = 54321
+    CONNECTION_PORT = 54321
     PROVIDER_URI = "druby://localhost:10101"
     TIMEOUT = 5
-    MAX_RETRY_NUMBER = 5
+    MAX_RETRY_NUMBER = 50
 
     class InstanceError < StandardError; end
 
@@ -69,7 +70,7 @@ module Pione
 
       @expiration_time = 5
       @timeout = data.has_key?(:timeout) ? data[:timeout] : TIMEOUT
-      @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : UDP_PORT
+      @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : CONNECTION_PORT
       @tuple_space_servers = {}
       @remote_object = Marshal.dump(DRbObject.new(self))
       @terminated = false

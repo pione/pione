@@ -56,7 +56,7 @@ module Pione
       # Make a working directory.
       def make_working_directory
         # build directory path
-        task_dirname = Util.domain(
+        task_dirname = ID.domain_id(
           @rule.expr.package.name,
           @rule.expr.name,
           @inputs,

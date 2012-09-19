@@ -4,16 +4,19 @@ module Pione::Model
 
     attr_reader :values
 
-    def initialize(*values)
-      unless values.empty?
-        if values.find{|val| not(val.kind_of?(PioneModelObject))}
-          raise ArgumentError.new(values)
+    # Creates a list with elements.
+    # @param [Array] values
+    #   elements
+    def initialize(*elts)
+      unless elts.empty?
+        if elts.find{|val| not(val.kind_of?(PioneModelObject))}
+          raise ArgumentError.new(elts)
         end
-        unless values.map{|val| val.pione_model_type}.uniq.size == 1
-          raise ArgumentError.new(values)
+        unless elts.map{|val| val.pione_model_type}.uniq.size == 1
+          raise ArgumentError.new(elts)
         end
       end
-      @values = values
+      @values = elts
     end
 
     def pione_model_type
@@ -27,6 +30,10 @@ module Pione::Model
     end
 
     # Returns new list which appended the element.
+    # @param [PioneModelObject] elt
+    #   the element object
+    # @return [PioneList]
+    #   new list with the element
     def add(elt)
       unless elt.kind_of?(PioneModelObject)
         raise ArgumentError.new(elt)
@@ -37,17 +44,34 @@ module Pione::Model
       self.class.new(@values + [elt])
     end
 
+    # Returns the value of index.
+    # @param [Integer] index
+    #   index to get the value
+    # @return
+    #   the value
+    def [](index)
+      @values[index]
+    end
+
+    def size
+      @values.size
+    end
+
+
+    # @api private
     def textize
       "[%s]" % @values.map{|val| val.textize}.join(",")
     end
 
+    # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @value == other.value
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
+    # @api private
     def hash
       @value.hash
     end
