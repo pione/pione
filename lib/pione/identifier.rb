@@ -49,7 +49,7 @@ module Pione
       package_name = rule.expr.package.name
       rule_name = rule.expr.name
       params = callee.expr.params
-      return domain(package_name, rule_name, inputs, params)
+      return domain_id(package_name, rule_name, inputs, params)
     end
     module_function :domain_id3
   end

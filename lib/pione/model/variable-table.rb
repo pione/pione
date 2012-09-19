@@ -144,7 +144,6 @@ MSG
       variables = to_hash
       new_str = str.to_s.gsub(/\{(\$.+?)\}/) do
         expr = Transformer.new.apply(Parser.new.expr.parse($1))
-        p expr
         expr.eval(self).call_pione_method("as_string").to_ruby
       end
       new_str.gsub(/\<\?\s*(.+?)\s*\?\>/) do

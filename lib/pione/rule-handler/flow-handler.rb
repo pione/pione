@@ -107,7 +107,7 @@ module Pione
       def select_updatables(combinations)
         combinations.select do |callee, rule, inputs, vtable|
           # task domain
-          task_domain = Util.domain3(rule, inputs, callee)
+          task_domain = ID.domain_id3(rule, inputs, callee)
 
           # import finished tuples's data
           import_finished_outputs(task_domain)
@@ -137,7 +137,7 @@ module Pione
 
           thread = Thread.new do
             # task domain
-            task_domain = Util.domain3(rule, inputs, callee)
+            task_domain = ID.domain_id3(rule, inputs, callee)
 
             # make a task tuple
             task = Tuple[:task].new(

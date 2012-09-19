@@ -204,6 +204,24 @@ module Pione::Model
       @domain = ROOT_DOMAIN
     end
 
+    # @api private
+    def make_handler(ts_server)
+      finder = DataFinder.new(ts_server, INPUT_DOMAIN)
+      results = finder.find(:input, inputs, VariableTable.new)
+      if results.empty? and not(@main.inputs.empty?)
+        return nil
+      end
+      inputs = @main.inputs.empty? ? [] : results.first.combination
+      handler_class.new(
+        ts_server,
+        self,
+        inputs,
+        @params,
+        [],
+        {:domain => @domain}
+      )
+    end
+
     private
 
     # @api private
@@ -220,24 +238,6 @@ module Pione::Model
         outputs,
         Parameters.empty,
         Feature.empty
-      )
-    end
-
-    # @api private
-    def make_handler(ts_server)
-      finder = DataFinder.new(ts_server, INPUT_DOMAIN)
-      results = finder.find(:input, inputs, VariableTable.new)
-      if results.empty? and not(@main.inputs.empty?)
-        return nil
-      end
-      inputs = @main.inputs.empty? ? [] : results.first.combination
-      handler_class.new(
-        ts_server,
-        self,
-        inputs,
-        @params,
-        [],
-        {:domain => @domain}
       )
     end
 

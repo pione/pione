@@ -55,11 +55,11 @@ module Pione::Model
       PioneString.new(rec.uri)
     end
 
-    define_pione_method("match", [], TypeList.new(TypeString)) do |rec, other|
+    define_pione_method("match", [], TypeList.new(TypeString)) do |rec|
       PioneList.new(*rec.match)
     end
 
-    define_pione_method("MATCH", [], TypeList.new(TypeString)) do |rec, other|
+    define_pione_method("MATCH", [], TypeList.new(TypeString)) do |rec|
       rec.call_pione_method("match")
     end
 
