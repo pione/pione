@@ -79,7 +79,7 @@ $dir = File.dirname(File.expand_path(__FILE__))
 
 # base uri
 unless option.base_uri
-  option.base_uri = "local:#{Dir.mktmpdir('pione-')}/"
+  option.base_uri = "local:./output/"
 end
 
 # make drb server and it's connection

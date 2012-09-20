@@ -1,5 +1,3 @@
-require 'pione/common'
-
 module Pione
   # RuleHandler is a handler for rule execution.
   module RuleHandler

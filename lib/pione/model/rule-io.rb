@@ -56,7 +56,7 @@ module Pione::Model
     end
 
     define_pione_method("match", [], TypeList.new(TypeString)) do |rec|
-      PioneList.new(*rec.match)
+      rec.match
     end
 
     define_pione_method("MATCH", [], TypeList.new(TypeString)) do |rec|

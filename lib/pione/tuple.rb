@@ -348,12 +348,18 @@ module Pione
     ]
 
     # rule application task with inputs, outpus and parameters
-    #   rule_path      : string               : rule location path
-    #   inputs         : data list            : input data list
-    #   params         : parameters           : parameter list
-    #   features       : feature              : request features
-    #   domain         : string               : task domain
-    #   call_stack     : string array         : call stack(domain list)
+    #   rule_path : String
+    #     rule location path
+    #   inputs : Array<DataExpr, Array<DataExpr>>
+    #     input data list
+    #   params : Parameters
+    #     parameter list
+    #   features : FeatureExpr
+    #     request features
+    #   domain : String
+    #     task domain
+    #   call_stack : Array<String>
+    #     call stack(domain list)
     define_format [:task,
       [:rule_path, String],
       [:inputs, Array],
@@ -364,8 +370,10 @@ module Pione
     ]
 
     # working information
-    #   domain : string : caller domain
-    #   digest : string : rule handler digest
+    #   domain : String
+    #     caller domain
+    #   digest : String
+    #     rule handler digest
     define_format [:working,
       [:domain, String],
       [:digest, String]

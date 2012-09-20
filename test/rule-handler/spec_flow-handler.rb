@@ -6,7 +6,7 @@ Rule Test
   input '{$INPUT[1].MATCH[1]}.b'
   output '{$INPUT[1].MATCH[1]}.c'
 Flow
-rule TestAction
+  rule TestAction
 End
 DOCUMENT
 
@@ -49,16 +49,16 @@ end
 doc = Document.parse(<<-DOCUMENT)
 Rule Test
   input '*.a'
-  input '{$INPUT[1].*}.b'
-  output '{$INPUT[1].*}.c'
+  input '{$*}.b'
+  output '{$*}.c'
 Flow
-rule Shell
+  rule Shell
 End
 
 Rule Shell
   input '*.a'
-  input '{$I[1].*}.b'
-  output '{$INPUT[1].*}.c'
+  input '{$*}.b'
+  output '{$*}.c'
 Action
 VAL1=`cat {$INPUT[1]}`;
 VAL2=`cat {$INPUT[2]}`;
@@ -69,7 +69,7 @@ Rule VariableBindingErrorTest
   input '*.a'
   output '*.b'
 Flow
-rule Test
+  rule Test
 End
 DOCUMENT
 
@@ -102,22 +102,6 @@ describe 'FlowHandler' do
 
   after do
     tuple_space_server.terminate
-  end
-
-  it 'should make working directory with no process informations' do
-    Dir.should.exist(@handler.working_directory)
-  end
-
-  it 'should make working directory with process informations' do
-    process_name = "test-process-123"
-    process_id = "xyz"
-    opts = {:process_name => process_name, :process_id => process_id}
-    handler = @rule.make_handler(
-      tuple_space_server, @tuples, Parameters.empty, opts
-    )
-    path = handler.working_directory
-    Dir.should.exist(path)
-    path.should.include "#{process_name}_#{process_id}"
   end
 
   it "should execute a flow" do

@@ -23,7 +23,8 @@ describe 'Agent::TaskWorker' do
         [],
         Parameters.empty,
         Feature.empty,
-        Util.uuid
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
       )
       write(task)
       @worker.__send__(:transit_to_initialized)
@@ -31,16 +32,18 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should wait taking a task because of features' do
-      write(Tuple[:task].new(
-          '&main:Test',
-          [],
-          Parameters.empty,
-          Feature::RequisiteExpr.new('X'),
-          Util.uuid
-      ))
+      task = Tuple[:task].new(
+        '&main:Test',
+        [],
+        Parameters.empty,
+        Feature::RequisiteExpr.new('X'),
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
+      )
+      write(task)
       should.raise(Timeout::Error) do
         timeout(1) do
-          p @worker.__send__(:transit_to_task_waiting)
+          @worker.__send__(:transit_to_task_waiting)
         end
       end
     end
@@ -51,7 +54,8 @@ describe 'Agent::TaskWorker' do
         [],
         Parameters.empty,
         Feature::RequisiteExpr.new('A'),
-        Util.uuid
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
       )
       write(task)
       @worker.__send__(:transit_to_task_waiting).should == task
@@ -63,7 +67,8 @@ describe 'Agent::TaskWorker' do
         [],
         Parameters.empty,
         Feature.empty,
-        Util.uuid
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
       )
       rule = Tuple[:rule].new('&main:Test', :fake_content, :known)
       write(rule)
@@ -78,7 +83,8 @@ describe 'Agent::TaskWorker' do
         [],
         Parameters.empty,
         Feature.empty,
-        Util.uuid
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
       )
       rule = Tuple[:rule].new('&main:Test', :fake_content, :unknown)
       write(rule)
@@ -88,14 +94,15 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should execute a task' do
-      uuid = Util.uuid
-      write(Tuple[:working].new(uuid))
+      uuid = Pione.generate_uuid
+      write(Tuple[:working].new("test","test"))
       task1 = Tuple[:task].new(
         '&main:Test',
         [],
         Parameters.empty,
         Feature.empty,
-        uuid
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
       )
       rule = ActionRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
@@ -107,10 +114,12 @@ describe 'Agent::TaskWorker' do
         ),
         ActionBlock.new("expr 1 + 2 > out.txt")
       )
-      task2, handler, result =
-        @worker.__send__(:transit_to_task_executing, task1, rule)
-      task2.should == task1
-      result.first.name.should == "out.txt"
+      Pione.quiet_mode do
+        task2, handler, result =
+          @worker.__send__(:transit_to_task_executing, task1, rule)
+        task2.should == task1
+        result.first.name.should == "out.txt"
+      end
     end
 
     it 'should write output data tuples' do
@@ -119,7 +128,8 @@ describe 'Agent::TaskWorker' do
         [],
         Parameters.empty,
         Feature.empty,
-        Util.uuid
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
       )
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
@@ -127,7 +137,7 @@ describe 'Agent::TaskWorker' do
         :dummy
       )
       handler1 = RuleHandler::FlowHandler.new(
-        tuple_space_server, rule, [], Parameters.empty
+        tuple_space_server, rule, [], Parameters.empty, []
       )
       result = [Tuple[:data].new('&main:Test', '1.a', nil, Time.now)]
       task2, handler2 =
@@ -139,7 +149,12 @@ describe 'Agent::TaskWorker' do
 
     it 'should write a finished_task tuple' do
       task = Tuple[:task].new(
-        '&main:Test', [], Parameters.empty, Feature.empty, Util.uuid
+        '&main:Test',
+        [],
+        Parameters.empty,
+        Feature.empty,
+        ID.domain_id("main", "Test", [], Parameters.empty),
+        []
       )
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
@@ -147,7 +162,7 @@ describe 'Agent::TaskWorker' do
         :dummy
       )
       handler = RuleHandler::FlowHandler.new(
-        tuple_space_server, rule, [], Parameters.empty
+        tuple_space_server, rule, [], Parameters.empty, []
       )
       @worker.__send__(:transit_to_task_finishing, task, handler)
       finished_task = read(Tuple[:finished].any)
@@ -173,11 +188,12 @@ describe 'Agent::TaskWorker' do
       Resource[@uri].create "abc"
       @data = Tuple[:data].new(domain: 'test', name: "1.a", uri: @uri)
       @task1 = Tuple[:task].new(
-        rule_path: "&main:test",
-        inputs: [@data],
-        params: Parameters.empty,
-        features: Feature.empty,
-        uuid: Util.uuid
+        "&main:test",
+        [@data],
+        Parameters.empty,
+        Feature.empty,
+        ID.domain_id("main", "Test", [@data], Parameters.empty),
+        []
       )
 
       # make a rule
