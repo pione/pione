@@ -3,6 +3,7 @@ require 'pione/agent'
 
 module Pione
   module Agent
+    # TaskWorker is an agent to process tasks
     class TaskWorker < TupleSpaceClient
       set_agent_type :task_worker
 
@@ -37,9 +38,11 @@ module Pione
 
       private
 
-      # Create a task worker agent.
-      # [+tuple_space_server+] tuple space server
-      # [+features+] feature set
+      # Creates a task worker agent.
+      # @param  [TupleSpaceServer] tuple_space_server
+      #   tuple space server
+      # @param [Feature::Expr] features
+      #   feature set
       def initialize(tuple_space_server, features=Feature::EmptyFeature.new)
         raise ArgumentError.new(features) unless features.kind_of?(Feature::Expr)
         @features = features
@@ -51,6 +54,8 @@ module Pione
 
       # Transition method for the state +task_waiting+. The agent takes a +task+
       # tuple and writes a +working+ tuple.
+      # @return [Task]
+      #   task tuple
       def transit_to_task_waiting
         task = take(Tuple[:task].new(features: @features))
         write(Tuple[:working].new(task.domain, task.digest))
@@ -59,6 +64,8 @@ module Pione
 
       # Transition method for the state +task_processing+. The agent starts
       # processing to do the task.
+      # @return [Task]
+      #   task tuple
       def transit_to_task_processing(task)
         log do |msg|
           msg.add_record(agent_type, "action", "process_rule")
@@ -68,6 +75,8 @@ module Pione
       end
 
       # Transition method for the state +rule_loading+.
+      # @return [Array<Task, Rule>]
+      #   task tuple and the rule
       def transit_to_rule_loading(task)
         rule =
           begin
@@ -88,6 +97,11 @@ module Pione
       end
 
       # State task_executing.
+      # @param [Task] task
+      #   task tuple
+      # @param [Rule] rule
+      #   the rule
+      # @return [Array<Task,RuleHandler,Array<Data>>]
       def transit_to_task_executing(task, rule)
         debug_message_begin("Start Task Execution #{rule.rule_path} by worker(#{uuid})")
 
@@ -135,12 +149,24 @@ module Pione
       end
 
       # State data_outputing.
+      # @param [Task] task
+      #   task tuple
+      # @param [RuleHandler] handler
+      #   rule handler
+      # @param [Array<Data>] result
+      #   result data tuples
+      # @return [Array<Task,RuleHandler>]
       def transit_to_data_outputing(task, handler, result)
         result.each {|output| write(output)}
         return task, handler
       end
 
       # State task_finishing.
+      # @param [Task] task
+      #   task tuple
+      # @param [RuleHandler] handler
+      #   the handler
+      # @return [void]
       def transit_to_task_finishing(task, handler)
         log do |msg|
           msg.add_record(agent_type, "action", "finished_task")

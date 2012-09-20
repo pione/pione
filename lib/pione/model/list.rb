@@ -1,11 +1,15 @@
 module Pione::Model
+  # PioneList is a list that include same type elements.
   class PioneList < PioneModelObject
+    extend Forwardable
+
     set_pione_model_type TypeList[TypeAny]
 
     attr_reader :values
+    def_delegators :@values, :[], :size, :empty?
 
     # Creates a list with elements.
-    # @param [Array] values
+    # @param [Array] elts
     #   elements
     def initialize(*elts)
       unless elts.empty?
@@ -19,14 +23,12 @@ module Pione::Model
       @values = elts
     end
 
+    # Returns pione model type corresponding to the elements.
+    # @return [TypeList]
+    #   the type
     def pione_model_type
       type = @values.empty? ? TypeAny : @values.first.pione_model_type
       TypeList.new(type)
-    end
-
-    # Returns true if the list is empty.
-    def empty?
-      @values.empty?
     end
 
     # Returns new list which appended the element.
@@ -44,19 +46,6 @@ module Pione::Model
       self.class.new(@values + [elt])
     end
 
-    # Returns the value of index.
-    # @param [Integer] index
-    #   index to get the value
-    # @return
-    #   the value
-    def [](index)
-      @values[index]
-    end
-
-    def size
-      @values.size
-    end
-
 
     # @api private
     def textize
@@ -66,7 +55,7 @@ module Pione::Model
     # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
-      @value == other.value
+      @values == other.values
     end
 
     alias :eql? :"=="
