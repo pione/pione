@@ -1,4 +1,4 @@
-require "bundler/setup"
+require 'bundler/setup'
 require 'set'
 require 'socket'
 require 'digest'
@@ -14,9 +14,9 @@ require 'thread'
 require 'monitor'
 require 'uri'
 require 'pathname'
-#require 'uuidtools'
-#require 'json'
-#require 'parslet'
+require 'uuidtools'
+require 'json'
+require 'parslet'
 
 require 'pione/version'
 require 'pione/util/terminal'
