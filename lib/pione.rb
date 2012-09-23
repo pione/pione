@@ -1,47 +1,24 @@
+require "bundler/setup"
 require 'set'
-require 'uuidtools'
 require 'socket'
 require 'digest'
 require 'socket'
 require 'drb/drb'
 require 'rinda/rinda'
 require 'rinda/tuplespace'
-require 'json'
 require 'tempfile'
-require 'pione'
 require 'yaml'
 require 'singleton'
 require 'timeout'
 require 'thread'
 require 'monitor'
-require 'parslet'
 require 'uri'
 require 'pathname'
+#require 'uuidtools'
+#require 'json'
+#require 'parslet'
 
-module Pione
-  VERSION = 0
-
-  def version
-    "%s" % VERSION
-  end
-  module_function :version
-
-  # Basic object class for PIONE system.
-  class PioneObject
-    # Returns this object's uuid.
-    # @return [String] UUID string
-    def uuid
-      @__uuid__ ||= Pione.generate_uuid
-    end
-
-    # Finalizes this object.
-    # @return [void]
-    def finalize
-      # do nothing
-    end
-  end
-end
-
+require 'pione/version'
 require 'pione/util/terminal'
 require 'pione/util/config'
 require 'pione/util/message'

@@ -108,6 +108,21 @@ module Pione::Model
         raise PioneModelTypeError.new(data, self)
       end
     end
+
+    # @api private
+    def to_s
+      "#<Type %s>" % @type_string
+    end
+
+    # @api private
+    def ==(other)
+      @type_string == other.type_string
+    end
+
+    # @api private
+    def hash
+      @type_string.hash
+    end
   end
 
   class VariableType

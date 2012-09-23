@@ -1,3 +1,5 @@
+require "bundler/gem_tasks"
+
 $stand_alone = "bin/pione-stand-alone"
 
 desc 'generate HTML API documentation'

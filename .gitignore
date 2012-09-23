@@ -6,3 +6,7 @@ html
 log.txt
 doc
 .yardoc
+vendor/bundle
+.bundle
+Gemfile.lock
+pkg

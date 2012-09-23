@@ -34,10 +34,14 @@ module Pione
       attr_reader :call_stack
 
       # Create a new handler for rule.
-      # [+ts_server+] tuple space server
-      # [+rule+] rule instance
-      # [+inputs+] input tuples
-      # [+opts+] optionals
+      # @param [TupleSpaceServer] ts_server
+      #   tuple space server
+      # @param [Rule] rule
+      #   rule instance
+      # @param [Array<Data,Array<Data>>] inputs
+      #   input tuples
+      # @param [Hash] opts
+      #   optionals
       def initialize(ts_server, rule, inputs, params, call_stack, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
@@ -64,13 +68,18 @@ module Pione
       end
 
       # Puts environment variable into pione variable table.
+      # @param [Hash{String => String}] env
+      #   environment table
+      # @return [void]
       def setenv(env)
         env.each do |key, value|
           @variable_table.set(Variable.new("ENV_" + key), PioneString.new(value))
         end
       end
 
-      # Handles the rule.
+      # Handles the rule and returns the outputs.
+      # @return [Array<Data,Array<Data>>]
+      #   outputs
       def handle
         name = self.class.message_name
 
@@ -102,12 +111,7 @@ module Pione
         return outputs
       end
 
-      # Executes the rule.
-      def execute
-        raise NotImplementError
-      end
-
-      # :nodoc:
+      # @api private
       def ==(other)
         return false unless @rule == other.rule
         return false unless @inputs == other.inputs
@@ -116,15 +120,23 @@ module Pione
         return true
       end
 
-      # :nodoc:
+      # @api private
       alias :eql? :==
 
-      # :nodoc:
+      # @api private
       def hash
         @rule.hash + @inputs.hash + @outputs.hash + @params.hash
       end
 
       private
+
+      # Executes the rule.
+      # @return [Array<Data,Array<Data>>]
+      #   outputs
+      # @api private
+      def execute
+        raise NotImplementError
+      end
 
       # Return the domain.
       def get_handling_domain(opts)
