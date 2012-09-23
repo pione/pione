@@ -1,0 +1,162 @@
+#
+# Variables
+#
+
+# Initial Reference Model
+$INITIAL := "initial"
+
+# Target structure name
+$TARGET := "all"
+
+#
+# Search Area for 3D
+#
+$ROTMODE := "YOYS"
+
+# Rot1
+$ROT1MIN := 0
+$ROT1MAX := 359
+$ROT1D   := 30
+$nRot1   := 12
+
+# Rot2
+$ROT2MIN := 0
+$ROT2MAX := 359
+$ROT2D   := 30
+$nRot2   := 12
+
+# Rot3
+$ROT3MIN := 0
+$ROT3MAX := 0
+$ROT3D   := 30
+$nRot3   := 1
+
+# For 2D
+$STEP   := 12
+$ROTMIN := 0
+$ROTMAX := 359
+$nROT   := 360 / $STEP
+
+# Seletion Step
+$COR_THRESHOLD     := 0.4
+$Y_SHIFT_THRESHOLD := 20
+
+# Pad size for 2D
+$PAD_W := 64
+$PAD_H := 64
+
+###
+### Initial model from PDB
+###
+$REFSOURCE := "121p-shift"
+$DELTA   := 2.5
+$SIZE_X  := 64
+$SIZE_Y  := 64
+$SIZE_Z  := 64
+$START_X := -1 * $DELTA * $SIZE_X / 2
+$START_Y := -1 * $DELTA * $SIZE_Y / 2
+$START_Z := -1 * $DELTA * $SIZE_Z / 2
+$SNRATIO := 3
+
+#
+# Rules
+#
+
+Rule Main
+
+End
+
+#
+# Converter Rules
+#
+
+# .ref3d.ref2d
+Rule ConvertRef3dToRef2d
+  input '{$TARGET}.ref3d'
+  output '{$TARGET}.ref2d'
+Action
+  mrc3Dto2D -i {$TARGET}.ref3d -o {$TARGET}.ref2d -EulerMode {$ROTMODE} -InterpolationMode 2 -Rot2 {$ROT2MIN} {$ROT2MAX} {$ROT2D} -Rot1 {$ROT1MIN} {$ROT1MAX} {$ROT1D} -Rot3 {$ROT3MIN} {$ROT3MAX} {$ROT3D} -m 0
+End
+
+# .roi.pad
+Rule ConvertRoiToPad
+  input '*.roi'
+  output '{$*}.pad'
+Action
+  mrcImageWindowing -i {$*}.roi -o {$*}.mask -W 0.1 0.0 0.05 0.0 -m 18
+  mrcImagePad -i {$*}.mask -o {$*}.padtmp -W {$PAD_W} -H {$PAD_H} -m 3
+  mrcImageWindowing -i {$*}.padtmp -o {$*}.pad -W 0.1 0.0 0.1 0.0 -m 2
+End
+
+# .pad.corinfo
+Rule ConvertPadToCorinfo
+  input '*.pad'
+  input '{$TARGET}.ref2d'
+  output '{$*}.corinfo'
+Action
+  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n {$nRot} -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
+End
+
+# .pad.corinfo
+Rule ConvertPadToCorinfo
+  input '*.pad'
+  input '{$TARGET}.ref2d'
+  output '{$*}.corinfo'
+Action
+  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n {$nRot} -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
+End
+
+# .corinfo.3dinfo
+Rule ConvertCorinfoTo3dinfo
+  input '*.corinfo'
+  output '{$*}.3dinfo'
+Action
+  awk '/Cor/ { print $$7,$$16,$$2,$$3,$$4,$$5,$$9,$$11,$$12}' {$*}.corinfo | sort -r | sed -e s/.pad/.fit/ > {$*}.3dinfolst
+  head -n 1 {$*}.3dinfolst | awk '{print $$2,$$3,$$4,$$5,$$6,$$1}' > {$*}.3dinfo
+End
+
+# .3dinfo.3dlst
+Rule Convert3dinfoTo3dlst
+  input '*.3dinfo'.all
+  output '*.3dlst'
+Action
+  cat {$*}.3dinfo >> $(TARGET).3dlst
+End
+
+# .3dlst.3d
+Rule Convert3dlstTo3d
+  input '{$TARGET}.3dlst'
+  output '{$TARGET}.3d'
+Action
+  mrc2Dto3D -I {$TARGET}.3dlst -o {$TARGET}.3d -InterpolationMode 2 -Double -DoubleCounter {$TARGET}.3dcounter -CounterThreshold 0.5 -m 1 -WeightMode 2
+End
+
+# .3d.3dsm
+Rule Convert3dTo3dsm
+Action
+  mrcImageSmoothing -i $(TARGET).3d -o $(TARGET).3dsm -m 1 -M 1 -r 3
+End
+
+# .3dsm.3dsmCenter
+Rule Convert3dsmTo3dsmCenter
+  input '{$TARGET}.3dsm'
+  output '{$TARGET}.3dsmCenter'
+Action
+  mrcImageCenterGet -i {$TARGET}.3dsm -o {$TARGET}.3dsmCenter -Nx 128 -Ny 128 -Nz 128
+End
+
+# .3dsmCenter.ds6
+Rule Convert3dsmCenterToDs6
+  input '{$TARGET}.3dsmCenter'
+  output '{$TARGET}.ds6'
+Action
+  mrc2map -i {$TARGET}.3dsmCenter -o {$TARGET}.ds6 -m 3
+End
+
+# .3d.ds6
+Rule Convert3dToDs6
+  input '*.3d'
+  output '{$*}.ds6'
+Action
+  mrc2map -i $*.3d -o $*.ds6 -m 0
+End

@@ -2,7 +2,7 @@
 # -*- ruby -*-
 
 require 'optparse'
-require 'pione/common'
+require 'pione'
 require 'pp'
 
 include Pione
