@@ -15,7 +15,7 @@ Option = Struct.new(
   :input_dir, :output_dir, :log_path, :stream, :params, :base_uri
 )
 option = Option.new(
-  "input", "output", "log.txt", false, Parameters.empty
+  nil, "output", "log.txt", false, Parameters.empty
 )
 
 OPTS = {}

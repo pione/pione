@@ -48,7 +48,11 @@ module Pione
         def initialize(ts_server, dir_path)
           super(ts_server)
           @dir_path = dir_path
-          @gen = Dir.open(@dir_path).to_enum
+          if dir_path
+            @gen = Dir.open(@dir_path).to_enum
+          else
+            @gen = [].each
+          end
         end
 
         def generate
