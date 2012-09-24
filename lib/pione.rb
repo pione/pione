@@ -45,5 +45,9 @@ module Pione
   include Pione::Util::Message
   include Pione::Model
 
+  def self.debug_mode=(arg)
+    Pione::Util::Message.debug_mode = arg
+  end
+
   CONFIG = Config.instance
 end

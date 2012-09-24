@@ -6,7 +6,7 @@ module Pione
         "Flow"
       end
 
-      # :nodoc:
+      # @api private
       def initialize(*args)
         super
         @data_finder = DataFinder.new(tuple_space_server, @domain)
@@ -14,6 +14,7 @@ module Pione
       end
 
       # Starts to process flow elements.
+      # @return [void]
       def execute
         # rule application
         apply_rules(@rule.body.eval(@variable_table).elements)
@@ -29,7 +30,10 @@ module Pione
 
       private
 
-      # Apply target input data to rules.
+      # Applies target input data to rules.
+      # @param [Array<CallRule>] callees
+      #   elements of call rule lines
+      # @return [void]
       def apply_rules(callees)
         user_message_begin("Start Rule Application: %s" % handler_digest)
 
@@ -129,6 +133,10 @@ module Pione
         end
       end
 
+      # Distributes tasks.
+      # @param [Array] applications
+      #   application informations
+      # @return [void]
       def distribute_tasks(applications)
         thgroup = ThreadGroup.new
         user_message_begin("Start Task Distribution: %s" % handler_digest)
@@ -192,10 +200,20 @@ module Pione
         user_message_end("End Task Distribution: %s" % handler_digest)
       end
 
+      # Returns true if we need to write the task into the tuple space.
+      # @param [Task] task
+      #   task tuple
+      # @return [Boolean]
+      #   true if we need to write the task into the tuple space
       def need_task?(task)
         not(exist_task?(task) or working?(task))
       end
 
+      # Returns true if the task exists in the tuple space already.
+      # @param [Task] task
+      #   task tuple
+      # @return [Boolean]
+      #   true if the task exists in the tuple space already
       def exist_task?(task)
         read(task, 0)
         return true
@@ -203,6 +221,11 @@ module Pione
         return false
       end
 
+      # Returns true if any task worker is working on the task.
+      # @param [Task] task
+      #   task tuple
+      # @return [Boolean]
+      #   true if any task worker is working on the task
       def working?(task)
         read(Tuple[:working].new(:domain => task.domain), 0)
         return true
@@ -211,6 +234,7 @@ module Pione
       end
 
       # Find outputs from the domain.
+      # @return [void]
       def find_outputs
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
@@ -225,17 +249,18 @@ module Pione
       end
 
       # Shifts output resource locations.
+      # @return [void]
       def shift_output_resources
         @outputs.flatten.each do |output|
-          old_uri = output.uri.to_s
-          new_uri = make_output_resource_uri(output.name).to_s
-          unless new_uri == old_uri
+          old_uri = ::URI.parse(output.uri)
+          new_uri = ::URI.parse(make_output_resource_uri(output.name).to_s)
+          unless new_uri.path == old_uri.path
             # shift resource
             Resource[new_uri].shift_from(Resource[old_uri])
-            # shift cache
-            FileCache.shift(old_uri, new_uri)
+            # shift cache if the old is cached in this machine
+             FileCache.shift(old_uri, new_uri)
             # write shift tuple
-            write(Tuple[:shift].new(old_uri, new_uri))
+            write(Tuple[:shift].new(old_uri.to_s, new_uri.to_s))
           end
         end
       end
@@ -257,12 +282,16 @@ module Pione
         end
       end
 
-      # Imports finished tuple's outputs.
+      # Imports finished tuple's outputs from the domain.
+      # @param [String] task_domain
+      #   target task domain
+      # @return [void]
       def import_finished_outputs(task_domain)
         return if @finished.any?{|t| t.domain == task_domain}
         if task_domain != @domain
           template = Tuple[:finished].new(
-            domain: task_domain, status: :succeeded
+            domain: task_domain,
+            status: :succeeded
           )
           finished = read0(template)
           copy_data_into_domain(finished.outputs, @domain)

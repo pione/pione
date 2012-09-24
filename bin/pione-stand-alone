@@ -26,10 +26,6 @@ parser = OptionParser.new do |opt|
   opt.on('-o dir', '--output-dir=dir') {|dir| option.output_dir = dir}
   opt.on('-b uri', '--base-uri=uri') {|uri|
     base_uri = ::URI.parse(uri)
-    if base_uri.scheme == "local"
-      FileUtils.makedirs(base_uri.path)
-      base_uri = base_uri.absolute
-    end
     option.base_uri = base_uri.to_s
   }
   opt.on('-l path', '--log=path') {|path| option.log_path = path }
@@ -79,8 +75,14 @@ $dir = File.dirname(File.expand_path(__FILE__))
 
 # base uri
 unless option.base_uri
-  option.base_uri = "local:./output/"
+  option.base_uri = ::URI.parse("local:./output/")
 end
+if option.base_uri.scheme == "local"
+  FileUtils.makedirs(option.base_uri.path)
+  option.base_uri = option.base_uri.absolute
+end
+option.base_uri = option.base_uri.to_s
+
 
 # make drb server and it's connection
 $tuple_space_server = TupleSpaceServer.new(
@@ -144,12 +146,7 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 $thread = Thread.start do
   while true do
     if handler = $doc.root_rule(option.params).make_handler($tuple_space_server)
-      outputs = handler.handle
-      Dir.mkdir(option.output_dir) unless File.exist?(option.output_dir)
-      outputs.first.each do |output|
-        path = File.join(option.output_dir, output.name)
-        File.open(path, "w+"){|out| out.write(Resource[output.uri].read)}
-      end
+      handler.handle
     else
       user_message "no inputs"
     end

@@ -147,7 +147,12 @@ module Pione
       #   swap target
       def shift_from(other)
         raise ArgumentError.new(other) unless other.kind_of?(self.class)
-        swap(other.path)
+        unless File.ftype(other.path) == "file"
+          raise ArgumentError.new(other)
+        end
+        dir = File.dirname(@path)
+        FileUtils.makedirs(dir) unless Dir.exist?(dir)
+        FileUtils.mv(other.path, @path)
       end
     end
 

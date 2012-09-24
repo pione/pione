@@ -63,7 +63,83 @@ $SNRATIO := 3
 #
 
 Rule Main
+  input '{$REFSOURCE}.pdb'
+  output
+Flow
+  rule CreateInitialModel
+  rule CreateTestData
+  rule CreateRef3d
+  rule Create3dList
+End
 
+#
+# Initial Model
+#
+
+# InitialModel
+Rule CreateInitialModel
+  input '{$REFSOURCE}.pdb'
+  output '{$INITIAL}.3d'
+Action
+  pdb2mrc -i {$REFSOURCE}.pdb -o {$INITIAL}.3d -nx {$SIZE_X} -ny {$SIZE_Y} -nz {$SIZE_Z} -Sx {$START_X} -Sy {$START_Y} -Sz {$START_Z} -dx {$DELTA} -dy {$DELTA} -dz {$DELTA} -m 1
+End
+
+
+# TestData
+Rule CreateTestData
+  input '${INITIAL}.3d'
+  output '*.roi'.all
+Flow
+  # $rot1 := for($ROT1MIN, $ROT1MAX, $ROT3D*2)
+  # $rot2 := for($ROT2MIN, $ROT2MAX, $ROT3D*2)
+  # $rot3 := for($ROT3MIN, $ROT3MAX, $ROT3D*2)
+  # rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
+  if $rot1 <= $ROT1MAX
+    if $rot2 <= $ROT2MAX
+      if $rot3 <= $ROT3MAX
+        rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3)
+        rule ActionTestDataNoise.params({rot1: $rot1, rot2: $rot2, rot3: $rot3)
+        rule CreataTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3 + {$ROT3D}*2})
+      else
+        rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + {$ROT2D}*2, rot3: $ROT3MIN})
+      end
+    else
+      rule CreateTestData.params({rot1: $rot1 + {$ROT1D}*2, rot2: $ROT2MIN, rot3: $ROT3MIN})
+    end
+  end
+End
+
+Rule ActionTestData
+  input '${INITIAL}.3d'
+  output '{$REFSOURCE}-{$rot1}-{$rot2}-{$rot3}.roi'
+  param $rot1
+  param $rot2
+  param $rot3
+Action
+  mrc3Dto2D -i {$INITIAL}.3d -o {$REFSOURCE}-{$rot1}-{$rot2}-{$rot3}.roi \
+    -InterpolationMode 2 -EulerMode {$ROTMODE} \
+    -Rot1 {$rot1} {$rot1} 1 -Rot2 {$rot2} {$rot2} 1 -Rot3 {$rot3} {$rot3} 1
+End
+
+Rule ActionTestDataNoise
+  input '{$REFSOURCE}-{$rot1}-{$rot2}-{$rot3}.roi'
+  output '{$REFSOURCE}-noise-{$rot1}-{$rot2}-{$rot3}.roi'
+  param $rot1
+  param $rot2
+  param $rot3
+Action
+  mrcImageNoiseAdd -i {$I[1]} -o {$O[1]} -SN {$SNRATIO};
+End
+
+#
+# First
+#
+
+Rule CreateRef3d
+  input '{$INITIAL}.3d'
+  output '{$TARGET}.ref3d'
+Action
+  cp {$INITIAL}.3d {$TARGET}.ref3d
 End
 
 #
@@ -76,6 +152,17 @@ Rule ConvertRef3dToRef2d
   output '{$TARGET}.ref2d'
 Action
   mrc3Dto2D -i {$TARGET}.ref3d -o {$TARGET}.ref2d -EulerMode {$ROTMODE} -InterpolationMode 2 -Rot2 {$ROT2MIN} {$ROT2MAX} {$ROT2D} -Rot1 {$ROT1MIN} {$ROT1MAX} {$ROT1D} -Rot3 {$ROT3MIN} {$ROT3MAX} {$ROT3D} -m 0
+End
+
+Rule Create3dList
+  input '*.roi'
+  output '{$*}.3dlst'
+Flow
+  rule ConvertRoiToPad
+  rule ConvertPadToCorinfo
+  rule ConvertCorinfoTo3dinfo
+  rule Convert3dinfoTo3dlst
+  rule Convert3dlstTo3d
 End
 
 # .roi.pad
@@ -120,7 +207,7 @@ Rule Convert3dinfoTo3dlst
   input '*.3dinfo'.all
   output '*.3dlst'
 Action
-  cat {$*}.3dinfo >> $(TARGET).3dlst
+  cat {$*}.3dinfo >> ${TARGET}.3dlst
 End
 
 # .3dlst.3d
@@ -133,8 +220,10 @@ End
 
 # .3d.3dsm
 Rule Convert3dTo3dsm
+  input '{$TARGET}.3d'
+  output '{$TARGET}.3dsm'
 Action
-  mrcImageSmoothing -i $(TARGET).3d -o $(TARGET).3dsm -m 1 -M 1 -r 3
+  mrcImageSmoothing -i {$TARGET}.3d -o {$TARGET}.3dsm -m 1 -M 1 -r 3
 End
 
 # .3dsm.3dsmCenter
