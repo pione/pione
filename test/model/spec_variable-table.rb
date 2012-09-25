@@ -8,13 +8,17 @@ describe 'Model::VariableTable' do
     @table.set(Variable.new('C'), PioneInteger.new(3))
   end
 
+  it 'should get an empty table' do
+    VariableTable.empty.should.empty
+  end
+
   it 'should get a variable value' do
     @table.get(Variable.new('A')).should == PioneInteger.new(1)
     @table.get(Variable.new('B')).should == PioneInteger.new(2)
     @table.get(Variable.new('C')).should == PioneInteger.new(3)
   end
 
-  it 'should get nil by unknown variable' do
+  it 'should get nil if the variable is unknown in the table' do
     @table.get(Variable.new('D')).should.nil
   end
 
@@ -37,10 +41,24 @@ describe 'Model::VariableTable' do
     end
   end
 
-  it 'should expand a string with variable name' do
+  it 'should expand a string with variable name form' do
     @table.expand('{$A}').should == '1'
     @table.expand('{$B}').should == '2'
     @table.expand('{$C}').should == '3'
+  end
+
+  it 'should expand a string with variable expression form' do
+    @table.expand('<? $A + 1 ?>').should == '2'
+    @table.expand('<? $B + 1 ?>').should == '3'
+    @table.expand('<? $C + 1 ?>').should == '4'
+  end
+
+  it 'should get keys' do
+    vars = @table.variables
+    vars.should.include(Variable.new("A"))
+    vars.should.include(Variable.new("B"))
+    vars.should.include(Variable.new("C"))
+    vars.should.not.include(Variable.new("D"))
   end
 
   it 'should raise an error by unknown variable when expanding a string' do

@@ -1,44 +1,48 @@
 module Pione::Model
   # Assignment represents a value assignment for variable.
   # @example
-  #   # assigning a string:
+  #   # assigning a string
   #   $X := "a"
   #   # => Assignment.new(Variable.new('X'), PioneString.new('a'))
   # @example
-  #   # assigning a variable value:
+  #   # assigning a variable value
   #   $X := $Y
   #   # => Assignment.new(Variable.new('X'), Variable.new('Y'))
   class Assignment < PioneModelObject
-    # Returns variable part of the assignment.
+    set_pione_model_type TypeAssignment
+
+    # Returns the variable part of assignment.
     attr_reader :variable
 
-    # Returns expression part of the assignment.
+    # Returns the expression part of assignment.
     attr_reader :expr
-
-    set_pione_model_type TypeAssignment
 
     # Creates an assignment.
     # @param [Variable] variable
-    #   head of assignment
+    #   variable part of assignment
     # @param [PioneModelObject] expr
-    #   tail of assignment
+    #   expression part of assignment
     def initialize(variable, expr)
-      raise ArgumentError.new(variable) unless variable.kind_of?(Variable)
-      raise ArgumentError.new(expr) unless expr.kind_of?(PioneModelObject)
+      check_argument_type(variable, Variable)
+      check_argument_type(expr, PioneModelObject)
       @variable = variable
       @expr = expr
       super()
     end
 
-    # Evaluates value and update the variable table with it.
+    # Evaluates the assignment. This method updates the variable table with the
+    # variable and expression. The expression is pushed into the table directory
+    # as it is because of lazy evaluation.
     # @param [VariableTable] vtable
     #   variable table for evaluation
+    # @return [PioneModelObject]
+    #   self
     def eval(vtable)
-      # put expr into the table directory because of lazy evaluation
       vtable.set(@variable, @expr)
     end
 
-    # Returns false because assignment has complex form.
+    # Returns false because assignment form is complex(pair of variable and
+    # expression).
     # @return [Boolean]
     #   false
     def atomic?
@@ -57,18 +61,18 @@ module Pione::Model
       "%s:=%s" % [@variable.textize, @expr.textize]
     end
 
-    # Return true if other is a variable object which name is same as myself.
+    # Returns true if other is a variable object which name is same as myself.
     # @api private
     def ==(other)
       return false unless other.kind_of?(self.class)
       @variable == other.variable && @expr == other.expr
     end
 
-    alias :eql? :==
+    alias :eql? :"=="
 
     # @api private
     def hash
-      @name.hash
+      @variable.hash + @expr.hash
     end
   end
 end

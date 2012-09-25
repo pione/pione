@@ -68,7 +68,7 @@ module Pione::Model
     end
   end
 
-  # RuleIOList is a list object for RuleIOElement.
+  # RuleIOList is a input or output list for RuleIOElement.
   class RuleIOList < PioneModelObject
     extend Forwardable
 
@@ -141,6 +141,14 @@ module Pione::Model
 
     define_pione_method("[]", [TypeInteger], TypeAny) do |rec, i|
       rec.elements[i.value-1]
+    end
+
+    define_pione_method("join", [TypeString], TypeString) do |rec, connective|
+      PioneString.new(
+        rec.elements.map{|elt|
+          elt.call_pione_method("as_string").to_ruby
+        }.join(connective)
+      )
     end
 
     define_pione_method("as_string", [], TypeString) do |rec|

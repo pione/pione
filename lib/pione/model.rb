@@ -309,9 +309,9 @@ module Pione::Model
       instance_eval(&b) if block_given?
     end
 
-    # Returns pione model type.
+    # Returns PIONE model type.
     # @return [Symbol]
-    #   pione model type
+    #   PIONE model type
     def pione_model_type
       self.class.pione_model_type
     end

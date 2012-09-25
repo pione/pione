@@ -1,6 +1,5 @@
 module Pione::Model
-
-  # Message represents method caller for Pione model objects.
+  # Message represents method callers for PIONE model objects.
   # @example
   #   1.as_string()
   # @example
@@ -19,8 +18,8 @@ module Pione::Model
     #   message arguments
     def initialize(name, receiver, *arguments)
       @name = name
-      @receiver = receiver
-      @arguments = arguments
+      @receiver = receiver.to_pione
+      @arguments = arguments.map{|arg| arg.to_pione}
       super()
     end
 
@@ -31,7 +30,8 @@ module Pione::Model
       false
     end
 
-    # Returns PIONE model type.
+    # Returns PIONE model type of the message result according to type
+    # interface.
     # @return [Symbol]
     #   PIONE model type
     def pione_model_type
@@ -42,10 +42,23 @@ module Pione::Model
     # @param [VariableTable] vtable variable table for the evaluation
     # @return [PioneModelObject]
     #   evaluation result
-    def eval(vtable=VariableTable.new)
+    def eval(vtable)
       receiver = @receiver.eval(vtable)
       arguments = @arguments.map{|arg| arg.eval(vtable)}
       receiver.call_pione_method(@name, *arguments)
+    end
+
+    # Returns true if the receiver or arguments include variables.
+    # @return [Boolean]
+    #   true if the receiver or arguments include variables
+    def include_variable?
+      @receiver.include_variable? or @arguments.any?{|arg| arg.include_variable?}
+    end
+
+    # @api private
+    def textize
+      args = [@name, @receiver.textize, @arguments.textize]
+      "message(\"%s\",%s,[%s])" % args
     end
 
     # @api private
@@ -55,20 +68,6 @@ module Pione::Model
       return false unless @receiver == other.receiver
       return false unless @arguments == other.arguments
       return true
-    end
-
-    # Returns true if receiver or arguments include variables.
-    # @return [Boolean]
-    #   true if receiver or arguments include variables
-    def include_variable?
-      @receiver.include_variable? or @arguments.any?{|arg| arg.include_variable?}
-    end
-
-    # @api private
-    def textize
-      "message(\"%s\",%s,[%s])" % [
-        @name, @receiver.textize,@argument.textize
-      ]
     end
 
     alias :eql? :"=="

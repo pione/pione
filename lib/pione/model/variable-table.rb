@@ -1,5 +1,4 @@
 module Pione::Model
-
   # UnboundVariableError represents an unknown variable reference.
   class UnboundVariableError < StandardError
     attr_reader :variable
@@ -9,8 +8,11 @@ module Pione::Model
     #   unbound variable
     def initialize(variable)
       @variable = variable
-      msg = "Refferred unbound variable '%s' in the context."
-      super(msg % [@variable.name])
+    end
+
+    # @api private
+    def message
+      "Refferred unbound variable '%s' in the context." % @variable.name
     end
   end
 
@@ -32,6 +34,10 @@ module Pione::Model
       @variable = variable
       @new_value = new_value
       @old_value = old_value
+    end
+
+    # @api private
+    def message
       args = [
         @new_value.textize,
         @variable.name,
@@ -39,15 +45,18 @@ module Pione::Model
         @variable.line,
         @variable.column
       ]
-      message = <<MSG % args
-Try to bind the value '%s' as variable %s, but already bound the value '%s'(line: %s, column: %s)
-MSG
-      super(message)
+      message = [
+        "Try to bind the value '%s' as variable %s, ",
+        "but already bound the value '%s'",
+        "(line: %s, column: %s)"
+      ] % args
     end
   end
 
-  # VariableTable represents variable table for rule and data finder.
+  # VariableTable represents variable tables for rule context.
   class VariableTable < PioneModelObject
+    set_pione_model_type TypeVariableTable
+
     # Returns empty variable table.
     # @return [VariableTable]
     #   empty variable table
@@ -55,11 +64,9 @@ MSG
       new
     end
 
-    set_pione_model_type TypeVariableTable
-
     # Creates a vairable table.
-    # @param [Hash] table
-    #    initial variable table values
+    # @param [Hash{Variable => PioneModelObject}] table
+    #   initial values for the variable table
     def initialize(table={})
       @table = table.to_hash.dup
       super()
@@ -67,14 +74,14 @@ MSG
 
     # Returns the variable table as hash.
     # @return [Hash{Variable => PioneModelObject}]
-    #   hash form
+    #   hash form of the variable table
     def to_hash
       @table
     end
 
     # Returns the parameters form.
     # @return [Parameters]
-    #   parameters form
+    #   parameters form of the variable table
     def to_params
       Parameters.new(to_hash)
     end
@@ -86,22 +93,23 @@ MSG
       @table.empty?
     end
 
-    # Gets the variable value.
+    # Gets the variable value and evaluates the value if the value is not
+    # atomic.
     # @param [Variable] var
     #   table key to get the value
     # @return [PioneModelObject]
     #   the value
     def get(var)
-      raise ArgumentError.new(var) unless var.kind_of?(Variable)
+      check_argument_type(var, Variable)
       val = @table[var]
-      if val.kind_of?(Variable)
-        next_val = get(@table[var])
+      case val
+      when Variable
+        next_val = get(val)
         return next_val.nil? ? val : next_val
-      elsif val.kind_of?(PioneModelObject) and not(val.atomic?)
-        return val.eval(self)
-      else
-        return val
+      when PioneModelObject
+        return not(val.atomic?) ? val.eval(self) : val
       end
+      return val
     end
 
     # Sets a new variable. This method raises an exception when the variable has
@@ -113,8 +121,8 @@ MSG
     # @return [VariableTable]
     #   new variable table
     def set(variable, new_value)
-      raise TypeError.new(variable) unless variable.kind_of?(Variable)
-      raise TypeError.new(new_value) unless new_value.kind_of?(PioneModelObject)
+      check_argument_type(variable, Variable)
+      check_argument_type(new_value, PioneModelObject)
       if old_value = @table[variable]
         unless old_value.kind_of?(UndefinedValue) or new_value == old_value
           raise VariableBindingError.new(variable, new_value, old_value)
@@ -130,8 +138,8 @@ MSG
     #   new value
     # @return [void]
     def set!(variable, new_value)
-      raise TypeError.new(variable) unless variable.kind_of?(Variable)
-      raise TypeError.new(new_value) unless new_value.kind_of?(PioneModelObject)
+      check_argument_type(variable, Variable)
+      check_argument_type(new_value, PioneModelObject)
       @table[variable] = new_value
     end
 
@@ -183,7 +191,7 @@ MSG
       @table.values.any?{|val| val.include_variable?}
     end
 
-    # Make input auto-variables
+    # Makes input auto-variables.
     # @param [Array<DataExpr>] input_exprs
     #   input expressions
     # @param [Array<Expr>] input_tuples
@@ -196,7 +204,7 @@ MSG
       end
     end
 
-    # Make output auto-variables.
+    # Makes output auto-variables.
     # @param [Array<DataExpr>] output_exprs
     #   output expressions
     # @param [Array<DataExpr>] output_tuples

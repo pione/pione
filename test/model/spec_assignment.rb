@@ -17,26 +17,33 @@ describe 'Model::Assignment' do
     x1.should.not.be.equal y2
   end
 
-  it 'should push its variable and value into variable table' do
-    vtable = VariableTable.new
-    x = Assignment.new(Variable.new("X"), PioneString.new("a"))
-    x.eval(vtable).should == PioneString.new("a")
+  it 'should push variable and value into variable table' do
+    Assignment.new(
+      Variable.new("X"),
+      PioneString.new("a")
+    ).eval(VariableTable.new).should == PioneString.new("a")
   end
 
   it 'should evaluate the value' do
     vtable = VariableTable.new
-    x = Assignment.new(Variable.new("X"), Message.new("as_string", 1.to_pione))
-    x.eval(vtable)
+    Assignment.new(
+      Variable.new("X"),
+      Message.new("as_string", 1.to_pione)
+    ).eval(vtable)
     Variable.new("X").eval(vtable).should == "1".to_pione
   end
 
   it 'should update variable table' do
     vtable = VariableTable.new
-    x = Assignment.new(Variable.new("X"), "a".to_pione)
-    x.eval(vtable).should == "a".to_pione
+    Assignment.new(
+      Variable.new("X"),
+      "a".to_pione
+    ).eval(vtable).should == "a".to_pione
     vtable.get(Variable.new("X")).should == "a".to_pione
-    y = Assignment.new(Variable.new("Y"), Variable.new("Z"))
-    y.eval(vtable).should == Variable.new("Z")
+    Assignment.new(
+      Variable.new("Y"),
+      Variable.new("Z")
+    ).eval(vtable).should == Variable.new("Z")
     vtable.get(Variable.new("Y")).should == Variable.new("Z")
     vtable.set(Variable.new("Z"), "b".to_pione)
     vtable.get(Variable.new("Y")).should == "b".to_pione
