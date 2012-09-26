@@ -18,6 +18,10 @@ module Pione
     include Block
     include RuleDefinition
 
+    def parse(str)
+      super(str.gsub(/^#.*/, ""))
+    end
+
     #
     # root
     #
@@ -45,7 +49,7 @@ module Pione
         space >>
         package_name >>
         line_end
-        ).as(:package)
+      ).as(:package)
     }
 
     # require_line
@@ -55,7 +59,7 @@ module Pione
         space >>
         package_name >>
         line_end
-        ).as(:require)
+      ).as(:require)
     }
   end
 end

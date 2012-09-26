@@ -105,15 +105,11 @@ Rule CreateTestData
   input '${INITIAL}.3d'
   output '*.roi'.all
 Flow
-  # $rot1 := for($ROT1MIN, $ROT1MAX, $ROT3D*2)
-  # $rot2 := for($ROT2MIN, $ROT2MAX, $ROT3D*2)
-  # $rot3 := for($ROT3MIN, $ROT3MAX, $ROT3D*2)
-  # rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
   if $rot1 <= $ROT1MAX
     if $rot2 <= $ROT2MAX
       if $rot3 <= $ROT3MAX
-        rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3)
-        rule ActionTestDataNoise.params({rot1: $rot1, rot2: $rot2, rot3: $rot3)
+        rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
+        rule ActionTestDataNoise.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
         rule CreataTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3 + {$ROT3D}*2})
       else
         rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + {$ROT2D}*2, rot3: $ROT3MIN})

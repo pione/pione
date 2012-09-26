@@ -31,8 +31,8 @@ module Pione::Model
     # @param [Feature] features
     #   rule features
     def initialize(inputs, outputs, params, features)
-      raise ArgumentError.new(params) unless params.kind_of?(Parameters)
-      raise ArgumentError.new(features) unless features.kind_of?(Feature::Expr)
+      check_argument_type(params, Parameters)
+      check_argument_type(features, Feature::Expr)
       @inputs = inputs
       @outputs = outputs
       @params = params
@@ -72,6 +72,7 @@ module Pione::Model
   class Rule < PioneModelObject
     extend Forwardable
 
+    # Returns rule type.
     def self.rule_type
       @rule_type
     end
@@ -83,6 +84,8 @@ module Pione::Model
 
     attr_reader :condition
     attr_reader :body
+
+    def_delegators :@condition, :inputs, :outputs, :params, :features
 
     # Creates a rule.
     # @param [RuleExpr] expr
@@ -104,13 +107,15 @@ module Pione::Model
       @expr.rule_path
     end
 
+    # Returns true if expression, condition, or body include variables.
+    # @return [Boolean]
+    #   true if expression, condition, or body include variables
     def include_variable?
-      @expr.include_variable? ||
-        @condition.include_variable? ||
-        @body.include_variable?
+      return true if @expr.include_variable?
+      return true if @condition.include_variable?
+      return true if @body.include_variable?
+      return false
     end
-
-    def_delegators :@condition, :inputs, :outputs, :params, :features
 
     # Returns true if this is a kind of action rule.
     # @return [Boolean]
@@ -126,13 +131,22 @@ module Pione::Model
       self.class.rule_type == :flow
     end
 
-    # Make task handler object for the rule.
+    # Makes a task handler object for the rule.
+    # @param [TupleSpaceServer] ts_server
+    #   tuple space server
+    # @param [Array<Data, Array<Data>>] inputs
+    #   input tuples
+    # @param [Parameters] params
+    #   rule parameters
+    # @param [Array<String>] call_stack
+    #   call stack
     # @return [RuleHandler]
     #   rule handler object
     def make_handler(ts_server, inputs, params, call_stack, opts={})
       handler_class.new(ts_server, self, inputs, params, call_stack, opts)
     end
 
+    # Returns a rule handler class.
     # @api private
     def handler_class
       raise NotImplementedError
@@ -184,7 +198,7 @@ module Pione::Model
   #     rule &main:Main
   #   End
   class RootRule < FlowRule
-    INPUT_DOMAIN = '/input'
+    INPUT_DOMAIN = 'input'
 
     # root domain has no digest and no package
     ROOT_DOMAIN = 'root'
@@ -226,7 +240,7 @@ module Pione::Model
 
     # @api private
     def make_condition
-      inputs  = @main.inputs
+      inputs = @main.inputs
       outputs =
         if inputs.empty?
           [DataExpr.all("*")]

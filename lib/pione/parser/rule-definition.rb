@@ -12,7 +12,7 @@ class Pione::Parser
     # @!attribute [r] rule_definitions
     #   @return [Parslet::Atoms::Entity] toplevel element list
     rule(:rule_definitions) {
-      (space? >> toplevel_element >> empty_lines?).repeat
+      (empty_lines? >> space? >> toplevel_element >> empty_lines?).repeat
     }
 
     # @!attribute [r] toplevel_element

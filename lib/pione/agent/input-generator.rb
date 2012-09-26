@@ -4,7 +4,7 @@ module Pione
       set_agent_type :input_generator
 
       InputData = Struct.new(:name, :uri, :time)
-      DOMAIN = "/input"
+      DOMAIN = "input"
 
       # Base class for generator methods.
       class GeneratorMethod
@@ -16,10 +16,14 @@ module Pione
           @tuple_space_server.now
         end
 
+        # Generates an input.
         def generate
           raise RuntimeError
         end
 
+        # Return true if the generator is stream mode.
+        # @return [Boolean]
+        #   true if the generator is stream mode
         def stream?
           return false
         end
@@ -45,6 +49,11 @@ module Pione
 
       # Directory based generator.
       class DirGeneratorMethod < GeneratorMethod
+        # Create a generator.
+        # @param [TupleSpaceServer] ts_server
+        #   tuple space server
+        # @param [Pathname] dir_path
+        #   directory path for loading target
         def initialize(ts_server, dir_path)
           super(ts_server)
           @dir_path = dir_path
@@ -81,7 +90,7 @@ module Pione
           mtime = File.mtime(path)
           if generate_new_file?(name, mtime)
             @table[name] = mtime
-            uri = "local:#{File.expand_path(path)}"
+            uri = "local:%s" % File.expand_path(path)
             return InputData.new(name, uri, mtime)
           else
             return nil
