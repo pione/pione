@@ -113,7 +113,7 @@ Flow
       if $rot3 <= $ROT3MAX
         rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
         rule ActionTestDataNoise.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
-        rule CreataTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3 + $ROT3D*2})
+        rule CreateTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3 + $ROT3D*2})
       else
         rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + $ROT2D*2, rot3: $ROT3MIN})
       end
