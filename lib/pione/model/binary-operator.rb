@@ -58,7 +58,7 @@ module Pione::Model
 
     # @api private
     def textize
-      "%s%s%s" % [@left.textize, @symbol.textize, @right.textize]
+      "%s%s%s" % [@left.textize, @symbol.to_s, @right.textize]
     end
 
     # @api private

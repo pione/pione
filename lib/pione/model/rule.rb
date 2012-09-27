@@ -221,7 +221,7 @@ module Pione::Model
     # @api private
     def make_handler(ts_server)
       finder = DataFinder.new(ts_server, INPUT_DOMAIN)
-      results = finder.find(:input, inputs, VariableTable.new)
+      results = finder.find(:input, inputs, @params.as_variable_table)
       if results.empty? and not(@main.inputs.empty?)
         return nil
       end

@@ -90,7 +90,7 @@ module Pione::Model
 
     define_pione_method("/", [TypeInteger], TypeInteger) do |rec, other|
       # TODO: zero division error
-      PioneIntger.new(rec.value / other.value)
+      PioneInteger.new(rec.value / other.value)
     end
 
     define_pione_method("as_string", [], TypeString) do |rec|

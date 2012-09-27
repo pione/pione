@@ -77,9 +77,6 @@ module Pione
           path = File.join(@working_directory, input.name)
           # create a link to cache
           cache_path = FileCache.get(input.uri)
-          p path
-          p input.uri
-          p cache_path
           FileUtils.symlink(cache_path, path, {:force => true})
         end
       end

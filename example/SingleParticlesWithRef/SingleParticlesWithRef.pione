@@ -49,17 +49,17 @@ $Y_SHIFT_THRESHOLD := 20
 $PAD_W := 64
 $PAD_H := 64
 
-###
-### Initial model from PDB
-###
+#
+# Initial model from PDB
+#
 $REFSOURCE := "121p-shift"
 $DELTA   := 2.5
-$SIZE_X  := 64
-$SIZE_Y  := 64
-$SIZE_Z  := 64
-$START_X := -1 * $DELTA * $SIZE_X / 2
-$START_Y := -1 * $DELTA * $SIZE_Y / 2
-$START_Z := -1 * $DELTA * $SIZE_Z / 2
+$SIZE_X  := 64.0
+$SIZE_Y  := 64.0
+$SIZE_Z  := 64.0
+$START_X := -1.0 * $DELTA * $SIZE_X / 2.0
+$START_Y := -1.0 * $DELTA * $SIZE_Y / 2.0
+$START_Z := -1.0 * $DELTA * $SIZE_Z / 2.0
 $SNRATIO := 3
 
 #
@@ -89,7 +89,7 @@ Rule Init
   output '*.roi'.all
 Flow
   rule CreateInitialModel
-  rule CreateTestData
+  rule CreateTestData.params({rot1: 0, rot2: 0, rot3: 0})
 End
 
 # InitialModel
@@ -104,18 +104,21 @@ End
 Rule CreateTestData
   input '${INITIAL}.3d'
   output '*.roi'.all
+  param $rot1
+  param $rot2
+  param $rot3
 Flow
   if $rot1 <= $ROT1MAX
     if $rot2 <= $ROT2MAX
       if $rot3 <= $ROT3MAX
         rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
         rule ActionTestDataNoise.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
-        rule CreataTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3 + {$ROT3D}*2})
+        rule CreataTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3 + $ROT3D*2})
       else
-        rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + {$ROT2D}*2, rot3: $ROT3MIN})
+        rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + $ROT2D*2, rot3: $ROT3MIN})
       end
     else
-      rule CreateTestData.params({rot1: $rot1 + {$ROT1D}*2, rot2: $ROT2MIN, rot3: $ROT3MIN})
+      rule CreateTestData.params({rot1: $rot1 + $ROT1D*2, rot2: $ROT2MIN, rot3: $ROT3MIN})
     end
   end
 End
@@ -153,7 +156,7 @@ Rule First
 Flow
   rule CreateRef3d
   rule CreateRef2d
-end
+End
 
 Rule CreateRef3d
   input '{$INITIAL}.3d'

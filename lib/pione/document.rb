@@ -39,27 +39,40 @@ module Pione
       table = rules.inject({}) do |tbl, rule|
         tbl.tap{|x| x[rule.rule_path] = rule}
       end
-      return new(table)
+      return new(table, params)
     end
 
     attr_reader :rules
 
-    def initialize(rules = {})
+    # Create a document.
+    def initialize(rules, params)
       @rules = rules
+      @params = params
       instance_eval(&b) if block_given?
     end
 
+    # Returns the named rule.
+    # @param [String] name
+    #   rule path
     def [](name)
-      @rules[name]
+      @rules[name].params.merge(@params)
     end
 
     # Returns main rule of main package.
+    # @return [Rule]
+    #   main rule of main package
     def main
+      @rules["&main:Main"].params.merge!(@params)
       @rules["&main:Main"]
     end
 
+    # Returns root rule.
+    # @param [Parameters] params
+    #   root root parameter
+    # @return [RootRule]
+    #   root rule
     def root_rule(params)
-      Rule::RootRule.new(main, params)
+      Rule::RootRule.new(main, params.merge(@params))
     end
   end
 end
