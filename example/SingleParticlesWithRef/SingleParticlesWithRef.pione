@@ -102,7 +102,7 @@ End
 
 # TestData
 Rule CreateTestData
-  input '${INITIAL}.3d'
+  input '{$INITIAL}.3d'
   output '*.roi'.all
   param $rot1
   param $rot2
