@@ -23,7 +23,7 @@ module Pione
       rule(:string) {
         dquote >>
         (backslash >> any | dquote.absent? >> any).repeat.as(:string) >>
-        dquote
+        (dquote | syntax_error("It should be double quotation.", :dquote))
       }
 
       # @!attribute [r] integer
@@ -38,7 +38,7 @@ module Pione
       rule(:integer) {
         ( match('[+-]').maybe >>
           digit.repeat(1)
-          ).as(:integer)
+        ).as(:integer)
       }
 
       # @!attribute [r] float
@@ -62,7 +62,7 @@ module Pione
           dot >>
           digit.repeat(1) >>
           (match('[eE]') >> match('[+-]').maybe >> digit.repeat(1)).maybe
-          ).as(:float)
+        ).as(:float)
       }
 
       # @!attribute [r] float
@@ -118,12 +118,13 @@ module Pione
       #     {a: 1, b: 2, c: 3}
       rule(:parameters) {
         lbrace >>
-        pad? >>
-        ( parameters_elements.maybe.as(:parameters) |
-          syntax_error("it should be parameter key", :identifier)
-        ) >>
-        pad? >>
-        rbrace
+        ( pad? >>
+          ( parameters_elements.maybe.as(:parameters) |
+            syntax_error("it should be parameter key", :identifier)
+          ) >>
+          pad? >>
+          (rbrace | syntax_error("it should be parameters end.", :parameters_end))
+        )
       }
 
       # @!attribute [r] parameters_elements
@@ -132,8 +133,18 @@ module Pione
       #   @example
       #     a: 1, b: 2, c: 3
       rule(:parameters_elements) {
-        parameters_element >> parameters_elements_rest.repeat
+        ( parameters_element >>
+          parameters_elements_rest.repeat
+        )
       }
+
+      # @api private
+      MSG_MISSING_COLON =
+        "Parameter elements should be 'key:value' form, but colon is missing."
+
+      # @api private
+      MSG_MISSING_VALUE =
+        "it should be parameter value."
 
       # @!attribute [r] parameters_element
       #   +parameters_element+ matches each element of parameters.
@@ -147,11 +158,9 @@ module Pione
       rule(:parameters_element) {
         ( identifier.as(:key) >>
           pad? >>
-          colon >>
+          (colon | syntax_error(MSG_MISSING_COLON, :colon)) >>
           pad? >>
-          ( expr.as(:value) |
-            syntax_error("it should be parameter value", :expr)
-          )
+          (expr.as(:value) | syntax_error(MSG_MISSING_VALUE, :expr))
         ).as(:parameters_element)
       }
 

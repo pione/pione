@@ -1,0 +1,4 @@
+parameters_missing_colon:
+  "Parameter elements should be 'key:value' form, but colon is missing."
+parameters_missing_value:
+  "It should be parameter value."
