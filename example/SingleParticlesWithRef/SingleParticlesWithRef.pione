@@ -17,6 +17,8 @@ $TARGET := "all"
 #
 $ROTMODE := "YOYS"
 
+$nRot := ""
+
 # Rot1
 $ROT1MIN := 0
 $ROT1MAX := 359
@@ -86,6 +88,7 @@ End
 
 Rule Init
   input '{$REFSOURCE}.pdb'
+  output '{$INITIAL}.3d'
   output '*.roi'.all
 Flow
   rule CreateInitialModel
@@ -111,13 +114,12 @@ Flow
   if $rot1 <= $ROT1MAX
     if $rot2 <= $ROT2MAX
       if $rot3 <= $ROT3MAX
+        if ((($rot1 + $ROT1D*2) > $ROT1MAX) and (($rot2 + $ROT2D*2) > $ROT2MAX)).not
+          rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + $ROT2D*2, rot3: $ROT3MIN})
+        end
         rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
         rule ActionTestDataNoise.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
-        if ((($rot1 + $ROT1D*2) > $ROT1MAX) and (($rot2 + $ROT2D*2) > $ROT2MAX) and (($rot3 + $ROT3D*2) > $ROT3MAX)).not
-          rule CreateTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3 + $ROT3D*2})
-        end
       else
-        rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + $ROT2D*2, rot3: $ROT3MIN})
       end
     else
       rule CreateTestData.params({rot1: $rot1 + $ROT1D*2, rot2: $ROT2MIN, rot3: $ROT3MIN})
@@ -126,7 +128,7 @@ Flow
 End
 
 Rule ActionTestData
-  input '${INITIAL}.3d'
+  input '{$INITIAL}.3d'
   output '{$REFSOURCE}-{$rot1}-{$rot2}-{$rot3}.roi'
   param $rot1
   param $rot2
@@ -203,9 +205,10 @@ End
 #
 
 Rule Create3dinfo
+  input '{$TARGET}.ref2d'
   input '*.roi'
   output '{$*}.corinfo'
-  output '{$*}.3dlst'
+  output '{$*}.3dinfo'
 Flow
   rule ConvertRoiToPad
   rule ConvertPadToCorinfo
@@ -228,7 +231,7 @@ Rule ConvertPadToCorinfo
   input '{$TARGET}.ref2d'
   output '{$*}.corinfo'
 Action
-  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n {$nRot} -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
+  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
 End
 
 # .corinfo.3dinfo

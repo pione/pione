@@ -268,7 +268,7 @@ module Pione
       # Shifts output resource locations.
       # @return [void]
       def shift_output_resources
-        @outputs.flatten.each do |output|
+        @outputs.flatten.compact.each do |output|
           old_uri = ::URI.parse(output.uri)
           new_uri = ::URI.parse(make_output_resource_uri(output.name).to_s)
           unless new_uri.path == old_uri.path
