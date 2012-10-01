@@ -13,9 +13,12 @@ module Pione
         @finished = []
       end
 
-      # Starts to process flow elements.
+      # Starts to process flow elements. This processes rule application, output
+      # search, resource shift, and output validation.
       # @return [void]
       def execute
+        # restore data tuples from resource
+        restore_data_tuples_from_resource
         # rule application
         apply_rules(@rule.body.eval(@variable_table).elements)
         # find outputs
@@ -29,6 +32,20 @@ module Pione
       end
 
       private
+
+      # Restores data tuples from the domain resource.
+      # @return [void]
+      def restore_data_tuples_from_resource
+        inputs = @inputs.flatten.map{|data| data.name}
+        uri = root? ? @base_uri : @base_uri + (".%s/%s" % @domain.split("_"))
+        if Resource[uri].exist?
+          Resource[uri].entries.select do |res|
+            not(inputs.include?(res.basename))
+          end.each do |res|
+            write(Tuple[:data].new(@domain, res.basename, res.uri.to_s, res.mtime))
+          end
+        end
+      end
 
       # Applies target input data to rules.
       # @param [Array<CallRule>] callees
@@ -53,7 +70,7 @@ module Pione
         user_message_end("End Rule Application: %s" % handler_digest)
       end
 
-      # Find applicable flow-element rules with inputs and variables.
+      # Finds applicable flow-element rules with inputs and variables.
       def find_applicable_rules(callees)
         callees.inject([]) do |combinations, callee|
           # eval callee expr by handling rule context
@@ -154,7 +171,7 @@ module Pione
               callee.expr.params,
               rule.features,
               task_domain,
-              @call_stack + [@domain]
+              @call_stack + [@domain] # current call stack + caller
             )
 
             # check if same task exists

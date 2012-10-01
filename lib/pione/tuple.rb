@@ -442,6 +442,8 @@ module Pione
       [:new_uri, String]
     ]
 
+    define_format [:dry_run, :availability]
+
     # Task is tuple class for representing job of workers.
     class Task
       # Returns the digest string of the task.

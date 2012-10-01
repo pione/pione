@@ -61,6 +61,7 @@ module Pione
         @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new(@params.data)
         @base_uri = read(Tuple[:base_uri].any).uri
+        @dry_run = begin read0(Tuple[:dry_run].any).availability rescue false end
         @task_id = ID.task_id(@inputs, @params)
         @call_stack = call_stack
 
@@ -109,6 +110,13 @@ module Pione
         user_message_end "End %s Rule: %s" % [name, handler_digest]
 
         return outputs
+      end
+
+      # Returns true if it is root rule handler.
+      # @return [Boolean]
+      #   true if it is root rule handler
+      def root?
+        self.kind_of?(RootHandler)
       end
 
       # @api private

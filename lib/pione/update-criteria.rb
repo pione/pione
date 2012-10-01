@@ -60,10 +60,10 @@ module Pione::UpdateCriteria
     #   true if inputs are newer than outputs
     def exist_newer_input?(rule, inputs, outputs, vtable)
       # get output oldest time
-      output_oldest_time = outputs.flatten.map{|out|out.time}.sort.last
+      output_oldest_time = outputs.flatten.map{|output| output.time}.sort.last
 
       # get input last time
-      input_last_time = inputs.flatten.map{|input|input.time}.sort.first
+      input_last_time = inputs.flatten.map{|input| input.time}.sort.last
 
       # criteria
       return false unless output_oldest_time
@@ -71,7 +71,7 @@ module Pione::UpdateCriteria
       return output_oldest_time < input_last_time
     end
 
-    # Return true if we need to update.
+    # Returns true if we need to update.
     # @param [Rule] rule
     #   rule
     # @param [Tuple::Data] inputs
@@ -87,8 +87,10 @@ module Pione::UpdateCriteria
     end
 
     # @api private
-    CRITERIAS = [ :no_output_rules?,
+    CRITERIAS = [
+      :no_output_rules?,
       :not_exist_output?,
-      :exist_newer_input? ]
+      :exist_newer_input?
+    ]
   end
 end

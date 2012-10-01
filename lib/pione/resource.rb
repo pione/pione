@@ -1,14 +1,15 @@
 module Pione
   # Resource is a module for data resources.
   module Resource
-    # ResourceException is raised when any resource errors happen.
-    class ResourceException < Exception
+
+    # ResourceError is raised when any resource errors happen.
+    class ResourceError < Exception
       def initialize(uri)
         @uri = uri
       end
     end
 
-    class NotFound < ResourceException; end
+    class NotFound < ResourceError; end
 
     # @api private
     @@schemes = {}
@@ -21,12 +22,9 @@ module Pione
       @@schemes[uri.scheme].new(uri)
     end
 
-    # FIXME
-    # @api private
-    Hint = Struct.new(:domain, :outputs)
-
     # Base is an interface class for all resouce classes.
     class Base
+      attr_reader :uri
       attr_reader :path
 
       # Creates a data resource on URI.
@@ -37,14 +35,14 @@ module Pione
         raise NotImplementedError
       end
 
-      # Reads a data resource from URI.
+      # Reads a resource data from URI.
       # @return [String]
       #   data content
       def read
         raise NotImplementedError
       end
 
-      # Updates a data resouce on URI.
+      # Updates a resource data on URI.
       # @param [String] data
       #   new data content
       # @return [void]
@@ -52,9 +50,34 @@ module Pione
         raise NotImplementedError
       end
 
-      # Deletes a data resource on URI.
+      # Deletes a resource data on URI.
       # @return [void]
       def delete
+        raise NotImplementedError
+      end
+
+      # Returns mtime of the resource.
+      # @return [Time]
+      #   mtime
+      def mtime
+        raise NotImplementedError
+      end
+
+      # Returns entries of the resource path.
+      # @return [Array<Resource>]
+      #   resource entries of the resource path
+      def entries
+        raise NotImplementedError
+      end
+
+      # Returns the basename of resource.
+      # @return [String]
+      #   basename
+      def basename
+        raise NotImplementedError
+      end
+
+      def exist?
         raise NotImplementedError
       end
 
@@ -69,35 +92,30 @@ module Pione
 
     # Local represents local path resources.
     class Local < Base
-      # Creates a resource path with URI.
+      # Creates a local resource handler with URI.
       # @param [String, URI] uri
-      #   local path URI
+      #   URI of a local path
       def initialize(uri)
         @uri = uri.kind_of?(::URI::Generic) ? uri : ::URI.parse(uri)
         raise ArgumentError unless @uri.kind_of?(URI::Local)
-        @path = uri.path
+        @path = Pathname.new(uri.path)
       end
 
       # (see Base#create)
       def create(data)
-        dir = File.dirname(@path)
-        FileUtils.makedirs(dir) unless Dir.exist?(dir)
-        File.open(@path, "w+"){|file| file.write(data)}
+        @path.dirname.mkpath unless @path.dirname.exist?
+        @path.open("w+"){|file| file.write(data)}
       end
 
       # (see Base#read)
       def read
-        if File.exist?(@path)
-          File.read(@path)
-        else
-          raise NotFound.new(@uri)
-        end
+        @path.exist? ? @path.read : (raise NotFound.new(@uri))
       end
 
       # (see Base#update)
       def update(data)
-        if File.exist?(@path)
-          File.open(@path, "w+"){|file| file.write(data)}
+        if @path.exist?
+          @path.open("w+"){|file| file.write(data)}
         else
           raise NotFound.new(@uri)
         end
@@ -105,7 +123,29 @@ module Pione
 
       # (see Base#delete)
       def delete
-        File.delete(@path)
+        @path.delete if @path.exist?
+      end
+
+      # (see Base#mtime)
+      def mtime
+        @path.mtime
+      end
+
+      # (see Base#entries)
+      def entries
+        @path.entries.select{|entry| (@path + entry).file?}.map do |entry|
+          Resource[::URI.parse("local:%s" % (@path + entry).expand_path)]
+        end
+      end
+
+      # (see Base#basename)
+      def basename
+        @path.basename.to_s
+      end
+
+      # (see Base#exist?)
+      def exist?
+        @path.exist?
       end
 
       # Makes symbolic link from the resource to the destination.
@@ -136,8 +176,8 @@ module Pione
         unless File.ftype(other) == "file"
           raise ArgumentError.new(other)
         end
-        dir = File.dirname(@path)
-        FileUtils.makedirs(dir) unless Dir.exist?(dir)
+        dir = @path.dirname
+        dir.mkpath unless dir.exist?
         FileUtils.mv(other, @path)
         FileUtils.symlink(@path, other)
       end
@@ -150,8 +190,8 @@ module Pione
         unless File.ftype(other.path) == "file"
           raise ArgumentError.new(other)
         end
-        dir = File.dirname(@path)
-        FileUtils.makedirs(dir) unless Dir.exist?(dir)
+        dir = @path.dirname
+        dir.mkpath unless dir.exist?
         FileUtils.mv(other.path, @path)
       end
     end

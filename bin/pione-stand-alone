@@ -12,10 +12,10 @@ Thread.abort_on_exception = true
 #
 
 Option = Struct.new(
-  :input_dir, :output_dir, :log_path, :stream, :params, :base_uri
+  :input_dir, :output_dir, :log_path, :stream, :params, :base_uri, :dry_run
 )
 option = Option.new(
-  nil, "output", "log.txt", false, Parameters.empty
+  nil, "output", "log.txt", false, Parameters.empty, false
 )
 
 OPTS = {}
@@ -50,6 +50,9 @@ parser = OptionParser.new do |opt|
   }
   opt.on('--params="{Var:1,...}"') {|str|
     option.params = Transformer.new.apply(Parser.new.parameters.parse(str))
+  }
+  opt.on('--dry-run') {|b|
+    option.dry_run = true
   }
 end
 
@@ -112,6 +115,7 @@ rule_loader.read_document($doc)
 rule_loader.wait_till(:request_waiting)
 
 $tuple_space_server.write(Tuple[:process_info].new('standalone', 'Standalone'))
+$tuple_space_server.write(Tuple[:dry_run].new(option.dry_run))
 
 # start input generators
 generator_method = option.stream ? :start_by_stream : :start_by_dir

@@ -87,7 +87,14 @@ module Pione
           File.join(@working_directory,"__pione-action__.sh"),
           "w+"
         )
-        file.print(@rule.body.eval(@variable_table).content)
+        if @dry_run
+          @rule.outputs.flatten.each do |output|
+            p output
+            file.print("touch %s" % output.eval(@variable_table).name)
+          end
+        else
+          file.print(@rule.body.eval(@variable_table).content)
+        end
         debug_message("Action #{file.path}")
         user_message("-"*60, 0, "SH")
         @rule.body.eval(@variable_table).content.split("\n").each do |line|
