@@ -72,15 +72,16 @@ Rule Main
   input '{$REFSOURCE}.pdb'
   output '{$TARGET}.3d'
   output '{$TARGET}.ds6'
-  output '{$TARGET}.gnuplotcorinfolst'
-  output '{$TARGET}.gnuplotanglelst'
-  output '{$TARGET}.gnuplotshiftlst'
   output '{$TARGET}.mon'
 Flow
   rule Init
   rule First
   rule All
 End
+
+#  output '{$TARGET}.gnuplotcorinfolst'
+#  output '{$TARGET}.gnuplotanglelst'
+#  output '{$TARGET}.gnuplotshiftlst'
 
 #
 # Init
@@ -100,7 +101,7 @@ Rule CreateInitialModel
   input '{$REFSOURCE}.pdb'
   output '{$INITIAL}.3d'
 Action
-  pdb2mrc -i {$REFSOURCE}.pdb -o {$INITIAL}.3d -nx {$SIZE_X} -ny {$SIZE_Y} -nz {$SIZE_Z} -Sx {$START_X} -Sy {$START_Y} -Sz {$START_Z} -dx {$DELTA} -dy {$DELTA} -dz {$DELTA} -m 1
+  pdb2mrc -i {$REFSOURCE}.pdb -o {$INITIAL}.3d -nx {$SIZE_X.as_int} -ny {$SIZE_Y.as_int} -nz {$SIZE_Z.as_int} -Sx {$START_X.as_int} -Sy {$START_Y.as_int} -Sz {$START_Z.as_int} -dx {$DELTA} -dy {$DELTA} -dz {$DELTA} -m 1
 End
 
 # TestData
@@ -186,28 +187,30 @@ Rule All
   input '{$TARGET}.ref2d'
   output '{$TARGET}.3d'
   output '{$TARGET}.ds6'
-  output '{$TARGET}.gnuplotcorinfolst'
-  output '{$TARGET}.gnuplotanglelst'
-  output '{$TARGET}.gnuplotshiftlst'
   output '{$TARGET}.mon'
 Flow
   rule Create3dinfo
   rule Create3dlst
   rule Create3d
   rule CreateDs6
-  rule CreateParcorinfoSort
-  rule CreatePlotData
   rule CreateMontageList
 End
+
+#  output '{$TARGET}.gnuplotcorinfolst'
+#  output '{$TARGET}.gnuplotanglelst'
+#  output '{$TARGET}.gnuplotshiftlst'
+#  rule CreateParcorinfoSort
+#  rule CreatePlotData
 
 #
 # 3dinfo
 #
 
 Rule Create3dinfo
-  input '{$TARGET}.ref2d'
   input '*.roi'
+  input '{$TARGET}.ref2d'
   output '{$*}.corinfo'
+  output '{$*}.fit'
   output '{$*}.3dinfo'
 Flow
   rule ConvertRoiToPad
@@ -230,6 +233,7 @@ Rule ConvertPadToCorinfo
   input '*.pad'
   input '{$TARGET}.ref2d'
   output '{$*}.corinfo'
+  output '{$*}.fit'
 Action
   mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
 End
@@ -239,8 +243,8 @@ Rule ConvertCorinfoTo3dinfo
   input '*.corinfo'
   output '{$*}.3dinfo'
 Action
-  awk '/Cor/ { print $$7,$$16,$$2,$$3,$$4,$$5,$$9,$$11,$$12}' {$*}.corinfo | sort -r | sed -e s/.pad/.fit/ > {$*}.3dinfolst
-  head -n 1 {$*}.3dinfolst | awk '{print $$2,$$3,$$4,$$5,$$6,$$1}' > {$*}.3dinfo
+  awk '/Cor/ { print $7,$16,$2,$3,$4,$5,$9,$11,$12}' {$*}.corinfo | sort -r | sed -e s/.pad/.fit/ > {$*}.3dinfolst
+  head -n 1 {$*}.3dinfolst | awk '{print $2,$3,$4,$5,$6,$1}' > {$*}.3dinfo
 End
 
 #
@@ -258,6 +262,7 @@ End
 # .3dlst.3d
 Rule Create3d
   input '{$TARGET}.3dlst'
+  input '*.fit'.all
   output '{$TARGET}.3d'
 Action
   mrc2Dto3D -I {$TARGET}.3dlst -o {$TARGET}.3d -InterpolationMode 2 -Double -DoubleCounter {$TARGET}.3dcounter -CounterThreshold 0.5 -m 1 -WeightMode 2
@@ -268,7 +273,7 @@ End
 #
 
 Rule CreateDs6
-  input '{$TARGET}.3d'
+  input  '{$TARGET}.3d'
   output '{$TARGET}.ds6'
 Flow
   rule Convert3dTo3dsm
@@ -278,7 +283,7 @@ End
 
 # .3d.3dsm
 Rule Convert3dTo3dsm
-  input '{$TARGET}.3d'
+  input  '{$TARGET}.3d'
   output '{$TARGET}.3dsm'
 Action
   mrcImageSmoothing -i {$TARGET}.3d -o {$TARGET}.3dsm -m 1 -M 1 -r 3
@@ -286,15 +291,15 @@ End
 
 # .3dsm.3dsmCenter
 Rule Convert3dsmTo3dsmCenter
-  input '{$TARGET}.3dsm'
+  input  '{$TARGET}.3dsm'
   output '{$TARGET}.3dsmCenter'
 Action
-  mrcImageCenterGet -i {$TARGET}.3dsm -o {$TARGET}.3dsmCenter -Nx 128 -Ny 128 -Nz 128
+  mrcImageCenterGet -i {$TARGET}.3dsm -o {$TARGET}.3dsmCenter -Nx 64 -Ny 64 -Nz 64
 End
 
 # .3dsmCenter.ds6
 Rule Convert3dsmCenterToDs6
-  input '{$TARGET}.3dsmCenter'
+  input  '{$TARGET}.3dsmCenter'
   output '{$TARGET}.ds6'
 Action
   mrc2map -i {$TARGET}.3dsmCenter -o {$TARGET}.ds6 -m 3
@@ -305,7 +310,7 @@ End
 #
 
 Rule CreateParcorinfoSort
-  input '*.corinfo'
+  input '*.corinfo'.all
   output '{$TARGET}.parcorinfolstsort'
 Flow
   rule ConvertCorinfoToCorinfo2
@@ -319,8 +324,8 @@ Rule ConvertCorinfoToCorinfo2
   input '*.corinfo'
   output '{$*}.corinfo2'
 Action
-  awk '/Cor/ { print $$18,$$16,$$2,$$3,$$4,$$5,$$9,$$11,$$12}' {$*}.corinfo | sort -r | sed -e 's/.roi/.fit/' > {$*}.corinfolst
-  head -n 1 {$*}.corinfolst | awk '{if({$PAD_W}-$$8>=$$8&&{$PAD_H}-$$9>=$$9) print $$1,$$2,$$3,$$4,$$5,$$6,$$7,0+$$8,0+$$9;else if({$PAD_W}-$$8>=$$8) print $$1,$$2,$$3,$$4,$$5,$$6,$$7,0+$$8,{$PAD_H}-$$9;else if({$PAD_H}-$$9>=$$9) print $$1,$$2,$$3,$$4,$$5,$$6,$$7,{$PAD_W}-$$8,0+$$9;else print $$1,$$2,$$3,$$4,$$5,$$6,$$7,{$PAD_W}-$$8,{$PAD_H}-$$9}' > {$*}.corinfo2
+  awk '/Cor/ { print $18,$16,$2,$3,$4,$5,$9,$11,$12}' {$*}.corinfo | sort -r | sed -e 's/.roi/.fit/' > {$*}.corinfolst
+  head -n 1 {$*}.corinfolst | awk '{if({$PAD_W}-$8>=$8&&{$PAD_H}-$9>=$9) print $1,$2,$3,$4,$5,$6,$7,0+$8,0+$9;else if({$PAD_W}-$8>=$8) print $1,$2,$3,$4,$5,$6,$7,0+$8,{$PAD_H}-$9;else if({$PAD_H}-$9>=$9) print $1,$2,$3,$4,$5,$6,$7,{$PAD_W}-$8,0+$9;else print $1,$2,$3,$4,$5,$6,$7,{$PAD_W}-$8,{$PAD_H}-$9}' > {$*}.corinfo2
 End
 
 # .corinfo2.parcorinfolst
@@ -336,7 +341,7 @@ Rule CreateParcorinfoSort
   input '{$TARGET}.parcorinfolst'
   output '{$TARGET}.parcorinfolstsort'
 Action
-  awk '{ print $$1,$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' {$TARGET}.parcorinfolst | sort -r > {$TARGET}.parcorinfolstsort
+  awk '{ print $1,$2,$3,$4,$5,$6,$7,$8,$9}' {$TARGET}.parcorinfolst | sort -r > {$TARGET}.parcorinfolstsort
 End
 
 # SelectParticle
@@ -344,7 +349,7 @@ Rule CreateSelectParticle
   input '{$TARGET}.parcorinfolstsort'
   output '{$TARGET}.3dlstselect'
 Action
-  awk '$$1 >= {$COR_THRESHOLD} || $$9 <= {$Y_SHIFT_THRESHOLD}{print $$2,$$3,$$4,$$5,$$6,$$1}' {$TARGET}.parcorinfolstsort > {$TARGET}.3dlstselect
+  awk '$1 >= {$COR_THRESHOLD} || $9 <= {$Y_SHIFT_THRESHOLD}{print $2,$3,$4,$5,$6,$1}' {$TARGET}.parcorinfolstsort > {$TARGET}.3dlstselect
 End
 
 #
@@ -366,21 +371,21 @@ Rule CreateGnuplotCorinfo
   input '{$TARGET}.parcorinfolst'
   output '{$TARGET}.gnuplotcorinfolst'
 Action
-  awk '{ print $$1,$$9}' {$TARGET}.parcorinfolst | sort -r > {$TARGET}.gnuplotcorinfolst
+  awk '{ print $1,$9}' {$TARGET}.parcorinfolst | sort -r > {$TARGET}.gnuplotcorinfolst
 End
 
 Rule CreateGnuplotAngle
   input '{$TARGET}.parcorinfolst'
   output '{$TARGET}.gnuplotanglelst'
 Action
-  awk '{ print $$4,$$5}' {$TARGET}.parcorinfolst > {$TARGET}.gnuplotanglelst
+  awk '{ print $4,$5}' {$TARGET}.parcorinfolst > {$TARGET}.gnuplotanglelst
 End
 
 Rule CreateGnuplotShift
   input '{$TARGET}.parcorinfolst'
   output '{$TARGET}.gnuplotshiftlst'
 Action
-  awk '{ print $$4,$$5}' {$TARGET}.parcorinfolst > {$TARGET}.gnuplotshiftlst
+  awk '{ print $4,$5}' {$TARGET}.parcorinfolst > {$TARGET}.gnuplotshiftlst
 End
 
 #
@@ -391,6 +396,6 @@ Rule CreateMontageList
   input '{$TARGET}.3dlst'
   output '{$TARGET}.mon'
 Action
-  awk '{ print $$1}' {$TARGET}.3dlst > {$TARGET}.monlst
+  awk '{ print $1}' {$TARGET}.3dlst > {$TARGET}.monlst
   mrcImageMontageCreate -i {$TARGET}.monlst -o {$TARGET}.mon -nx 15 -ny 10
 End

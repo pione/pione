@@ -147,7 +147,7 @@ module Pione::Model
       PioneString.new(
         rec.elements.map{|elt|
           elt.call_pione_method("as_string").to_ruby
-        }.join(connective)
+        }.join(connective.to_ruby)
       )
     end
 

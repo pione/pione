@@ -98,7 +98,7 @@ module Pione::Model
     end
 
     define_pione_method("as_int", [], TypeInteger) do |rec|
-      PioneInteger(rec.value.to_i)
+      PioneInteger.new(rec.value.to_i)
     end
 
     define_pione_method("as_float", [], TypeFloat) do |rec|
