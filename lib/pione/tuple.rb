@@ -450,12 +450,14 @@ module Pione
       # @return [String]
       #   task digest string
       def digest
-        "%s([%s],[%s])" % [
+        "%s([%s],{%s})" % [
           rule_path,
           inputs.map{|i|
             i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
           }.join(","),
-          params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
+          params.data.select{|k,_|
+            not(k.toplevel?)
+          }.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
         ]
       end
     end

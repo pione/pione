@@ -318,7 +318,7 @@ module Pione
 
       # Copy data into specified domain and return the tuple list
       def copy_data_into_domain(src_data, dest_domain)
-        src_data.flatten.map do |d|
+        src_data.flatten.compact.map do |d|
           new_data = d.clone
           new_data.domain = dest_domain
           write(new_data)

@@ -89,7 +89,6 @@ module Pione
         )
         if @dry_run
           @rule.outputs.flatten.each do |output|
-            p output
             file.print("touch %s" % output.eval(@variable_table).name)
           end
         else
@@ -148,7 +147,7 @@ module Pione
 
       # Write resources for output data.
       def write_output_resources
-        @outputs.flatten.each do |output|
+        @outputs.flatten.compact.each do |output|
           path = File.join(@working_directory, output.name)
           FileCache.put(path, output.uri)
         end
@@ -178,7 +177,7 @@ module Pione
 
       # Writes output tuples into the tuple space server.
       def write_output_tuples
-        @outputs.flatten.each {|output| write(output)}
+        @outputs.flatten.compact.each {|output| write(output)}
       end
     end
   end

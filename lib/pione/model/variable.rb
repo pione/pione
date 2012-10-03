@@ -2,9 +2,9 @@ module Pione::Model
   # Variable represent variable name objects. A variable object can evaluates
   # its value with the variable table.
   class Variable < PioneModelObject
-    attr_reader :name
-
     set_pione_model_type TypeAny
+
+    attr_reader :name
 
     # Creates a variable with name.
     # @param [String] name
@@ -31,6 +31,17 @@ module Pione::Model
     #   true
     def include_variable?
       true
+    end
+
+    def set_toplevel(b)
+      @toplevel = b
+    end
+
+    # Returns true if the variable is defined in toplevel.
+    # @return [Boolean]
+    #   true if the variable is defined in toplevel
+    def toplevel?
+      @toplevel
     end
 
     # @api private

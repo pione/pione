@@ -24,6 +24,7 @@ module Pione
       # rules and assignments
       rules = toplevels.select{|elt| elt.kind_of?(Rule)}
       assignments = toplevels.select{|elt| elt.kind_of?(Assignment)}
+      assignments.each {|assignment| assignment.set_toplevel(true)}
 
       # make document parameters
       params = assignments.inject(VariableTable.empty) do |vtable, a|

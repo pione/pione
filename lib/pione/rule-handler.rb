@@ -97,7 +97,7 @@ module Pione
 
         # show output list
         debug_message("%s Rule %s Result:" % [name, handler_digest])
-        @outputs.each_with_index do |output, i|
+        @outputs.compact.each_with_index do |output, i|
           if output.kind_of?(Array)
             output.each_with_index do |o, ii|
               debug_message("%s,%s:%s" % [i, ii, o.name], 1)
@@ -109,7 +109,7 @@ module Pione
         # show end message
         user_message_end "End %s Rule: %s" % [name, handler_digest]
 
-        return outputs
+        return outputs.compact
       end
 
       # Returns true if it is root rule handler.
@@ -196,12 +196,15 @@ module Pione
 
       # Returns digest string of this handler.
       def handler_digest
-        "%s([%s],[%s])" % [
+        params = @params.data.select{|k,_|
+          not(k.toplevel?)
+        }.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
+        "%s([%s],{%s})" % [
           @rule.rule_path,
           @inputs.map{|i|
             i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
           }.join(","),
-          @params.data.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
+          params
         ]
       end
 

@@ -17,6 +17,12 @@ module Rinda
   end
 
   class TupleBag
+    class TupleBin
+      def elements
+        @bin
+      end
+    end
+
     # DomainTupleBin is a domain based TupleBin class.
     # @note
     #   DomainTupleBin should take tuples that have it's domain only.
@@ -24,6 +30,10 @@ module Rinda
       # Creates a new bin.
       def initialize
         @bin = {}
+      end
+
+      def elements
+        @bin.values
       end
 
       # Adds the tuple.
@@ -113,6 +123,10 @@ module Rinda
     class DataTupleBin < TupleBin
       def initialize
         @bin = {}
+      end
+
+      def elements
+        @bin.values.map{|val| val.values}.flatten
       end
 
       # Adds the tuple.
@@ -207,6 +221,10 @@ module Rinda
         @bin = {}
       end
 
+      def elements
+        @bin.values
+      end
+
       def add(tuple)
         @bin[key(tuple)] = tuple
       end
@@ -285,6 +303,10 @@ module Rinda
 
     public
 
+    def all_tuples
+      @hash.values.map{|bin| bin.elements}.flatten
+    end
+
     def find(template)
       key = bin_key(template)
       if @special_bin[key]
@@ -336,6 +358,10 @@ module Rinda
       orig_read_all(tuple).map do |res|
         shift_tuple(res)
       end
+    end
+
+    def all_tuples
+      @bag.all_tuples
     end
 
     private

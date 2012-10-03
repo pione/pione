@@ -187,20 +187,20 @@ Rule All
   input '{$TARGET}.ref2d'
   output '{$TARGET}.3d'
   output '{$TARGET}.ds6'
+  output '{$TARGET}.gnuplotcorinfolst'
+  output '{$TARGET}.gnuplotanglelst'
+  output '{$TARGET}.gnuplotshiftlst'
   output '{$TARGET}.mon'
 Flow
   rule Create3dinfo
   rule Create3dlst
   rule Create3d
   rule CreateDs6
+  rule CreateParcorinfoSort
+  rule CreatePlotData
   rule CreateMontageList
 End
 
-#  output '{$TARGET}.gnuplotcorinfolst'
-#  output '{$TARGET}.gnuplotanglelst'
-#  output '{$TARGET}.gnuplotshiftlst'
-#  rule CreateParcorinfoSort
-#  rule CreatePlotData
 
 #
 # 3dinfo
@@ -394,6 +394,7 @@ End
 
 Rule CreateMontageList
   input '{$TARGET}.3dlst'
+  input '*.fit'.all
   output '{$TARGET}.mon'
 Action
   awk '{ print $1}' {$TARGET}.3dlst > {$TARGET}.monlst

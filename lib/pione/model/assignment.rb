@@ -41,6 +41,17 @@ module Pione::Model
       vtable.set(@variable, @expr)
     end
 
+    def set_toplevel(b)
+      @variable.set_toplevel(b)
+    end
+
+    # Returns true if the assignment is defined in toplevel.
+    # @return [Boolean]
+    #   true if the assignment is defined in toplevel
+    def toplevel?
+      @variable.toplevel?
+    end
+
     # Returns false because assignment form is complex(pair of variable and
     # expression).
     # @return [Boolean]

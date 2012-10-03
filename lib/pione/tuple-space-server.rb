@@ -103,13 +103,7 @@ module Pione
 
     # Return all tuples of the tuple space.
     def all_tuples
-      tuples = []
-      bag = @__ts__.instance_variable_get("@bag")
-      bag.instance_variable_get("@hash").values.each do |bin|
-        tuples += bin.instance_variable_get("@bin")
-      end
-      _tuples = tuples.map{|t| t.value}
-      return _tuples
+      @__ts__.all_tuples.compact
     end
 
     # Shutdown the server.

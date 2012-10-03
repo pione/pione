@@ -4,8 +4,8 @@
 require 'pp'
 require 'optparse'
 
-require 'pione/common'
-require 'pione/tuple-space-provider'
+require 'pione'
+# require 'pione/tuple-space-provider'
 
 include Pione
 
