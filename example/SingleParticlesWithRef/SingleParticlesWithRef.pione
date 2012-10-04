@@ -17,8 +17,6 @@ $TARGET := "all"
 #
 $ROTMODE := "YOYS"
 
-$nRot := ""
-
 # Rot1
 $ROT1MIN := 0
 $ROT1MAX := 359
@@ -72,6 +70,9 @@ Rule Main
   input '{$REFSOURCE}.pdb'
   output '{$TARGET}.3d'
   output '{$TARGET}.ds6'
+  output '{$TARGET}.gnuplotcorinfolst'
+  output '{$TARGET}.gnuplotanglelst'
+  output '{$TARGET}.gnuplotshiftlst'
   output '{$TARGET}.mon'
 Flow
   rule Init
@@ -79,9 +80,6 @@ Flow
   rule All
 End
 
-#  output '{$TARGET}.gnuplotcorinfolst'
-#  output '{$TARGET}.gnuplotanglelst'
-#  output '{$TARGET}.gnuplotshiftlst'
 
 #
 # Init
@@ -156,22 +154,22 @@ End
 
 Rule First
   input '{$INITIAL}.3d'
-  output '{$TARGET}.ref3d'
-  output '{$TARGET}.ref2d'
+  output '{$TARGET}.ref3d'.all
+  output '{$TARGET}.ref2d'.all
 Flow
   rule CreateRef3d
   rule CreateRef2d
 End
 
 Rule CreateRef3d
-  input '{$INITIAL}.3d'
+  input  '{$INITIAL}.3d'
   output '{$TARGET}.ref3d'
 Action
   cp {$INITIAL}.3d {$TARGET}.ref3d
 End
 
 Rule CreateRef2d
-  input '{$TARGET}.ref3d'
+  input  '{$TARGET}.ref3d'
   output '{$TARGET}.ref2d'
 Action
   mrc3Dto2D -i {$TARGET}.ref3d -o {$TARGET}.ref2d -EulerMode {$ROTMODE} -InterpolationMode 2 -Rot2 {$ROT2MIN} {$ROT2MAX} {$ROT2D} -Rot1 {$ROT1MIN} {$ROT1MAX} {$ROT1D} -Rot3 {$ROT3MIN} {$ROT3MAX} {$ROT3D} -m 0
@@ -235,7 +233,7 @@ Rule ConvertPadToCorinfo
   output '{$*}.corinfo'
   output '{$*}.fit'
 Action
-  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
+  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n {$nROT} -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
 End
 
 # .corinfo.3dinfo

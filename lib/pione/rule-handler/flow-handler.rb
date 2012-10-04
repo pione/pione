@@ -108,7 +108,7 @@ module Pione
         end
       end
 
-      # Find the rule of the callee.
+      # Finds the rule of the callee.
       def find_callee_rule(callee)
         return read(Tuple[:rule].new(rule_path: callee.rule_path), 0).content
       rescue Rinda::RequestExpiredError
@@ -124,7 +124,7 @@ module Pione
         end
       end
 
-      # Find inputs and variables for flow element rules.
+      # Finds inputs and variables for flow element rules.
       def select_updatables(combinations)
         combinations.select do |callee, rule, inputs, vtable|
           # task domain

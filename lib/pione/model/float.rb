@@ -1,5 +1,5 @@
 module Pione::Model
-  # PioneFloat represents float value in PIONE system.
+  # PioneFloat represents float values in PIONE system.
   class PioneFloat < PioneModelObject
     set_pione_model_type TypeFloat
 
@@ -14,13 +14,9 @@ module Pione::Model
     end
 
     # @api private
-    def task_id_string
-      "Float<#{@value}>"
-    end
-
-    # @api private
     def textize
-      @value.to_s
+      "#PioneFloat{%s}" % @value
+      # @value.to_s
     end
 
     # Returns ruby's value.
@@ -45,6 +41,9 @@ module Pione::Model
   end
 
   TypeFloat.instance_eval do
+    # Returns true if the other equals self.
+    # @return [PioneBoolean]
+    #   true if the other equals self
     define_pione_method("==", [TypeFloat], TypeBoolean) do |rec, other|
       PioneBoolean.new(rec.value == other.value)
     end

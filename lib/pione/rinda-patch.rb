@@ -41,7 +41,11 @@ module Rinda
       #   the tuple
       # @return [void]
       def add(tuple)
-        @bin[domain(tuple)] = tuple
+        if dom = domain(tuple)
+          @bin[dom] = tuple
+        else
+          raise RuntimeError
+        end
       end
 
       # Deletes the tuple.
@@ -360,8 +364,11 @@ module Rinda
       end
     end
 
+    # Returns all tuples in the space.
+    # @return [Array]
+    #   all tuples
     def all_tuples
-      @bag.all_tuples
+      @bag.all_tuples.map{|tuple| tuple.value}
     end
 
     private

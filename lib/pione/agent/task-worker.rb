@@ -138,9 +138,10 @@ module Pione
           end
         end
 
-        # Sleep unless execution thread will be terminated
+        # sleep until execution thread will be terminated
         th.join
 
+        # remove the working tuple
         take(Tuple[:working].new(task.domain, nil), 0)
 
         debug_message_end "End Task Execution #{rule.rule_path} by worker(#{uuid})"
@@ -157,7 +158,7 @@ module Pione
       #   result data tuples
       # @return [Array<Task,RuleHandler>]
       def transit_to_data_outputing(task, handler, result)
-        result.each {|output| write(output)}
+        result.flatten.each {|output| write(output)}
         return task, handler
       end
 

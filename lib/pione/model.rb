@@ -297,6 +297,7 @@ module Pione::Model
         @pione_model_type.define_pione_method(*args, &b)
       end
 
+      # @api private
       def inherited(subclass)
         if @pione_model_type
           subclass.set_pione_model_type @pione_model_type

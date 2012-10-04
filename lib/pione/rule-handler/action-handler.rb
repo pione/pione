@@ -89,7 +89,7 @@ module Pione
         )
         if @dry_run
           @rule.outputs.flatten.each do |output|
-            file.print("touch %s" % output.eval(@variable_table).name)
+            file.puts("touch %s" % output.eval(@variable_table).name)
           end
         else
           file.print(@rule.body.eval(@variable_table).content)
