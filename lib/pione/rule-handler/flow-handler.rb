@@ -36,12 +36,9 @@ module Pione
       # Restores data tuples from the domain resource.
       # @return [void]
       def restore_data_tuples_from_resource
-        inputs = @inputs.flatten.map{|data| data.name}
         uri = root? ? @base_uri : @base_uri + (".%s/%s" % @domain.split("_"))
         if Resource[uri].exist?
-          Resource[uri].entries.select do |res|
-            not(inputs.include?(res.basename))
-          end.each do |res|
+          Resource[uri].entries.each do |res|
             write(Tuple[:data].new(@domain, res.basename, res.uri.to_s, res.mtime))
           end
         end

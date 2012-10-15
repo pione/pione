@@ -26,9 +26,17 @@ module Pione
     end
 
     # Define tuple space interfaces.
-    tuple_space_interface :read, :result => lambda{|t| Tuple.from_array(t)}
-    tuple_space_interface :read_all, :result => lambda{|list| list.map{|t| Tuple.from_array(t)}}
-    tuple_space_interface :take, :result => lambda{|t| Tuple.from_array(t)}
+    tuple_space_interface :read, :result => lambda{|t|
+      Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
+    }
+    tuple_space_interface :read_all, :result => lambda{|list|
+      list.map{|t|
+        Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
+      }
+    }
+    tuple_space_interface :take, :result => lambda{|t|
+      Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
+    }
     tuple_space_interface :write, :validator => Proc.new {|*args|
       args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
     }
@@ -60,10 +68,16 @@ module Pione
         write(Tuple[:base_uri].new(uri: uri))
       end
 
-      # agents
-      @life_keeper = Agent::TupleSpaceServerLifeKeeper.start(self)
-      @life_keeper.wait_till(:sleeping)
+      # start agents
+      @life_keeper = Agent::TrivialRoutineWorker.start(
+        TupleSpaceProvider.instance.add(self), 1
+      )
       @client_life_checker = Agent::TupleSpaceServerClientLifeChecker.start(self)
+    end
+
+    def drburi
+      @remote_object ||= DRb.start_service(nil, self)
+      @remote_object.__drburi
     end
 
     def alive?
@@ -102,8 +116,8 @@ module Pione
     end
 
     # Return all tuples of the tuple space.
-    def all_tuples
-      @__ts__.all_tuples.compact
+    def all_tuples(*args)
+      @__ts__.all_tuples(*args).compact
     end
 
     # Shutdown the server.

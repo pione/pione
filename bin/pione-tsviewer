@@ -54,11 +54,8 @@ if provider.tuple_space_servers.empty?
   exit 0
 end
 
-# print tuples
-provider.tuple_space_servers.each do |ts_server|
-  puts "TupleSpaceServer: %s" % Terminal.red(ts_server.uuid)
-  puts "-"*78
-  ts_server.all_tuples.each do |tuple|
+def show_bag(ts_server, type)
+  ts_server.all_tuples(type).each do |tuple|
     # target option
     if not(OPTS[:targets].empty?) and not(OPTS[:targets].include?(tuple.first.to_s))
       next
@@ -74,4 +71,16 @@ provider.tuple_space_servers.each do |ts_server|
     res.gsub!(/\#<(\S+)/) {|s| "#<%s" % Terminal.green($1) }
     puts res
   end
+end
+
+# print tuples
+provider.tuple_space_servers.each do |ts_server|
+  puts "TupleSpaceServer: %s" % Terminal.red(ts_server.uuid)
+  puts "-"*78
+  puts "*** bag ***"
+  show_bag(ts_server, :bag)
+  puts "*** read waiter ***"
+  show_bag(ts_server, :read_waiter)
+  puts "*** take waiter ***"
+  show_bag(ts_server, :take_waiter)
 end

@@ -1,6 +1,3 @@
-require 'pione/common'
-require 'pione/agent'
-
 module Pione
   module Agent
     # TaskWorker is an agent to process tasks
@@ -13,7 +10,20 @@ module Pione
         end
 
         def message
-          "Unknown rule in the task of #{@task.inspect}."
+          "Unknown rule in the task of %s." % @task.inspect
+        end
+      end
+
+      # Start a task worker agent on a different process.
+      # @param [Pione::Front::BasicFront] front
+      #   caller front server
+      # @return [ConditionVariable]
+      #   connection notifier
+      def self.spawn(front, connection_id)
+        Process.spawn("pione-task-worker", front.uri, connection_id)
+        while true
+          break if front.task_worker_front_connection_id.include?(connection_id)
+          sleep 0.1
         end
       end
 
@@ -43,8 +53,8 @@ module Pione
       #   tuple space server
       # @param [Feature::Expr] features
       #   feature set
-      def initialize(tuple_space_server, features=Feature::EmptyFeature.new)
-        raise ArgumentError.new(features) unless features.kind_of?(Feature::Expr)
+      def initialize(tuple_space_server, features=Model::Feature::EmptyFeature.new)
+        raise ArgumentError.new(features) unless features.kind_of?(Model::Feature::Expr)
         @features = features
         super(tuple_space_server)
 
@@ -142,7 +152,7 @@ module Pione
         th.join
 
         # remove the working tuple
-        take(Tuple[:working].new(task.domain, nil), 0)
+        take0(Tuple[:working].new(task.domain, nil))
 
         debug_message_end "End Task Execution #{rule.rule_path} by worker(#{uuid})"
 

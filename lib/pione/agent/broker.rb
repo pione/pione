@@ -1,11 +1,9 @@
-require 'pione/agent'
-require 'pione/agent/task-worker'
-require 'pione/agent/broker-task-worker-life-checker'
-
 module Pione
   module Agent
-    class Broker < Base
+    class Broker < BasicAgent
+      # Balancer is a base class for balancing task workers.
       class Balancer < PioneObject
+        # Create a new balancer.
         def initialize(broker)
           @broker = broker
         end
@@ -15,12 +13,14 @@ module Pione
         end
       end
 
+      # EasyBalancer is a balancer by ratios of tuple space server and task worker.
       class EasyBalancer < Balancer
+        # see Balancer.new
         def initialize(broker)
           @broker = broker
         end
 
-        # Balance by killing a task worker in max tuple server.
+        # Balances by killing a task worker in max tuple server.
         def balance
           ratios = calc_resource_ratios
           min = ratios.values.min
@@ -35,7 +35,7 @@ module Pione
           end
         end
 
-        # Calculate resource ratios of tuple space servers.
+        # Calculates resource ratios of tuple space servers.
         def calc_resource_ratios(revision={})
           ratio = {}
           # make ratio table
@@ -48,7 +48,7 @@ module Pione
           return ratio
         end
 
-        # Create new task worker.
+        # Creates a new task worker.
         def create_task_worker(min_server)
           @broker.create_task_worker(min_server)
 
@@ -57,7 +57,7 @@ module Pione
           end
         end
 
-        # Adjust task worker size between tuple space servers.
+        # Adjusts task worker size between tuple space servers.
         def adjust_task_worker(min_server, max_server)
           revision = {min_server => 1, max_server => -1}
           new_ratios = calc_resource_ratios(revision)
@@ -80,7 +80,7 @@ module Pione
       end
 
       module BrokerMethod
-        # Add the tuple space server.
+        # Adds the tuple space server.
         def add_tuple_space_server(ts_server)
           @tuple_space_servers << ts_server
         end
@@ -106,8 +106,10 @@ module Pione
         end
 
         # Create a task worker for the server.
-        def create_task_worker(ts)
-          @task_workers << Agent[:task_worker].start(ts)
+        def create_task_worker(tuple_space_server)
+          connection_id = Pione.generate_uui
+          @assignment_table[connection_id] = tuple_space_server
+          Agent[:task_worker].spawn(tuple_space_server)
         end
 
         # Delete unavilable tuple space servers.
@@ -130,13 +132,16 @@ module Pione
             #return if del_targets.empty? and add_targets.empty?
 
             # bye
-            del_targets.each{|ts_server| bye(ts_server)}
+            del_targets.each do |ts_server|
+              ts_server.write(Tuple[:bye].new(agent_type: agent_type, uuid: uuid))
+            end
             # hello
-            add_targets.each{|ts_server| hello(ts_server)}
+            add_targets.each do |ts_server|
+              ts_server.write(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
+            end
             # update
             @tuple_space_servers = tuple_space_servers
 
-            # for debug
             if Pione.debug_mode?
               puts "tuple space servers: #{@tuple_space_servers}"
             end
@@ -169,28 +174,31 @@ module Pione
       attr_reader :tuple_space_servers
       attr_reader :task_worker_resource
 
-      # :nodoc:
+      # @api private
       def initialize(data={})
         super()
         @task_workers = []
         @tuple_space_servers = []
         @task_worker_resource = data[:task_worker_resource] || 1
         @sleeping_time = data[:sleeping_time] || 1
+        @assignment_table = {}
 
         # balancer
         @balancer = EasyBalancer.new(self)
 
-        # subagent
-        @task_worker_checker = Agent[:broker_task_worker_life_checker].new(self)
+        # start agents
+        @task_worker_checker = Agent::TrivialRoutineWorker.new(
+          Proc.new{ @task_workers.delete_if {|worker| worker.terminated? }}, 1
+        )
       end
 
-      # :nodoc:
+      # @api private
       def start
         super
         @task_worker_checker.start
       end
 
-      # Send bye message to tuple space servers when the broker is destroid.
+      # Sends bye message to tuple space servers when the broker is destroyed.
       def finalize
         @tuple_space_servers.each {|ts_server| ts_server.bye }
         super
@@ -198,6 +206,7 @@ module Pione
 
       private
 
+      # @api private
       def transit_to_initialized
         # start drb service
         DRb.start_service(nil, self)

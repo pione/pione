@@ -1,5 +1,59 @@
 module Pione
   module Agent
+    # @api private
+    @table = Hash.new
+
+    class << self
+      # Returns a class corresponding to the agent type.
+      # @param [Symbol] type
+      #   agent type
+      # @return [Pione::Agent::BasicAgent]
+      #   agent class
+      def [](type)
+        @table[type]
+      end
+
+      # Sets an agent of the system.
+      # @param [Pione::Agent::BasicAgent] klass
+      #   agent class
+      # @return [void]
+      def set_agent(klass)
+        @table[klass.agent_type] = klass
+      end
+    end
+
+    # Aborting is an exception for aborting agents.
+    class Aborting < Exception; end
+
+    # TransitionError happens when
+    class TransitionError < StandardError; end
+
+    # TimeoutStateWaiting happens when not reached expected in time.
+    class TimeoutStateWaiting < StandardError
+      # expected status
+      attr_reader :expected
+
+      # current status
+      attr_reader :current
+
+      # Creates an exception.
+      #
+      # @param [Symbol] expected
+      #   expected state
+      # @param [Symbol] current
+      #   current state
+      def initialize(expected, current)
+        @expected = expected
+        @current = current
+      end
+
+      # @private
+      def message
+        msg = "expected state is '%s' but current state is '%s'"
+        msg % [@expected_state, @current_state]
+      end
+    end
+
     # StateTransitionSingleMethod provides state transition singleton methods.
     module StateTransitionSingletonMethod
       # Sets pre-defined states when the module is extended by others.
@@ -230,14 +284,13 @@ module Pione
       end
     end
 
-    # Base represents pione system agent excluding function for tuple
-    # space client.
-    class Base < PioneObject
+    # BasicAgent is a super class for PIONE agents.
+    class BasicAgent < PioneObject
       extend StateTransitionSingletonMethod
       include StateTransitionMethod
 
       def self.inherited(subclass)
-        states.each {|st| subclass.define_state st }
+        states.each {|state| subclass.define_state state }
         define_state_transition(state_transition_table)
       end
 

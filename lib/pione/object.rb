@@ -13,6 +13,11 @@ module Pione
       @__uuid__ ||= Pione.generate_uuid
     end
 
+    def remote_object_uri
+      @remote_object ||= DRbObject.new(self)
+      @remote_object.__drburi
+    end
+
     # Finalizes this object.
     # @return [void]
     def finalize

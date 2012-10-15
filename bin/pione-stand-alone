@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 # -*- ruby -*-
 
-require 'optparse'
 require 'pione'
+require 'optparse'
+require 'ostruct'
 
 include Pione
 Thread.abort_on_exception = true
@@ -70,6 +71,11 @@ if ARGF.filename == "-"
 end
 
 #
+# front
+#
+front = Pione::Front::StandAloneFront.new
+
+#
 # start process
 #
 
@@ -86,16 +92,15 @@ if option.base_uri.scheme == "local"
 end
 option.base_uri = option.base_uri.to_s
 
-
 # make drb server and it's connection
 $tuple_space_server = TupleSpaceServer.new(
   task_worker_resource: 1,
   base_uri: option.base_uri
 )
+front.tuple_space_server = $tuple_space_server
+
 provider = Pione::TupleSpaceProvider.instance
 provider.add($tuple_space_server)
-# $remote_drb_server = DRb::DRbServer.new(nil, $tuple_space_server)
-# $remote_server = DRbObject.new(nil, $remote_drb_server.uri)
 
 # make logger
 Agent[:logger].start($tuple_space_server, File.open(option.log_path, "w+"))
@@ -126,7 +131,8 @@ sleep 0.1 while not(gen.counter > 0)
 
 # add workers
 OPTS[:resource].times do
-  Agent[:task_worker].start($tuple_space_server)
+  puts "worker"
+  Agent[:task_worker].spawn(front)
 end
 
 class CommandExecuter
@@ -147,17 +153,18 @@ Agent[:command_listener].start($tuple_space_server, CommandExecuter.new)
 #
 # start rule handling
 #
-$thread = Thread.start do
-  while true do
-    if handler = $doc.root_rule(option.params).make_handler($tuple_space_server)
-      handler.handle
-    else
-      user_message "no inputs"
-    end
-
-    break unless option.stream
-    sleep 5
-    user_message "check new inputs"
+while true do
+  if handler = $doc.root_rule(option.params).make_handler($tuple_space_server)
+    handler.handle
+  else
+    user_message "no inputs"
   end
+
+  break unless option.stream
+  sleep 5
+  user_message "check new inputs"
 end
-$thread.join
+
+# stop task workers
+front.terminate
+sleep 1

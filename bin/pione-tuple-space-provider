@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+
+require 'pione'
+
+# arguments
+druby_port = ARGV[0]
+notifier_port = ARGV[1]
+
+# start druby
+DRb.start_service
+
+# create a front server
+Pione::Front::TupleSpaceProviderFront.new(druby_port, notifier_port).start

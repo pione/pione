@@ -6,6 +6,15 @@ module Rinda
       value == other.value
     end
     alias :eql? :"=="
+
+    def init_with_ary(ary)
+      @tuple = Array.new(ary.size)
+      # add timestamp
+      @tuple.timestamp = ary.timestamp
+      @tuple.size.times do |i|
+        @tuple[i] = ary[i]
+      end
+    end
   end
 
   class TupleEntry
@@ -299,7 +308,7 @@ module Rinda
 
     def bin_class(key)
       return TupleBin unless @special_bin
-      return @special_bin[key] ? @special_bin[key] : TupleBin
+      return @special_bin.has_key?(key) ? @special_bin[key] : TupleBin
     end
 
     alias :orig_find :find
@@ -364,11 +373,28 @@ module Rinda
       end
     end
 
+    alias :orig_write :write
+    def write(tuple, *args)
+      tuple.timestamp = Time.now
+      orig_write(tuple, *args)
+    end
+
     # Returns all tuples in the space.
+    # @param [Symbol] target
+    #   tuple type(:all, :bag, :read_waiter, or :take_waiter)
     # @return [Array]
     #   all tuples
-    def all_tuples
-      @bag.all_tuples.map{|tuple| tuple.value}
+    def all_tuples(target=:bag)
+      case target
+      when :all
+        all_tuples(:bag) + all_tuples(:read_waiter) + all_tuples(:take_waiter)
+      when :bag
+        @bag.all_tuples.map{|tuple| tuple.value}
+      when :read_waiter
+        @read_waiter.all_tuples.map{|tuple| tuple.value}
+      when :take_waiter
+        @take_waiter.all_tuples.map{|tuple| tuple.value}
+      end
     end
 
     private

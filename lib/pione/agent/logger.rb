@@ -9,12 +9,15 @@ module Pione
       def initialize(ts_server, out=$stdout)
         super(ts_server)
         @out = out
+        @logs = []
+        @last_time = Time.now
       end
 
       define_state :logging
 
       define_state_transition :initialized => :logging
-      define_state_transition :logging => :logging
+      define_state_transition :logging => :write_log
+      define_state_transition :write_log => :logging
 
       define_exception_handler ThreadError => :terminated
 
@@ -29,10 +32,19 @@ module Pione
 
       # State logging.
       def transit_to_logging
-        log = take(Tuple[:log].any)
-        @out.puts log.message.format
-        @out.flush
-        @out.sync
+        @logs << take(Tuple[:log].any)
+      end
+
+      def transit_to_write_log
+        if @logs.size > 0 and Time.now - @last_time > 1
+          @logs.sort{|a,b| a.timestamp <=> b.timestamp}.each do |log|
+            @out.puts log.message.format
+            @out.flush
+            @out.sync
+          end
+          @logs = []
+          @last_time = Time.now
+        end
       end
 
       # State terminated.

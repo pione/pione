@@ -1,156 +1,118 @@
-require 'pione/common'
-
 module Pione
-  # TupleSpaceProvider provides tuple space server's location.
+  # TupleSpaceProvider provides tuple space server's location to tuple space
+  # receivers.
   class TupleSpaceProvider < PioneObject
     include DRbUndumped
-    include MonitorMixin
 
-    CONNECTION_PORT = 54321
-    PROVIDER_URI = "druby://localhost:10101"
-    TIMEOUT = 5
-    MAX_RETRY_NUMBER = 50
+    PRESENCE_NOTIFICATION_PORT = 55000
+    DRUBY_PORT = 54000
 
-    class InstanceError < StandardError; end
+    Params = Struct.new(:presence_notification_port, :provider_port, :expiration_time)
 
-    # Return the provider instance.
-    def self.instance(data = {}, i=0)
-      if i >= MAX_RETRY_NUMBER
-        raise InstanceError
-      end
-      data = {} unless data.kind_of?(Hash)
-      uri = if data.has_key?(:provider_port)
-              "druby://localhost:#{data[:provider_port]}"
-            else
-              PROVIDER_URI
-            end
-      # check DRb service
-      begin
-        DRb.current_server
-      rescue
-        DRb.start_service
-      end
-      # remote object
-      begin
-        # get provider reference
-        provider = DRbObject.new_with_uri(uri)
-        provider.uuid # check the server exists
-        provider
-      rescue
-        begin
-          # create new provider
-          provider = self.new(data)
-          provider.drb_service = DRb::DRbServer.new(uri, provider)
-          DRbObject.new_with_uri(uri)
-        rescue Errno::EADDRINUSE
-          # retry
-          instance(data, i+1)
+    class << self
+      # Creates the tuple space provider as new process.
+      # @param [Integer] port
+      #   provider port
+      # @return [TupleSpaceProviderFront]
+      #   tuple space provider front
+      def spawn(params)
+        # create provider process
+        Process.spawn("pione-tuple-space-provider", front.uri, port)
+        # get front
+        provider_front = DRbObject.new_with_uri("druby://localhost:%s" % params.druby_port)
+        # wait that the provider starts up
+        while true
+          begin
+            break if provider_front.uuid
+          rescue
+            sleep 0.1
+          end
         end
+        return provider_front
       end
-    end
 
-    # Terminate tuple space provider.
-    def self.terminate
-      # terminate message as remote procedure call causes connection error
-      begin
-        instance.terminate
+      # Returns the provider instance.
+      # @param [Integer] port
+      #   provider port
+      # @return [TupleSpaceProvider]
+      #   tuple space provider instance as druby object
+      def instance(druby_port=PROVIDER_PORT)
+        # get provider reference
+        front = DRbObject.new_with_uri(uri)
+        front.provider
       rescue
-        # do nothing
+        # create new provider
+        self.spawn(port)
       end
     end
 
-    attr_accessor :timeout
-    attr_accessor :receiver_port
-    attr_accessor :drb_service
+    # Returns presence notification port number
+    attr_reader :presence_notification_port
+    # Returns druby service port number
+    attr_reader :druby_port
 
-    def initialize(data={})
-      raise ArgumentError if (data.keys - [:provider_port, :udp_port, :timeout]).size > 0
-
+    # Creatas a new server. This method assumes to be called from
+    # pione-tuple-space-provider command only. So you should not initialize
+    # server directly.
+    def initialize(option=Option.new)
       super()
 
+      # set variables
+      @monitor = Monitor.new
       @expiration_time = 5
-      @timeout = data.has_key?(:timeout) ? data[:timeout] : TIMEOUT
-      @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : CONNECTION_PORT
+      @presence_notification_port = CONFIG.presence_notification
       @tuple_space_servers = {}
-      @remote_object = Marshal.dump(DRbObject.new(self))
+      @ref = Marshal.dump(DRbObject.new(self))
       @terminated = false
 
-      keep_connection
-      keep_clean
+      # start agents
+      @keeper = Agent::TrivialRoutineWorker.start(Proc.new{send_packet}, 3)
+      @cleaner = Agent::TrivialRoutineWorker.start(Proc.new{clean}, 3)
     end
 
-    def alive?
-      not(@terminated)
-    end
-
-    # Add the tuple space server.
-    def add(ts_server)
-      synchronize do
-        @tuple_space_servers[ts_server] = Time.now
+    # Adds the tuple space server.
+    def add(tuple_space_server)
+      @monitor.synchronize do
+        @tuple_space_servers[tuple_space_server] = Time.now
       end
     end
 
-    # Return the process provider's current pid
+    # Returns the process provider's current pid
     def pid
       Process.pid
     end
 
-    # Return uri of the drb server.
-    def uri
-      @drb_service.uri
-    end
-
-    # Return tuple space servers.
+    # Returns tuple space servers.
     def tuple_space_servers
-      synchronize do
+      @monitor.synchronize do
         @tuple_space_servers.keys
       end
     end
 
-    # Send empty tuple space server list.
-    def finalize
+    # Sends empty tuple space server list.
+    def terminate
+      return unless @terminated
       @terminated = true
-      @drb_service.stop_service
-      # DRbServer#stop_service killed service thread, but sometime it cannot
-      # close the socket because ensure clause isn't called in some cases on MRI
-      # 1.9.x.
-      @drb_service.instance_eval do
-        @thread.kill.join
-        kill_sub_thread.join
-        @protocol.close
-      end
-      if DRb.primary_server == @drb_service
-        DRb.primary_server = nil
-      end
-      @thread_keep_connection.kill.join
-      @thread_keep_clean.kill.join
-      @tuple_space_servers = []
-      send_packet
+      @keeper_agent.terminate
+      @cleaner_agent.terminate
     end
 
-    alias :terminate :finalize
+    alias :finalize :terminate
 
     private
 
-    # Start to run the provider.
-    def keep_connection
-      @thread_keep_connection = Thread.new do
-        while true do
-          send_packet
-          sleep 3
-        end
-      end
-    end
-
-    # Send UDP packet.
+    # Sends presence notification to tuple space receivers as UDP packet.
     def send_packet
       socket = UDPSocket.open
       begin
-        puts "sent UDP packet ..." if debug_mode?
-        # send UDP packet
-        socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, true)
-        #socket.send(dump, 0, '<broadcast>', @udp_port)
-        socket.send(@remote_object, 0, Socket::INADDR_BROADCAST, @udp_port)
+        if debug_mode?
+          puts "sent UDP packet ..."
+        end
+        # enable broadcast
+        socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
+        # send packet
+        #socket.send(@remote_object, 0, Socket::INADDR_BROADCAST, @udp_port)
+        socket.send(@ref, 0, '192.168.56.255', @presence_notification_port)
       rescue
         nil
       ensure
@@ -158,36 +120,24 @@ module Pione
       end
     end
 
-    # Keep clean.
-    def keep_clean
-      @thread_keep_clean = Thread.new do
-        while true do
-          clean
-          sleep 1
-        end
-      end
-    end
-
-    # Delete dead or expired tuple space servers.
+    # Cleans dead or expired tuple space servers.
     def clean
-      synchronize do
-        delete = []
+      @monitor.synchronize do
+        targets = []
+
         # find dead or expired servers
-        @tuple_space_servers.each do |ts_server, time|
+        @tuple_space_servers.each do |server, time|
           begin
-            if ts_server.alive?
-              if Time.now - time > @expiration_time
-                delete << ts_server
-              end
+            if server.alive? and (Time.now - time > @expiration_time)
+              targets << server
             end
           rescue
-            delete << ts_server
+            targets << server
           end
         end
+
         # delete target servers
-        delete.each do |ts_server|
-          @tuple_space_servers.delete(ts_server)
-        end
+        targets.each {|server| @tuple_space_servers.delete(server)}
       end
     end
   end

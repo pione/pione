@@ -91,6 +91,7 @@ module Pione
           message(type, :magenta, "  "*level + msg)
         end
       end
+      module_function :debug_message
 
       # Sends the debug message to notify that something begins.
       # @param [String] msg
@@ -148,6 +149,7 @@ module Pione
       def message(type, color, msg)
         MessageQueue.push "%s %s" % [Terminal.color(color, "%5s" % type), msg]
       end
+      module_function :message
     end
   end
 end

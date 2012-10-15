@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+
+require 'pione'
+
+# arguments
+caller_front_uri = ARGV[0]
+connection_id = ARGV[1]
+
+# start druby
+DRb.start_service
+
+# get the caller front server
+begin
+  caller_front = DRbObject.new_with_uri(ARGV[0])
+  caller_front.uuid
+rescue => e
+  abort("cannot get the caller front server: %s" % e)
+end
+
+# check connection_id
+unless connection_id
+  abort("invalid connection id: %s" % connection_id)
+end
+
+# create a front server
+Pione::Front::TaskWorkerFront.new(caller_front, connection_id).start

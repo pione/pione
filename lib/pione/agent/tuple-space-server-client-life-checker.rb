@@ -2,7 +2,7 @@ require 'pione/common'
 
 module Pione
   module Agent
-    class TupleSpaceServerClientLifeChecker < Base
+    class TupleSpaceServerClientLifeChecker < BasicAgent
       include TupleSpaceServerInterface
 
       define_state :checking_bye
@@ -13,9 +13,9 @@ module Pione
       define_state_transition :checking_bye => :cleaning_agent
       define_state_transition :cleaning_agent => :checking_bye
 
-      def initialize(ts_server)
+      def initialize(tuple_space_server)
         super()
-        set_tuple_space_server(ts_server)
+        set_tuple_space_server(tuple_space_server)
       end
 
       def transit_to_checking_bye

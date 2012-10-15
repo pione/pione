@@ -23,14 +23,6 @@ module Pione
 
     private
 
-    def write(tuple, *args, &b)
-      unless tuple.kind_of?(Tuple::TupleObject)
-        p caller
-        exit
-      end
-      @__tuple_space_server__.write(tuple, *args, &b)
-    end
-
     # Reads a tuple without waiting.
     # @return [Tuple]
     def read0(tuple)

@@ -47,4 +47,13 @@ module Pione
     Socket.gethostname
   end
   module_function :get_hostname
+
+  def self.get_core_number
+    begin
+      `cat /proc/cpuinfo | grep processor | wc -l`.to_i
+    rescue
+      1
+    end
+  end
+
 end

@@ -1,23 +1,39 @@
 #!/usr/bin/env ruby
 # -*- ruby -*-
 
-require 'pione/common'
-require 'pione/tuple-space-receiver'
-require 'pione/agent/broker'
+require 'pione'
 
-Thread.abort_on_exception = true
+#
+# option
+#
 
-Pione.debug_mode = true
-#Pione.set_signal_trap
+option = OpenStruct.new
+option.resource = [Pione.get_core_number - 1, 1].max
 
-# tuple space receiver
-receiver = Pione::TupleSpaceReceiver.instance
+parser = OptionParser.new do |opt|
+  opt.on('-r n', '--resource=n') {|n|
+    option.resource = n.to_i
+    unless option.resource > 0
+      puts "invalid resource size: %s" % option.resource
+      exit
+    end
+  }
+  opt.on('-d', '--debug') {|name| Pione.debug_mode = true }
+end
 
-# broker
-broker = Pione::Agent[:broker].new(task_worker_resource: 4)
+begin
+  parser.parse!(ARGV)
+rescue OptionParser::InvalidOption => e
+  e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
+  abort
+end
 
-# regist broker
-receiver.register(broker)
+#
+# start broker
+#
 
-# wait
-DRb.thread.join
+# druby
+DRb.start_service
+
+# start front
+Pione::Front::BrokerFront.new(option.resource).start

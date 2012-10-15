@@ -1,32 +1,42 @@
-module Pione::Util
-  # Config represents a PIONE system configuration.
-  class Config < Hash
-    include Singleton
+module Pione
+  module Util
+    # Config represents a PIONE system configuration.
+    class Config < PioneObject
+      @@default = {}
 
-    # Loads a configuration file formatted by YAML.
-    # @param [Pathname] path
-    #   configuration file path
-    # @return [void]
-    def self.load(path=Pathname.new("~").expand_path)
-      CONFIG.merge!(YAML.load(path.read))
-    end
+      def self.define_time(name, default)
+        @@default[name] = default
 
-    # Creates a new configuration.
-    # @param [Hash] data
-    #   preset configuration table
-    def initialize(data={})
-      merge!(data)
-    end
+        define_method(name) do
+          self[name]
+        end
 
-    # Returns working directory path for task workers.
-    # @return [Pathname]
-    #   working directory path
-    def working_directory
-      unless @working_directory
-        tmpdir = CONFIG[:working_dir] || Dir.tmpdir
-        @working_directory = Pathname.new(Dir.mktmpdir("", tmpdir))
+        define_method("%s=" % name) do |val|
+          self[name] = val
+        end
       end
-      return @working_directory
+
+      # Loads a configuration file formatted by YAML.
+      # @param [Pathname] path
+      #   configuration file path
+      # @return [void]
+      def self.load(path=Pathname.new("~/.pione/config.yml").expand_path)
+        self.new(YAML.load(path.read))
+      end
+
+      define_item :working_directory, File.join(Dir.tmpdir, "pione-wd")
+      define_item :presence_notification_port, 55000
+      define_item :tuple_space_provider_druby_port, 54000
+      define_item :tuple_space_receiver_druby_port, 54001
+
+      # Creates a new configuration.
+      # @param [Hash] data
+      #   preset configuration table
+      def initialize(data={})
+        merge!(data)
+      end
     end
   end
+
+  CONFIG = Util::Config.load
 end

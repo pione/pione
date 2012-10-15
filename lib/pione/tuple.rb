@@ -155,6 +155,8 @@ module Pione
         end
       end
 
+      attr_accessor :timestamp
+
       # Creates new tuple object.
       # @param [Hash] data
       #   tuple data
@@ -459,6 +461,13 @@ module Pione
             not(k.toplevel?)
           }.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
         ]
+      end
+    end
+
+    class Log
+      def timestamp=(time)
+        @timestamp = time
+        message.timestamp = time
       end
     end
   end

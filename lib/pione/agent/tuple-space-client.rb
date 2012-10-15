@@ -1,9 +1,7 @@
-require 'pione/common'
-
 module Pione
   module Agent
     module TupleSpaceClientOperation
-      # Send a bye message to the tuple space servers and terminate myself.
+      # Sends a bye message to the tuple space servers and terminate myself.
       def finalize
         unless current_state == :terminated
           bye
@@ -21,12 +19,16 @@ module Pione
         write(to_bye_tuple)
       end
 
-      # Convert a agent tuple.
+      # Makes the agent tuple.
+      # @return [Tuple::Agent]
+      #   the agent tuple
       def to_agent_tuple
         Tuple[:agent].new(agent_type: agent_type, uuid: uuid)
       end
 
-      # Convert a bye tuple
+      # Makes the bye tuple.
+      # @return [Tuple::Bye]
+      #   the bye tuple
       def to_bye_tuple
         Tuple[:bye].new(agent_type: agent_type, uuid: uuid)
       end
@@ -72,16 +74,16 @@ module Pione
       end
     end
 
-    class TupleSpaceClient < Base
+    class TupleSpaceClient < BasicAgent
       include TupleSpaceServerInterface
       include TupleSpaceClientOperation
 
       # Initialize agent's state.
-      def initialize(ts_server)
+      def initialize(tuple_space_server)
         super()
-        set_tuple_space_server(ts_server)
+        set_tuple_space_server(tuple_space_server)
         unless self.kind_of?(CommandListener)
-          @command_listener = CommandListener.new(ts_server, self)
+          @command_listener = CommandListener.new(tuple_space_server, self)
         end
       end
 
@@ -145,5 +147,3 @@ module Pione
     end
   end
 end
-
-require 'pione/agent/command-listener'

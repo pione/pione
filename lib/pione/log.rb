@@ -1,9 +1,15 @@
-require 'pione/common'
-require 'time'
-
 module Pione
+  # Log is a representation for logging.
+  # @example
+  #   Log.new do
+  #     add_record(
+  #       component: "tuple-space-server",
+  #       key: "action",
+  #       value: "start"
+  #     )
+  #   end
+  #
   class Log
-
     # Log::Record is a key-value line for log. A record consisted of following items:
     # - application
     # - component
@@ -14,6 +20,7 @@ module Pione
       attr_reader :key
       attr_reader :value
 
+      # Creata a log record.
       def initialize(components, key, value)
         @components = components.kind_of?(Array) ? components : [components]
         @key = key
@@ -26,7 +33,7 @@ module Pione
 
       # Format as a string.
       # i.e.
-      #   A35D[2012-04-25T14:48:57.791+09:00] pione.rule-provider.status: initialized
+      #   2012-04-25T14:48:57.791+09:00 A35D pione.rule-provider.status: initialized
       def format(logid, time)
         resource = [application, components, key].flatten.compact.join(".")
         "%s %s %s: %s" % [time, logid, resource, value.to_json]
@@ -35,14 +42,6 @@ module Pione
 
     attr_reader :records
 
-    # Log is a representation for logging.
-    # i.e.
-    #   Log.new do
-    #     add_record(component: "tuple-space-server",
-    #                key: "action",
-    #                value: "start")
-    #   end
-    #
     def initialize
       @records = []
       yield self if block_given?
@@ -52,14 +51,17 @@ module Pione
       @records << Record.new(*args)
     end
 
+    def timestamp=(time)
+      @time = time
+    end
 
     # Format as string.
     # i.e.
-    #   A35D[2012-04-25T14:48:57.791+09:00] pione.task-worker.action: "take_task"
-    #   A35D[2012-04-25T14:48:57.791+09:00] pione.task-worker.object: ...
+    #   2012-04-25T14:48:57.791+09:00 A35D .task-worker.action: "take_task"
+    #   2012-04-25T14:48:57.791+09:00 A35D .task-worker.object: ...
     def format
       logid = generate_logid
-      time = Time.now.iso8601(3)
+      time = @time.iso8601(3)
       @records.map{|record| record.format(logid, time)}.join("\n")
     end
 

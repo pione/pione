@@ -1,6 +1,3 @@
-require 'pione/common'
-require 'socket'
-
 module Pione
   class TupleSpaceReceiver < PioneObject
 
@@ -55,6 +52,10 @@ module Pione
       end
     end
 
+    def self.start(broker)
+      instance.register(broker)
+    end
+
     attr_reader :receiver_thread
     attr_reader :updater_thread
     attr_reader :agents
@@ -71,11 +72,11 @@ module Pione
       # initialize variables
       @receiver_thread = nil
       @updater_thread = nil
-      @agents = []
+      @brokers = []
       @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : UDP_PORT
       @disconnect_time = data.has_key?(:disconnect_time) ? data[:disconnect_time] : DISCONNECT_TIME
       @socket = UDPSocket.open
-      @socket.bind('', @udp_port)
+      @socket.bind(Socket::INADDR_ANY, @udp_port)
       @tuple_space_servers = {}
 
       # start
@@ -83,7 +84,7 @@ module Pione
     end
 
     def register(agent)
-      @agents << agent
+      @brokers << agent
     end
 
     # Start to receive tuple space servers.
@@ -149,9 +150,7 @@ module Pione
     def update_tuple_space_servers
       @thread_update_list = Thread.new do
         loop do
-          if Pione.debug_mode?
-            puts "check for updating tuple space servers"
-          end
+          Pione::Util::Message.debug_message "check for updating tuple space servers" if Pione.debug_mode?
 
           @tuple_space_servers.delete_if do |ts_server, time|
             begin
@@ -176,11 +175,11 @@ module Pione
           end
 
           # update
-          @agents.each do |agent|
+          @brokers.each do |broker|
             begin
-              agent.update_tuple_space_servers(tuple_space_servers)
+              broker.update_tuple_space_servers(tuple_space_servers)
             rescue DRb::DRbConnError
-              puts "dead server or agent"
+              puts "dead server"
               # none
             end
           end
@@ -195,15 +194,15 @@ module Pione
       @thread_check_agent_life = Thread.new do
         while true do
           list = []
-          @agents.each do |agent|
+          @brokers.each do |broker|
             begin
-              agent.uuid
-              list << agent
+              broker.uuid
+              list << broker
             rescue DRb::DRbConnError
               # none
             end
           end
-          @agents = list
+          @brokers = list
 
           sleep 1
         end
