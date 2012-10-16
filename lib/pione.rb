@@ -1,3 +1,6 @@
+#
+# load libraries
+#
 require 'bundler/setup'
 require 'set'
 require 'socket'
@@ -19,6 +22,9 @@ require 'json'
 require 'parslet'
 require 'ostruct'
 
+#
+# load pione
+#
 require 'pione/version'
 require 'pione/util/terminal'
 require 'pione/util/config'
@@ -38,7 +44,9 @@ require 'pione/data-finder'
 require 'pione/document'
 require 'pione/update-criteria'
 require 'pione/uri'
-require 'pione/resource'
+require 'pione/resource/basic-resource'
+Pione::Resource.autoload :Local, 'pione/resource/local'
+Pione::Resource.autoload :FTP, 'pione/resource/ftp'
 require 'pione/file-cache'
 require 'pione/rule-handler/basic-handler'
 require 'pione/rule-handler/flow-handler'
@@ -46,25 +54,25 @@ require 'pione/rule-handler/action-handler'
 require 'pione/rule-handler/root-handler'
 require 'pione/rule-handler/system-handler'
 require 'pione/agent/basic-agent'
-require 'pione/agent/exception'
-require 'pione/agent/tuple-space-client'
-require 'pione/agent/command-listener'
-require 'pione/agent/task-worker'
-require 'pione/agent/input-generator'
-require 'pione/agent/rule-provider'
-require 'pione/agent/logger'
-require 'pione/agent/broker'
-require 'pione/agent/broker-task-worker-life-checker'
-require 'pione/agent/process-manager'
+Pione::Agent.autoload :TupleSpaceClient, 'pione/agent/tuple-space-client'
+Pione::Agent.autoload :CommandListener, 'pione/agent/command-listener'
+Pione::Agent.autoload :TaskWorker, 'pione/agent/task-worker'
+Pione::Agent.autoload :InputGenerator, 'pione/agent/input-generator'
+Pione::Agent.autoload :RuleProvider, 'pione/agent/rule-provider'
+Pione::Agent.autoload :Logger, 'pione/agent/logger'
+Pione::Agent.autoload :Broker, 'pione/agent/broker'
+Pione::Agent.autoload :BrokerTaskWrokerLifeChecker, 'pione/agent/broker-task-worker-life-checker'
+Pione::Agent.autoload :ProcessManager, 'pione/agent/process-manager'
 require 'pione/front/basic-front'
-require 'pione/front/task-worker-owner'
-require 'pione/front/broker-front'
-require 'pione/front/task-worker-front'
-require 'pione/front/stand-alone-front'
-require 'pione/front/tuple-space-provider-front'
+Pione::Front.autoload :TaskWorkerOwner, 'pione/front/task-worker-owner'
+Pione::Front.autoload :BrokerFront, 'pione/front/broker-front'
+Pione::Front.autoload :TaskWorkerFront, 'pione/front/task-worker-front'
+Pione::Front.autoload :StandAloneFront, 'pione/front/stand-alone-front'
+Pione::Front.autoload :TupleSpaceProviderFront, 'pione/front/tuple-space-provider-front'
 
-Thread.abort_on_exception = true
-
+#
+# other settings
+#
 module Pione
   include Pione::Util
   include Pione::Util::Message
@@ -77,3 +85,4 @@ module Pione
 end
 
 include Pione
+Thread.abort_on_exception = true
