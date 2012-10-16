@@ -15,15 +15,15 @@ module Pione
     @@schemes = {}
 
     # Returns the resource object corresponding to the uri.
-    # @return [Base]
+    # @return [BasicResource]
     #   resouce object
     def self.[](uri)
       uri = uri.kind_of?(::URI::Generic) ? uri : ::URI.parse(uri)
       @@schemes[uri.scheme].new(uri)
     end
 
-    # Base is an interface class for all resouce classes.
-    class Base
+    # BasicResource is an interface class for all resouce classes.
+    class BasicResource
       attr_reader :uri
       attr_reader :path
 
@@ -91,7 +91,7 @@ module Pione
     end
 
     # Local represents local path resources.
-    class Local < Base
+    class Local < BasicResource
       # Creates a local resource handler with URI.
       # @param [String, URI] uri
       #   URI of a local path
@@ -101,18 +101,18 @@ module Pione
         @path = Pathname.new(uri.path)
       end
 
-      # (see Base#create)
+      # (see BasicResource#create)
       def create(data)
         @path.dirname.mkpath unless @path.dirname.exist?
         @path.open("w+"){|file| file.write(data)}
       end
 
-      # (see Base#read)
+      # (see BasicResource#read)
       def read
         @path.exist? ? @path.read : (raise NotFound.new(@uri))
       end
 
-      # (see Base#update)
+      # (see BasicResource#update)
       def update(data)
         if @path.exist?
           @path.open("w+"){|file| file.write(data)}
@@ -121,29 +121,29 @@ module Pione
         end
       end
 
-      # (see Base#delete)
+      # (see BasicResource#delete)
       def delete
         @path.delete if @path.exist?
       end
 
-      # (see Base#mtime)
+      # (see BasicResource#mtime)
       def mtime
         @path.mtime
       end
 
-      # (see Base#entries)
+      # (see BasicResource#entries)
       def entries
         @path.entries.select{|entry| (@path + entry).file?}.map do |entry|
           Resource[::URI.parse("local:%s" % (@path + entry).expand_path)]
         end
       end
 
-      # (see Base#basename)
+      # (see BasicResource#basename)
       def basename
         @path.basename.to_s
       end
 
-      # (see Base#exist?)
+      # (see BasicResource#exist?)
       def exist?
         @path.exist?
       end
@@ -201,7 +201,7 @@ module Pione
     require 'net/ftp'
 
     # FTP represents resources on FTP server.
-    class FTP
+    class FTP < BasicResource
       # Creates a resouce.
       # @param [String, ::URI] uri
       #   resource URI
@@ -211,7 +211,7 @@ module Pione
         @path = uri.path
       end
 
-      # (see Base#create)
+      # (see BasicResource#create)
       def create(data)
         Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
           pathes = @path.split('/')
@@ -223,7 +223,7 @@ module Pione
         end
       end
 
-      # (see Base#read)
+      # (see BasicResource#read)
       def read
         begin
           tempfile = Tempfile.new("test")
@@ -236,7 +236,7 @@ module Pione
         end
       end
 
-      # (see Base#update)
+      # (see BasicResource#update)
       def update(data)
         Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
           begin
@@ -251,14 +251,14 @@ module Pione
         end
       end
 
-      # (see Base#delete)
+      # (see BasicResource#delete)
       def delete
         Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
           ftp.delete(@path)
         end
       end
 
-      # (see Base#copy_to)
+      # (see BasicResource#copy_to)
       def copy_to(dist)
         FileUtil.symlink(@path, dist)
       end

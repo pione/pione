@@ -19,8 +19,8 @@ module Pione
 
     class UnknownRule < StandardError; end
 
-    # BaseHandler is a base class for rule handlers.
-    class BaseHandler
+    # BasicHandler is a base class for rule handlers.
+    class BasicHandler
       include TupleSpaceServerInterface
 
       attr_reader :rule
@@ -212,7 +212,3 @@ module Pione
   end
 end
 
-require 'pione/rule-handler/flow-handler'
-require 'pione/rule-handler/action-handler'
-require 'pione/rule-handler/root-handler'
-require 'pione/rule-handler/system-handler'

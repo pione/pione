@@ -2,7 +2,7 @@ require 'pione/common'
 
 module Pione
   module RuleHandler
-    class SystemHandler < BaseHandler
+    class SystemHandler < BasicHandler
       def self.message_name
         "System"
       end

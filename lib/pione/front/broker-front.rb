@@ -1,6 +1,7 @@
 module Pione
   module Front
-    class BrokerFront < BaseFront
+    # BrokerFront is a front class for pione-broker command.
+    class BrokerFront < BasicFront
       include TaskWorkerOwner
 
       def initialize(resource)

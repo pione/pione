@@ -1,6 +1,7 @@
 module Pione
   module Front
-    class StandAloneFront < BaseFront
+    # StandAloneFront is a front class for pione-stand-alone command.
+    class StandAloneFront < BasicFront
       include TaskWorkerOwner
 
       attr_accessor :tuple_space_server

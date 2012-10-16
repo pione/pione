@@ -1,7 +1,8 @@
 module Pione
-  # PioneObject is a Base class for PIONE system.
+  # PioneObject is a base class for PIONE system.
   class PioneObject
-    # Checks argument type and raises a type error if the value is not 
+    # Checks argument type and raises a type error if the value is not kind of
+    # the type.
     def check_argument_type(val, klass)
       raise TypeError.new(val) unless val.kind_of?(klass)
     end

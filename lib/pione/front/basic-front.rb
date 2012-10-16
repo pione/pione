@@ -6,7 +6,7 @@ module Pione
 
     # This is base class for all PIONE front classes. PIONE fronts exist in each
     # command and control its process.
-    class BaseFront < PioneObject
+    class BasicFront < PioneObject
       # fronts are referred as remote objects
       include DRbUndumped
 

@@ -1,7 +1,7 @@
 module Pione
   module RuleHandler
     # ActionHandler handles ActionRule.
-    class ActionHandler < BaseHandler
+    class ActionHandler < BasicHandler
       def self.message_name
         "Action"
       end

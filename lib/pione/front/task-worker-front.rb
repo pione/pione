@@ -1,6 +1,7 @@
 module Pione
   module Front
-    class TaskWorkerFront < BaseFront
+    # TaskWorkerFront is a front class for pione-task-worker command.
+    class TaskWorkerFront < BasicFront
       attr_reader :agent
       attr_reader :connection_id
 

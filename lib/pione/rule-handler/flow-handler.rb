@@ -1,7 +1,7 @@
 module Pione
   module RuleHandler
     # FlowHandler represents a handler for flow actions.
-    class FlowHandler < BaseHandler
+    class FlowHandler < BasicHandler
       def self.message_name
         "Flow"
       end
