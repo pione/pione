@@ -2,38 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-
-#
-# option
-#
-
-option = OpenStruct.new
-option.resource = [Pione.get_core_number - 1, 1].max
-
-parser = OptionParser.new do |opt|
-  opt.on('-r n', '--resource=n') {|n|
-    option.resource = n.to_i
-    unless option.resource > 0
-      puts "invalid resource size: %s" % option.resource
-      exit
-    end
-  }
-  opt.on('-d', '--debug') {|name| Pione.debug_mode = true }
-end
-
-begin
-  parser.parse!(ARGV)
-rescue OptionParser::InvalidOption => e
-  e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
-  abort
-end
-
-#
-# start broker
-#
-
-# druby
-DRb.start_service
-
-# start front
-Pione::Front::BrokerFront.new(option.resource).start
+Pione::Command::PioneBroker.run

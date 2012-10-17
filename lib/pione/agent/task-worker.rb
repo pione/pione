@@ -14,16 +14,30 @@ module Pione
         end
       end
 
+      @monitor = Monitor.new
+
       # Start a task worker agent on a different process.
       # @param [Pione::Front::BasicFront] front
       #   caller front server
-      # @return [ConditionVariable]
-      #   connection notifier
+      # @return [Thread]
+      #   worker monitor thread
       def self.spawn(front, connection_id)
-        Process.spawn("pione-task-worker", front.uri, connection_id)
-        while true
-          break if front.task_worker_front_connection_id.include?(connection_id)
-          sleep 0.1
+        @monitor.synchronize do
+          pid = Process.spawn(
+            "pione-task-worker",
+            "--caller-front", front.uri,
+            "--connection-id", connection_id
+          )
+          thread = Process.detach(pid)
+          while thread.alive?
+            break if front.task_worker_front_connection_id.include?(connection_id)
+            sleep 0.1
+          end
+          unless thread.alive?
+            # failed to run pione-task-worker
+            Process.abort("You cannot run pione-task-worker.")
+          end
+          return thread
         end
       end
 

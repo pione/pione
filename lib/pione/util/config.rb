@@ -4,7 +4,7 @@ module Pione
     class Config < PioneObject
       @@default = {}
 
-      def self.define_time(name, default)
+      def self.define_item(name, default)
         @@default[name] = default
 
         define_method(name) do
@@ -20,23 +20,35 @@ module Pione
       # @param [Pathname] path
       #   configuration file path
       # @return [void]
-      def self.load(path=Pathname.new("~/.pione/config.yml").expand_path)
+      def self.load(path)
         self.new(YAML.load(path.read))
       end
 
-      define_item :working_directory, File.join(Dir.tmpdir, "pione-wd")
-      define_item :presence_notification_port, 55000
+      define_item :working_directory, Dir.mktmpdir(nil, File.join(Dir.tmpdir, "pione-wd"))
+      define_item :presence_port, 55000
       define_item :tuple_space_provider_druby_port, 54000
       define_item :tuple_space_receiver_druby_port, 54001
+      define_item :tuple_space_gateway_port, 54002
 
       # Creates a new configuration.
       # @param [Hash] data
       #   preset configuration table
       def initialize(data={})
-        merge!(data)
+        @table = {}
+        @table.merge!(data)
+      end
+
+      # Returns the configuration value or default value.
+      # @param [Symbol] key
+      #   key symbol
+      # @return [Object]
+      #   the value
+      def [](key)
+        @table.has_key?(key) ? @table[key] : @@default[key]
       end
     end
   end
 
-  CONFIG = Util::Config.load
+  path = Pathname.new("~/.pione/config.yml").expand_path
+  CONFIG = path.exist? ? CONFIG = Util::Config.load(path) : Util::Config.new
 end

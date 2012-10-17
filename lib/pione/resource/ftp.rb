@@ -1,7 +1,5 @@
 module Pione
   module Resource
-    require 'net/ftp'
-
     # FTP represents resources on FTP server.
     class FTP < BasicResource
       # Creates a resouce.

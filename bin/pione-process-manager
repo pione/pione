@@ -2,12 +2,7 @@
 # -*- ruby -*-
 
 require 'pione'
-require 'pione/tuple-space-provider'
-require 'ostruct'
 
-include Pione
-
-Thread.abort_on_exception = true
 
 option = OpenStruct.new
 option.input_dir = nil
@@ -18,97 +13,3 @@ option.base_uri = ::URI.parse("local:./output/")
 option.resource = 1
 option.dry_run = false
 
-parser = OptionParser.new do |opt|
-  opt.on('-i dir', '--input-dir=dir') {|dir| option.input_dir = dir }
-  opt.on('-b uri', '--base-uri=uri') {|uri|
-    option.base_uri = ::URI.parse(uri)
-  }
-  opt.on('-l path', '--log=path') {|path| option.log_path = path }
-  opt.on('-s', '--stream') { option.stream = true }
-  opt.on('-r n', '--resource=n') {|n|
-    option.resource = n.to_i
-    unless option.resource > 0
-      puts "invalid resource size: %s" % option.resource
-      exit
-    end
-  }
-  opt.on('-d', '--debug') {|name| Pione.debug_mode = true }
-  opt.on('--color=true or false') {|str|
-    bool = nil
-    bool = true if str == "true"
-    bool = false if str == "false"
-    if bool.nil?
-      puts "invalid color option: %s" % bool
-      exit
-    end
-    Terminal.color_mode = bool
-  }
-  opt.on('--params="{Var:1,...}"') {|str|
-    option.params = Transformer.new.apply(Parser.new.parameters.parse(str))
-  }
-  opt.on('--dry-run') {|b|
-    option.dry_run = true
-  }
-end
-
-begin
-  parser.parse!(ARGV)
-rescue OptionParser::InvalidOption => e
-  e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
-  abort
-end
-
-# base uri
-if option.base_uri.scheme == "local"
-  FileUtils.makedirs(option.base_uri.path)
-  option.base_uri = option.base_uri.absolute
-end
-option.base_uri = option.base_uri.to_s
-
-# process definition document
-if ARGF.filename == "-"
-  puts "No process document."
-  exit
-end
-
-DRb.start_service
-
-# tuple space server
-$tuple_space_server = TupleSpaceServer.new(
-  task_worker_resource: option.resource,
-  base_uri: option.base_uri
-)
-$tuple_space_server.write(Tuple[:process_info].new('standalone', 'Standalone'))
-
-# tuple space provider
-provider = Pione::TupleSpaceProvider.instance
-# register tuple space server
-provider.add($tuple_space_server)
-
-# logger
-Agent[:logger].start($tuple_space_server, File.open(option.log_path, "w+"))
-
-# input generator
-# start input generators
-generator_method = option.stream ? :start_by_stream : :start_by_dir
-gen = Agent[:input_generator].send(generator_method, $tuple_space_server, option.input_dir)
-sleep 0.1 while not(gen.counter > 0)
-
-# read process document
-begin
-  $doc = Document.parse(ARGF.read)
-rescue Pione::Parser::ParserError => e
-  abort("Pione syntax error: " + e.message)
-rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e
-  abort("Pione model error: " + e.message)
-end
-
-# start rule provider
-rule_loader = Agent[:rule_provider].start($tuple_space_server)
-rule_loader.read_document($doc)
-rule_loader.wait_till(:request_waiting)
-
-# process manager
-Pione::Agent[:process_manager].new($tuple_space_server, $doc, option.params)
-
-DRb.thread.join

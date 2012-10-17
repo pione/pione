@@ -1,6 +1,3 @@
-require 'pione'
-require 'pione/agent'
-
 module Pione
   module Agent
     class Logger < TupleSpaceClient

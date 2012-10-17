@@ -17,6 +17,7 @@ module Pione
       # @param [Integer] sec
       #   sleeping time
       def initialize(action, sec)
+        raise ArgumentError.new(action) unless action.kind_of?(Proc)
         @action = action
         @sec = sec
       end

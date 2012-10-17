@@ -20,10 +20,13 @@ module Pione
         @agent.start
 
         # wait...
-        @agent.running_thread.join
-
-        # terminate
-        terminate
+        begin
+          @agent.running_thread.join
+          # terminate
+          terminate
+        rescue DRb::DRbConnError
+          # do nothing
+        end
       end
 
       def terminate

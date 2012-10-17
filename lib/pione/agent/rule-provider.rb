@@ -1,6 +1,3 @@
-require 'pione/common'
-require 'pione/agent'
-
 module Pione
   module Agent
     class RuleProvider < TupleSpaceClient

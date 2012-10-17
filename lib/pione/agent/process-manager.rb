@@ -3,30 +3,33 @@ module Pione
     class ProcessManager < BasicAgent
       set_agent_type :process_manager
 
+      define_state :running
+      define_state_transition :initialized => :running
+      define_state_transition :running => :sleeping
+      define_state_transition :sleeping => :running
+
       attr_reader :document
 
-      def initialize(ts_server, document, params)
-        super()
+      def initialize(tuple_space_server, document, params)
         raise ArgumentError unless document.main
+        super()
+        @tuple_space_server = tuple_space_server
         @document = document
         @params = params
-        @output_threads = []
-        # start_running
-        run
       end
 
-      def run
-        while true do
-          if handler = @document.root_rule(@params).make_handler($tuple_space_server)
-            handler.handle
-          else
-            user_message "no inputs"
-          end
-
-          break unless option.stream
-          sleep 5
-          user_message "check new inputs"
+      def transit_to_running
+        if handler = @document.root_rule(@params).make_handler(@tuple_space_server)
+          handler.handle
+        else
+          user_message "no inputs"
+          terminate
         end
+        terminate unless @stream
+      end
+
+      def transit_to_sleeping
+        sleep 5
       end
     end
 

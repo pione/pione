@@ -29,6 +29,10 @@ module Pione
       def start
         # do nothing
       end
+
+      def terminate
+        DRb.stop_service
+      end
     end
   end
 end
