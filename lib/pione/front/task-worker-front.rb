@@ -3,6 +3,7 @@ module Pione
     # TaskWorkerFront is a front class for pione-task-worker command.
     class TaskWorkerFront < BasicFront
       attr_reader :agent
+      attr_reader :caller_front
       attr_reader :connection_id
 
       def initialize(caller_front, connection_id)
@@ -13,20 +14,6 @@ module Pione
 
         # connect caller front
         @caller_front.add_task_worker_front(self, @connection_id)
-      end
-
-      def start
-        # start task worker activity
-        @agent.start
-
-        # wait...
-        begin
-          @agent.running_thread.join
-          # terminate
-          terminate
-        rescue DRb::DRbConnError
-          # do nothing
-        end
       end
 
       def terminate

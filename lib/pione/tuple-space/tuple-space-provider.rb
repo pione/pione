@@ -7,77 +7,76 @@ module Pione
 
       @monitor = Monitor.new
 
-      class << self
-        # Creates the tuple space provider as new process.
-        # @return [TupleSpaceProviderFront]
-        #   tuple space provider front
-        def spawn
-          user_message "create process for tuple space provider"
-          port = CONFIG.tuple_space_provider_druby_port
-          # create provider process
-          pid = Process.spawn(
-            'pione-tuple-space-provider',
-            '--presence-port', CONFIG.presence_port.to_s,
-            '--druby-port', port.to_s
-          )
-          thread = Process.detach(pid)
-          # get front
-          provider_front = DRbObject.new_with_uri("druby://localhost:%s" % port)
-          # wait that the provider starts up
-          while thread.alive?
-            begin
-              break if provider_front.uuid
-            rescue
-              sleep 0.1
-            end
-          end
-          if thread.alive?
-            return provider_front
-          else
-            # failed to run pione-tuple-space-provider
-            Process.abort("You cannot run pione-tuple-space-provider.")
+      # Creates the tuple space provider as new process.
+      # @return [TupleSpaceProviderFront]
+      #   tuple space provider front
+      def self.spawn
+        user_message "create process for tuple space provider"
+        # create provider process
+        pid = Process.spawn(
+          'pione-tuple-space-provider',
+          '--presence-port', CONFIG.presence_port.to_s,
+          '--caller-front', Pione.front.uri
+        )
+        thread = Process.detach(pid)
+        # wait that the provider starts up
+        while thread.alive?
+          begin
+            # get front
+            provider_front = DRbObject.new_with_uri(Pione.tuple_space_provider_uri)
+            break if provider_front.uuid
+          rescue
+            sleep 0.1
           end
         end
+        if thread.alive?
+          return provider_front
+        else
+          # failed to run pione-tuple-space-provider
+          Process.abort("You cannot run pione-tuple-space-provider.")
+        end
+      end
 
-        # Returns the provider instance.
-        # @return [TupleSpaceProvider]
-        #   tuple space provider instance as druby object
-        def instance
-          @monitor.synchronize do
-            # get provider reference
-            begin
-              front = DRbObject.new_with_uri(
-                'druby://localhost:%s' % CONFIG.tuple_space_provider_druby_port
-              )
-              front.uuid
-              front
-            rescue
-              # create new provider
-              self.spawn
-            end.tuple_space_provider
-          end
+      # Returns the provider instance.
+      # @return [TupleSpaceProvider]
+      #   tuple space provider instance as druby object
+      def self.instance
+        @monitor.synchronize do
+          # get provider reference
+          begin
+            front = DRbObject.new_with_uri(
+              Pione.tuple_space_provider_uri
+            )
+            front.uuid
+            front
+          rescue
+            # create new provider
+            self.spawn
+          end.tuple_space_provider
         end
       end
 
       # Creatas a new server. This method assumes to be called from
       # pione-tuple-space-provider command only. So you should not initialize
       # server directly.
-      def initialize
+      def initialize(presence_port=CONFIG.presence_port)
         super()
 
         # set variables
         @monitor = Monitor.new
         @expiration_time = 5
-        @presence_port = CONFIG.presence_port
+        @presence_port = presence_port
         @tuple_space_servers = {}
-        @ref = Marshal.dump(DRbObject.new(self))
         @terminated = false
 
         # start agents
-        if CONFIG.tuple_space_provider_mode == :providable
-          @keeper = Agent::TrivialRoutineWorker.start(Proc.new{send_packet}, 3)
-          @cleaner = Agent::TrivialRoutineWorker.start(Proc.new{clean}, 3)
-        end
+        @keeper = Agent::TrivialRoutineWorker.new(Proc.new{send_packet}, 3)
+        @cleaner = Agent::TrivialRoutineWorker.new(Proc.new{clean}, 3)
+      end
+
+      def start
+        @keeper.start
+        @cleaner.start
       end
 
       # Adds the tuple space server.
@@ -113,6 +112,7 @@ module Pione
 
       # Sends presence notification to tuple space receivers as UDP packet.
       def send_packet
+        @ref ||= Marshal.dump(DRbObject.new(self))
         socket = UDPSocket.open
         begin
           if debug_mode?

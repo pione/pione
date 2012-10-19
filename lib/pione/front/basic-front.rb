@@ -10,11 +10,12 @@ module Pione
       # fronts are referred as remote objects
       include DRbUndumped
 
-      # front URI
+      attr_reader :command
       attr_reader :uri
 
       # Creates a front server as druby's service.
-      def initialize(port=nil)
+      def initialize(command, port)
+        @command = command
         uri = port ? "druby://localhost:%s" % port : nil
         DRb.start_service(uri, self)
         @uri = DRb.uri
@@ -25,14 +26,17 @@ module Pione
         Process.pid
       end
 
-      # Starts front server.
-      def start
-        # do nothing
-      end
-
       def terminate
         DRb.stop_service
       end
     end
+  end
+
+  def self.set_front(front)
+    @front = front
+  end
+
+  def self.front
+    @front
   end
 end

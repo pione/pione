@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneStandAlone.run
+Pione::Command::PioneClient.run

@@ -24,11 +24,13 @@ module Pione
         self.new(YAML.load(path.read))
       end
 
+      define_item :enable_tuple_space_provider, false
+
       define_item :working_directory, Dir.mktmpdir(nil, File.join(Dir.tmpdir, "pione-wd"))
-      define_item :presence_port, 55000
       define_item :tuple_space_provider_druby_port, 54000
       define_item :tuple_space_receiver_druby_port, 54001
-      define_item :tuple_space_gateway_port, 54002
+      define_item :relay_port, 54002
+      define_item :presence_port, 55000
 
       # Creates a new configuration.
       # @param [Hash] data
@@ -45,6 +47,10 @@ module Pione
       #   the value
       def [](key)
         @table.has_key?(key) ? @table[key] : @@default[key]
+      end
+
+      def []=(key, val)
+        @table[key] = val
       end
     end
   end

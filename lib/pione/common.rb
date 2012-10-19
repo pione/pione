@@ -55,5 +55,4 @@ module Pione
       1
     end
   end
-
 end

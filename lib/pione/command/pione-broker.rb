@@ -2,23 +2,31 @@ module Pione
   module Command
     class PioneBroker < BasicCommand
       def self.default_task_worker_size
-        Pione.get_core_number - 1
+        [Pione.get_core_number - 1, 1].max
+      end
+
+      define_option(
+        '-r n',
+        '--worker-resource=n',
+        'task worker resource size(default %s)' % default_task_worker_size
+      ) do |n|
+        @resource = n.to_i
+        unless @resource > 0
+          abort "invalid resource size: %s" % option.resource
+        end
       end
 
       def initialize
         @resource = self.class.default_task_worker_size
       end
 
-      def run
-        Pione::Front::BrokerFront.new(@resource).start
+      def create_front
+        Pione::Front::BrokerFront.new(@resource)
       end
 
-      msg = 'task worker resource size(default %s)' % default_task_worker_size
-      define_option('-r n', '--worker-resource=n', msg) do |n|
-        @resource = n.to_i
+      def validate_options
         unless @resource > 0
-          puts "invalid resource size: %s" % option.resource
-          exit
+          abort("error: no task worker resources")
         end
       end
     end
