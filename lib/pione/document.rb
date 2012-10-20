@@ -1,6 +1,3 @@
-require 'parslet'
-require 'pione/common'
-
 module Pione
   class Document < PioneObject
     # Add ruby shebang line.
@@ -77,6 +74,3 @@ module Pione
     end
   end
 end
-
-require 'pione/parser'
-require 'pione/transformer'
