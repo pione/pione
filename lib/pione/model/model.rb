@@ -391,25 +391,4 @@ module Pione::Model
       self
     end
   end
-
-  require 'pione/model/undefined-value'
-  require 'pione/model/list'
-  require 'pione/model/boolean'
-  require 'pione/model/integer'
-  require 'pione/model/float'
-  require 'pione/model/string'
-  require 'pione/model/feature-expr'
-  require 'pione/model/variable'
-  require 'pione/model/variable-table'
-  require 'pione/model/data-expr'
-  require 'pione/model/parameters'
-  require 'pione/model/package'
-  require 'pione/model/rule-expr'
-  require 'pione/model/binary-operator'
-  require 'pione/model/message'
-  require 'pione/model/call-rule'
-  require 'pione/model/assignment'
-  require 'pione/model/block'
-  require 'pione/model/rule'
-  require 'pione/model/rule-io'
 end

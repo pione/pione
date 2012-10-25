@@ -47,13 +47,6 @@ module Pione
   end
 
   class Transformer < Parslet::Transform
-    require 'pione/transformer/literal'
-    require 'pione/transformer/feature-expr'
-    require 'pione/transformer/expr'
-    require 'pione/transformer/flow-element'
-    require 'pione/transformer/block'
-    require 'pione/transformer/rule-definition'
-
     include Literal
     include FeatureExpr
     include Expr
