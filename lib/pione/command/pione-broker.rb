@@ -1,7 +1,9 @@
 module Pione
   module Command
     class PioneBroker < DaemonProcess
-      set_program_name "pione-broker"
+      set_program_name "pione-broker" do
+        "--task-worker %s" % @resource
+      end
 
       define_option(
         '-r n',
@@ -14,11 +16,11 @@ module Pione
       attr_reader :broker
 
       def initialize
-        @resource = [Pione.get_core_number - 1, 1].max
+        @resource = [Util.core_number - 1, 1].max
       end
 
       def create_front
-        Pione::Front::BrokerFront.new(self)
+        Front::BrokerFront.new(self)
       end
 
       def validate_options

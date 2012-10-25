@@ -1,7 +1,7 @@
 module Pione
   module Parser
-    # Literal is a set of parser atom for literal descriptions.
-    module Literal
+    # LiteralParser is a set of parser atom for literal descriptions.
+    module LiteralParser
       include Parslet
 
       # @!attribute [r] boolean

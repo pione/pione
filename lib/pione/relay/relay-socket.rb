@@ -88,7 +88,7 @@ module Pione
 
           # relay auth like HTTP's digest method
           ssl.puts(Global.relay_realm)
-          uuid = Pione.generate_uuid
+          uuid = Util.generate_uuid
           ssl.puts(uuid)
           if msg = ssl.gets
             name, digest = msg.chomp.split(":")

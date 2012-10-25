@@ -1,12 +1,12 @@
 module Pione
   module Parser
-    # Expr is a set of parser atoms for PIONE expressions.
-    module Expr
+    # ExprParser is a set of parser atoms for PIONE expressions.
+    module ExprParser
       include Parslet
       include SyntaxError
-      include Common
-      include Literal
-      include FeatureExpr
+      include CommonParser
+      include LiteralParser
+      include FeatureExprParser
 
       # @!attribute [r] expr
       #   +expr+ matches all expressions in PIONE document.

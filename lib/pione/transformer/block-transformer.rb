@@ -1,6 +1,6 @@
 module Pione
   module Transformer
-    module Block
+    module BlockTransformer
       include TransformerModule
 
       # flow_block:

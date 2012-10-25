@@ -1,12 +1,12 @@
 module Pione
   module Transformer
-    class Transformer < Parslet::Transform
-      include Literal
-      include FeatureExpr
-      include Expr
-      include FlowElement
-      include Block
-      include RuleDefinition
+    class DocumentTransformer < Parslet::Transform
+      include LiteralTransformer
+      include FeatureExprTransformer
+      include ExprTransformer
+      include FlowElementTransformer
+      include BlockTransformer
+      include RuleDefinitionTransformer
 
       def initialize(package_name="main")
         super()

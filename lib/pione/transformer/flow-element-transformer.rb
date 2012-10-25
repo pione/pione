@@ -1,6 +1,6 @@
 module Pione
   module Transformer
-    module FlowElement
+    module FlowElementTransformer
       include TransformerModule
 
       # flow_elements returns just elements sequence

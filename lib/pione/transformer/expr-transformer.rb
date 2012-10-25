@@ -3,7 +3,7 @@ module Pione
     MessageArgument = Struct.new(:name, :parameters)
     ParametersElement = Struct.new(:key, :value)
 
-    module Expr
+    module ExprTransformer
       include TransformerModule
 
       # expr_operator_application

@@ -51,7 +51,7 @@ module Pione
         @stream = false
         @params = Parameters.empty
         @dry_run = false
-        @resource = [Pione.get_core_number - 1, 1].max
+        @resource = [Util.core_number - 1, 1].max
         @worker_threads = []
         @stand_alone = false
         @relay = nil
@@ -143,7 +143,7 @@ module Pione
 
       def start_workers
         @resource.times do
-          Agent[:task_worker].spawn(Global.front, Pione.generate_uuid)
+          Agent[:task_worker].spawn(Global.front, Util.generate_uuid)
         end
       end
     end

@@ -1,14 +1,14 @@
 module Pione
   module Parser
-    # Parser is a parser for PIONE rule document.
-    class Parser < Parslet::Parser
-      include Common
-      include Literal
-      include FeatureExpr
-      include Expr
-      include FlowElement
-      include Block
-      include RuleDefinition
+    # DocumentParser is a parser for PIONE rule document.
+    class DocumentParser < Parslet::Parser
+      include CommonParser
+      include LiteralParser
+      include FeatureExprParser
+      include ExprParser
+      include FlowElementParser
+      include BlockParser
+      include RuleDefinitionParser
 
       def parse(str)
         super(str.gsub(/^#.*/, ""))
@@ -56,4 +56,3 @@ module Pione
     end
   end
 end
-

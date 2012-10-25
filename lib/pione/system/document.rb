@@ -8,15 +8,16 @@ module Pione
         return res + str
       end
 
-      # Load a document and return rule table.
+      # Load a rule document and return it.
       def self.load(filepath)
         parse(File.read(filepath))
       end
 
+      # Parse a rule document string.
       def self.parse(src)
         # parse the document and build the model
-        parser = Parser.new
-        transformer = Transformer.new
+        parser = Parser::DocumentParser.new
+        transformer = Transformer::DocumentTransformer.new
         toplevels = transformer.apply(parser.parse(src))
 
         # rules and assignments
@@ -43,7 +44,7 @@ module Pione
 
       attr_reader :rules
 
-      # Create a document.
+      # Creates a document.
       def initialize(rules, params)
         @rules = rules
         @params = params

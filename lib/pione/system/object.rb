@@ -17,7 +17,7 @@ module Pione
       # @return [String]
       #   UUID string
       def uuid
-        @__uuid__ ||= Pione.generate_uuid
+        @__uuid__ ||= Util.generate_uuid
       end
 
       # Finalizes this object.

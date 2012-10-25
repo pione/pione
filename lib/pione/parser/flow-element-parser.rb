@@ -1,12 +1,12 @@
 module Pione
   module Parser
-    # FlowElement is a set of parser atoms for flow elements.
-    module FlowElement
+    # FlowElementParser is a set of parser atoms for flow elements.
+    module FlowElementParser
       include Parslet
       include SyntaxError
-      include Common
-      include Literal
-      include Expr
+      include CommonParser
+      include LiteralParser
+      include ExprParser
 
       # @!attribute [r] flow_element
       #   +flow_element+ matches flow element.

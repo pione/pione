@@ -25,7 +25,7 @@ require 'parslet'
 require 'ostruct'
 require 'net/ftp'
 require 'highline'
-# require 'dropbox_sdk'
+require 'dropbox_sdk'
 
 #
 # load pione
@@ -39,6 +39,12 @@ require 'pione/patch/array-patch'
 require 'pione/patch/rinda-patch'
 require 'pione/patch/uri-patch'
 
+# util
+require 'pione/util/misc'
+require 'pione/util/terminal'
+require 'pione/util/message'
+require 'pione/util/log'
+
 # system
 require 'pione/system/object'
 require 'pione/system/common'
@@ -50,11 +56,6 @@ require 'pione/system/document'
 require 'pione/system/file-cache'
 
 Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
-
-# util
-require 'pione/util/terminal'
-require 'pione/util/message'
-require 'pione/util/log'
 
 # uri
 require 'pione/uri/local.rb'
@@ -100,24 +101,24 @@ require 'pione/tuple-space/update-criteria'
 
 # parser
 require 'pione/parser/syntax-error'
-require 'pione/parser/common'
-require 'pione/parser/literal'
-require 'pione/parser/feature-expr'
-require 'pione/parser/expr'
-require 'pione/parser/flow-element'
-require 'pione/parser/block'
-require 'pione/parser/rule-definition'
-require 'pione/parser/parser'
+require 'pione/parser/common-parser'
+require 'pione/parser/literal-parser'
+require 'pione/parser/feature-expr-parser'
+require 'pione/parser/expr-parser'
+require 'pione/parser/flow-element-parser'
+require 'pione/parser/block-parser'
+require 'pione/parser/rule-definition-parser'
+require 'pione/parser/document-parser'
 
 # transformer
 require 'pione/transformer/transformer-module'
-require 'pione/transformer/literal'
-require 'pione/transformer/feature-expr'
-require 'pione/transformer/expr'
-require 'pione/transformer/flow-element'
-require 'pione/transformer/block'
-require 'pione/transformer/rule-definition'
-require 'pione/transformer/transformer'
+require 'pione/transformer/literal-transformer'
+require 'pione/transformer/feature-expr-transformer'
+require 'pione/transformer/expr-transformer'
+require 'pione/transformer/flow-element-transformer'
+require 'pione/transformer/block-transformer'
+require 'pione/transformer/rule-definition-transformer'
+require 'pione/transformer/document-transformer'
 
 # resource
 require 'pione/resource/basic-resource'
@@ -178,6 +179,8 @@ module Pione
   include Util::Message
   include Model
   include TupleSpace
+  include Parser
+  include Transformer
 
   module_function :debug_mode=
   module_function :debug_mode?

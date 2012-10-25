@@ -1,7 +1,7 @@
 module Pione
   module Parser
-    # Common is a set of common parsers: symbols, keywords, and utility parsers.
-    module Common
+    # CommonParser is a set of symbols, keywords, and utility parsers.
+    module CommonParser
       include Parslet
 
       #

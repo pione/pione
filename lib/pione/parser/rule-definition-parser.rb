@@ -1,14 +1,14 @@
 module Pione
   module Parser
-    # Rule Definition is a set of parser atom for defining rule.
-    module RuleDefinition
+    # RuleDefinitionParser is a set of parser atom for defining rule.
+    module RuleDefinitionParser
       include Parslet
       include SyntaxError
-      include Common
-      include Literal
-      include Expr
-      include FlowElement
-      include Block
+      include CommonParser
+      include LiteralParser
+      include ExprParser
+      include FlowElementParser
+      include BlockParser
 
       # @!attribute [r] rule_definitions
       #   @return [Parslet::Atoms::Entity] toplevel element list

@@ -1,6 +1,6 @@
 module Pione
   module Transformer
-    module FeatureExpr
+    module FeatureExprTransformer
       include TransformerModule
 
       # feature_name

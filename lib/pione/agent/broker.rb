@@ -112,7 +112,7 @@ module Pione
 
         # Create a task worker for the server.
         def create_task_worker(tuple_space_server)
-          connection_id = Pione.generate_uuid
+          connection_id = Util.generate_uuid
           @assignment_table[connection_id] = tuple_space_server
           Agent[:task_worker].spawn(Global.front, connection_id)
         end

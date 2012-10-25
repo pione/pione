@@ -1,6 +1,6 @@
 module Pione
   module Transformer
-    module Literal
+    module LiteralTransformer
       include TransformerModule
 
       # boolean

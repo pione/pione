@@ -1,11 +1,11 @@
 module Pione
   module Parser
-    # FeatureExpr is a set of parser atoms for feature expressions.
-    module FeatureExpr
+    # FeatureExprParser is a set of parser atoms for feature expressions.
+    module FeatureExprParser
       include Parslet
       include SyntaxError
-      include Common
-      include Literal
+      include CommonParser
+      include LiteralParser
 
       # @!attribute [r] atomic_feature
       #   +atomic_feature+ matches all atomic features.

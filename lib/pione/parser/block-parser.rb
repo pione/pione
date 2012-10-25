@@ -1,13 +1,13 @@
 module Pione
   module Parser
-    # Block is a set of parser atoms for rule block.
-    module Block
+    # BlockParser is a set of parser atoms for rule block.
+    module BlockParser
       include Parslet
       include SyntaxError
-      include Common
-      include Literal
-      include Expr
-      include FlowElement
+      include CommonParser
+      include LiteralParser
+      include ExprParser
+      include FlowElementParser
 
       # @!attribute [r] block
       #   +block+ matches flow block or action block.

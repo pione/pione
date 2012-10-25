@@ -1,6 +1,6 @@
 module Pione
   module Transformer
-    module RuleDefinition
+    module RuleDefinitionTransformer
       include TransformerModule
 
       def check_model_type(obj, pione_model_type)
