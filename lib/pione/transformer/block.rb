@@ -1,5 +1,5 @@
 module Pione
-  class Transformer
+  module Transformer
     module Block
       include TransformerModule
 

@@ -1,7 +1,6 @@
 module Pione
-  # URI is a URI module for PIONE system.
   module URI
-    # Local is local file system path representation.
+    # Local represents local file system path.
     # @example
     #   # absolute path form
     #   local:/home/keita/
@@ -38,5 +37,8 @@ module Pione
         ::URI.parse("%s:%s/" % [scheme, File.realpath(path)])
       end
     end
+
+    # install scheme
+    ::URI.install_scheme('LOCAL', Local)
   end
 end

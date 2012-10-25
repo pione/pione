@@ -1,7 +1,5 @@
-require 'pione/common'
-
 module Pione
-  class Transformer
+  module Transformer
     module Literal
       include TransformerModule
 

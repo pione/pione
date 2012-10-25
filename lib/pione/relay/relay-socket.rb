@@ -1,12 +1,15 @@
 module Pione
   module Relay
+    # RelaySocket is connection layer between PIONE client and PIONE relay.
     class RelaySocket < DRb::DRbSSLSocket
+      # AuthError is an error for relay authentication failure.
       class AuthError < Exception
         def initialize(name)
           @name = name
         end
       end
 
+      # BadMessage is an error for protocol violation.
       class BadMessage < Exception; end
 
       def self.parse_uri(uri)
@@ -107,6 +110,7 @@ module Pione
       end
     end
 
+    # install the protocol
     ::DRb::DRbProtocol.add_protocol(RelaySocket)
   end
 end

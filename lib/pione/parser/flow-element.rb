@@ -1,5 +1,5 @@
 module Pione
-  class Parser
+  module Parser
     # FlowElement is a set of parser atoms for flow elements.
     module FlowElement
       include Parslet

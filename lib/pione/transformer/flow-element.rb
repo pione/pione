@@ -1,5 +1,5 @@
 module Pione
-  class Transformer
+  module Transformer
     module FlowElement
       include TransformerModule
 
@@ -33,9 +33,9 @@ module Pione
 
       # case_block
       rule(:case_block =>
-           { :condition => simple(:condition),
-             :when_blocks => sequence(:when_blocks),
-             :case_else_block => simple(:else_block) }) {
+        { :condition => simple(:condition),
+          :when_blocks => sequence(:when_blocks),
+          :case_else_block => simple(:else_block) }) {
         block = {}
         when_blocks.each do |when_block|
           block[when_block.value] = when_block.body
@@ -43,17 +43,16 @@ module Pione
         block[:else] = else_block if else_block
         ConditionalBlock.new(condition, block)
       }
-    end
 
-    WhenBlock = Struct.new(:value, :body)
+      WhenBlock = Struct.new(:value, :body)
 
-    # when_block
-    rule(:when_block =>
-      { :value => simple(:value),
+      # when_block
+      rule(:when_block =>
+        { :value => simple(:value),
         :elements => sequence(:elements) }
-    ) {
-      WhenBlock.new(value, FlowBlock.new(*elements))
-    }
+      ) {
+        WhenBlock.new(value, FlowBlock.new(*elements))
+      }
 
     # assignment
     rule(:assignment =>
@@ -62,5 +61,6 @@ module Pione
     ) {
       Assignment.new(symbol, value)
     }
+    end
   end
 end

@@ -1,5 +1,5 @@
 module Pione
-  class Parser
+  module Parser
     # ParserError is raised when the parser finds syntax error.
     class ParserError < Parslet::ParseFailed
       # Creates an error.

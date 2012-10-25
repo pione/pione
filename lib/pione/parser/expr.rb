@@ -1,5 +1,5 @@
 module Pione
-  class Parser
+  module Parser
     # Expr is a set of parser atoms for PIONE expressions.
     module Expr
       include Parslet

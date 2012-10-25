@@ -25,15 +25,21 @@ require 'parslet'
 require 'ostruct'
 require 'net/ftp'
 require 'highline'
-require 'dropbox_sdk'
+# require 'dropbox_sdk'
 
 #
 # load pione
 #
+
+# version
 require 'pione/version'
+
+# patch
 require 'pione/patch/array-patch'
 require 'pione/patch/rinda-patch'
 require 'pione/patch/uri-patch'
+
+# system
 require 'pione/system/object'
 require 'pione/system/common'
 require 'pione/system/config'
@@ -42,14 +48,24 @@ require 'pione/system/init'
 require 'pione/system/identifier'
 require 'pione/system/document'
 require 'pione/system/file-cache'
+
+Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
+
+# util
 require 'pione/util/terminal'
 require 'pione/util/message'
 require 'pione/util/log'
+
+# uri
 require 'pione/uri/local.rb'
 require 'pione/uri/dropbox.rb'
+
+# relay
 require 'pione/relay/relay-socket'
 require 'pione/relay/relay-client-db'
 require 'pione/relay/relay-account-db'
+
+# model
 require 'pione/model/model'
 require 'pione/model/undefined-value'
 require 'pione/model/list'
@@ -71,6 +87,8 @@ require 'pione/model/assignment'
 require 'pione/model/block'
 require 'pione/model/rule'
 require 'pione/model/rule-io'
+
+# tuple-space
 require 'pione/tuple-space/tuple'
 require 'pione/tuple-space/tuple-space-server-interface'
 require 'pione/tuple-space/presence-notifier'
@@ -79,6 +97,8 @@ require 'pione/tuple-space/tuple-space-receiver'
 require 'pione/tuple-space/tuple-space-provider'
 require 'pione/tuple-space/data-finder'
 require 'pione/tuple-space/update-criteria'
+
+# parser
 require 'pione/parser/syntax-error'
 require 'pione/parser/common'
 require 'pione/parser/literal'
@@ -88,6 +108,9 @@ require 'pione/parser/flow-element'
 require 'pione/parser/block'
 require 'pione/parser/rule-definition'
 require 'pione/parser/parser'
+
+# transformer
+require 'pione/transformer/transformer-module'
 require 'pione/transformer/literal'
 require 'pione/transformer/feature-expr'
 require 'pione/transformer/expr'
@@ -95,14 +118,20 @@ require 'pione/transformer/flow-element'
 require 'pione/transformer/block'
 require 'pione/transformer/rule-definition'
 require 'pione/transformer/transformer'
+
+# resource
 require 'pione/resource/basic-resource'
 require 'pione/resource/local'
 require 'pione/resource/ftp'
+
+# rule-handler
 require 'pione/rule-handler/basic-handler'
 require 'pione/rule-handler/flow-handler'
 require 'pione/rule-handler/action-handler'
 require 'pione/rule-handler/root-handler'
 require 'pione/rule-handler/system-handler'
+
+# agent
 require 'pione/agent/basic-agent'
 require 'pione/agent/tuple-space-client'
 require 'pione/agent/command-listener'
@@ -114,6 +143,8 @@ require 'pione/agent/broker'
 require 'pione/agent/process-manager'
 require 'pione/agent/trivial-routine-worker'
 require 'pione/agent/tuple-space-server-client-life-checker'
+
+# front
 require 'pione/front/basic-front'
 require 'pione/front/task-worker-owner'
 require 'pione/front/client-front'
@@ -122,6 +153,8 @@ require 'pione/front/task-worker-front'
 require 'pione/front/tuple-space-provider-front'
 require 'pione/front/tuple-space-receiver-front'
 require 'pione/front/relay-front'
+
+# command
 require 'pione/command/basic-command'
 require 'pione/command/front-owner'
 require 'pione/command/daemon-process'

@@ -38,7 +38,7 @@ module Pione
     #   complex_type = Type.new(String, Symbol)
     #   complex_type === "abc" #=> true
     #   complex_type === :abc  #=> true
-    class Type
+    class Type < PioneObject
       class << self
         alias :or :new
       end

@@ -1,5 +1,5 @@
 module Pione
-  class Parser
+  module Parser
     # FeatureExpr is a set of parser atoms for feature expressions.
     module FeatureExpr
       include Parslet

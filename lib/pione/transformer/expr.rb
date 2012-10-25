@@ -1,7 +1,5 @@
-require 'pione/common'
-
 module Pione
-  class Transformer
+  module Transformer
     MessageArgument = Struct.new(:name, :parameters)
     ParametersElement = Struct.new(:key, :value)
 

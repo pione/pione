@@ -1,8 +1,10 @@
 # URI extention for PIONE system.
 # @api private
 module URI
-  @@schemes['LOCAL'] = Pione::URI::Local
-  @@schemes['DROPBOX'] = Pione::URI::Dropbox
+  # Installs a new scheme.
+  def self.install_scheme(name, klass)
+    @@schemes[name] = klass
+  end
 
   class Parser
     alias :orig_split :split

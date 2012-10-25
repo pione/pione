@@ -1,5 +1,5 @@
 module Pione
-  class Parser
+  module Parser
     # Block is a set of parser atoms for rule block.
     module Block
       include Parslet

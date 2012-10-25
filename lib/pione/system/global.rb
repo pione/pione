@@ -74,6 +74,8 @@ module Pione
 
       extend GlobalInterface
 
+      define_item(:config, true, Config.new("~/.pione/config.yml"))
+
       # .pione dir
       define_item(:dot_pione_dir, true) do
         Pathname.new("~/.pione").expand_path.tap{|path|

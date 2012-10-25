@@ -1,5 +1,3 @@
-require 'pione/common'
-
 module Pione
   module Agent
     class CommandListener < TupleSpaceClient
