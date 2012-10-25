@@ -4,29 +4,24 @@ module Pione
     class BrokerFront < BasicFront
       include TaskWorkerOwner
 
-      def initialize(resource)
-        @broker = Pione::Agent[:broker].new(task_worker_resource: resource)
-        @tuple_space_receiver = Pione::TupleSpaceReceiver.instance
+      def_delegator :@command, :broker
+
+      # Create a new front.
+      def initialize(command)
+        super(command, nil)
         initialize_task_worker_owner
       end
 
       def get_tuple_space_server(connection_id)
-        @broker.get_tuple_space_server(connection_id)
+        broker.get_tuple_space_server(connection_id)
       end
 
       def add_task_worker(task_worker)
-        @broker.add_task_worker(task_worker)
+        broker.add_task_worker(task_worker)
       end
 
-      def start
-        # start broker
-        @broker.start
-
-        # start tuple space receiver
-        @tuple_space_receiver.register(@broker)
-
-        # wait
-        DRb.thread.join
+      def set_tuple_space_receiver(uri)
+        Global.set_tuple_space_receiver_uri(uri)
       end
     end
   end

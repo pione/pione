@@ -81,8 +81,13 @@ module Pione
 
       module BrokerMethod
         # Adds the tuple space server.
-        def add_tuple_space_server(ts_server)
-          @tuple_space_servers << ts_server
+        def add_tuple_space_server(tuple_space_server)
+          @tuple_space_servers << tuple_space_server
+        end
+
+        # Gets a tuple space server by connection id.
+        def get_tuple_space_server(connection_id)
+          @assignment_table[connection_id]
         end
 
         # Return excess number of workers belongs to this broker.
@@ -107,9 +112,9 @@ module Pione
 
         # Create a task worker for the server.
         def create_task_worker(tuple_space_server)
-          connection_id = Pione.generate_uui
+          connection_id = Pione.generate_uuid
           @assignment_table[connection_id] = tuple_space_server
-          Agent[:task_worker].spawn(tuple_space_server)
+          Agent[:task_worker].spawn(Global.front, connection_id)
         end
 
         # Delete unavilable tuple space servers.
@@ -159,6 +164,7 @@ module Pione
       define_state :creating_task_worker
       define_state :balancing_task_worker
       define_state :sleeping
+      define_state :checking_tuple_space_servers
 
       define_state_transition :initialized => :count_tuple_space_servers
       define_state_transition :count_tuple_space_servers => lambda {|agent, res|
@@ -166,6 +172,7 @@ module Pione
       }
       define_state_transition :balancing_task_worker => :sleeping
       define_state_transition :sleeping => :count_tuple_space_servers
+      define_state_transition :checking_tuple_space_servers => :count_tuple_space_servers
 
       define_exception_handler DRb::DRbConnError => :checking_tuple_space_servers
       define_exception_handler Errno::ECONNREFUSED => :checking_tuple_space_servers

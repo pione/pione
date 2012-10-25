@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneRelay.run
+Pione::Command::PioneRelayClientDB.run

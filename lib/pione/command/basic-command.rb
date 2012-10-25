@@ -1,6 +1,7 @@
 module Pione
   module Command
-    module OptionInterfaceSingleton
+    # OptionInterface provides methods for defining options.
+    module OptionInterface
       # Makes options list.
       def self.extended(klass)
         klass.instance_variable_set(:@options, [])
@@ -17,48 +18,13 @@ module Pione
       end
     end
 
-    # OptionInterface is for defining command options.
-    module OptionInterface
-      # Parses options.
-      def parse_options
-        OptionParser.new do |opt|
-          self.class.options.each do |args, b|
-            opt.on(*args, Proc.new{|*args| self.instance_exec(*args, &b)})
-          end
-          opt.version = Pione::VERSION
-        end.parse!(ARGV)
-      rescue OptionParser::InvalidOption => e
-        e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
-        abort
-      end
-
-      # Validates options.
-      # @return [void]
-      #   true if options are valid.
-      def validate_options
-        # do nothing
-      end
-    end
-
     # BasicCommand is a base class for PIONE commands.
-    class BasicCommand
-      extend OptionInterfaceSingleton
-      include OptionInterface
+    class BasicCommand < PioneObject
+      extend OptionInterface
 
-      # @api private
-      def self.inherited(subclass)
-        opts = options.clone
-        subclass.instance_eval { @options = opts }
-      end
-
-      # Runs the command.
-      def self.run
-        cmd = self.new
-        cmd.parse_options
-        cmd.validate_options
-        cmd.setup_front
-        cmd.run
-      end
+      #
+      # common options
+      #
 
       define_option('-d', '--debug', "debug mode") do |name|
         Pione.debug_mode = true
@@ -75,25 +41,85 @@ module Pione
         Terminal.color_mode = bool
       end
 
-      attr_reader :front
+      # @api private
+      def self.inherited(subclass)
+        opts = options.clone
+        subclass.instance_eval { @options = opts }
+      end
 
-      # Setups font server.
-      def setup_front
-        Pione.set_front(create_front)
+      # @api private
+      def self.program_name
+        [@program_name, @b]
+      end
+
+      # Sets progaram name and visible options.
+      def self.set_program_name(program_name, &b)
+        @program_name = program_name
+        if block_given?
+          @b = b
+        else
+          @b = Proc.new{""}
+        end
+      end
+
+      # Runs the command.
+      def self.run(*args)
+        self.new(*args).run
       end
 
       # Runs the command.
       def run
-        raise NotImplementedError
+        parse_options
+        validate_options
+        prepare
+        $PROGRAM_NAME = program_name
+        start
       end
 
       private
 
-      # Creates a front server.
-      # @return [BasicFront]
-      #   front server
-      def create_front
+      def program_name
+        name, b = self.class.program_name
+        tail = self.instance_exec(&b)
+        "%s %s" % [name, tail]
+      end
+
+      # Parses options.
+      # @return [void]
+      def parse_options
+        OptionParser.new do |opt|
+          self.class.options.each do |args, b|
+            opt.on(*args, Proc.new{|*args| self.instance_exec(*args, &b)})
+          end
+          opt.version = Pione::VERSION
+        end.parse!(ARGV)
+      rescue OptionParser::InvalidOption => e
+        e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
+        abort
+      end
+
+      # Validates options. Override this method if subclasses should check
+      # options.
+      # @return [void]
+      def validate_options
+        # do nothing
+      end
+
+      # Prepares for activity. Override this method if subclass should prepare
+      # before command activity.
+      # @return [void]
+      def prepare
+        # do nothing
+      end
+
+      # Starts the command activity. This method should be overridden in subclasses.
+      # @return [void]
+      def start
         raise NotImplementedError
+      end
+
+      def terminate
+        # do nothing
       end
     end
   end

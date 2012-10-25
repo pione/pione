@@ -1,213 +1,115 @@
 module Pione
-  class TupleSpaceReceiver < PioneObject
+  module TupleSpace
+    class TupleSpaceReceiver < PresenceNotifier
+      class InstanceError < StandardError; end
 
-    UDP_PORT = 54321
-    RECEIVER_URI = "druby://localhost:10107"
-    DISCONNECT_TIME = 180
-    MAX_RETRY_NUMBER = 10
+      set_command_name "pione-tuple-space-receiver"
+      set_notifier_uri Proc.new {Global.tuple_space_receiver_uri}
 
-    class InstanceError < StandardError; end
-
-    # Return the receiver instance.
-    def self.instance(data={}, i=0)
-      if i >= MAX_RETRY_NUMBER
-        raise InstanceError
+      def self.start(broker)
+        instance.register(broker)
       end
-      uri = if data.has_key?(:receiver_port) then
-              "druby://localhost:#{data[:receiver_port]}"
-            else RECEIVER_URI end
-      # check DRb service
-      begin
-        DRb.current_server
-      rescue
-        DRb.start_service
+
+      attr_accessor :tuple_space_server
+      attr_accessor :drb_service
+
+      def initialize(presence_port)
+        @receiver_thread = nil
+        @updater_thread = nil
+        @brokers = []
+        @disconnect_time = Global.tuple_space_receiver_disconnect_time
+        @socket = UDPSocket.open
+        @socket.bind(Socket::INADDR_ANY, presence_port)
+        @tuple_space_servers = {}
+
+        # agents
+        @receiver = Agent::TrivialRoutineWorker.new(Proc.new{receive_tuple_space_servers}, 0)
+        @updater = Agent::TrivialRoutineWorker.new(Proc.new{update_tuple_space_servers}, 1)
+        @life_checker = Agent::TrivialRoutineWorker.new(Proc.new{check_agent_life}, 1)
       end
-      # remote object
-      begin
-        # get receiver reference
-        receiver = DRbObject.new_with_uri(uri)
-        receiver.uuid # check the server exists
-        receiver
-      rescue
-        begin
-          # create new receiver
-          receiver = self.new(data)
-          receiver.drb_service = DRb::DRbServer.new(uri, receiver)
-          DRbObject.new_with_uri(uri)
-        rescue Errno::EADDRINUSE
-          # retry
-          sleep 0.1
-          instance(data, i+1)
+
+      def register(agent)
+        @brokers << agent
+      end
+
+      # Start to receive tuple space servers.
+      def start
+        @receiver.start
+        @updater.start
+        @life_checker.start
+      end
+
+      def tuple_space_servers
+        @tuple_space_servers.keys
+      end
+
+      # Send empty tuple space server list.
+      def finalize
+        @terminated = true
+        @receiver.terminate
+        @updater.terminate
+        @life_checker.terminate
+        @tuple_space_servers = []
+      end
+
+      alias :terminate :finalize
+
+      private
+
+      def receive_tuple_space_servers
+        provider_front = Marshal.load(@socket.recv(1024))
+        tuple_space_server = provider_front.tuple_space_server
+        @tuple_space_servers[tuple_space_server] = Time.now
+        puts "receive UDP packet..." if Pione.debug_mode?
+      rescue DRb::DRbConnError
+        if Pione.debug_mode?
+          puts "tuple space receiver: something bad..."
         end
       end
-    end
 
-    # Terminate tuple space provider.
-    def self.terminate
-      # terminate message as remote procedure call causes connection error
-      begin
-        instance.terminate
-      rescue
-        # do nothing
-      end
-    end
-
-    def self.start(broker)
-      instance.register(broker)
-    end
-
-    attr_reader :receiver_thread
-    attr_reader :updater_thread
-    attr_reader :agents
-    attr_reader :udp_port
-
-    attr_accessor :drb_service
-
-    def initialize(data={})
-      # check argument
-      if (data.keys - [:receiver_port, :udp_port, :disconnect_time]).size > 0
-        raise ArgumentError
-      end
-
-      # initialize variables
-      @receiver_thread = nil
-      @updater_thread = nil
-      @brokers = []
-      @udp_port = data.has_key?(:udp_port) ? data[:udp_port] : UDP_PORT
-      @disconnect_time = data.has_key?(:disconnect_time) ? data[:disconnect_time] : DISCONNECT_TIME
-      @socket = UDPSocket.open
-      @socket.bind(Socket::INADDR_ANY, @udp_port)
-      @tuple_space_servers = {}
-
-      # start
-      run
-    end
-
-    def register(agent)
-      @brokers << agent
-    end
-
-    # Start to receive tuple space servers.
-    def run
-      receive_tuple_space_servers
-      update_tuple_space_servers
-      check_agent_life
-    end
-
-    def tuple_space_servers
-      @tuple_space_servers.keys
-    end
-
-    # Send empty tuple space server list.
-    def finalize
-      @terminated = true
-      @drb_service.stop_service
-      # DRbServer#stop_service killed service thread, but sometime it cannot
-      # close the socket because ensure clause isn't called in some cases on MRI
-      # 1.9.x.
-      @drb_service.instance_eval do
-        @thread.kill.join
-        kill_sub_thread.join
-        @protocol.close
-      end
-      if DRb.primary_server == @drb_service
-        DRb.primary_server = nil
-      end
-      @thread_receive_packet.kill.join
-      @thread_update_list.kill.join
-      @thread_check_agent_life.kill.join
-      @tuple_space_servers = []
-    end
-
-    alias :terminate :finalize
-
-    private
-
-    def receive_tuple_space_servers
-      @thread_receive_packet = Thread.new do
-        loop do
+      def update_tuple_space_servers
+        @tuple_space_servers.delete_if do |server, time|
           begin
-            msg = @socket.recv(1024)
-            provider = Marshal.load(msg)
-            time = Time.now
-            provider.tuple_space_servers.each do |ts_server|
-              @tuple_space_servers[ts_server] = time
-            end
+            server.uuid
+            false
+          rescue
+            true
+          end
+        end
 
-            if Pione.debug_mode?
-              puts "receive UDP packet..."
-            end
+        # make drop target
+        drop_target = []
+        @tuple_space_servers.each do |ts_server, time|
+          if (Time.now - time) > @disconnect_time
+            drop_target << ts_server
+          end
+        end
+
+        # drop targets
+        drop_target.each do |key|
+          @tuple_space_servers.delete(key)
+        end
+
+        # update
+        @brokers.each do |broker|
+          begin
+            broker.update_tuple_space_servers(tuple_space_servers)
           rescue DRb::DRbConnError
-            # none
-            if Pione.debug_mode?
-              puts "tuple space receiver: something bad..."
-            end
+            puts "dead server"
+          end
+        end
+      end
+
+      def check_agent_life
+        @brokers.delete_if do |broker|
+          begin
+            broker.uuid
+            false
+          rescue DRb::DRbConnError
+            true
           end
         end
       end
     end
-
-    def update_tuple_space_servers
-      @thread_update_list = Thread.new do
-        loop do
-          Pione::Util::Message.debug_message "check for updating tuple space servers" if Pione.debug_mode?
-
-          @tuple_space_servers.delete_if do |ts_server, time|
-            begin
-              ts_server.uuid
-              false
-            rescue DRb::DRbConnError
-              true
-            end
-          end
-
-          # make drop target
-          drop_target = []
-          @tuple_space_servers.each do |ts_server, time|
-            if (Time.now - time) > @disconnect_time
-              drop_target << ts_server
-            end
-          end
-
-          # drop targets
-          drop_target.each do |key|
-            @tuple_space_servers.delete(key)
-          end
-
-          # update
-          @brokers.each do |broker|
-            begin
-              broker.update_tuple_space_servers(tuple_space_servers)
-            rescue DRb::DRbConnError
-              puts "dead server"
-              # none
-            end
-          end
-
-          # sleep and go next...
-          sleep 1
-        end
-      end
-    end
-
-    def check_agent_life
-      @thread_check_agent_life = Thread.new do
-        while true do
-          list = []
-          @brokers.each do |broker|
-            begin
-              broker.uuid
-              list << broker
-            rescue DRb::DRbConnError
-              # none
-            end
-          end
-          @brokers = list
-
-          sleep 1
-        end
-      end
-    end
-
   end
 end

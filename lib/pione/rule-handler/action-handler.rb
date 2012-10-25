@@ -64,7 +64,7 @@ module Pione
         )
 
         # create a directory
-        path = File.join(CONFIG.working_directory, task_dirname)
+        path = Global.working_directory + task_dirname
         FileUtils.makedirs(path)
 
         return path

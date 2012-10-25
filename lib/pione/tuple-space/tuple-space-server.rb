@@ -67,9 +67,6 @@ module Pione
         end
 
         # start agents
-        @life_keeper = Agent::TrivialRoutineWorker.start(
-          Proc.new {TupleSpaceProvider.instance.add(self)}, 1
-        )
         @client_life_checker = Agent::TupleSpaceServerClientLifeChecker.start(self)
       end
 
@@ -122,8 +119,6 @@ module Pione
       def finalize
         @terminated = true
         write(Tuple[:command].new("terminate"))
-        @life_keeper.terminate
-        @life_keeper.running_thread.join
         @client_life_checker.terminate
         @client_life_checker.running_thread.join
         sleep 1

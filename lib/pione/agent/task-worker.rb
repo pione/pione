@@ -23,18 +23,21 @@ module Pione
       #   worker monitor thread
       def self.spawn(front, connection_id)
         @monitor.synchronize do
-          pid = Process.spawn(
+          args = [
             "pione-task-worker",
             "--caller-front", front.uri,
             "--connection-id", connection_id
-          )
+          ]
+          args << "-d" if Pione.debug_mode?
+          pid = Process.spawn(*args)
           thread = Process.detach(pid)
+          # connection check
           while thread.alive?
             break if front.task_worker_front_connection_id.include?(connection_id)
             sleep 0.1
           end
+          # error check
           unless thread.alive?
-            # failed to run pione-task-worker
             Process.abort("You cannot run pione-task-worker.")
           end
           return thread
