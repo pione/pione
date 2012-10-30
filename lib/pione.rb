@@ -34,16 +34,18 @@ require 'dropbox_sdk'
 # version
 require 'pione/version'
 
-# patch
-require 'pione/patch/array-patch'
-require 'pione/patch/rinda-patch'
-require 'pione/patch/uri-patch'
-
 # util
 require 'pione/util/misc'
 require 'pione/util/terminal'
 require 'pione/util/message'
 require 'pione/util/log'
+require 'pione/util/waiter-table'
+
+# patch
+require 'pione/patch/array-patch'
+require 'pione/patch/drb-patch'
+require 'pione/patch/rinda-patch'
+require 'pione/patch/uri-patch'
 
 # system
 require 'pione/system/object'
@@ -165,6 +167,7 @@ require 'pione/command/pione-task-worker'
 require 'pione/command/pione-broker'
 require 'pione/command/pione-tuple-space-provider'
 require 'pione/command/pione-tuple-space-receiver'
+require 'pione/command/pione-tuple-space-viewer'
 require 'pione/command/pione-relay'
 require 'pione/command/pione-relay-client-db'
 require 'pione/command/pione-relay-account-db'

@@ -1,5 +1,8 @@
 module Pione
   module Front
+    # FrontError is raised when front server cannnot start.
+    class FrontError < StandardError; end
+
     # This is base class for all PIONE front classes. PIONE fronts exist in each
     # command and control its process.
     class BasicFront < PioneObject
@@ -12,7 +15,8 @@ module Pione
       # Creates a front server as druby's service.
       def initialize(command, port)
         @command = command
-        @uri = start_service(port)
+        # @uri = start_service(port, {:verbose => true})
+        @uri = start_service(port, {})
       end
 
       # Returns the pid.
@@ -20,6 +24,7 @@ module Pione
         Process.pid
       end
 
+      # Terminates the front.
       def terminate
         DRb.stop_service
       end
@@ -27,8 +32,23 @@ module Pione
       private
 
       # Starts drb service and returns the URI.
-      def start_service(port)
-        DRb.start_service(port ? "druby://localhost:%s" % port : nil, self)
+      def start_service(port, config)
+        if port.kind_of?(Range)
+          port = port.each
+          begin
+            DRb.start_service("druby://localhost:%s" % port.next, self, config)
+          rescue StopIteration => e
+            raise FrontError.new("you couldn't start front server.")
+          rescue
+            retry
+          end
+        else
+          begin
+            DRb.start_service(port ? "druby://localhost:%s" % port : nil, self, config)
+          rescue => e
+            raise FrontError.new("You couldn't start front server: %s" % e.message)
+          end
+        end
         return DRb.uri
       end
     end

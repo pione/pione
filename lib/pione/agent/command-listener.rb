@@ -10,6 +10,12 @@ module Pione
       define_state_transition :waiting_command => :doing_command
       define_state_transition :doing_command => :waiting_command
 
+      def hello
+      end
+
+      def bye
+      end
+
       def initialize(ts_server, obj)
         @target = obj
         super(ts_server)

@@ -215,8 +215,6 @@ module Pione
 
       # @api private
       def transit_to_initialized
-        # start drb service
-        DRb.start_service(nil, self)
       end
 
       def transit_to_count_tuple_space_servers

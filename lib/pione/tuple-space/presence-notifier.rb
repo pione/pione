@@ -34,6 +34,7 @@ module Pione
         ]
         args << "--relay-uri" << Global.relay_uri if Global.relay_uri
         args << "-d" if Pione.debug_mode?
+        args << "--show-communication" if Global.show_communication
         pid = Process.spawn(*args)
         thread = Process.detach(pid)
         # wait that the provider starts up

@@ -9,7 +9,7 @@ module Pione
 
       # Create a new front.
       def initialize(command)
-        super(command, nil)
+        super(command, Global.client_front_port_range)
         initialize_task_worker_owner
       end
 

@@ -6,6 +6,10 @@ module Pione
       def_delegator :@command, :tuple_space_provider
       def_delegator :@command, :presence_port
 
+      def initialize(command)
+        super(command, Global.tuple_space_provider_front_port_range)
+      end
+
       def presence_notifier
         tuple_space_provider
       end

@@ -29,6 +29,7 @@ module Pione
             "--connection-id", connection_id
           ]
           args << "-d" if Pione.debug_mode?
+          args << "--show-communication" if Global.show_communication
           pid = Process.spawn(*args)
           thread = Process.detach(pid)
           # connection check

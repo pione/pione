@@ -30,6 +30,10 @@ module Pione
         Pione.debug_mode = true
       end
 
+      define_option('--show-communication') do |show|
+        Global.show_communication = true
+      end
+
       define_option('--[no-]color', 'color mode') do |str|
         bool = nil
         bool = true if str == "true"

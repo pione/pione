@@ -26,7 +26,9 @@ module Pione
       end
 
       define_option('--params="{Var:1,...}"') do |str|
-        @params = Transformer.new.apply(Parser.new.parameters.parse(str))
+        @params = DocumentTransformer.new.apply(
+          DocumentParser.new.parameters.parse(str)
+        )
       end
 
       define_option('--stand-alone') do

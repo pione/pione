@@ -28,7 +28,7 @@ module Pione
       end
 
       def create_front
-        Pione::Front::TupleSpaceProviderFront.new(self, nil)
+        Pione::Front::TupleSpaceProviderFront.new(self)
       end
 
       def prepare

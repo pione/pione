@@ -22,6 +22,10 @@ module Pione
         UUIDTools::UUID.random_create.to_s
       end
 
+      def generate_uuid_int
+        UUIDTools::UUID.random_create.to_i
+      end
+
       # Returns the hostname of the machine.
       # @return [String]
       #   hostname

@@ -74,6 +74,16 @@ module Pione
 
       extend GlobalInterface
 
+      #
+      # debug
+      #
+
+      define_item(:show_communication, false, false)
+
+      #
+      # system
+      #
+
       define_item(:config, true, Config.new("~/.pione/config.yml"))
 
       # .pione dir
@@ -100,20 +110,96 @@ module Pione
         Pathname.new(Dir.mktmpdir(nil, Global.working_directory_root))
       end
 
-      # front server
+      # system front server
       define_item(:front, false)
+
+      #
+      # pione-client
+      #
+
+      # client-front port range begin
+      define_item(:client_front_port_range_begin, true, 40000)
+
+      # client-front port range end
+      define_item(:client_front_port_range_end, true, 40999)
+
+      # client-front port range
+      define_item(:client_front_port_range, false) do
+        Range.new(
+          Global.client_front_port_range_begin,
+          Global.client_front_port_range_end
+        )
+      end
+
+      #
+      # pione-broker
+      #
+
+      # broker-front port range begin
+      define_item(:broker_front_port_range_begin, true, 41000)
+
+      # broker-front port range end
+      define_item(:broker_front_port_range_end, true, 41999)
+
+      # broker-front port range
+      define_item(:broker_front_port_range, false) do
+        Range.new(
+          Global.broker_front_port_range_begin,
+          Global.broker_front_port_range_end
+        )
+      end
+
+      #
+      # provider & receiver
+      #
+
+      # presence port
+      define_item(:presence_port, true, 55000)
+
+      #
+      # pione-tuple-space-provider
+      #
 
       # tuple space provider uri
       define_item(:tuple_space_provider_uri, false)
 
+      # provider-front port range begin
+      define_item(:tuple_space_provider_front_port_range_begin, true, 42000)
+
+      # provider-front port range end
+      define_item(:tuple_space_provider_front_port_range_end, true, 42999)
+
+      # provider-front port range end
+      define_item(:tuple_space_provider_front_port_range, false) do
+        Range.new(
+          Global.tuple_space_provider_front_port_range_begin,
+          Global.tuple_space_provider_front_port_range_end
+        )
+      end
+
+      #
+      # pione-tuple-space-receiver
+      #
+
       # tuple space receiver uri
       define_item(:tuple_space_receiver_uri, false)
 
+      # receiver-front port range begin
+      define_item(:tuple_space_receiver_front_port_range_begin, true, 43000)
+
+      # receiver-front port range end
+      define_item(:tuple_space_receiver_front_port_range_end, true, 43999)
+
+      # receiver-front port range end
+      define_item(:tuple_space_receiver_front_port_range, false) do
+        Range.new(
+          Global.tuple_space_receiver_front_port_range_begin,
+          Global.tuple_space_receiver_front_port_range_end
+        )
+      end
+
       # disconnect time for tuple space receiver
       define_item(:tuple_space_receiver_disconnect_time, true, 180)
-
-      # presence port
-      define_item(:presence_port, true, 55000)
 
       #
       # relay

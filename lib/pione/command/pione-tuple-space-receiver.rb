@@ -12,7 +12,7 @@ module Pione
       attr_reader :tuple_space_receiver
 
       def create_front
-        Front::TupleSpaceReceiverFront.new(self, nil)
+        Front::TupleSpaceReceiverFront.new(self)
       end
 
       def prepare
