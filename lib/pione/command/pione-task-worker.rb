@@ -18,7 +18,7 @@ module Pione
       private
 
       def create_front
-        Pione::Front::TaskWorkerFront.new(self, nil)
+        Pione::Front::TaskWorkerFront.new(self)
       end
 
       def validate_options
@@ -57,7 +57,7 @@ module Pione
           # terminate
           terminate
         rescue DRb::DRbConnError
-          # do nothing
+          terminate
         end
       end
 

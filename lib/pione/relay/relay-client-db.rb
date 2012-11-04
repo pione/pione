@@ -40,7 +40,7 @@ module Pione
       def read_database
         if @path.exist?
           @path.readlines.inject({}) do |tbl, line|
-            name, digest = line.split(":")
+            name, digest = line.chomp.split(":")
             tbl.tap{ tbl.store(name, digest) }
           end
         else

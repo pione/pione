@@ -7,7 +7,14 @@ module DRb
   end
   module_function :waiter_table
 
+  class DRbObject
+    def __connect
+      DRbConn.open(@uri) {}
+    end
+  end
+
   class DRbMessage
+
     alias :orig_initialize :initialize
 
     def initialize(*args)
@@ -19,10 +26,10 @@ module DRb
     end
 
     def send_request(stream, ref, msg_id, arg, b)
-      if Global.show_communication
-        puts "send_request #%s(%s) on %s" % [msg_id, arg, Process.pid]
-      end
       req_id = Util.generate_uuid_int
+      if Global.show_communication
+        puts "send_request[%s] %s#%s(%s) on PID %s" % [req_id, ref.__drburi, msg_id, arg, Process.pid]
+      end
       data = [
         dump(req_id),
         dump(ref.__drbref),
@@ -31,24 +38,29 @@ module DRb
         arg.map{|e|dump(e)}.join(''),
         dump(b)
       ].join('')
-      @send_request_lock.synchronize do
-        stream.write(data)
-      end
+      @send_request_lock.synchronize {stream.write(data)}
       return req_id
-    rescue
+    rescue => e
+      if Global.show_communication
+        puts "%s: %s" % [e.class, e.message]
+        caller.each {|line| puts "    %s" % line}
+      end
       raise(DRbConnError, $!.message, $!.backtrace)
     end
 
     def recv_request(stream)
       if Global.show_communication
-        puts "start recv_request on %s" % Process.pid
+        puts "start recv_request on PID %s" % Process.pid
       end
       @recv_request_lock.synchronize do
         req_id = load(stream)
         ref = load(stream)
-        ro = DRb.to_obj(ref)
         msg_id = load(stream)
         argc = load(stream)
+        puts "recv_request:req_id:%s" % req_id
+        puts "recv_request:ref:%s" % ref
+        puts "recv_request:msg_id:%s" % msg_id
+        ro = DRb.to_obj(ref)
         raise(DRbConnError, "too many arguments") if @argc_limit < argc
         argv = Array.new(argc, nil)
         argc.times do |n|
@@ -56,7 +68,7 @@ module DRb
         end
         block = load(stream)
         if Global.show_communication
-          puts "end recv_request => #%s(%s) on %s" % [msg_id, argv, Process.pid]
+          puts "end recv_request[%s] %s#%s(%s) on %s" % [req_id, ref ? ref.__drburi : "", msg_id, argv, Process.pid]
         end
         return req_id, ro, msg_id, argv, block
       end
@@ -64,7 +76,7 @@ module DRb
 
     def send_reply(req_id, stream, succ, result)
       if Global.show_communication
-        puts "send_reply %s on %s" % [result, Process.pid]
+        puts "send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
       end
       @send_reply_lock.synchronize do
         stream.write(dump(req_id) +dump(succ) + dump(result, !succ))
@@ -75,14 +87,18 @@ module DRb
 
     def recv_reply(stream)
       if Global.show_communication
-        puts "start recv_reply on %s" % Process.pid
+        puts "start recv_reply on PID %s" % Process.pid
       end
       @recv_reply_lock.synchronize do
+        puts "!!!!!!!!!!!!!!!!!"
         req_id = load(stream)
+        p req_id
         succ = load(stream)
+        p succ
         result = load(stream)
+        p result
         if Global.show_communication
-          puts "end recv_reply %s on %s" % [req_id, Process.pid]
+          puts "end recv_reply[%s] on PID %s" % [req_id, Process.pid]
         end
         return [req_id, succ, result]
       end
@@ -93,11 +109,16 @@ module DRb
     def reader_thread
       @thread ||= Thread.new do
         begin
+          # loop for receiving reply and waiting the result
           while true
             req_id, succ, result = recv_reply
             DRb.waiter_table.push(req_id, [succ, result])
           end
-        rescue DRbConnError
+        rescue DRbConnError => e
+          if Global.show_communication
+            puts "%s:%s" % [e.class, e.message]
+            puts "    %s" % $!.backtrace
+          end
         rescue => e
           puts "%s on %s" % [e.inspect, Process.pid]
           puts "    %s" % $!.backtrace
@@ -167,8 +188,7 @@ module DRb
       # you can read request id
       attr_reader :req_id
 
-      public :setup_message
-
+      # perform without setup_message
       def perform
         @result = nil
         @succ = false
@@ -205,6 +225,8 @@ module DRb
         return @succ, @result
       end
 
+      public :setup_message
+
       # with request id
       def init_with_client
         req_id, obj, msg, argv, block = @client.recv_request
@@ -214,42 +236,78 @@ module DRb
         @argv = argv
         @block = block
       end
+
+      # Checks whether it can invoke method.
+      def ready?
+        return false unless @req_id
+        return false unless @msg_id
+        return false unless @argv
+        return true
+      end
     end
 
-    # with request id
     def main_loop
-      Thread.start(@protocol.accept) do |client|
-        @grp.add Thread.current
-        Thread.current['DRb'] = { 'client' => client, 'server' => self }
-        DRb.mutex.synchronize do
-          client_uri = client.uri
-          @exported_uri << client_uri unless @exported_uri.include?(client_uri)
+      if @protocol.uri =~ /^(receiver|transmitter):/
+        main_loop_transceiver
+      else
+        main_loop_others
+      end
+    end
+
+    def main_loop_core(client)
+      @grp.add Thread.current
+      Thread.current['DRb'] = { 'client' => client, 'server' => self }
+      DRb.mutex.synchronize do
+        client_uri = client.uri
+        @exported_uri << client_uri unless @exported_uri.include?(client_uri)
+      end
+      while true do
+        invoke_method = InvokeMethod.new(self, client)
+        begin
+          invoke_method.setup_message
+        rescue DRbConnError => e
+          client.close
+          if Global.show_communication
+            puts "closed socket on server side"
+            puts "%s: %s" % [e.class, e.message]
+            caller.each {|line| puts " "*4 + line}
+          end
+          break
         end
-        loop do
+        Thread.start(invoke_method) do |invoker|
           begin
-            succ = false
-            invoke_method = InvokeMethod.new(self, client)
-            invoke_method.setup_message
-            Thread.new do
-              Thread.current['DRb'] = { 'client' => client, 'server' => self }
-              succ, result = invoke_method.perform
-              if !succ && verbose
-                p result
-                result.backtrace.each do |x|
-                  puts x
-                end
-              end
-              # req_id
-              client.send_reply(invoke_method.req_id, succ, result) rescue nil
+            @grp.add Thread.current
+            Thread.current['DRb'] = { 'client' => client, 'server' => self }
+            succ, result = invoker.perform
+            if !succ && Global.show_communication
+              p result
+              result.backtrace.each {|x| puts x}
             end
-          rescue DRbConnError
+            # req_id
+            client.send_reply(invoker.req_id, succ, result) rescue nil
+          rescue DRbConnError => e
             client.close
-          ensure
-            if Thread.current['DRb']['stop_service']
-              Thread.new { stop_service }
+            if Global.show_communication
+              puts "error in method invocation thread"
+              puts "%s: %s" % [e.class, e.message]
+              caller.each {|line| puts " "*4 + line}
             end
           end
         end
+      end
+    end
+
+    def main_loop_transceiver
+      main_loop_core(@protocol)
+
+      # stop transceiver
+      @thread.kill.join
+    end
+
+    # main loop with request id
+    def main_loop_others
+      Thread.start(@protocol.accept) do |client|
+        main_loop_core(client)
       end
     end
   end

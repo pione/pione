@@ -14,23 +14,24 @@ module Pione
       end
 
       def initialize
-        require 'drb/gw'
+        # require 'drb/gw'
+        @relay_port = Global.relay_port
       end
 
       def validate_options
-        abort("no realm name") unless Global.relay_realm
+        abort("no realm name") if Global.relay_realm.nil? or Global.relay_realm.empty?
         abort("no relay port") unless @relay_port
       end
 
       def create_front
-        Front::RelayFront.new(self, nil)
+        Front::RelayFront.new(self)
       end
 
       def start
         puts DRb.front.uri
         DRb::DRbServer.new(
           "relay://localhost:%s" % @relay_port,
-          DRb::GW.new,
+          nil,
           {:SSLCertName => Global.relay_ssl_certname}
         )
         DRb.thread.join

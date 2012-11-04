@@ -286,6 +286,7 @@ module Pione
 
     # BasicAgent is a super class for PIONE agents.
     class BasicAgent < PioneObject
+      include DRbUndumped
       extend StateTransitionSingletonMethod
       include StateTransitionMethod
 

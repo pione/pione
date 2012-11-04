@@ -88,7 +88,7 @@ module Pione
 
       # .pione dir
       define_item(:dot_pione_dir, true) do
-        Pathname.new("~/.pione").expand_path.tap{|path|
+        Pathname.new("~/.pione").expand_path.tap {|path|
           path.mkpath unless path.exist?
         }
       end
@@ -100,7 +100,7 @@ module Pione
 
       # root of working directory
       define_item(:working_directory_root, true) do
-        Pathname.new(File.join(Dir.tmpdir, "pione-wd")).tap{|path|
+        Pathname.new(File.join(Dir.tmpdir, "pione-wd")).tap {|path|
           path.mkpath unless path.exist?
         }
       end
@@ -154,7 +154,7 @@ module Pione
       #
 
       # presence port
-      define_item(:presence_port, true, 55000)
+      define_item(:presence_port, true, 56000)
 
       #
       # pione-tuple-space-provider
@@ -169,7 +169,7 @@ module Pione
       # provider-front port range end
       define_item(:tuple_space_provider_front_port_range_end, true, 42999)
 
-      # provider-front port range end
+      # provider-front port range
       define_item(:tuple_space_provider_front_port_range, false) do
         Range.new(
           Global.tuple_space_provider_front_port_range_begin,
@@ -190,7 +190,7 @@ module Pione
       # receiver-front port range end
       define_item(:tuple_space_receiver_front_port_range_end, true, 43999)
 
-      # receiver-front port range end
+      # receiver-front port range
       define_item(:tuple_space_receiver_front_port_range, false) do
         Range.new(
           Global.tuple_space_receiver_front_port_range_begin,
@@ -228,10 +228,65 @@ module Pione
       define_item(:relay_uri, false)
 
       # relay port
-      define_item(:relay_port, true, 54002)
+      define_item(:relay_port, true, 56001)
 
       # certname for relay server
       define_item(:relay_ssl_certname, true, [["CN", "localhost.localhost"]])
+
+      # relay-front port range begin
+      define_item(:relay_front_port_range_begin, true, 44000)
+
+      # receiver-front port range end
+      define_item(:relay_front_port_range_end, true, 44999)
+
+      # receiver-front port range
+      define_item(:relay_front_port_range, false) do
+        Range.new(
+          Global.relay_front_port_range_begin,
+          Global.relay_front_port_range_end
+        )
+      end
+
+      # relay-proxy port range begin
+      define_item(:relay_proxy_port_range_begin, true, 45000)
+
+      # relay-proxy port range end
+      define_item(:relay_proxy_port_range_end, true, 45999)
+
+      # relay-proxy port range
+      define_item(:relay_proxy_port_range, false) do
+        Range.new(
+          Global.relay_proxy_port_range_begin,
+          Global.relay_proxy_port_range_end
+        )
+      end
+
+      # relay-client authentication timeout second
+      define_item(:relay_client_auth_timeout_sec, true, 5)
+
+      # relay tuple space server
+      define_item(:relay_tuple_space_server, false)
+
+      # relay receiver
+      define_item(:relay_receiver, false)
+
+      #
+      # task worker
+      #
+
+      # task-worker-front port range begin
+      define_item(:task_worker_front_port_range_begin, true, 50000)
+
+      # task-worker-front port range end
+      define_item(:task_worker_front_port_range_end, true, 54999)
+
+      # task-worker-front port range
+      define_item(:task_worker_front_port_range, false) do
+        Range.new(
+          Global.task_worker_front_port_range_begin,
+          Global.task_worker_front_port_range_end
+        )
+      end
     end
   end
 end

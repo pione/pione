@@ -177,7 +177,7 @@ module Pione
       define_exception_handler DRb::DRbConnError => :checking_tuple_space_servers
       define_exception_handler Errno::ECONNREFUSED => :checking_tuple_space_servers
 
-      attr_reader :task_workers
+      attr_accessor :task_workers
       attr_reader :tuple_space_servers
       attr_reader :task_worker_resource
 

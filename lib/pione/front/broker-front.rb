@@ -16,8 +16,10 @@ module Pione
         broker.get_tuple_space_server(connection_id)
       end
 
-      def add_task_worker(task_worker)
-        broker.add_task_worker(task_worker)
+      # Override the method with adding task worker agent to broker.
+      def add_task_worker_front(task_worker_front, connection_id)
+        super
+        broker.task_workers << task_worker_front.agent
       end
 
       def set_tuple_space_receiver(uri)

@@ -8,8 +8,8 @@ module Pione
         parse_options
         validate_options
         setup_front
-        $PROGRAM_NAME = program_name
         prepare
+        $PROGRAM_NAME = program_name
         start
       end
 

@@ -100,6 +100,8 @@ module Pione
       rescue OptionParser::InvalidOption => e
         e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
         abort
+      rescue OptionParser::MissingArgument => e
+        abort(e.message)
       end
 
       # Validates options. Override this method if subclasses should check

@@ -43,7 +43,7 @@ module Pione
       def read_database
         if @path.exist?
           @path.readlines.inject({}) do |tbl, line|
-            realm, name, digest = line.split(":")
+            realm, name, digest = line.chomp.split(":")
             tbl.tap{ tbl.store(realm, Account.new(name, digest)) }
           end
         else

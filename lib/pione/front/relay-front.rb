@@ -3,6 +3,11 @@ module Pione
     class RelayFront < BasicFront
       def_delegator :@command, :presence_port
 
+      # Create a new front.
+      def initialize(command)
+        super(command, Global.relay_front_port_range)
+      end
+
       def presence_notifier
         tuple_space_provider
       end

@@ -2,7 +2,7 @@ module Pione
   module Command
     class PioneClient < FrontOwner
       set_program_name("pione-client") do
-        "%s -b %s -s %s" % [@filename, @base_dir, @stream]
+        [@filename, "-b %s" % @base_uri, @stream ? "--stream" : ""].join(" ")
       end
 
       define_option('-i dir', '--input-dir=dir') do |dir|
@@ -33,6 +33,7 @@ module Pione
 
       define_option('--stand-alone') do
         @stand_alone = true
+        @without_tuple_space_provider = true
       end
 
       define_option('--dry-run') do |b|
@@ -41,6 +42,10 @@ module Pione
 
       define_option('--relay uri') do |uri|
         @relay = uri
+      end
+
+      define_option('--without-tuple-space-provider') do
+        @without_tuple_space_provider = true
       end
 
       attr_reader :tuple_space_server
@@ -57,6 +62,8 @@ module Pione
         @worker_threads = []
         @stand_alone = false
         @relay = nil
+        @filename = "-"
+        @without_tuple_space_provider = false
       end
 
       private
@@ -72,6 +79,8 @@ module Pione
       end
 
       def prepare
+        @filename = ARGF.filename
+
         # base uri
         if @base_uri.scheme == "local"
           FileUtils.makedirs(@base_uri.path)
@@ -88,8 +97,9 @@ module Pione
       def start
         read_process_document
         write_tuples
+        connect_relay if @relay
         start_agents
-        start_tuple_space_provider unless @stand_alone
+        start_tuple_space_provider unless @without_tuple_space_provider
         start_workers
         @agent = Agent[:process_manager].start(@tuple_space_server, @document, @params)
         @agent.running_thread.join
@@ -147,6 +157,27 @@ module Pione
         @resource.times do
           Agent[:task_worker].spawn(Global.front, Util.generate_uuid)
         end
+      end
+
+      def connect_relay
+        Global.relay_tuple_space_server = @tuple_space_server
+        @relay_ref = DRbObject.new_with_uri(@relay)
+        @relay_ref.__connect
+        if Global.show_communication
+          puts "you connected the relay: %s" % @relay
+        end
+        # watchdog for the relay server
+        Thread.start do
+          Global.relay_receiver.thread.join
+          abort("relay server disconnected: %s" % @relay_ref.__drburi)
+        end
+      rescue DRb::DRbConnError => e
+        puts "You couldn't connect the relay server: %s" % @relay_ref.__drburi
+        puts "%s: %s" % [e.class, e.message]
+        caller.each {|line| puts "    %s" % line}
+        abort
+      rescue Relay::RelaySocket::AuthError
+        abort("You failed authentication to connect the relay server: %s" % @relay_ref.__drburi)
       end
     end
   end
