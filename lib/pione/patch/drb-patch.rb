@@ -90,13 +90,9 @@ module DRb
         puts "start recv_reply on PID %s" % Process.pid
       end
       @recv_reply_lock.synchronize do
-        puts "!!!!!!!!!!!!!!!!!"
         req_id = load(stream)
-        p req_id
         succ = load(stream)
-        p succ
         result = load(stream)
-        p result
         if Global.show_communication
           puts "end recv_reply[%s] on PID %s" % [req_id, Process.pid]
         end

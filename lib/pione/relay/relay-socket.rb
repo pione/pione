@@ -16,10 +16,10 @@ module Pione
           host = $1
           port = $3 ? $3.to_i : Global.relay_port
           option = $5
-          return [host, port, option]
+          return host, port, option
         else
-          raise(DRb::DRbBadScheme, uri) unless uri =~ /^relay:/
-          raise(DRb::DRbBadURI, 'can\'t parse uri:' + uri)
+          raise DRb::DRbBadScheme.new(uri) unless uri =~ /^relay:/
+          raise DRb::DRbBadURI.new('can\'t parse uri:' + uri)
         end
       end
 
@@ -77,8 +77,11 @@ module Pione
       # Opens relay server port for clients.
       # @api private
       def self.open_server(uri, config)
+        # parse URI
         uri = 'relay://:%s' % Global.relay_port unless uri
         host, port, option = parse_uri(uri)
+
+        # rebuild URI
         if host.size == 0
           host = getservername
           soc = open_server_inaddr_any(host, port)
@@ -86,15 +89,16 @@ module Pione
           soc = TCPServer.open(host, port)
         end
         port = soc.addr[1] if port == 0
-        @uri = "relay://#{host}:#{port}"
+        new_uri = "relay://#{host}:#{port}"
 
         # prepare SSL
-        ssl_conf = DRb::DRbSSLSocket::SSLConfig.new(config)
-        ssl_conf.setup_certificate
-        ssl_conf.setup_ssl_context
+        ssl_conf = DRb::DRbSSLSocket::SSLConfig.new(config).tap do |conf|
+          conf.setup_certificate
+          conf.setup_ssl_context
+        end
 
-        # create an instance
-        self.new(@uri, soc, ssl_conf, false)
+        # create instance
+        self.new(new_uri, soc, ssl_conf, false)
       end
 
       def self.uri_option(uri, config)
@@ -106,17 +110,19 @@ module Pione
       # @api private
       def accept
         begin
+          # accept loop
           while true
             soc = @socket.accept
             break if (@acl ? @acl.allow_socket?(soc) : true)
             soc.close
           end
 
-          ssl = @config.accept(soc)
-
           if Global.show_communication
             puts "someone connected to relay socket..."
           end
+
+          # build ssl
+          ssl = @config.accept(soc)
 
           # relay auth like HTTP's digest method
           ssl.puts(Global.relay_realm)
@@ -135,27 +141,36 @@ module Pione
 
             # setup transmitter_id
             transmitter_id = Util.generate_uuid
-            TransmitterSocket.table[transmitter_id] = ssl
+
+            # save ssl socket with transmitter_id
+            TransmitterSocket.ssl_socket[transmitter_id] = ssl
+
+            # open and save tcp socket with transmitter_id
+            Global.relay_transmitter_tcp_port_range.each do |port|
+              begin
+                tcp_socket = TCPServer.new("localhost", port)
+                TransmitterSocket.tcp_socket[transmitter_id] = tcp_socket
+                break
+              rescue
+              end
+            end
 
             # create servers
             create_transmitter_server(transmitter_id)
             create_proxy_server(transmitter_id)
 
-            # create an object
+            # create instance
             self.class.new(uri, ssl, @config, true)
           else
             raise BadMessage
           end
-        rescue OpenSSL::SSL::SSLError
-          warn("#{__FILE__}:#{__LINE__}: warning: #{$!.message} (#{$!.class})") if @config[:verbose]
-          retry
-        rescue AuthError, BadMessage => e
+        rescue OpenSSL::SSL::SSLError, AuthError, BadMessage => e
+          soc.close
           if Global.show_communication
-            puts "relay socket disconnected"
+            puts "closed relay socket"
             puts "%s: %s" % [e.class, e.message]
             caller.each {|line| puts "    %s" % line}
           end
-          soc.close
           retry
         end
       end
@@ -185,7 +200,7 @@ module Pione
             next
           end
         end
-        raise ProxyError.new("You cannot start proxy server.")
+        raise ProxyError.new("You cannot start relay proxy server.")
       end
     end
 

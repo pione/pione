@@ -236,10 +236,10 @@ module Pione
       # relay-front port range begin
       define_item(:relay_front_port_range_begin, true, 44000)
 
-      # receiver-front port range end
+      # relay-front port range end
       define_item(:relay_front_port_range_end, true, 44999)
 
-      # receiver-front port range
+      # relay-front port range
       define_item(:relay_front_port_range, false) do
         Range.new(
           Global.relay_front_port_range_begin,
@@ -267,7 +267,21 @@ module Pione
       # relay tuple space server
       define_item(:relay_tuple_space_server, false)
 
-      # relay receiver
+      # relay-transmitter tcp port range begin
+      define_item(:relay_transmitter_tcp_port_begin, true, 46000)
+
+      # relay-transmitter tcp port range end
+      define_item(:relay_transmitter_tcp_port_end, true, 46999)
+
+      # relay-transmitter tcp port range
+      define_item(:relay_transmitter_tcp_port, false) do
+        Range.new(
+          Global.relay_transmitter_tcp_port_begin,
+          Global.relay_transmitter_tcp_port_end
+        )
+      end
+
+      # relay-receiver
       define_item(:relay_receiver, false)
 
       #
