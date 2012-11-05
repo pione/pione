@@ -43,7 +43,7 @@ module Pione
           msg = "No receiver side socket for %s." % transmitter_id
           raise TransmitterSocketError.new(msg)
         end
-        proxy_socket = TCPSocket.new("localhost", soc)
+        proxy_socket = TCPSocket.new("localhost", soc.addr[1])
 
         # create instance with proxy socket
         self.new(uri, nil, proxy_socket, config)
@@ -59,14 +59,14 @@ module Pione
         transmitter_id.untaint
 
         # get receiver side socket
-        receiver_socket = @@ssl_socket[transmitter_id]
+        receiver_socket = @@receiver_socket[transmitter_id]
         unless receiver_socket
           msg = "No receiver side sockets for %s." % transmitter_id
           raise TransmitterSocketError.new(msg)
         end
 
         # get proxy side socket
-        proxy_socket = @@tcp_socket[transmitter_id]
+        proxy_socket = @@proxy_socket[transmitter_id]
         unless proxy_socket
           msg = "No proxy side sockets for %s." % transmitter_id
           raise TransmitterSocketError.new(msg)
@@ -83,19 +83,24 @@ module Pione
 
       def initialize(uri, receiver_socket, proxy_socket, config)
         @uri = uri
-        @receiver_socket = reciver_socket
+        @receiver_socket = receiver_socket
         @proxy_socket = proxy_socket
+        @config = config
         @acl = config[:tcp_acl]
-        @receiver_msg = DRbMessage.new(config)
-        @proxy_msg = DRbMessage.new(config)
-        set_socket(@receiver_socket) if @receiver_socket
-        set_socket(@proxy_socket) if @proxy_socket
+        @receiver_msg = DRb::DRbMessage.new(config)
+        @proxy_msg = DRb::DRbMessage.new(config)
+        set_sockopt(@receiver_socket) if @receiver_socket
+        set_sockopt(@proxy_socket) if @proxy_socket
       end
 
       # Sends a request from transmitter to receiver.
       # @api private
       def send_request(ref, msg_id, arg, b)
-        @receiver_msg.send_request(@receiver_socket, ref, msg_id, arg, b)
+        if @receiver_socket
+          @receiver_msg.send_request(@receiver_socket, ref, msg_id, arg, b)
+        else
+          @proxy_msg.send_request(@proxy_socket, ref, msg_id, arg, b)
+        end
       end
 
       # Receives a request from proxy to transmitter.
@@ -113,19 +118,42 @@ module Pione
       # Receives a reply from receiver to transmitter.
       # @api private
       def recv_reply
-        @receiver_msg.recv_reply(@receiver_socket)
+        if @receiver_socket
+          @receiver_msg.recv_reply(@receiver_socket)
+        else
+          @proxy_msg.recv_reply(@proxy_socket)
+        end
+      end
+
+      # Closes proxy side socket.
+      def close
+        @proxy_socket.close
+        @proxy_socket = nil
       end
 
       # Opens fake connection from proxy to transmitter.
       # Just returns self.
       def accept
-        begin
-          while true
-            soc = @proxy_socket.accept
-            break if (@acl ? @acl.allow_socket?(soc) : true)
-            soc.close
-          end
+        while true
+          soc = @proxy_socket.accept
+          break if (@acl ? @acl.allow_socket?(soc) : true)
+          soc.close
+        end
 
+        if Global.show_communication
+          puts "proxy connects to transmitter"
+        end
+
+        # create instance
+        self.class.new(uri, nil, soc, @config)
+      rescue => e
+        soc.close
+        if Global.show_communication
+          puts "closed transmitter's proxy side socket"
+          puts "%s: %s" % [e.class, e.message]
+          caller.each {|line| puts "    %s" % line}
+        end
+        retry
       end
     end
 

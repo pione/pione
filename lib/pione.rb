@@ -65,6 +65,7 @@ require 'pione/uri/dropbox.rb'
 
 # relay
 require 'pione/relay/transmitter-socket'
+require 'pione/relay/trampoline'
 require 'pione/relay/receiver-socket'
 require 'pione/relay/relay-socket'
 require 'pione/relay/relay-client-db'

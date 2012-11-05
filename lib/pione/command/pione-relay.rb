@@ -28,6 +28,8 @@ module Pione
       end
 
       def start
+        @provider = Pione::TupleSpaceProvider.instance
+
         puts DRb.front.uri
         DRb::DRbServer.new(
           "relay://localhost:%s" % @relay_port,

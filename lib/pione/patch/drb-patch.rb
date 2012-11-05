@@ -57,9 +57,6 @@ module DRb
         ref = load(stream)
         msg_id = load(stream)
         argc = load(stream)
-        puts "recv_request:req_id:%s" % req_id
-        puts "recv_request:ref:%s" % ref
-        puts "recv_request:msg_id:%s" % msg_id
         ro = DRb.to_obj(ref)
         raise(DRbConnError, "too many arguments") if @argc_limit < argc
         argv = Array.new(argc, nil)
@@ -76,10 +73,13 @@ module DRb
 
     def send_reply(req_id, stream, succ, result)
       if Global.show_communication
-        puts "send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
+        puts "start send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
       end
       @send_reply_lock.synchronize do
         stream.write(dump(req_id) +dump(succ) + dump(result, !succ))
+      end
+      if Global.show_communication
+        puts "end send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
       end
     rescue
       raise(DRbConnError, $!.message, $!.backtrace)
@@ -96,7 +96,7 @@ module DRb
         if Global.show_communication
           puts "end recv_reply[%s] on PID %s" % [req_id, Process.pid]
         end
-        return [req_id, succ, result]
+        return req_id, succ, result
       end
     end
   end
@@ -108,6 +108,7 @@ module DRb
           # loop for receiving reply and waiting the result
           while true
             req_id, succ, result = recv_reply
+            puts "recv_reply:req_id: %s" % req_id
             DRb.waiter_table.push(req_id, [succ, result])
           end
         rescue DRbConnError => e
@@ -243,8 +244,8 @@ module DRb
     end
 
     def main_loop
-      if @protocol.uri =~ /^(receiver|transmitter):/
-        main_loop_transceiver
+      if @protocol.uri =~ /^receiver:/
+        main_loop_receiver
       else
         main_loop_others
       end
@@ -293,7 +294,7 @@ module DRb
       end
     end
 
-    def main_loop_transceiver
+    def main_loop_receiver
       main_loop_core(@protocol)
 
       # stop transceiver
@@ -303,7 +304,12 @@ module DRb
     # main loop with request id
     def main_loop_others
       Thread.start(@protocol.accept) do |client|
-        main_loop_core(client)
+        # relay socket doesn't need request receiver loop because its aim is
+        # to get connection only
+        unless @protocol.kind_of?(RelaySocket)
+          main_loop_core(client)
+        else
+        end
       end
     end
   end

@@ -267,17 +267,17 @@ module Pione
       # relay tuple space server
       define_item(:relay_tuple_space_server, false)
 
-      # relay-transmitter tcp port range begin
-      define_item(:relay_transmitter_tcp_port_begin, true, 46000)
+      # relay-transmitter proxy side port range begin
+      define_item(:relay_transmitter_proxy_side_port_begin, true, 46000)
 
-      # relay-transmitter tcp port range end
-      define_item(:relay_transmitter_tcp_port_end, true, 46999)
+      # relay-transmitter proxy side port range end
+      define_item(:relay_transmitter_proxy_side_port_end, true, 46999)
 
-      # relay-transmitter tcp port range
-      define_item(:relay_transmitter_tcp_port, false) do
+      # relay-transmitter proxy side port range
+      define_item(:relay_transmitter_proxy_side_port_range, false) do
         Range.new(
-          Global.relay_transmitter_tcp_port_begin,
-          Global.relay_transmitter_tcp_port_end
+          Global.relay_transmitter_proxy_side_port_begin,
+          Global.relay_transmitter_proxy_side_port_end
         )
       end
 

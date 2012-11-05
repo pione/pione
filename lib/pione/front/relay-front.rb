@@ -1,7 +1,10 @@
 module Pione
   module Front
     class RelayFront < BasicFront
+      include TupleSpaceProviderOwner
+
       def_delegator :@command, :presence_port
+      def_delegator :@command, :tuple_space_server
 
       # Create a new front.
       def initialize(command)

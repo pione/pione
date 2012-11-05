@@ -142,14 +142,14 @@ module Pione
             # setup transmitter_id
             transmitter_id = Util.generate_uuid
 
-            # save ssl socket with transmitter_id
-            TransmitterSocket.ssl_socket[transmitter_id] = ssl
+            # save ssl socket as receiver side with transmitter_id
+            TransmitterSocket.receiver_socket[transmitter_id] = ssl
 
             # open and save tcp socket with transmitter_id
-            Global.relay_transmitter_tcp_port_range.each do |port|
+            Global.relay_transmitter_proxy_side_port_range.each do |port|
               begin
                 tcp_socket = TCPServer.new("localhost", port)
-                TransmitterSocket.tcp_socket[transmitter_id] = tcp_socket
+                TransmitterSocket.proxy_socket[transmitter_id] = tcp_socket
                 break
               rescue
               end
@@ -158,6 +158,9 @@ module Pione
             # create servers
             create_transmitter_server(transmitter_id)
             create_proxy_server(transmitter_id)
+
+            # start to provide tuple space
+            Global.relay_front.tuple_space_provider.tuple_space_server = @tuple_space_server
 
             # create instance
             self.class.new(uri, ssl, @config, true)
@@ -178,7 +181,8 @@ module Pione
       # Creates a transmitter server with the relay socket.
       # @return [void]
       def create_transmitter_server(transmitter_id)
-        server = DRb::DRbServer.new("transmitter://%s" % transmitter_id, nil)
+        uri = "transmitter://%s" % transmitter_id
+        server = DRb::DRbServer.new(uri, Trampoline.new(uri, @config))
         if Global.show_communication
           puts "relay created the transmitter: %s" % server.uri
         end
