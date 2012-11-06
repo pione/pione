@@ -70,6 +70,10 @@ module Pione
         @client_life_checker = Agent::TupleSpaceServerClientLifeChecker.start(self)
       end
 
+      def set_base_uri(uri)
+        write(Tuple[:base_uri].new(uri: uri))
+      end
+
       def drburi
         @remote_object ||= DRb.start_service(nil, self)
         @remote_object.__drburi

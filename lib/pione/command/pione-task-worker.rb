@@ -43,6 +43,14 @@ module Pione
 
         # connect caller front
         @caller_front.add_task_worker_front(self, @connection_id)
+
+        # get base uri
+        if @tuple_space_server.base_uri.scheme == "dropbox"
+          Resource::Dropbox.init(@tuple_space_server)
+          unless Resource::Dropbox.ready?
+            abort("You aren't ready to access dropbox.")
+          end
+        end
       end
 
       def start

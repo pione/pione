@@ -108,7 +108,6 @@ module DRb
           # loop for receiving reply and waiting the result
           while true
             req_id, succ, result = recv_reply
-            puts "recv_reply:req_id: %s" % req_id
             DRb.waiter_table.push(req_id, [succ, result])
           end
         rescue DRbConnError => e

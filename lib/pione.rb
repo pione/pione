@@ -131,7 +131,7 @@ require 'pione/transformer/document-transformer'
 require 'pione/resource/basic-resource'
 require 'pione/resource/local'
 require 'pione/resource/ftp'
-require 'pione/resource/dropbox'
+require 'pione/resource/dropbox-resource'
 
 # rule-handler
 require 'pione/rule-handler/basic-handler'

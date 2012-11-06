@@ -112,7 +112,7 @@ module Pione
           # move the file from the working directory to cache
           FileUtils.mv(src, path)
 
-          # make a symbolic link
+          # make a symbolic link from original location to the cache
           FileUtils.symlink(path, src)
 
           # copy from cache to the resource file

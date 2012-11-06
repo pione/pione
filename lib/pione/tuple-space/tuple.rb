@@ -446,7 +446,7 @@ module Pione
 
     define_format [:dry_run, :availability]
 
-    define_format [:attribute, [:key, :String], :value]
+    define_format [:attribute, [:key, String], :value]
 
     # Task is tuple class for representing job of workers.
     class Task

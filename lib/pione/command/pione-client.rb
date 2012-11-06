@@ -81,25 +81,54 @@ module Pione
       def prepare
         @filename = ARGF.filename
 
-        # base uri
+        @tuple_space_server = TupleSpaceServer.new(
+          task_worker_resource: @resource
+        )
+
+        # setup base uri
         case @base_uri.scheme
         when "local"
           FileUtils.makedirs(@base_uri.path)
           @base_uri = @base_uri.absolute
         when "dropbox"
-          Resource::Dropbox.init
-          session = Resource::Dropbox.session
-          get_authorize_url = session.get_authorize_url
-          puts "AUTHORIZING", authorize_url
-          puts "Please visit that web page and hit 'Allow', then hit Enter here."
-          gets
-        end
-        @base_uri = @base_uri.to_s
+          # start session
+          session = nil
+          consumer_key = nil
+          consumer_secret = nil
 
-        @tuple_space_server = TupleSpaceServer.new(
-          task_worker_resource: @resource,
-          base_uri: @base_uri
-        )
+          cache = Pathname.new("~/.pione/dropbox_api.cache").expand_path
+          if cache.exist?
+            session = DropboxSession.deserialize(cache.read)
+            Resource::Dropbox.set_session(session)
+            consumer_key = session.instance_variable_get(:@consumer_key)
+            consumer_secret = session.instance_variable_get(:@consumer_secret)
+          else
+            api = YAML.load(Pathname.new("~/.pione/dropbox_api.yml").expand_path.read)
+            consumer_key = api["key"]
+            consumer_secret = api["secret"]
+            session = DropboxSession.new(consumer_key, consumer_secret)
+            Resource::Dropbox.set_session(session)
+            authorize_url = session.get_authorize_url
+            puts "AUTHORIZING", authorize_url
+            puts "Please visit that web page and hit 'Allow', then hit Enter here."
+            STDIN.gets
+            session.get_access_token
+
+            # cache session
+            cache.open("w+") {|c| c.write session.serialize}
+          end
+
+          # check session state
+          unless session.authorized?
+            abort("We cannot authorize dropbox access to PIONE.")
+          end
+
+          # share access token in tuple space
+          Resource::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
+        end
+
+        @base_uri = @base_uri.to_s
+        @tuple_space_server.set_base_uri(@base_uri.to_s)
       end
 
       def start
