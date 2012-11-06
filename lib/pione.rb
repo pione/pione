@@ -19,6 +19,8 @@ require 'thread'
 require 'monitor'
 require 'uri'
 require 'pathname'
+require 'time'
+
 require 'uuidtools'
 require 'json'
 require 'parslet'
@@ -61,7 +63,7 @@ Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
 
 # uri
 require 'pione/uri/local.rb'
-require 'pione/uri/dropbox.rb'
+require 'pione/uri/dropbox-scheme.rb'
 
 # relay
 require 'pione/relay/transmitter-socket'
@@ -129,6 +131,7 @@ require 'pione/transformer/document-transformer'
 require 'pione/resource/basic-resource'
 require 'pione/resource/local'
 require 'pione/resource/ftp'
+require 'pione/resource/dropbox'
 
 # rule-handler
 require 'pione/rule-handler/basic-handler'
@@ -153,6 +156,7 @@ require 'pione/agent/tuple-space-server-client-life-checker'
 # front
 require 'pione/front/basic-front'
 require 'pione/front/task-worker-owner'
+require 'pione/front/tuple-space-provider-owner'
 require 'pione/front/client-front'
 require 'pione/front/broker-front'
 require 'pione/front/task-worker-front'

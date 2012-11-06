@@ -80,11 +80,11 @@ module Pione
         raise NotImplementedError
       end
 
-      def copy_to(dist)
+      def link_to(dist)
         raise NotImplementedError
       end
 
-      def copy_from(dist)
+      def link_from(dist)
         raise NotImplementedError
       end
     end

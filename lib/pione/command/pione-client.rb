@@ -82,9 +82,17 @@ module Pione
         @filename = ARGF.filename
 
         # base uri
-        if @base_uri.scheme == "local"
+        case @base_uri.scheme
+        when "local"
           FileUtils.makedirs(@base_uri.path)
           @base_uri = @base_uri.absolute
+        when "dropbox"
+          Resource::Dropbox.init
+          session = Resource::Dropbox.session
+          get_authorize_url = session.get_authorize_url
+          puts "AUTHORIZING", authorize_url
+          puts "Please visit that web page and hit 'Allow', then hit Enter here."
+          gets
         end
         @base_uri = @base_uri.to_s
 

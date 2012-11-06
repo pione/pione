@@ -1,6 +1,4 @@
-require 'tmpdir'
 require 'bacon'
-require 'yaml'
 require 'pione'
 
 module TestUtil
@@ -187,7 +185,7 @@ module Pione
 end
 
 module Pione
-  class Agent::Base
+  class Agent::BasicAgent
     include TestUtil
 
     # Fake set_current_state for counting state changes.
