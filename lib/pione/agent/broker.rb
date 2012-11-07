@@ -222,7 +222,7 @@ module Pione
       end
 
       def transit_to_balancing_task_worker
-        @balancer.balance
+       @balancer.balance
       end
 
       def transit_to_checking_tuple_space_servers

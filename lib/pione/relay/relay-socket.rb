@@ -106,7 +106,7 @@ module Pione
         return "relay://#{host}:#{port}", option
       end
 
-      # Accepts clients on server side.
+      # Accepts pione-clients on server side.
       # @api private
       def accept
         begin
@@ -156,11 +156,13 @@ module Pione
             end
 
             # create servers
-            create_transmitter_server(transmitter_id)
-            create_proxy_server(transmitter_id)
+            transmitter_server = create_transmitter_server(transmitter_id)
+            proxy_server = create_proxy_server(transmitter_id)
 
-            # start to provide tuple space
-            Global.relay_front.tuple_space_provider.tuple_space_server = @tuple_space_server
+            # start to provide the proxy server
+            TupleSpaceProvider.instance.add_tuple_space_server(
+              DRb::DRbObject.new_with_uri(proxy_server.uri)
+            )
 
             # create instance
             self.class.new(uri, ssl, @config, true)

@@ -20,6 +20,7 @@ module Pione
         @disconnect_time = Global.tuple_space_receiver_disconnect_time
         @socket = UDPSocket.open
         @socket.bind(Socket::INADDR_ANY, presence_port)
+        @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
         @tuple_space_servers = {}
 
         # agents
@@ -58,12 +59,15 @@ module Pione
 
       def receive_tuple_space_servers
         provider_front = Marshal.load(@socket.recv(1024))
-        tuple_space_server = provider_front.tuple_space_server
-        @tuple_space_servers[tuple_space_server] = Time.now
-        puts "receive UDP packet..." if Pione.debug_mode?
-      rescue DRb::DRbConnError
-        if Pione.debug_mode?
-          puts "tuple space receiver: something bad..."
+        provider_front.tuple_space_servers.each do |tuple_space_server|
+          @tuple_space_servers[tuple_space_server] = Time.now
+        end
+        if Global.show_communication
+          puts "tuple space receiver received %s" % provider_front.__drburi
+        end
+      rescue DRb::DRbConnError => e
+        if Global.show_communication
+          puts "tuple space receiver is something bad... %s" % e
         end
       end
 

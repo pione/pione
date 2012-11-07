@@ -8,7 +8,7 @@ module Pione
       set_command_name "pione-tuple-space-provider"
       set_notifier_uri Proc.new {Global.tuple_space_provider_uri}
 
-      attr_accessor :tuple_space_server
+      attr_accessor :tuple_space_servers
 
       # Creatas a new server. This method assumes to be called from
       # pione-tuple-space-provider command only. So you should not initialize
@@ -18,7 +18,7 @@ module Pione
 
         # set variables
         @presence_port = presence_port
-        @tuple_space_server = nil
+        @tuple_space_servers = []
         @terminated = false
 
         # start agents
@@ -27,6 +27,10 @@ module Pione
 
       def start
         @keeper.start
+      end
+
+      def add_tuple_space_server(tuple_space_server)
+        @tuple_space_servers << tuple_space_server
       end
 
       # Sends empty tuple space server list.
@@ -44,10 +48,9 @@ module Pione
       def send_packet
         @ref ||= Marshal.dump(DRbObject.new(Global.front))
         socket = UDPSocket.open
-        # addr = Socket::INADDR_BROADCAST
-        addr = '192.168.56.255'
+        addr = Socket::INADDR_BROADCAST
         begin
-          if debug_mode?
+          if Global.show_communication
             puts "sent UDP packet %s port %s at %s" % [addr, @presence_port, Time.now]
           end
           # send packet

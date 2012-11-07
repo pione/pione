@@ -97,6 +97,10 @@ module Pione
       # @api private
       def send_request(ref, msg_id, arg, b)
         if @receiver_socket
+          ref = DRbObject.new_with_uri("receiver://%s:%s" % ["localhost", Global.relay_port])
+          #p ref.__drburi if ref.kind_of?(DRbObject)
+          #p msg_id
+          #p arg
           @receiver_msg.send_request(@receiver_socket, ref, msg_id, arg, b)
         else
           @proxy_msg.send_request(@proxy_socket, ref, msg_id, arg, b)

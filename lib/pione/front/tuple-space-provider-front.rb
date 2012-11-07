@@ -14,8 +14,8 @@ module Pione
         tuple_space_provider
       end
 
-      def tuple_space_server
-        tuple_space_provider.tuple_space_server
+      def tuple_space_servers
+        tuple_space_provider.tuple_space_servers
       end
     end
   end

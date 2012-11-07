@@ -37,6 +37,9 @@ module Pione
       }
       tuple_space_interface :write, :validator => Proc.new {|*args|
         args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
+      }, :result => lambda{|t|
+        # don't return raw tuple entry in PIONE
+        nil
       }
       tuple_space_interface :notify
     end

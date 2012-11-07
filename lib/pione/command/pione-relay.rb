@@ -28,7 +28,8 @@ module Pione
       end
 
       def start
-        @provider = Pione::TupleSpaceProvider.instance
+        # wake up tuple space provider process
+        Pione::TupleSpaceProvider.instance
 
         puts DRb.front.uri
         DRb::DRbServer.new(

@@ -185,9 +185,11 @@ module Pione
         sleep 0.1 while not(gen.counter > 0)
       end
 
+      # Wakes up tuple space provider process and push my tuple space server to
+      # it.
       def start_tuple_space_provider
         @provider = Pione::TupleSpaceProvider.instance
-        @provider.tuple_space_server = @tuple_space_server
+        @provider.add_tuple_space_server(@tuple_space_server)
       end
 
       def start_workers

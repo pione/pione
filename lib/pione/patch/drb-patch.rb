@@ -65,7 +65,7 @@ module DRb
         end
         block = load(stream)
         if Global.show_communication
-          puts "end recv_request[%s] %s#%s(%s) on %s" % [req_id, ref ? ref.__drburi : "", msg_id, argv, Process.pid]
+          # puts "end recv_request[%s] %s#%s(%s) on %s" % [req_id, ref ? ref.__drburi : "", msg_id, argv, Process.pid]
         end
         return req_id, ro, msg_id, argv, block
       end
@@ -276,7 +276,6 @@ module DRb
             Thread.current['DRb'] = { 'client' => client, 'server' => self }
             succ, result = invoker.perform
             if !succ && Global.show_communication
-              p result
               result.backtrace.each {|x| puts x}
             end
             # req_id

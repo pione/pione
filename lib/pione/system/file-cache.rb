@@ -127,7 +127,9 @@ module Pione
         # @return [void]
         def shift(old_uri, new_uri)
           if path = @table[old_uri.to_s]
-            FileUtils.symlink(new_uri.path, path, :force => true)
+            if new_uri.scheme == "local"
+              FileUtils.symlink(new_uri.path, path, :force => true)
+            end
             @table[new_uri.to_s] = path
           end
         end
