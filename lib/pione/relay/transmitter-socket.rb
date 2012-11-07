@@ -2,7 +2,7 @@ module Pione
   module Relay
     # TransmitterSocket is a connection layer from PIONE relay to PIONE client.
     class TransmitterSocket < DRb::DRbTCPSocket
-      class TransmitterSocketError; end
+      class TransmitterSocketError < Exception; end
 
       @@receiver_socket = {}
       @@proxy_socket = {}

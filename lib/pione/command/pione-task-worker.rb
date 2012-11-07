@@ -42,7 +42,7 @@ module Pione
         @agent = Pione::Agent[:task_worker].new(@tuple_space_server)
 
         # connect caller front
-        @caller_front.add_task_worker_front(self, @connection_id)
+        @caller_front.add_task_worker_front(Global.front, @connection_id)
 
         # get base uri
         if @tuple_space_server.base_uri.scheme == "dropbox"
