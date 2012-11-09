@@ -42,8 +42,10 @@ module Pione
           @broker.tuple_space_servers.each do |ts|
             rev = revision.has_key?(ts) ? revision[ts] : 0
             current = ts.current_task_worker_size + rev
-            resource = ts.task_worker_resource.to_f
-            ratio[ts] = current / resource
+            resource = ts.task_worker_resource
+            # minimum resource is 1
+            resource = 1.0 unless resource > 0
+            ratio[ts] = current / resource.to_f
           end
           return ratio
         end

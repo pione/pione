@@ -16,7 +16,7 @@ module Pione
       # Setups font server.
       # @return [void]
       def setup_front
-        Global.set_front(create_front)
+        Global.front = create_front
       end
 
       # Creates a front server. This method should be overridden in subclasses.

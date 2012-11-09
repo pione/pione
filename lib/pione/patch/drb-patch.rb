@@ -7,6 +7,39 @@ module DRb
   end
   module_function :waiter_table
 
+  # module DRbProtocol
+  #   def open(uri, config, first=true)
+  #     @protocol.each do |prot|
+  #       begin
+  #         return prot.open(uri, config)
+  #       rescue DRbBadScheme
+  #       rescue DRbConnError
+  #         raise($!)
+  #       rescue => e
+  #         p e
+  #         e.backtrace.each do |line|
+  #           puts line
+  #         end
+  #         raise DRbConnError.new("#{uri} - #{$!.inspect}")
+  #       end
+  #     end
+  #     if first && (config[:auto_load] != false)
+  #       auto_load(uri, config)
+  #       return open(uri, config, false)
+  #     end
+  #     raise DRbBadURI, 'can\'t parse uri:' + uri
+  #   end
+  #   module_function :open
+  # end
+
+  class DRbConnError
+    attr_reader :args
+    def initialize(*args)
+      super
+      @args = args
+    end
+  end
+
   class DRbObject
     def __connect
       DRbConn.open(@uri) {}
@@ -74,6 +107,13 @@ module DRb
     def send_reply(req_id, stream, succ, result)
       if Global.show_communication
         puts "start send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
+        unless succ
+          p result
+          result.backtrace.each do |line|
+            puts line
+          end
+          p result.args
+        end
       end
       @send_reply_lock.synchronize do
         stream.write(dump(req_id) +dump(succ) + dump(result, !succ))

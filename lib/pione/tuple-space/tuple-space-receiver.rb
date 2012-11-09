@@ -22,6 +22,7 @@ module Pione
         @socket.bind(Socket::INADDR_ANY, presence_port)
         @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
         @tuple_space_servers = {}
+        @mutex = Mutex.new
 
         # agents
         @receiver = Agent::TrivialRoutineWorker.new(Proc.new{receive_tuple_space_servers}, 0)
@@ -41,7 +42,9 @@ module Pione
       end
 
       def tuple_space_servers
-        @tuple_space_servers.keys
+        @mutex.synchronize do
+          @tuple_space_servers.keys
+        end
       end
 
       # Send empty tuple space server list.
@@ -59,8 +62,10 @@ module Pione
 
       def receive_tuple_space_servers
         provider_front = Marshal.load(@socket.recv(1024))
-        provider_front.tuple_space_servers.each do |tuple_space_server|
-          @tuple_space_servers[tuple_space_server] = Time.now
+        @mutex.synchronize do
+          provider_front.tuple_space_servers.each do |tuple_space_server|
+            @tuple_space_servers[tuple_space_server] = Time.now
+          end
         end
         if Global.show_communication
           puts "tuple space receiver received %s" % provider_front.__drburi
@@ -72,26 +77,32 @@ module Pione
       end
 
       def update_tuple_space_servers
-        @tuple_space_servers.delete_if do |server, time|
-          begin
-            server.uuid
-            false
-          rescue
-            true
+        @mutex.synchronize do
+          @tuple_space_servers.delete_if do |server, time|
+            begin
+              server.uuid
+              false
+            rescue
+              true
+            end
           end
         end
 
         # make drop target
         drop_target = []
-        @tuple_space_servers.each do |ts_server, time|
-          if (Time.now - time) > @disconnect_time
-            drop_target << ts_server
+        @mutex.synchronize do
+          @tuple_space_servers.each do |ts_server, time|
+            if (Time.now - time) > @disconnect_time
+              drop_target << ts_server
+            end
           end
         end
 
         # drop targets
         drop_target.each do |key|
-          @tuple_space_servers.delete(key)
+          @mutex.synchronize do
+            @tuple_space_servers.delete(key)
+          end
         end
 
         # update
