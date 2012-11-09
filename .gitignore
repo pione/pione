@@ -8,6 +8,5 @@ doc
 .yardoc
 vendor/bundle
 .bundle
-Gemfile.lock
 pkg
 \#*
