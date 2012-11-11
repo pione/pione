@@ -5,6 +5,12 @@ module Pione
         "--task-worker %s" % @resource
       end
 
+      set_program_message <<TXT
+Runs the broker to launch task workers.
+TXT
+
+      use_option_module CommandOption::TupleSpaceReceiverOption
+
       define_option(
         '-r n',
         '--worker-resource n',

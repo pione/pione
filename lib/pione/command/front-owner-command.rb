@@ -1,8 +1,6 @@
 module Pione
   module Command
-    class FrontOwner < BasicCommand
-      attr_reader :front
-
+    class FrontOwnerCommand < BasicCommand
       # Runs the command.
       def run
         parse_options

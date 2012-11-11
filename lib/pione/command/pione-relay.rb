@@ -1,6 +1,6 @@
 module Pione
   module Command
-    class PioneRelay < FrontOwner
+    class PioneRelay < FrontOwnerCommand
       set_program_name("pione-relay") do
         "--relay-port %s" % [@relay_port]
       end
@@ -33,7 +33,7 @@ module Pione
 
         puts DRb.front.uri
         DRb::DRbServer.new(
-          "relay://localhost:%s" % @relay_port,
+          "relay://:%s" % @relay_port,
           nil,
           {:SSLCertName => Global.relay_ssl_certname}
         )

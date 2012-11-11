@@ -42,6 +42,7 @@ require 'pione/util/terminal'
 require 'pione/util/message'
 require 'pione/util/log'
 require 'pione/util/waiter-table'
+require 'pione/util/error-report'
 
 # patch
 require 'pione/patch/array-patch'
@@ -60,10 +61,13 @@ require 'pione/system/document'
 require 'pione/system/file-cache'
 
 Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
+Pione.module_exec {const_set(:Global, Pione::System::Global)}
 
-# uri
-require 'pione/uri/local.rb'
-require 'pione/uri/dropbox-scheme.rb'
+# uri-scheme
+require 'pione/uri-scheme/basic-scheme'
+require 'pione/uri-scheme/local-scheme'
+require 'pione/uri-scheme/dropbox-scheme'
+require 'pione/uri-scheme/broadcast-scheme'
 
 # relay
 require 'pione/relay/transmitter-socket'
@@ -164,9 +168,19 @@ require 'pione/front/tuple-space-provider-front'
 require 'pione/front/tuple-space-receiver-front'
 require 'pione/front/relay-front'
 
+# command-option
+require 'pione/command-option/basic-option'
+require 'pione/command-option/common-option'
+require 'pione/command-option/daemon-option'
+require 'pione/command-option/child-process-option'
+require 'pione/command-option/presence-notifier-option'
+require 'pione/command-option/tuple-space-provider-option'
+require 'pione/command-option/tuple-space-provider-owner-option'
+require 'pione/command-option/tuple-space-receiver-option'
+
 # command
 require 'pione/command/basic-command'
-require 'pione/command/front-owner'
+require 'pione/command/front-owner-command'
 require 'pione/command/daemon-process'
 require 'pione/command/child-process'
 require 'pione/command/pione-client'

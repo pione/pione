@@ -1,69 +1,58 @@
 module Pione
   module Command
     # OptionInterface provides methods for defining options.
-    module OptionInterface
-      # Makes options list.
-      def self.extended(klass)
-        klass.instance_variable_set(:@options, [])
+    module ClassInterface
+      # Returns the program name.
+      def program_name
+        [@program_name, @program_name_block]
       end
 
-      # Defines an option for the command.
-      def define_option(*args, &b)
-        @options << [args, b]
+      # Sets progaram name and visible options.
+      def set_program_name(program_name, &b)
+        @program_name = program_name
+        @program_name_block = block_given? ? b : Proc.new{""}
       end
 
-      # Returns options.
-      def options
-        @options
+      # Returns the program message.
+      def program_message
+        @program_message
+      end
+
+      # Sets program message.
+      def set_program_message(message)
+        @program_message = message
+      end
+    end
+
+    module InstanceInterface
+      # Returns program name.
+      # @return [String]
+      #   program name
+      def program_name
+        name, b = self.class.program_name
+        tail = self.instance_exec(&b)
+        "%s %s" % [name, tail]
+      end
+
+      # Returns program message.
+      # @return [String]
+      #   program message
+      def program_message
+        self.class.program_message
       end
     end
 
     # BasicCommand is a base class for PIONE commands.
     class BasicCommand < PioneObject
-      extend OptionInterface
-
-      #
-      # common options
-      #
-
-      define_option('-d', '--debug', "debug mode") do |name|
-        Pione.debug_mode = true
-      end
-
-      define_option('--show-communication') do |show|
-        Global.show_communication = true
-      end
-
-      define_option('--[no-]color', 'color mode') do |str|
-        bool = nil
-        bool = true if str == "true"
-        bool = false if str == "false"
-        if bool.nil?
-          puts "invalid color option: %s" % bool
-          exit
-        end
-        Terminal.color_mode = bool
-      end
+      extend ClassInterface
+      include InstanceInterface
+      extend CommandOption::OptionInterface
+      use_option_module CommandOption::CommonOption
 
       # @api private
       def self.inherited(subclass)
-        opts = options.clone
-        subclass.instance_eval { @options = opts }
-      end
-
-      # @api private
-      def self.program_name
-        [@program_name, @b]
-      end
-
-      # Sets progaram name and visible options.
-      def self.set_program_name(program_name, &b)
-        @program_name = program_name
-        if block_given?
-          @b = b
-        else
-          @b = Proc.new{""}
-        end
+        opts = command_options.clone
+        subclass.instance_eval { @command_options = opts }
       end
 
       # Runs the command.
@@ -82,21 +71,20 @@ module Pione
 
       private
 
-      def program_name
-        name, b = self.class.program_name
-        tail = self.instance_exec(&b)
-        "%s %s" % [name, tail]
-      end
-
       # Parses options.
       # @return [void]
       def parse_options
-        OptionParser.new do |opt|
-          self.class.options.each do |args, b|
+        parser = OptionParser.new do |opt|
+          opt.banner = "Usage: %s [options]" % opt.program_name
+          opt.banner << "\n" + program_message if program_message
+
+          self.class.command_options.values.sort.each do |args, b|
             opt.on(*args, Proc.new{|*args| self.instance_exec(*args, &b)})
           end
           opt.version = Pione::VERSION
-        end.parse!(ARGV)
+        end
+
+        parser.parse!(ARGV)
       rescue OptionParser::InvalidOption => e
         e.args.each {|arg| $stderr.puts "Unknown option: #{arg}" }
         abort
@@ -115,7 +103,7 @@ module Pione
       # before command activity.
       # @return [void]
       def prepare
-        # do nothing
+        Signal.trap(:INT) {terminate}
       end
 
       # Starts the command activity. This method should be overridden in subclasses.
@@ -125,7 +113,7 @@ module Pione
       end
 
       def terminate
-        # do nothing
+        exit
       end
     end
   end

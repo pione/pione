@@ -44,6 +44,12 @@ module Pione
           1
         end
       end
+
+      # Parses IP address string. Address string is written with port number.
+      # @return [Array<String, Integer>]
+      def parse_ip_address(s)
+        ":"
+      end
     end
 
     extend Misc

@@ -1,9 +1,7 @@
 module Pione
   module Command
-    class DaemonProcess < FrontOwner
-      define_option("--daemon", "enable daemon mode") do
-        @daemon = true
-      end
+    class DaemonProcess < FrontOwnerCommand
+      use_option_module CommandOption::DaemonOption
 
       def initialize
         super

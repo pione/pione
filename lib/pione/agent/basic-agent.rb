@@ -213,7 +213,10 @@ module Pione
         # abort the agent when called by other thread
         abort unless @running_thread == Thread.current
         # transit to terminated
-        res = call_transition_method(:terminated)
+        begin
+          res = call_transition_method(:terminated)
+        rescue DRb::DRbConnError
+        end
         # set agent state
         set_current_state(:terminated)
         return res

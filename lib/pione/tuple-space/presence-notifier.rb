@@ -27,14 +27,14 @@ module Pione
       def self.spawn
         user_message "create process for %s" % command_name
         # create provider process
-        args = [
-          command_name,
-          '--presence-port', Global.presence_port.to_s,
-          '--caller-front', Global.front.uri,
-        ]
-        args << "--relay-uri" << Global.relay_uri if Global.relay_uri
-        args << "-d" if Pione.debug_mode?
+        args = [command_name, '--parent-front', Global.front.uri]
+        args << "--debug" if Pione.debug_mode?
         args << "--show-communication" if Global.show_communication
+        args << "--show-presence-notifier" if Global.show_presence_notifier
+        if self == TupleSpaceReceiver
+          args << "--presence-port"
+          args << Global.presence_port.to_s
+        end
         pid = Process.spawn(*args)
         thread = Process.detach(pid)
         # wait that the provider starts up

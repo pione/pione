@@ -11,7 +11,7 @@ module Pione
       include RuleDefinitionParser
 
       def parse(str)
-        super(str.gsub(/^#.*/, ""))
+        super(str.gsub(/^(?!#!)#.*/, ""))
       end
 
       #

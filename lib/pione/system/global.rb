@@ -78,7 +78,11 @@ module Pione
       # debug
       #
 
+      # show distributed object communication
       define_item(:show_communication, false, false)
+
+      # show presence notifier
+      define_item(:show_presence_notifier, false, false)
 
       #
       # system
@@ -108,6 +112,18 @@ module Pione
       # working directory
       define_item(:working_directory, false) do
         Pathname.new(Dir.mktmpdir(nil, Global.working_directory_root))
+      end
+
+      # root of working directory
+      define_item(:file_cache_directory_root, true) do
+        Pathname.new(File.join(Dir.tmpdir, "pione-file-cache")).tap {|path|
+          path.mkpath unless path.exist?
+        }
+      end
+
+      # working directory
+      define_item(:file_cache_directory, false) do
+        Pathname.new(Dir.mktmpdir(nil, Global.file_cache_directory_root))
       end
 
       # system front server
@@ -175,6 +191,11 @@ module Pione
           Global.tuple_space_provider_front_port_range_begin,
           Global.tuple_space_provider_front_port_range_end
         )
+      end
+
+      # broadcast addresses for presence notification
+      define_item(:tuple_space_provider_broadcast_addresses, true) do
+        [URI.parse("broadcast://%s:%s" % ["255.255.255.255", Global.presence_port])]
       end
 
       #

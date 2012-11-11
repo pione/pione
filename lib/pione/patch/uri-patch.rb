@@ -9,15 +9,24 @@ module URI
   class Parser
     alias :orig_split :split
 
-    # special split method for local scheme.
+    # Handles to split special schemes's URI.
     def split(uri)
-      if uri.split(":").first == "local"
-        scheme = "local"
+      scheme = uri.split(":").first
+
+      # special schemes
+      case scheme
+      when "local"
         path = uri[6..-1]
         return [scheme, nil, nil, nil, nil, path, nil, nil, nil]
-      else
-        return orig_split(uri)
+      when "broadcast"
+        rest = uri[10..-1]
+        if rest == "//"
+          return [scheme, nil, nil, nil, nil, nil, nil, nil, nil]
+        end
       end
+
+      # other case
+      return orig_split(uri)
     end
   end
 end

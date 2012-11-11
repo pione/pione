@@ -38,8 +38,8 @@ module Pione
       end
 
       def initialize(uri)
-        @uri = uri.kind_of?(::URI::Generic) ? uri : ::URI.parse(uri)
-        raise ArgumentError unless @uri.kind_of?(Pione::URI::Dropbox)
+        @uri = uri.kind_of?(URI::Generic) ? uri : URI.parse(uri)
+        raise ArgumentError unless @uri.kind_of?(Pione::URIScheme::DropboxScheme)
         @path = uri.path
         @client = DropboxClient.new(self.class.session, "app_folder")
       end

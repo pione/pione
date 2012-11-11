@@ -1,27 +1,35 @@
 module Pione
   module Command
-    class ChildProcess < FrontOwner
-      define_option('--caller-front uri') do |uri|
-        @caller_front = DRbObject.new_with_uri(uri)
-      end
+    class ChildProcess < FrontOwnerCommand
+      use_option_module CommandOption::ChildProcessOption
+      attr_reader :parent_front
 
-      attr_reader :caller_front
-
+      # @api private
       def validate_options
-        abort("error: no caller front address") if @caller_front.nil?
+        if not(@no_parent_mode) and @parent_front.nil?
+          abort("error: no caller front address")
+        end
       end
 
+      # @api private
       def prepare
-        @watchdog = Agent::TrivialRoutineWorker.new(Proc.new{ terminate if Process.ppid == 1 }, 3)
+        super
+
+        # "ppid == 1" means the parent is dead
+        terminater = Proc.new{ terminate if Process.ppid == 1 }
+
+        # watch that the parent process exists
+        @watchdog = Agent::TrivialRoutineWorker.new(terminater, 3)
       end
 
+      # @api private
       def start
         @watchdog.start
       end
 
       def terminate
+        @watchdog.terminate
         super
-        @watchdog
       end
     end
   end

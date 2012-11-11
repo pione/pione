@@ -13,11 +13,10 @@ module Pione
       # Creatas a new server. This method assumes to be called from
       # pione-tuple-space-provider command only. So you should not initialize
       # server directly.
-      def initialize(presence_port)
-        super()
+      def initialize
+        super
 
         # set variables
-        @presence_port = presence_port
         @tuple_space_servers = []
         @terminated = false
 
@@ -45,21 +44,29 @@ module Pione
       private
 
       # Sends presence notification to tuple space receivers as UDP packet.
+      # @return [void]
       def send_packet
+        # setup reference data
         @ref ||= Marshal.dump(DRbObject.new(Global.front))
+        # open a socket
         socket = UDPSocket.open
-        addr = Socket::INADDR_BROADCAST
+        # address to send broadcast
+        addresses = Global.tuple_space_provider_broadcast_addresses
         begin
-          if Global.show_communication
-            puts "sent UDP packet %s port %s at %s" % [addr, @presence_port, Time.now]
+          if Global.show_presence_notifier
+            args = [Global.front.uri, addresses.join(", "), Time.now]
+            puts "sent presence notifier from %s to %s at %s" % args
           end
           # send packet
-          # FIXME: multicast or direct boardcast
           socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
-          socket.send(@ref, 0, addr, @presence_port)
-        rescue
-          nil
+          addresses.each {|addr| socket.send(@ref, 0, addr.host, addr.port)}
+        rescue => e
+          if Global.show_presence_notifier
+            puts "something is bad..."
+            Util::ErrorReport.print(e)
+          end
         ensure
+          # close the socket always
           socket.close
         end
       end

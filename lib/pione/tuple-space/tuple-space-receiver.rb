@@ -13,13 +13,13 @@ module Pione
       attr_accessor :tuple_space_server
       attr_accessor :drb_service
 
-      def initialize(presence_port)
+      def initialize
         @receiver_thread = nil
         @updater_thread = nil
         @brokers = []
         @disconnect_time = Global.tuple_space_receiver_disconnect_time
         @socket = UDPSocket.open
-        @socket.bind(Socket::INADDR_ANY, presence_port)
+        @socket.bind(Socket::INADDR_ANY, Global.presence_port)
         @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
         @tuple_space_servers = {}
         @mutex = Mutex.new
@@ -67,12 +67,13 @@ module Pione
             @tuple_space_servers[tuple_space_server] = Time.now
           end
         end
-        if Global.show_communication
-          puts "tuple space receiver received %s" % provider_front.__drburi
+        if Global.show_presence_notifier
+          puts "presence notifier was received %s" % provider_front.__drburi
         end
       rescue DRb::DRbConnError => e
-        if Global.show_communication
-          puts "tuple space receiver is something bad... %s" % e
+        if Global.show_presence_notifier
+          puts "tuple space receiver is something bad..."
+          Util::ErrorReport.print(e)
         end
       end
 

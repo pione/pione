@@ -25,10 +25,10 @@ module Pione
         @monitor.synchronize do
           args = [
             "pione-task-worker",
-            "--caller-front", front.uri,
+            "--parent-front", Global.front.uri,
             "--connection-id", connection_id
           ]
-          args << "-d" if Pione.debug_mode?
+          args << "--debug" if Pione.debug_mode?
           args << "--show-communication" if Global.show_communication
           pid = Process.spawn(*args)
           thread = Process.detach(pid)

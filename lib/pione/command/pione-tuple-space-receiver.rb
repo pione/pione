@@ -2,12 +2,17 @@ module Pione
   module Command
     class PioneTupleSpaceReceiver < ChildProcess
       set_program_name("pione-tuple-space-receiver") do
-        "--presence-port %s --caller-front %s" % [@presence_port, @caller_front.uri]
+        parent_front = @no_parent_mode ? "nil" : @parent_front.uri
+        "<front=%s, parent=%s>" % [Global.front.uri, parent_front]
       end
 
-      define_option("--presence-port port", "presence port number") do |port|
-        @presence_port = port.to_i
-      end
+      set_program_message <<TXT
+Runs tuple space receiver process for receiving tuple space presence
+notifier. This command is launched by other processes like pione-broker
+normally, but you can force to start by calling with --no-parent option.
+TXT
+
+      use_option_module CommandOption::TupleSpaceReceiverOption
 
       attr_reader :tuple_space_receiver
 
@@ -17,7 +22,7 @@ module Pione
 
       def prepare
         super
-        @tuple_space_receiver = TupleSpaceReceiver.new(@presence_port)
+        @tuple_space_receiver = TupleSpaceReceiver.new
       end
 
       def start
@@ -25,13 +30,21 @@ module Pione
 
         # start provider activity
         @tuple_space_receiver.start
-        # set my uri to caller front as its provider
-        @caller_front.set_tuple_space_receiver(Global.front.uri)
+
+        # set my uri to parent front as its provider
+        unless @no_parent_mode
+          @parent_front.set_tuple_space_receiver(Global.front.uri)
+        end
+
         DRb.thread.join
       end
 
       def terminate
-        @tuple_space_receiver.terminate
+        puts "terminate %s" % program_name
+        begin
+          @tuple_space_receiver.terminate
+        rescue DRb::DRbConnError
+        end
         super
       end
     end

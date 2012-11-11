@@ -1,51 +1,59 @@
 module Pione
   module Command
-    class PioneClient < FrontOwner
+    class PioneClient < FrontOwnerCommand
+      use_option_module CommandOption::TupleSpaceProviderOwnerOption
+
       set_program_name("pione-client") do
         [@filename, "-b %s" % @base_uri, @stream ? "--stream" : ""].join(" ")
       end
 
-      define_option('-i dir', '--input-dir=dir') do |dir|
+      set_program_message <<TXT
+Requests to process PIONE document.
+TXT
+
+      define_option('-i DIR', '--input-dir=DIR', 'set input data directory') do |dir|
         @input_dir = dir
       end
 
-      define_option('-b uri', '--base-uri=uri', 'base uri') do |uri|
+      define_option('-b URI', '--base-uri=URI', 'set base URI') do |uri|
         @base_uri = ::URI.parse(uri)
       end
 
-      define_option('-l path', '--log=path', 'log path') do |path|
+      define_option('--log=PATH', 'set log path') do |path|
         @log_path = path
       end
 
-      define_option('-s', '--stream') do
+      define_option('--stream', 'turn on stream mode') do
         @stream = true
       end
 
-      define_option('-r n', '--resource=n') do |n|
+      define_option('-r N', '--resource=N', 'set resource number') do |n|
         @resource = n.to_i
       end
 
-      define_option('--params="{Var:1,...}"') do |str|
-        @params = DocumentTransformer.new.apply(
-          DocumentParser.new.parameters.parse(str)
-        )
+      define_option('--params="{Var:1,...}"', "set &main:Main rule's parameters") do |str|
+        begin
+          @params = DocumentTransformer.new.apply(
+            DocumentParser.new.parameters.parse(str)
+          )
+        rescue Parslet::ParseFailed => e
+          puts "invalid parameters: " + str
+          Util::ErrorReport.print(e)
+          abort
+        end
       end
 
-      define_option('--stand-alone') do
+      define_option('--stand-alone', 'turn on stand alone mode') do
         @stand_alone = true
         @without_tuple_space_provider = true
       end
 
-      define_option('--dry-run') do |b|
+      define_option('--dry-run', 'turn on dry run mode') do |b|
         @dry_run = true
       end
 
-      define_option('--relay uri') do |uri|
+      define_option('--relay URI', 'turn on relay mode and set relay address') do |uri|
         @relay = uri
-      end
-
-      define_option('--without-tuple-space-provider') do
-        @without_tuple_space_provider = true
       end
 
       attr_reader :tuple_space_server
@@ -53,7 +61,7 @@ module Pione
       def initialize
         super()
         @input_dir = nil
-        @base_uri = ::URI.parse("local:./output/")
+        @base_uri = URI.parse("local:./output/")
         @log_path = "log.txt"
         @stream = false
         @params = Parameters.empty
@@ -79,6 +87,8 @@ module Pione
       end
 
       def prepare
+        super
+
         @filename = ARGF.filename
 
         @tuple_space_server = TupleSpaceServer.new(

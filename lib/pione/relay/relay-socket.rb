@@ -173,8 +173,7 @@ module Pione
           soc.close
           if Global.show_communication
             puts "closed relay socket"
-            puts "%s: %s" % [e.class, e.message]
-            caller.each {|line| puts "    %s" % line}
+            Util::ErrorReport.print(e)
           end
           retry
         end

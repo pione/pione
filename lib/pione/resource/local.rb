@@ -7,7 +7,7 @@ module Pione
       #   URI of a local path
       def initialize(uri)
         @uri = uri.kind_of?(::URI::Generic) ? uri : ::URI.parse(uri)
-        raise ArgumentError unless @uri.kind_of?(URI::Local)
+        raise ArgumentError unless @uri.kind_of?(URIScheme::LocalScheme)
         @path = Pathname.new(uri.path)
       end
 

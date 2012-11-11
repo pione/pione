@@ -1,5 +1,5 @@
 module Pione
-  module URI
+  module URIScheme
     # Local represents local file system path.
     # @example
     #   # absolute path form
@@ -7,7 +7,7 @@ module Pione
     # @example
     #   # relative path form
     #   local:./test.txt
-    class Local < ::URI::Generic
+    class LocalScheme < BasicScheme('local')
       # @api private
       COMPONENT = [:scheme, :path]
 
@@ -34,11 +34,8 @@ module Pione
       # @return [::URI]
       #   URI with absolute path
       def absolute
-        ::URI.parse("%s:%s/" % [scheme, File.realpath(path)])
+        URI.parse("%s:%s/" % [scheme, File.realpath(path)])
       end
     end
-
-    # install scheme
-    ::URI.install_scheme('LOCAL', Local)
   end
 end

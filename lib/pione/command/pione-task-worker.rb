@@ -4,10 +4,19 @@ module Pione
     # starts a task worker agent with tuple space server.
     class PioneTaskWorker < ChildProcess
       set_program_name("pione-task-worker") do
-        "--caller-front %s --connection-id %s" % [@caller_front.uri, @connection_id]
+        parent_front = @no_parent_mode ? "nil" : @parent_front.uri
+        "<front=%s, parent-front=%s>" % [Global.front.uri, parent_front]
       end
 
-      define_option('--connection-id id') do |id|
+      set_program_message <<TXT
+Runs task worker process. This command is launched by other processes like
+pione-client or pione-broker.
+TXT
+
+      use_option_module CommandOption::ChildProcessOption
+
+      # --connection-id
+      define_option('--connection-id=ID', 'set connection id') do |id|
         @connection_id = id
       end
 
@@ -25,30 +34,32 @@ module Pione
         super
 
         # check requisite options
-        abort("error: no connection id") if @connection_id.nil?
+        if @connection_id.nil?
+          abort("error: no connection id")
+        end
 
-        # get the caller front server
+        # get the parent front server
         begin
-          @caller_front.uuid
+          @parent_front.uuid
         rescue => e
-          abort("pione-task-worker cannot get the caller front server: %s" % e)
+          abort("pione-task-worker cannot get the parent front server: %s" % e)
         end
       end
 
       def prepare
         super
 
-        @tuple_space_server = @caller_front.get_tuple_space_server(@connection_id)
+        @tuple_space_server = @parent_front.get_tuple_space_server(@connection_id)
         @agent = Pione::Agent[:task_worker].new(@tuple_space_server)
 
         # connect caller front
-        @caller_front.add_task_worker_front(Global.front, @connection_id)
+        @parent_front.add_task_worker_front(Global.front, @connection_id)
 
         # get base uri
         if @tuple_space_server.base_uri.scheme == "dropbox"
           Resource::Dropbox.init(@tuple_space_server)
           unless Resource::Dropbox.ready?
-            abort("You aren't ready to access dropbox.")
+            abort("You aren't ready to access Dropbox.")
           end
         end
       end
@@ -78,8 +89,11 @@ module Pione
           sleep 0.1
         end
 
-        # disconnect caller front
-        @caller_front.remove_task_worker_front(self, @connection_id)
+        # disconnect parent front
+        begin
+          @parent_front.remove_task_worker_front(self, @connection_id)
+        rescue DRb::DRbConnError
+        end
         @terminated = true
 
         super

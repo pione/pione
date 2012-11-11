@@ -139,7 +139,7 @@ module Pione
         # Makes new cache path.
         # @api private
         def prepare_cache_path
-          cache = Tempfile.new("", @tmpdir)
+          cache = Tempfile.new("", Global.file_cache_directory)
           path = cache.path
           cache.close(true)
           return path
