@@ -81,7 +81,7 @@ module Pione
         # Creates a method.
         def initialize
           @table = {}
-          @tmpdir = Dir.mktmpdir("pione-file-cache")
+          @tmpdir = Global.file_cache_directory
         end
 
         # Gets cached data path from the uri resource.

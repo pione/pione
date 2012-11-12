@@ -104,7 +104,7 @@ module Pione
 
       # root of working directory
       define_item(:working_directory_root, true) do
-        Pathname.new(File.join(Dir.tmpdir, "pione-wd")).tap {|path|
+        Pathname.new(File.join(Dir.tmpdir, "pione-wd-" + Etc.getlogin)).tap {|path|
           path.mkpath unless path.exist?
         }
       end
@@ -116,7 +116,7 @@ module Pione
 
       # root of working directory
       define_item(:file_cache_directory_root, true) do
-        Pathname.new(File.join(Dir.tmpdir, "pione-file-cache")).tap {|path|
+        Pathname.new(File.join(Dir.tmpdir, "pione-file-cache-" + Etc.getlogin)).tap {|path|
           path.mkpath unless path.exist?
         }
       end
