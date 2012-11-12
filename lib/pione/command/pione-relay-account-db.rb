@@ -3,6 +3,10 @@ module Pione
     class PioneRelayAccountDB < BasicCommand
       set_program_name("pione-relay-account-db")
 
+      set_program_message <<TXT
+Add, delete, or show your accounts of relay servers.
+TXT
+
       define_option("-a", "--add", "add an account") do
         @action = :add
       end

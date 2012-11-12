@@ -3,6 +3,10 @@ module Pione
     class PioneRelayClientDB < BasicCommand
       set_program_name("pione-relay-client-db")
 
+      set_program_message <<TXT
+Add, delete, or show clients in this relay server.
+TXT
+
       define_option("-a", "--add", "add a client") do
         @action = :add
       end
