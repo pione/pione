@@ -153,6 +153,15 @@ TXT
         terminate
       end
 
+      def terminate
+        if @tuple_space_provider
+          @tuple_space_provider.terminate
+        end
+        super
+      end
+
+      private
+
       def read_process_document
         # process definition document is not found.
         if ARGF.filename == "-"
@@ -198,8 +207,8 @@ TXT
       # Wakes up tuple space provider process and push my tuple space server to
       # it.
       def start_tuple_space_provider
-        @provider = Pione::TupleSpaceProvider.instance
-        @provider.add_tuple_space_server(@tuple_space_server)
+        @tuple_space_provider = Pione::TupleSpaceProvider.instance
+        @tuple_space_provider.add_tuple_space_server(@tuple_space_server)
       end
 
       def start_workers
