@@ -5,22 +5,25 @@ module Pione
         "--relay-port %s" % [@relay_port]
       end
 
-      define_option("--realm name", "relay realm name for client authentification") do |name|
+      set_program_message <<TXT
+Runs relay process for connecting between clients and brokers.
+TXT
+
+      define_option("--realm name", "set relay realm name for client authentification") do |name|
         Global.relay_realm = name
       end
 
-      define_option("--relay-port port", "relay port") do |port|
+      define_option("--relay-port port", "set relay port") do |port|
         @relay_port = port
       end
 
       def initialize
-        # require 'drb/gw'
         @relay_port = Global.relay_port
       end
 
       def validate_options
-        abort("no realm name") if Global.relay_realm.nil? or Global.relay_realm.empty?
-        abort("no relay port") unless @relay_port
+        abort("error: no realm name") if Global.relay_realm.nil? or Global.relay_realm.empty?
+        abort("error: no relay port") unless @relay_port
       end
 
       def create_front
