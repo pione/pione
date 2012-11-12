@@ -31,7 +31,7 @@ end
 #
 def print_result(str)
   begin
-    puts Transformer.new.apply(Parser.new.parse(str))[0].eval($vtable).textize
+    puts DocumentTransformer.new.apply(DocumentParser.new.parse(str))[0].eval($vtable).textize
   rescue Pione::Parser::ParserError, Parslet::UnconsumedInput, Parslet::ParseFailed => e
     error("Pione syntax error", e)
   rescue Pione::Model::PioneModelTypeError,
@@ -95,7 +95,7 @@ if $readline_mode
   while buf = Readline.readline(Terminal.red("> "), true)
     if /[^\s]/.match(buf)
       # don't record if previous line is the same
-      if Readline::HISTORY[-2] == buf
+      if Readline::HISTORY.size > 1 && Readline::HISTORY[-2] == buf
         Readline::HISTORY.pop
       end
       # print parsing result
