@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 # -*- ruby -*-
 
+require 'pione'
 require 'optparse'
-require 'pione/common'
 require 'pp'
 
 include Pione
@@ -30,11 +30,11 @@ end
 def print_result(str)
   begin
     puts Terminal.green("syntax:")
-    stree = Parser.new.parse(str).first
+    stree = DocumentParser.new.parse(str).first
     pp stree
     if $transform
       puts Terminal.green("model:")
-      pp Transformer.new.apply(stree)
+      pp DocumentTransformer.new.apply(stree)
     end
   rescue Pione::Parser::ParserError, Parslet::UnconsumedInput, Parslet::ParseFailed => e
     msg = "Pione syntax error: %s (%s)" % [e.message, e.class.name]
@@ -88,7 +88,7 @@ if $readline_mode
   while buf = Readline.readline(Terminal.red("> "), true)
     if /[^\s]/.match(buf)
       # don't record if previous line is the same
-      if Readline::HISTORY[-2] == buf
+      if Readline::HISTORY > 1 && Readline::HISTORY[-2] == buf
         Readline::HISTORY.pop
       end
       # print parsing result
