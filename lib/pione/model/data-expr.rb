@@ -168,7 +168,7 @@ module Pione::Model
 
     # @api private
     def textize
-      "data_expr(\"#{@name}\",:#{@modifier},[%s]>" % [
+      "data_expr(\"#{@name}\",:#{@modifier},[%s])" % [
         @exceptions.map{|exc| exc.textize}.join(",")
       ]
     end
