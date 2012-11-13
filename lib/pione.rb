@@ -194,6 +194,7 @@ require 'pione/command/pione-relay'
 require 'pione/command/pione-relay-client-db'
 require 'pione/command/pione-relay-account-db'
 require 'pione/command/pione-clean'
+require 'pione/command/pione-syntax-checker'
 
 
 #
