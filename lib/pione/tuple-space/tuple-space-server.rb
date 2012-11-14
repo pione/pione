@@ -61,7 +61,6 @@ module Pione
         write(Tuple[:task_worker_resource].new(number: resource))
 
         @terminated = false
-        @provider_options = {} ## FIXME
 
         # base uri
         if data.has_key?(:base_uri)

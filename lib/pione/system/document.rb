@@ -54,8 +54,10 @@ module Pione
       # Returns the named rule.
       # @param [String] name
       #   rule path
+      # @return [Pione::Model::Rule]
       def [](name)
-        @rules[name].params.merge(@params)
+        @rules[name].params.merge!(@params)
+        @rules[name]
       end
 
       # Returns main rule of main package.

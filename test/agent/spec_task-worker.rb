@@ -1,9 +1,9 @@
 require_relative '../test-util'
-require 'pione/agent/task-worker'
 
-describe 'Agent::TaskWorker' do
-  describe 'transition spec' do
+describe 'Pione::Agent::TaskWorker' do
+  describe 'transition' do
     before do
+      DRb.start_service
       create_remote_tuple_space_server
       features = Feature::AndExpr.new(
         Feature::PossibleExpr.new('A'),
@@ -94,8 +94,6 @@ describe 'Agent::TaskWorker' do
     end
 
     it 'should execute a task' do
-      uuid = Pione.generate_uuid
-      write(Tuple[:working].new("test","test"))
       task1 = Tuple[:task].new(
         '&main:Test',
         [],
@@ -104,6 +102,7 @@ describe 'Agent::TaskWorker' do
         ID.domain_id("main", "Test", [], Parameters.empty),
         []
       )
+      write(Tuple[:working].new(task1.domain, "test"))
       rule = ActionRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
         RuleCondition.new(
@@ -131,6 +130,7 @@ describe 'Agent::TaskWorker' do
         ID.domain_id("main", "Test", [], Parameters.empty),
         []
       )
+      write(Tuple[:working].new(task1.domain, "test"))
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
         RuleCondition.new([], [], Parameters.empty, Feature.empty),
@@ -156,6 +156,7 @@ describe 'Agent::TaskWorker' do
         ID.domain_id("main", "Test", [], Parameters.empty),
         []
       )
+      write(Tuple[:working].new(task.domain, "test"))
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
         RuleCondition.new([], [], Parameters.empty, Feature.empty),
@@ -171,9 +172,12 @@ describe 'Agent::TaskWorker' do
     end
   end
 
-  describe 'running spec' do
+  describe 'running' do
     before do
+      DRb.start_service
       create_remote_tuple_space_server
+
+      Agent[:logger].start(tuple_space_server, File.open("out.txt", "w+"))
 
       # process info
       write(Tuple[:process_info].new('spec_task-worker', 'testid'))
@@ -200,19 +204,30 @@ describe 'Agent::TaskWorker' do
       doc = Pione::Document.parse <<-DOCUMENT
         Rule test
           input  '*.a'
-          output '{$INPUT[1].MATCH[1]}.b'.stdout
+          output '{$*}.b'.stdout
         Action
-        echo -n "input: `cat {$INPUT[1]}`"
+        echo -n "input: `cat {$I[1]}`"
         End
-        DOCUMENT
-      write(Tuple[:rule].new(rule_path: "&main:test",
-                             content: doc["&main:test"],
-                             status: :known))
+      DOCUMENT
+      write(
+        Tuple[:rule].new(
+          rule_path: "&main:test",
+          content: doc["&main:test"],
+          status: :known
+        )
+      )
 
       # workers are waiting tasks
       @worker1.wait_till(:task_waiting)
       @worker2.wait_till(:task_waiting)
       @worker3.wait_till(:task_waiting)
+    end
+
+    after do
+      @worker1.terminate
+      @worker2.terminate
+      @worker3.terminate
+      tuple_space_server.terminate
     end
 
     it "should wait tasks" do
@@ -274,19 +289,15 @@ describe 'Agent::TaskWorker' do
       @worker2.running_thread.should.not.be.alive
       @worker3.running_thread.should.not.be.alive
 
-      # push task
-      @worker1.wait_until_count(1, :task_finishing) do
-        @worker1.wait_till(:task_waiting)
-        write(@task1)
-        check_exceptions
-      end
+      # process task on @worker1
+      @worker1.wait_till(:task_waiting)
+      write(@task1)
 
       # process task
       observe_exceptions do
         sleep 0.3
         # check finished tuple
         finished = read(Tuple[:finished].any)
-        #finished.task_id.should == @task1.task_id
         # check result data
         data = read(Tuple[:data].new(name: "1.b"))
         Resource[data.uri].read.should == "input: abc"

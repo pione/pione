@@ -53,8 +53,7 @@ module Pione
       define_state :task_finishing
 
       define_state_transition :initialized => :task_waiting
-      define_state_transition :task_waiting => :task_processing
-      define_state_transition :task_processing => :rule_loading
+      define_state_transition :task_waiting => :rule_loading
       define_state_transition :rule_loading => :task_executing
       define_state_transition :task_executing => :data_outputing
       define_state_transition :data_outputing => :task_finishing
@@ -90,25 +89,13 @@ module Pione
         return task
       end
 
-      # Transition method for the state +task_processing+. The agent starts
-      # processing to do the task.
-      # @return [Task]
-      #   task tuple
-      def transit_to_task_processing(task)
-        log do |msg|
-          msg.add_record(agent_type, "action", "process_rule")
-          msg.add_record(agent_type, "object", task)
-        end
-        return task
-      end
-
       # Transition method for the state +rule_loading+.
       # @return [Array<Task, Rule>]
       #   task tuple and the rule
       def transit_to_rule_loading(task)
         rule =
           begin
-            read(Tuple[:rule].new(rule_path: task.rule_path), 0)
+            read0(Tuple[:rule].new(rule_path: task.rule_path))
           rescue Rinda::RequestExpiredError
             log do |msg|
               msg.add_record(agent_type, "action", "request_rule")
@@ -124,11 +111,11 @@ module Pione
         end
       end
 
-      # State task_executing.
+      # Transition method for the state +task_executing+.
       # @param [Task] task
       #   task tuple
       # @param [Rule] rule
-      #   the rule
+      #   rule for processing the task
       # @return [Array<Task,RuleHandler,Array<Data>>]
       def transit_to_task_executing(task, rule)
         debug_message_begin("Start Task Execution #{rule.rule_path} by worker(#{uuid})")

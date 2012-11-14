@@ -1,10 +1,10 @@
-require_relative 'test-util'
+require_relative '../test-util'
 
-class TestAgentType < Agent::Base
+class TestAgentType < Agent::BasicAgent
   set_agent_type :test_agent_type
 end
 
-class TestStateTransition < Agent::Base
+class TestStateTransition < Agent::BasicAgent
   define_state :test1
   define_state :test2
   define_state :test3
@@ -15,14 +15,14 @@ class TestStateTransition < Agent::Base
   define_state_transition :test3 => :terminated
 end
 
-class TestLoopStateTransition < Agent::Base
+class TestLoopStateTransition < Agent::BasicAgent
   define_state :test
 
   define_state_transition :initialized => :test
   define_state_transition :test => :test
 end
 
-class TestConditionalStateTransition < Agent::Base
+class TestConditionalStateTransition < Agent::BasicAgent
   define_state :test
   define_state :testA
   define_state :testB
@@ -46,7 +46,7 @@ class TestConditionalStateTransition < Agent::Base
   end
 end
 
-class TestExceptionTransition < Agent::Base
+class TestExceptionTransition < Agent::BasicAgent
   define_state :test
   define_state :ehandler
 
@@ -64,7 +64,7 @@ class TestExceptionTransition < Agent::Base
   end
 end
 
-describe 'Agent::Base' do
+describe 'Pione::Agent::BasicAgent' do
   describe 'agent type' do
     it 'should get the agent type' do
       TestAgentType.agent_type.should == :test_agent_type

@@ -32,6 +32,7 @@ module Pione
         @logs << take(Tuple[:log].any)
       end
 
+      # Transits to the state +write_log+.
       def transit_to_write_log
         if @logs.size > 0 and Time.now - @last_time > 1
           @logs.sort{|a,b| a.timestamp <=> b.timestamp}.each do |log|

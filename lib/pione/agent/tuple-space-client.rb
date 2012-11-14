@@ -16,7 +16,9 @@ module Pione
 
       # Send a bye message to the tuple space server.
       def bye
-        write(to_bye_tuple)
+        Util.ignore_exception do
+          write(to_bye_tuple)
+        end
       end
 
       # Makes the agent tuple.
@@ -135,7 +137,7 @@ module Pione
 
       # Redefine call transition method with logging.
       def call_transition_method(*args)
-        unless agent_type == :logger
+        unless [:logger, :command_listener].include?(agent_type)
           log do |msg|
             msg.add_record(agent_type, "action", "transit")
             msg.add_record(agent_type, "state", args.first)
