@@ -34,7 +34,7 @@ module Pione
       # @return [::URI]
       #   URI with absolute path
       def absolute
-        URI.parse("%s:%s/" % [scheme, File.realpath(path)])
+        URI.parse("%s:%s" % [scheme, File.realpath(path)])
       end
     end
   end
