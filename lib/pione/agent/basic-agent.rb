@@ -43,8 +43,8 @@ module Pione
       # @param [Symbol] current
       #   current state
       def initialize(expected, current)
-        @expected = expected
-        @current = current
+        @expected_state = expected
+        @current_state = current
       end
 
       # @private
