@@ -75,7 +75,7 @@ TXT
           @agent.running_thread.join
           # terminate
           terminate
-        rescue DRb::DRbConnError
+        rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
           terminate
         end
       end
@@ -86,17 +86,18 @@ TXT
 
         while true
           break if @agent.terminated? and @agent.running_thread.stop?
-          sleep 0.1
+          sleep 1
         end
 
         # disconnect parent front
-        begin
-          @parent_front.remove_task_worker_front(self, @connection_id)
-        rescue DRb::DRbConnError
-        end
+        @parent_front.remove_task_worker_front(self, @connection_id)
+
+        # flag
         @terminated = true
 
         super
+      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+        abort
       end
     end
   end

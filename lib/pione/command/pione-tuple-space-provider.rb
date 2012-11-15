@@ -67,18 +67,20 @@ TXT
         end
 
         # wait
-        DRb.thread.join
+        begin
+          DRb.thread.join
+        rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+          terminate
+        end
       end
 
       # @api private
       def terminate
-        begin
-          puts "terminate %s" % program_name
-          @tuple_space_provider.terminate
-        rescue DRb::DRbConnError
-        end
+        puts "terminate %s" % program_name
+        @tuple_space_provider.terminate
         super
-        exit
+      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+        abort
       end
     end
   end

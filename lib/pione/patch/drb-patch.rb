@@ -1,9 +1,7 @@
 # @api private
 module DRb
-  @waiter_table = Pione::Util::WaiterTable.new
-
   def waiter_table
-    @waiter_table
+    @waiter_table ||= Pione::Util::WaiterTable.new
   end
   module_function :waiter_table
 
@@ -34,6 +32,7 @@ module DRb
 
   class DRbConnError
     attr_reader :args
+
     def initialize(*args)
       super
       @args = args
@@ -41,13 +40,13 @@ module DRb
   end
 
   class DRbObject
+    # Creates fake connection for relay.
     def __connect
       DRbConn.open(@uri) {}
     end
   end
 
   class DRbMessage
-
     alias :orig_initialize :initialize
 
     def initialize(*args)
@@ -75,8 +74,7 @@ module DRb
       return req_id
     rescue => e
       if Global.show_communication
-        puts "%s: %s" % [e.class, e.message]
-        caller.each {|line| puts "    %s" % line}
+        ErrorReport.print(e)
       end
       raise(DRbConnError, $!.message, $!.backtrace)
     end
@@ -116,7 +114,7 @@ module DRb
         end
       end
       @send_reply_lock.synchronize do
-        stream.write(dump(req_id) +dump(succ) + dump(result, !succ))
+        stream.write(dump(req_id) + dump(succ) + dump(result, !succ))
       end
       if Global.show_communication
         puts "end send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
@@ -141,8 +139,17 @@ module DRb
     end
   end
 
+  class ReplyReaderThreadError < RuntimeError
+    def initialize(exception)
+      @exception = exception
+    end
+  end
+
   class DRbTCPSocket
-    def reader_thread
+    # Makes reader thread for receiving unordered replies.
+    def reader_thread(watcher)
+      @watchers ||= []
+      @watchers << watcher
       @thread ||= Thread.new do
         begin
           # loop for receiving reply and waiting the result
@@ -150,14 +157,12 @@ module DRb
             req_id, succ, result = recv_reply
             DRb.waiter_table.push(req_id, [succ, result])
           end
-        rescue DRbConnError => e
-          if Global.show_communication
-            puts "%s:%s" % [e.class, e.message]
-            puts "    %s" % $!.backtrace
+        rescue Exception => e
+          @watchers.each do |watcher|
+            if ["run", "sleep"].include?(watcher.status)
+              watcher.raise(ReplyReaderThreadError.new(e))
+            end
           end
-        rescue => e
-          puts "%s on %s" % [e.inspect, Process.pid]
-          puts "    %s" % $!.backtrace
         end
       end
     end
@@ -174,6 +179,10 @@ module DRb
 
   class DRbConn
     @table = {}
+
+    def self.table
+      @table
+    end
 
     # @api private
     def self.open(remote_uri)
@@ -195,6 +204,9 @@ module DRb
 
         succ, result = yield(conn)
         return succ, result
+      rescue DRb::DRbConnError
+        @table.delete(remote_uri)
+        raise
       end
     end
 
@@ -206,6 +218,7 @@ module DRb
       end
       unless @closed
         @closed = true
+        self.class.table.delete(remote_uri)
         orig_close
       end
     end
@@ -213,7 +226,7 @@ module DRb
     # Sends a request and takes the result from waiter table.
     def send_message(ref, msg_id, arg, block)
       req_id = @protocol.send_request(ref, msg_id, arg, block)
-      @protocol.reader_thread
+      @protocol.reader_thread(Thread.current)
       succ, result = DRb.waiter_table.take(req_id, msg_id, arg)
       return succ, result
     end
