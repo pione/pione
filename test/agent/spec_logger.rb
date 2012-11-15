@@ -1,12 +1,8 @@
-require 'drb/drb'
-require 'stringio'
 require_relative '../test-util'
-require 'pione/agent/logger'
 
-DRb.start_service
-
-describe "Agent::Logger" do
+describe "Pione::Agent::Logger" do
   before do
+    DRb.start_service
     create_remote_tuple_space_server
     @buf = StringIO.new("", "w+")
     @logger = Agent[:logger].start(tuple_space_server, @buf)
@@ -15,26 +11,24 @@ describe "Agent::Logger" do
   end
 
   after do
-    tuple_space_server.terminate
+    DRb.stop_service
   end
 
   it "should say hello and bye" do
     # say hello
-    @logger.wait_till(:logging)
-    agents = read_all(Tuple[:agent].any)
-    agents.should.include @logger.to_agent_tuple
+    @logger.wait_till(:take)
+    read_all(Tuple[:agent].any).should.include @logger.to_agent_tuple
     # say bye
     @logger.terminate
     @logger.wait_till(:terminated)
-    agents = read_all(Tuple[:agent].any)
-    agents.should.not.include @logger.to_agent_tuple
+    read_all(Tuple[:agent].any).should.not.include @logger.to_agent_tuple
   end
 
   it "should log messages" do
     # send log messages
     write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg1)}))
     write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg2)}))
-    @logger.wait_till(:logging)
+    @logger.wait_till(:take)
     @logger.wait_to_clear_logs
     # check messages
     @buf.string.should.include @msg1
@@ -43,7 +37,7 @@ describe "Agent::Logger" do
 
   it "should terminate logging by terminate message" do
     # terminate
-    @logger.wait_till(:logging)
+    @logger.wait_till(:take)
     @logger.wait_to_clear_logs
     @logger.terminate
     @logger.wait_till(:terminated)
@@ -53,7 +47,7 @@ describe "Agent::Logger" do
     @buf.string.should.not.include @msg1
   end
 
-  it "should terminate logging by exception" do
+  it "should terminate logging by exceptions" do
     # write a message
     write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg1)}))
     @logger.wait_to_clear_logs
@@ -61,15 +55,13 @@ describe "Agent::Logger" do
     remote_drb_server.stop_service
     DRb.stop_service
     DRb.remove_server(remote_drb_server)
-    p remote_drb_server
-    p tuple_space_server
+    sleep 1
 
-    tuple_space_server.write(Tuple[:data].new)
-    @logger.wait_till(:terminated)
     # write a message after remote server was down
     Util.ignore_exception do
       write(Tuple[:log].new(Log.new{|msg| msg.add_record(:test, :key, @msg2)}))
     end
+    @logger.wait_till(:terminated)
     # logger is terminated
     @logger.should.be.terminated
     # check log content

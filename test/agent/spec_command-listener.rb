@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-class TestCommandListener < Agent::TupleSpaceClient
+class TestCommandListener < Pione::Agent::TupleSpaceClient
   define_state :test
 
   define_state_transition :initialized => :test
@@ -11,20 +11,20 @@ class TestCommandListener < Agent::TupleSpaceClient
   end
 end
 
-describe 'Agent::CommandListener' do
+describe 'Pione::Agent::CommandListener' do
   before do
     create_remote_tuple_space_server
   end
 
   after do
-    tuple_space_server.terminate
+    DRb.stop_service
   end
 
   it 'should terminate' do
-    ts = TestCommandListener.start(tuple_space_server)
-    ts.wait_till(:test)
-    tuple_space_server.write(Tuple[:command].new("terminate"))
-    ts.wait_till(:terminated)
-    ts.should.terminated
+    agent = TestCommandListener.start(tuple_space_server)
+    agent.wait_till(:test)
+    write(Tuple[:command].new("terminate"))
+    agent.wait_till(:terminated)
+    agent.should.be.terminated
   end
 end

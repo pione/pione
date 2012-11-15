@@ -13,8 +13,8 @@ module TestUtil
   end
 
   def clear_exceptions
-    ts_server = get_tuple_space_server
-    ts_server.read_all(Tuple[:exception].any).each do |tuple|
+    server = get_tuple_space_server
+    server.read_all(Tuple[:exception].any).each do |tuple|
       ts_server.take(tuple)
     end
   end
@@ -43,10 +43,10 @@ module TestUtil
 
   def create_remote_tuple_space_server
     # make drb server and it's connection
-    ts_server = Pione::TupleSpace::TupleSpaceServer.new
+    tuple_space_server = Pione::TupleSpace::TupleSpaceServer.new
     # base uri
-    ts_server.write(Tuple[:base_uri].new("local:#{Dir.mktmpdir('pione-test')}/"))
-    @__remote_drb_server__ = DRb::DRbServer.new(nil, ts_server)
+    tuple_space_server.write(Tuple[:base_uri].new("local:#{Dir.mktmpdir('pione-test')}/"))
+    @__remote_drb_server__ = DRb::DRbServer.new(nil, tuple_space_server)
     server = DRbObject.new_with_uri(@__remote_drb_server__.uri)
     # set default tuple space server
     set_tuple_space_server server
@@ -158,7 +158,7 @@ class Bacon::Context
   end
 end
 
-module Pione
+module Pione::TupleSpace
   class TupleSpaceServer
     # Return all tuples of the tuple space.
     def all_tuples
@@ -184,8 +184,8 @@ module Pione
   end
 end
 
-module Pione
-  class Agent::BasicAgent
+module Pione::Agent
+  class BasicAgent
     include TestUtil
 
     # Fake set_current_state for counting state changes.

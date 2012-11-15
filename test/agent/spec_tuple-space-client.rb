@@ -11,20 +11,20 @@ class TestTupleSpaceClient < Agent::TupleSpaceClient
   define_state_transition :test3 => :terminated
 end
 
-describe 'Agent::TupleSpaceClient' do
+describe 'Pione::Agent::TupleSpaceClient' do
   before do
+    DRb.start_service
     create_remote_tuple_space_server
   end
 
   after do
-    tuple_space_server.terminate
+    DRb.stop_service
   end
 
-  it 'should say hello' do
+  it 'should say "hello"' do
     ts = TestTupleSpaceClient.new(tuple_space_server)
     ts.current_state.should == nil
     ts.transit
     ts.should.initialized
   end
-
 end

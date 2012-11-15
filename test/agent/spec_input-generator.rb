@@ -1,21 +1,21 @@
 require_relative '../test-util'
-require 'pione/agent/input-generator'
 
-describe "Agent::InputGenerator" do
+describe "Pione::Agent::InputGenerator" do
   before do
+    DRb.start_service
     create_remote_tuple_space_server
   end
 
   after do
-    tuple_space_server.terminate
+    DRb.stop_service
   end
 
-  describe 'with sinmple generator' do
+  describe 'simple generator' do
     it 'should provide data by simple generator' do
-      # create generator and wait to finish it's job
-      ts_server = tuple_space_server
+      # create generator
       generator =
-        Agent[:input_generator].start_by_simple(ts_server, "*.a", 1..10, 11..20)
+        Agent[:input_generator].start_by_simple(tuple_space_server, "*.a", 1..10, 11..20)
+      # wait finishing
       generator.wait_till(:terminated)
       # check exceptions
       check_exceptions
@@ -23,8 +23,7 @@ describe "Agent::InputGenerator" do
       count_tuple(Tuple[:data].any).should == 10
       should.not.raise(Rinda::RequestExpiredError) do
         (1..10).each do |i|
-          tuple = Tuple[:data].new(name: "#{i}.a", domain: "/input")
-          data = read(tuple, 0)
+          data = read0(Tuple[:data].new(name: "#{i}.a", domain: "input"))
           should.not.raise(Resource::NotFound) do
             Resource[URI(data.uri)].read.should == (i + 10).to_s
           end
@@ -33,7 +32,7 @@ describe "Agent::InputGenerator" do
     end
   end
 
-  describe 'with dir generator' do
+  describe 'dir generator' do
     it 'should provide files in a directory by dir generator' do
       Dir.mktmpdir do |dir|
         # create input files
@@ -52,7 +51,7 @@ describe "Agent::InputGenerator" do
         count_tuple(Tuple[:data].any).should == 3
         should.not.raise(Rinda::RequestExpiredError) do
           (1..3).each do |i|
-            tuple = Tuple[:data].new(name: "#{i}.#{(i+96).chr}", domain: "/input")
+            tuple = Tuple[:data].new(name: "#{i}.#{(i+96).chr}", domain: "input")
             data = read(tuple, 0)
             should.not.raise(Resource::NotFound) do
               Resource[URI(data.uri)].read.should == "#{i}#{i}"
@@ -121,7 +120,7 @@ describe "Agent::InputGenerator" do
 
         should.not.raise(Rinda::RequestExpiredError) do
           (1..3).each do |i|
-            tuple = Tuple[:data].new(name: "#{i}.#{(i+96).chr}", domain: "/input")
+            tuple = Tuple[:data].new(name: "#{i}.#{(i+96).chr}", domain: "input")
             data = read(tuple, 0)
             should.not.raise(Resource::NotFound) do
               Resource[URI(data.uri)].read.should == "#{i}#{i}"

@@ -1,47 +1,52 @@
 module Pione
   module Agent
+    # Logger is an agent for logging in tuple space.
     class Logger < TupleSpaceClient
       set_agent_type :logger
 
-      def initialize(ts_server, out=$stdout)
-        super(ts_server)
+      def initialize(tuple_space_server, out=$stdout)
+        super(tuple_space_server)
         @out = out
         @logs = []
-        @last_time = Time.now
       end
 
-      define_state :logging
+      define_state :take
+      define_state :store
 
-      define_state_transition :initialized => :logging
-      define_state_transition :logging => :write_log
-      define_state_transition :write_log => :logging
+      define_state_transition :initialized => :take
+      define_state_transition :take => :store
+      define_state_transition :store => :take
 
-      define_exception_handler ThreadError => :terminated
+      define_exception_handler Exception => :terminated
 
-      # Sleep till the logger clears logs.
+      # Sleeps till the logger clears logs.
+      # @param [Float]
+      #   timespan for clearing logs
       def wait_to_clear_logs(timespan=0.1)
-        while count_tuple(Tuple[:log].any) > 0
+        while count_tuple(Tuple[:log].any) > 0 || @logs.size > 0
           sleep timespan
         end
       end
 
       private
 
-      # State logging.
-      def transit_to_logging
-        @logs << take(Tuple[:log].any)
+      # Transits to the state +take_log+.
+      def transit_to_take
+        timeout(1) do
+          @logs << take(Tuple[:log].any)
+        end
+      rescue TimeoutError
       end
 
-      # Transits to the state +write_log+.
-      def transit_to_write_log
-        if @logs.size > 0 and Time.now - @last_time > 1
+      # Transits to the state +store+.
+      def transit_to_store
+        unless @logs.empty?
           @logs.sort{|a,b| a.timestamp <=> b.timestamp}.each do |log|
             @out.puts log.message.format
             @out.flush
             @out.sync
           end
           @logs = []
-          @last_time = Time.now
         end
       end
 

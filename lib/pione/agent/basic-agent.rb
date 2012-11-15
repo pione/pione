@@ -182,12 +182,12 @@ module Pione
           next_state = get_next_state(state_transition_table[current_state])
           set_current_state(next_state)
           @__result__ = call_transition_method(next_state, *@__result__)
-        rescue Aborting => e
-          raise e
-        rescue Object => e
-          if self.class.known_exceptions.include?(e.class)
+        rescue Aborting
+          raise
+        rescue Exception => e
+          if error_state = exception_handler(e)
             # known exception
-            next_state = get_next_state(exception_handler(e))
+            next_state = get_next_state(error_state)
             set_current_state(next_state)
             @__result__ = call_transition_method(next_state, e)
           else
@@ -242,7 +242,7 @@ module Pione
         method.call(*_args)
       end
 
-      # Return the handling state for the exception.
+      # Returns the handling state for the exception.
       def exception_handler(e)
         handler = nil
         table = self.class.exception_handler_table
@@ -252,7 +252,7 @@ module Pione
             break
           end
         end
-        return handler || :error
+        return handler
       end
 
       # Start to transit agent's state.
