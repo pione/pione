@@ -1,4 +1,4 @@
-require "bundler/gem_tasks"
+require "bundler/setup"
 
 $stand_alone = "bin/pione-stand-alone"
 
