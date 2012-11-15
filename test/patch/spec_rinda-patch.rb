@@ -1,6 +1,6 @@
-require_relative 'test-util'
+require_relative '../test-util'
 
-describe 'RindaPatch' do
+describe 'Rinda patch' do
   it 'should be different tuples that have different contentes' do
     ts = Rinda::TupleSpace.new
     e1 = ts.write([:abc, 1])
