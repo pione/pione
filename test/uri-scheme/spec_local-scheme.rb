@@ -37,8 +37,16 @@ describe 'Pione::URIScheme::LocalScheme' do
     URI.parse("local:/home/keita/test.rb").should.be.file
   end
 
-  it 'should get absolute path' do
+  it 'should convert as a directory' do
+    URI.parse("local:/home/keita").as_directory.should.be.directory
+  end
+
+  it 'should get absolute path of "local:./output"' do
     URI.parse("local:./output").absolute.path.should == File.join(Dir.pwd, "output")
+  end
+
+  it 'should get absolute path of "local:./output/"' do
+    URI.parse("local:./output/").absolute.path.should == File.join(Dir.pwd, "output") + "/"
   end
 end
 

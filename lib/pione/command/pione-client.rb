@@ -103,7 +103,7 @@ TXT
         case @base_uri.scheme
         when "local"
           FileUtils.makedirs(@base_uri.path)
-          @base_uri = @base_uri.absolute
+          @base_uri = @base_uri.absolute.as_directory
         when "dropbox"
           # start session
           session = nil

@@ -16,6 +16,13 @@ module Pione
         super(URI::Util::make_components_hash(self, args))
       end
 
+      # Converts the uri into directory form.
+      # @return [LocalScheme]
+      #   directory form
+      def as_directory
+        directory? ? self : URI.parse("%s:%s/" % [scheme, path])
+      end
+
       # Returns true if the path represents a directory.
       # @return [Boolean]
       #   true if the path represents a directory
@@ -34,7 +41,8 @@ module Pione
       # @return [::URI]
       #   URI with absolute path
       def absolute
-        URI.parse("%s:%s" % [scheme, File.realpath(path)])
+        uri = URI.parse("%s:%s" % [scheme, File.realpath(path)])
+        directory? ? uri.as_directory : uri
       end
     end
   end
