@@ -78,7 +78,11 @@ TXT
 
       def validate_options
         unless @resource > 0 or (not(@stand_alone) and @resource == 0)
-          abort("invalid resource size: %s" % @resource)
+          abort("error: invalid resource size: %s" % @resource)
+        end
+
+        if @stream and @input_dir.nil?
+          abort("error: no input dir on stream mode")
         end
       end
 
