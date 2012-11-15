@@ -6,6 +6,33 @@ module URI
     @@schemes[name] = klass
   end
 
+  class Generic
+    # Returns true if the path represents a directory.
+    # @return [Boolean]
+    #   true if the path represents a directory
+    def directory?
+      path[-1] == '/'
+    end
+
+    # Returns true if the path represents a file.
+    # @return [Boolean]
+    #   true if the path represents a file
+    def file?
+      not(directory?)
+    end
+
+    # Converts the uri into directory form.
+    # @return [Generic]
+    #   directory path form
+    def as_directory
+      if directory?
+        self
+      else
+        self.clone.tap{|s| s.path = s.path + "/"}
+      end
+    end
+  end
+
   class Parser
     alias :orig_split :split
 

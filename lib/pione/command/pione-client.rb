@@ -103,7 +103,7 @@ TXT
         case @base_uri.scheme
         when "local"
           FileUtils.makedirs(@base_uri.path)
-          @base_uri = @base_uri.absolute.as_directory
+          @base_uri = @base_uri.absolute
         when "dropbox"
           # start session
           session = nil
@@ -141,8 +141,8 @@ TXT
           Resource::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
         end
 
-        @base_uri = @base_uri.to_s
-        @tuple_space_server.set_base_uri(@base_uri.to_s)
+        @base_uri = @base_uri.as_directory.to_s
+        @tuple_space_server.set_base_uri(@base_uri)
       end
 
       def start
