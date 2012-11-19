@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Transformer::FlowElement' do
+describe 'Pione::Transformer::FlowElementTransformer' do
   transformer_spec("call_rule_line", :call_rule_line) do
     tc(
       "rule Test" =>

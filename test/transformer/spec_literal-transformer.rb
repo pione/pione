@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Transformer::Literal' do
+describe 'Pione::Transformer::LiteralTransformer' do
   transformer_spec('boolean', :boolean) do
     tc('true' => PioneBoolean.true)
     tc('false' => PioneBoolean.false)

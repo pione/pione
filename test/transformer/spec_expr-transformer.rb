@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Transformer::Expr' do
+describe 'Pione::Transformer::ExprTransformer' do
   transformer_spec("binary operator", :expr) do
     tc "1 + 2" do
       BinaryOperator.new(

@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Transformer::FeatureExpr' do
+describe 'Pione::Transformer::FeatureExprTransformer' do
   transformer_spec("feature_expr", :feature_expr) do
     tc('+A' => Feature::RequisiteExpr.new("A"))
     tc('-A' => Feature::BlockingExpr.new("A"))

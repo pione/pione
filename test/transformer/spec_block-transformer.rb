@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Transformer::ActionBlock' do
+describe 'Pione::Transformer::BlockTransformer' do
   transformer_spec("action_block", :action_block) do
     tc(<<-STRING) do
       Action

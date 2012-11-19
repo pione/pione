@@ -1,8 +1,8 @@
 require_relative '../test-util'
 
-ConditionLine = Transformer::RuleDefinition::ConditionLine
+ConditionLine = Transformer::RuleDefinitionTransformer::ConditionLine
 
-describe 'Transformer::RuleDefinition' do
+describe 'Pione::Transformer::RuleDefinitionTransformer' do
   transformer_spec("input_line", :input_line) do
     tc("input '*.txt'") do
       ConditionLine.new(:input, DataExpr.new("*.txt"))
