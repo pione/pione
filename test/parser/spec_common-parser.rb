@@ -2,7 +2,7 @@
 require_relative '../test-util'
 
 class TestParser < Parslet::Parser
-  include Pione::Parser::Common
+  include Pione::Parser::CommonParser
 
   rule(:test_line_end) {
     str('begin') >> line_end >> str('end')
@@ -25,10 +25,10 @@ class TestParser < Parslet::Parser
   }
 end
 
-describe 'Parser::Common' do
+describe 'Pione::Parser::CommonParser' do
   describe 'symbols' do
     it 'should parse symbols' do
-      Parser::Common::SYMBOLS.values.each do |val|
+      Parser::CommonParser::SYMBOLS.values.each do |val|
         should.not.raise(Parslet::ParseFailed) do
           TestParser.new.symbols.parse(val)
         end
@@ -46,7 +46,7 @@ describe 'Parser::Common' do
 
   describe 'keywords' do
     it 'should parse keywords' do
-      Parser::Common::KEYWORDS.each do |key, val|
+      Parser::CommonParser::KEYWORDS.each do |key, val|
         should.not.raise(Parslet::ParseFailed) do
           TestParser.new.send(key).parse(val)
         end
@@ -55,7 +55,7 @@ describe 'Parser::Common' do
 
     it 'should fail with other words' do
       words = ['abc', '', 'RULE', 'enD', 'Input']
-      Parser::Common::KEYWORDS.keys.each do |key|
+      Parser::CommonParser::KEYWORDS.keys.each do |key|
         words.each do |word|
           should.raise(Parslet::ParseFailed) do
             TestParser.new.send(key).parse(word)

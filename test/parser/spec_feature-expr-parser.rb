@@ -1,10 +1,10 @@
 require_relative '../test-util'
 
 class TestParser < Parslet::Parser
-  include Pione::Parser::FeatureExpr
+  include Pione::Parser::FeatureExprParser
 end
 
-describe 'Parser::FeatureExpr' do
+describe 'Pione::Parser::FeatureExprParser' do
   describe 'feature_expr' do
     it 'should parse feature expressions' do
       strings = ['+A', '-A', '?A', '(+A)',
@@ -18,7 +18,7 @@ describe 'Parser::FeatureExpr' do
       end
     end
 
-    TestUtil::Parser.spec(Pione::Parser::FeatureExpr, __FILE__, self)
+    TestUtil::Parser.spec(Pione::Parser::FeatureExprParser, __FILE__, self)
 
     it 'should fail with other strings' do
       strings = ['A', '(-A', '?A)']
