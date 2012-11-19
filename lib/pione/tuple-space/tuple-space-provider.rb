@@ -44,6 +44,10 @@ module Pione
         @keeper_agent.terminate
       end
 
+      def terminated?
+        @terminated
+      end
+
       alias :finalize :terminate
 
       private

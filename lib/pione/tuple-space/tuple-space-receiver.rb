@@ -52,11 +52,16 @@ module Pione
       def finalize
         @terminated = true
         @tuple_space_server_receiver.terminate
+        @socket.close
         @updater.terminate
         @tuple_space_servers = []
       end
 
       alias :terminate :finalize
+
+      def terminated?
+        @terminated
+      end
 
       private
 

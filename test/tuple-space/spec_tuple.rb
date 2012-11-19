@@ -1,7 +1,7 @@
-require_relative 'test-util'
+require_relative '../test-util'
 
-describe "Tuple" do
-  describe "Tuple::TupleObject" do
+describe "Pione::TupleSpace::Tuple" do
+  describe "Pione::TupleSpace::Tuple::TupleObject" do
     before do
       # test type tuple for this test
       Tuple.define_format([:test,
@@ -79,11 +79,11 @@ describe "Tuple" do
 
     it "should raise exception when tuple is redefined by different format" do
       # different format
-      should.raise(ArgumentError) do
+      should.raise(Pione::Tuple::FormatError) do
         Tuple.define_format([:test, :attr3, :attr2, :attr1])
       end
       # same format
-      should.not.raise(ArgumentError) do
+      should.not.raise(Pione::Tuple::FormatError) do
         Tuple.define_format([:test, [:attr1, Integer], [:attr2, Symbol], [:attr3, Object]])
       end
     end
