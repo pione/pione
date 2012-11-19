@@ -36,7 +36,10 @@ TXT
           @parent_front.set_tuple_space_receiver(Global.front.uri)
         end
 
+        # wait
         DRb.thread.join
+      rescue DRb::ReplyReaderThreadError => e
+        # ignore reply reader error
       end
 
       def terminate

@@ -84,7 +84,9 @@ module Pione
       module BrokerMethod
         # Adds the tuple space server.
         def add_tuple_space_server(tuple_space_server)
-          @tuple_space_servers << tuple_space_server
+          @tuple_space_server_lock.synchronize do
+            @tuple_space_servers << tuple_space_server
+          end
         end
 
         # Gets a tuple space server by connection id.
@@ -119,14 +121,15 @@ module Pione
           Agent[:task_worker].spawn(Global.front, connection_id)
         end
 
-        # Delete unavilable tuple space servers.
+        # Deletes unavilable tuple space servers.
         def check_tuple_space_servers
-          @tuple_space_servers.select! do |ts|
-            begin
-              ts.uuid
-              true
-            rescue DRb::DRbConnError, Errno::ECONNREFUSED
-              false
+          @tuple_space_server_lock.synchronize do
+            @tuple_space_servers.select! do |ts|
+              begin
+                timeout(1) { ts.ping }
+              rescue Exception
+                false
+              end
             end
           end
         end
@@ -134,23 +137,24 @@ module Pione
         # Update tuple space server list.
         def update_tuple_space_servers(tuple_space_servers)
           begin
-            del_targets = @tuple_space_servers - tuple_space_servers
-            add_targets = tuple_space_servers - @tuple_space_servers
-            #return if del_targets.empty? and add_targets.empty?
+            @tuple_space_server_lock.synchronize do
+              del_targets = @tuple_space_servers - tuple_space_servers
+              add_targets = tuple_space_servers - @tuple_space_servers
 
-            # bye
-            del_targets.each do |ts_server|
-              ts_server.write(Tuple[:bye].new(agent_type: agent_type, uuid: uuid))
-            end
-            # hello
-            add_targets.each do |ts_server|
-              ts_server.write(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
-            end
-            # update
-            @tuple_space_servers = tuple_space_servers
+              # bye
+              del_targets.each do |ts_server|
+                ts_server.write(Tuple[:bye].new(agent_type: agent_type, uuid: uuid))
+              end
+              # hello
+              add_targets.each do |ts_server|
+                ts_server.write(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
+              end
+              # update
+              @tuple_space_servers = tuple_space_servers
 
-            if Pione.debug_mode?
-              puts "tuple space servers: #{@tuple_space_servers}"
+              if Global.show_presence_notifier
+                puts "broker's tuple space servers: #{@tuple_space_servers}"
+              end
             end
           rescue DRb::DRbConnError, Errno::ECONNREFUSED
             check_tuple_space_servers
@@ -178,6 +182,7 @@ module Pione
 
       define_exception_handler DRb::DRbConnError => :checking_tuple_space_servers
       define_exception_handler Errno::ECONNREFUSED => :checking_tuple_space_servers
+      define_exception_handler DRb::ReplyReaderThreadError => :checking_tuple_space_servers
 
       attr_accessor :task_workers
       attr_reader :tuple_space_servers
@@ -191,13 +196,23 @@ module Pione
         @task_worker_resource = data[:task_worker_resource] || 1
         @sleeping_time = data[:sleeping_time] || 1
         @assignment_table = {}
+        @tuple_space_server_lock = Mutex.new
 
         # balancer
         @balancer = EasyBalancer.new(self)
 
         # start agents
         @task_worker_checker = Agent::TrivialRoutineWorker.new(
-          Proc.new{ @task_workers.delete_if {|worker| worker.terminated? }}, 1
+          Proc.new do
+            @task_workers.delete_if do |worker|
+              begin
+                timeout(3) { worker.terminated? }
+              rescue Exception
+                true
+              end
+            end
+            sleep 1
+          end
         )
       end
 
@@ -209,7 +224,9 @@ module Pione
 
       # Sends bye message to tuple space servers when the broker is destroyed.
       def finalize
-        @tuple_space_servers.each {|ts_server| ts_server.bye }
+        @tuple_space_server_lock.synchronize do
+          @tuple_space_servers.each {|ts_server| ts_server.bye }
+        end
         super
       end
 
@@ -231,9 +248,9 @@ module Pione
         check_tuple_space_servers
       end
 
-      # State sleeping.
+      # Transits to the state +sleeping+.
       def transit_to_sleeping
-        sleep 0.3
+        sleep 1
       end
     end
 

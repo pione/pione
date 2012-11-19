@@ -16,10 +16,13 @@ module Pione
         super
 
         # "ppid == 1" means the parent is dead
-        terminater = Proc.new{ terminate if Process.ppid == 1 }
+        terminater = Proc.new do
+          terminate if Process.ppid == 1
+          sleep 3
+        end
 
         # watch that the parent process exists
-        @watchdog = Agent::TrivialRoutineWorker.new(terminater, 3)
+        @watchdog = Agent::TrivialRoutineWorker.new(terminater)
       end
 
       # @api private

@@ -103,7 +103,13 @@ module Pione
       # before command activity.
       # @return [void]
       def prepare
-        Signal.trap(:INT) {terminate}
+        Signal.trap(:INT) do
+          begin
+            terminate
+          rescue DRb::ReplyReaderThreadError
+            # ignore reply reader error
+          end
+        end
       end
 
       # Starts the command activity. This method should be overridden in subclasses.

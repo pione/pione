@@ -13,6 +13,11 @@ module Pione
         raise TypeError.new(val) unless val.kind_of?(klass)
       end
 
+      # Returns true.
+      def ping
+        true
+      end
+
       # Returns this object's uuid.
       # @return [String]
       #   UUID string

@@ -10,39 +10,40 @@ module Pione
         instance.register(broker)
       end
 
-      attr_accessor :tuple_space_server
       attr_accessor :drb_service
 
       def initialize
-        @receiver_thread = nil
-        @updater_thread = nil
         @brokers = []
-        @disconnect_time = Global.tuple_space_receiver_disconnect_time
-        @socket = UDPSocket.open
-        @socket.bind(Socket::INADDR_ANY, Global.presence_port)
-        @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
         @tuple_space_servers = {}
-        @mutex = Mutex.new
+        @socket = open_socket
 
-        # agents
-        @receiver = Agent::TrivialRoutineWorker.new(Proc.new{receive_tuple_space_servers}, 0)
-        @updater = Agent::TrivialRoutineWorker.new(Proc.new{update_tuple_space_servers}, 1)
-        @life_checker = Agent::TrivialRoutineWorker.new(Proc.new{check_agent_life}, 1)
+        # lock
+        @tuple_space_server_lock = Mutex.new
+        @broker_lock = Mutex.new
+
+        # subagents
+        @tuple_space_server_receiver =
+          Agent::TrivialRoutineWorker.new(Proc.new{receive_tuple_space_servers})
+        @updater = Agent::TrivialRoutineWorker.new(
+          Proc.new do
+            update_tuple_space_servers
+          end
+        )
       end
 
+      # Registers the agent.
       def register(agent)
-        @brokers << agent
+        @broker_lock.synchronize { @brokers << agent }
       end
 
       # Start to receive tuple space servers.
       def start
-        @receiver.start
+        @tuple_space_server_receiver.start
         @updater.start
-        @life_checker.start
       end
 
       def tuple_space_servers
-        @mutex.synchronize do
+        @tuple_space_server_lock.synchronize do
           @tuple_space_servers.keys
         end
       end
@@ -50,9 +51,8 @@ module Pione
       # Send empty tuple space server list.
       def finalize
         @terminated = true
-        @receiver.terminate
+        @tuple_space_server_receiver.terminate
         @updater.terminate
-        @life_checker.terminate
         @tuple_space_servers = []
       end
 
@@ -60,71 +60,76 @@ module Pione
 
       private
 
+      # Opens receiver socket.
+      # @return [UDPSocket]
+      #   server socket
+      def open_socket
+        socket = UDPSocket.open
+        socket.bind(Socket::INADDR_ANY, Global.presence_port)
+        socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
+        return socket
+      end
+
+      # Receives tuple space servers and updates the table.
+      # @return [void]
       def receive_tuple_space_servers
         provider_front = Marshal.load(@socket.recv(1024))
-        @mutex.synchronize do
-          provider_front.tuple_space_servers.each do |tuple_space_server|
-            @tuple_space_servers[tuple_space_server] = Time.now
+        begin
+          # need return of ping in short time
+          Timeout.timeout(1) do
+            provider_front.ping
+            provider_front.tuple_space_servers.each do |tuple_space_server|
+              @tuple_space_server_lock.synchronize do
+                @tuple_space_servers[tuple_space_server] = Time.now
+              end
+            end
           end
+        rescue Exception
+          # ignore
         end
         if Global.show_presence_notifier
           puts "presence notifier was received %s" % provider_front.__drburi
         end
-      rescue DRb::DRbConnError => e
+      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError, IOError => e
+        @socket.close
+        @socket = open_socket
         if Global.show_presence_notifier
-          puts "tuple space receiver is something bad..."
-          Util::ErrorReport.print(e)
+          puts "tuple space receiver disconnected"
         end
       end
 
       def update_tuple_space_servers
-        @mutex.synchronize do
+        # update tuple space server list
+        @tuple_space_server_lock.synchronize do
           @tuple_space_servers.delete_if do |server, time|
             begin
-              server.uuid
-              false
+              # ping
+              timeout(1) { server.ping }
+              # check timespan
+              (Time.now - time) > Global.tuple_space_receiver_disconnect_time
             rescue
               true
             end
           end
         end
 
-        # make drop target
-        drop_target = []
-        @mutex.synchronize do
-          @tuple_space_servers.each do |ts_server, time|
-            if (Time.now - time) > @disconnect_time
-              drop_target << ts_server
+        # update broker
+        @broker_lock.synchronize do
+          @brokers.select! do |broker|
+            begin
+              timeout(1) { broker.ping }
+              broker.update_tuple_space_servers(tuple_space_servers)
+              true
+            rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+              puts "dead server"
+              false
             end
           end
         end
 
-        # drop targets
-        drop_target.each do |key|
-          @mutex.synchronize do
-            @tuple_space_servers.delete(key)
-          end
-        end
-
-        # update
-        @brokers.each do |broker|
-          begin
-            broker.update_tuple_space_servers(tuple_space_servers)
-          rescue DRb::DRbConnError
-            puts "dead server"
-          end
-        end
-      end
-
-      def check_agent_life
-        @brokers.delete_if do |broker|
-          begin
-            broker.uuid
-            false
-          rescue DRb::DRbConnError
-            true
-          end
-        end
+        sleep 1
+      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+        # ignore
       end
     end
   end

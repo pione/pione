@@ -140,15 +140,17 @@ module DRb
   end
 
   class ReplyReaderThreadError < RuntimeError
+    attr_reader :inner_exception
+
     def initialize(exception)
-      @exception = exception
+      @inner_exception = exception
     end
   end
 
   class DRbTCPSocket
     # Makes reader thread for receiving unordered replies.
     def reader_thread(watcher)
-      @watchers ||= []
+      @watchers ||= Set.new
       @watchers << watcher
       @thread ||= Thread.new do
         begin
@@ -159,7 +161,7 @@ module DRb
           end
         rescue Exception => e
           @watchers.each do |watcher|
-            if ["run", "sleep"].include?(watcher.status)
+            if watcher.alive?
               watcher.raise(ReplyReaderThreadError.new(e))
             end
           end
@@ -179,6 +181,7 @@ module DRb
 
   class DRbConn
     @table = {}
+    @retry = {}
 
     def self.table
       @table
@@ -186,26 +189,31 @@ module DRb
 
     # @api private
     def self.open(remote_uri)
-      begin
-        conn = nil
+      conn = nil
 
-        @mutex.synchronize do
-          cache = @table[remote_uri]
-          if not(cache.nil?)
-            conn = cache
-          else
-            if Global.show_communication
-              puts "new connection to %s on %s" % [remote_uri, Process.pid] if remote_uri
-            end
-            conn = self.new(remote_uri) unless conn
+      @mutex.synchronize do
+        cache = @table[remote_uri]
+        if not(cache.nil?) and cache.alive?
+          conn = cache
+        else
+          if Global.show_communication
+            puts "new connection to %s on %s" % [remote_uri, Process.pid] if remote_uri
           end
-          @table[remote_uri] = conn
+          conn = self.new(remote_uri) unless conn
         end
+        @table[remote_uri] = conn
+      end
 
-        succ, result = yield(conn)
-        return succ, result
-      rescue DRb::DRbConnError
-        @table.delete(remote_uri)
+      succ, result = yield(conn)
+      @retry[remote_uri] = 0
+      return succ, result
+    rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+      @table.delete(remote_uri)
+      @retry[remote_uri] ||= 0
+      @retry[remote_uri] += 1
+      if @retry[remote_uri] < 5
+        retry
+      else
         raise
       end
     end

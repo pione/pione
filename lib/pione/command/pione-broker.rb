@@ -49,7 +49,11 @@ TXT
         @tuple_space_receiver.register(@broker)
 
         # wait
-        DRb.thread.join
+        begin
+          DRb.thread.join
+        rescue DRb::ReplyReaderThreadError
+          retry
+        end
       end
     end
   end

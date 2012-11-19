@@ -151,11 +151,14 @@ module Pione
       # State transition thread.
       attr_reader :running_thread
 
+      attr_accessor :show_agent_status
+
       # Start agent activity.
       # @return the agent
       def start
         raise TransitionError.new(current_state) if current_state == :terminated
 
+        @__owner_thread__ = Thread.current
         @__result__ = nil
         @running_thread = Thread.new { start_running }
         return self
@@ -168,7 +171,7 @@ module Pione
         @__current_state__ ||= nil
       end
 
-      # Transits to next state.
+      # Transits to the next state.
       # @return [void]
       def transit
         # raise error if the current state is terminated
@@ -181,18 +184,23 @@ module Pione
         begin
           next_state = get_next_state(state_transition_table[current_state])
           set_current_state(next_state)
+          p next_state if @show_agent_status
           @__result__ = call_transition_method(next_state, *@__result__)
         rescue Aborting
           raise
         rescue Exception => e
           if error_state = exception_handler(e)
-            # known exception
+            # known exception : go error state
             next_state = get_next_state(error_state)
             set_current_state(next_state)
             @__result__ = call_transition_method(next_state, e)
           else
-            # unknown exception
-            raise e
+            # unknown exception : raise it to owner thread
+            if @__owner_thread__.alive?
+              @__owner_thread__.raise e
+            else
+              raise e
+            end
           end
         end
       end
@@ -215,7 +223,7 @@ module Pione
         # transit to terminated
         begin
           res = call_transition_method(:terminated)
-        rescue DRb::DRbConnError
+        rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
         end
         # set agent state
         set_current_state(:terminated)
@@ -311,10 +319,6 @@ module Pione
       # Return agent type of the object.
       def agent_type
         self.class.agent_type
-      end
-
-      def transit_to_error(e)
-        terminate
       end
     end
   end

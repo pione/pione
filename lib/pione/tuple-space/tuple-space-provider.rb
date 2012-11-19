@@ -21,7 +21,12 @@ module Pione
         @terminated = false
 
         # start agents
-        @keeper = Agent::TrivialRoutineWorker.new(Proc.new{send_packet}, 3)
+        @keeper = Agent::TrivialRoutineWorker.new(
+          Proc.new do
+            send_packet
+            sleep 5
+          end
+        )
       end
 
       def start
@@ -62,7 +67,7 @@ module Pione
           addresses.each {|addr| socket.send(@ref, 0, addr.host, addr.port)}
         rescue => e
           if Global.show_presence_notifier
-            puts "something is bad..."
+            puts "tuple-space-provider: something is bad..."
             Util::ErrorReport.print(e)
           end
         ensure

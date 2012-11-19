@@ -25,7 +25,8 @@ module Pione
         return read(Tuple[:command].any)
       end
 
-      def transit_to_doing_command(cmd)
+      def transit_to_doing_command(cmd=nil)
+        return unless cmd # the case we got null command
         return unless cmd.kind_of?(Tuple::Command)
         case cmd.type
         when "terminate"
