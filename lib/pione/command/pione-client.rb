@@ -1,6 +1,7 @@
 module Pione
   module Command
     class PioneClient < FrontOwnerCommand
+      use_option_module CommandOption::TaskWorkerOwnerOption
       use_option_module CommandOption::TupleSpaceProviderOwnerOption
 
       set_program_name("pione-client") do
@@ -31,11 +32,6 @@ module Pione
       # --stream
       define_option('--stream', 'turn on stream mode') do
         @stream = true
-      end
-
-      # --task-worker
-      define_option('-t N', '--task-worker=N', 'set task worker number that this process creates') do |n|
-        @task_worker = n.to_i
       end
 
       # --request-task-worker

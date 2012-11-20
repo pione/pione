@@ -10,14 +10,7 @@ Runs the broker to launch task workers.
 TXT
 
       use_option_module CommandOption::TupleSpaceReceiverOption
-
-      define_option(
-        '-r n',
-        '--worker-resource n',
-        'task worker resource size'
-      ) do |n|
-        @resource = n.to_i
-      end
+      use_option_module CommandOption::TaskWorkerOwnerOption
 
       attr_reader :broker
 

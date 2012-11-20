@@ -178,6 +178,7 @@ require 'pione/command-option/presence-notifier-option'
 require 'pione/command-option/tuple-space-provider-option'
 require 'pione/command-option/tuple-space-provider-owner-option'
 require 'pione/command-option/tuple-space-receiver-option'
+require 'pione/command-option/task-worker-owner-option'
 
 # command
 require 'pione/command/basic-command'
