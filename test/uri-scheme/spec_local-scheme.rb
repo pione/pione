@@ -1,6 +1,14 @@
 require_relative '../test-util'
 
 describe 'Pione::URIScheme::LocalScheme' do
+  it 'should be suported by PIONE' do
+    URI.parse("local:/").should.be.pione
+  end
+
+  it 'should be storage' do
+    URI.parse("local:/").should.be.storage
+  end
+
   it 'should be local scheme URI' do
     URI.parse("local:./output").should.kind_of Pione::URIScheme::LocalScheme
   end

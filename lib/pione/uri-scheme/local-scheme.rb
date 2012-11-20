@@ -7,7 +7,7 @@ module Pione
     # @example
     #   # relative path form
     #   local:./test.txt
-    class LocalScheme < BasicScheme('local')
+    class LocalScheme < BasicScheme('local', :storage => true)
       # @api private
       COMPONENT = [:scheme, :path]
 

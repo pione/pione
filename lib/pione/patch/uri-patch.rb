@@ -7,6 +7,13 @@ module URI
   end
 
   class Generic
+    # Returns true if the scheme is supportted by PIONE system.
+    # @return [Boolean]
+    #   true if the scheme is supportted by PIONE system
+    def pione?
+      false
+    end
+
     # Returns true if the path represents a directory.
     # @return [Boolean]
     #   true if the path represents a directory
