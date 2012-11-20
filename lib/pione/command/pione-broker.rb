@@ -2,7 +2,7 @@ module Pione
   module Command
     class PioneBroker < DaemonProcess
       set_program_name "pione-broker" do
-        "--task-worker %s" % @resource
+        "--task-worker %s" % @task_worker
       end
 
       set_program_message <<TXT
@@ -15,7 +15,7 @@ TXT
       attr_reader :broker
 
       def initialize
-        @resource = [Util.core_number - 1, 1].max
+        @task_worker = [Util.core_number - 1, 1].max
       end
 
       def create_front
@@ -23,14 +23,14 @@ TXT
       end
 
       def validate_options
-        unless @resource > 0
+        unless @task_worker > 0
           abort("error: no task worker resources")
         end
       end
 
       def prepare
         super
-        @broker = Pione::Agent[:broker].new(task_worker_resource: @resource)
+        @broker = Pione::Agent[:broker].new(task_worker_resource: @task_worker)
         @tuple_space_receiver = Pione::TupleSpaceReceiver.instance
       end
 
