@@ -55,7 +55,7 @@ module Pione
         # @param [URI] dir_path
         #   directory URI for loading target
         def initialize(ts_server, dir_path)
-          raise TypeError.new(dir_path) unless dir_path.kind_of?(URI)
+          raise TypeError.new(dir_path) unless dir_path.kind_of?(URI) or dir_path.nil?
           super(ts_server)
           @dir_path = dir_path
           if dir_path
