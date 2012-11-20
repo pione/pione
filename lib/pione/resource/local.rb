@@ -46,6 +46,8 @@ module Pione
         @path.entries.select{|entry| (@path + entry).file?}.map do |entry|
           Resource[::URI.parse("local:%s" % (@path + entry).expand_path)]
         end
+      rescue Errno::ENOENT
+        raise NotFound.new(self)
       end
 
       # (see BasicResource#basename)

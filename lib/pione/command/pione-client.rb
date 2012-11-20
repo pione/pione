@@ -4,33 +4,46 @@ module Pione
       use_option_module CommandOption::TupleSpaceProviderOwnerOption
 
       set_program_name("pione-client") do
-        [@filename, "-b %s" % @base_uri, @stream ? "--stream" : ""].join(" ")
+        [@filename, "-o %s" % @output_uri, @stream ? "--stream" : ""].join(" ")
       end
 
-      set_program_message <<TXT
-Requests to process PIONE document.
-TXT
+      set_program_message "Requests to process PIONE document."
 
-      define_option('-i DIR', '--input-dir=DIR', 'set input data directory') do |dir|
-        @input_dir = dir
+      # --input-uri
+      define_option('-i URI', '--input-uri=URI', 'set input directory URI') do |uri|
+        parsed = URI.parse(uri)
+        unless parsed.scheme
+          parsed = URI.parse("local:%s" % Pathname.new(uri).expand_path)
+        end
+        @input_uri = parsed.as_directory
       end
 
-      define_option('-b URI', '--base-uri=URI', 'set base URI') do |uri|
-        @base_uri = ::URI.parse(uri)
+      # --output-uri
+      define_option('-o URI', '--output-uri=URI', 'set output directory URI') do |uri|
+        @output_uri = URI.parse(uri)
       end
 
+      # --log
       define_option('--log=PATH', 'set log path') do |path|
         @log_path = path
       end
 
+      # --stream
       define_option('--stream', 'turn on stream mode') do
         @stream = true
       end
 
-      define_option('-r N', '--resource=N', 'set resource number') do |n|
-        @resource = n.to_i
+      # --task-worker
+      define_option('-t N', '--task-worker=N', 'set task worker number that this process creates') do |n|
+        @task_worker = n.to_i
       end
 
+      # --request-task-worker
+      define_option('--request-task-worker=N', 'set request number of task workers') do |n|
+        @request_task_worker = n.to_i
+      end
+
+      # --params
       define_option('--params="{Var:1,...}"', "set &main:Main rule's parameters") do |str|
         begin
           @params = DocumentTransformer.new.apply(
@@ -43,16 +56,19 @@ TXT
         end
       end
 
+      # --stand-alone
       define_option('--stand-alone', 'turn on stand alone mode') do
         @stand_alone = true
         @without_tuple_space_provider = true
       end
 
+      # --dry-run
       define_option('--dry-run', 'turn on dry run mode') do |b|
         @dry_run = true
       end
 
-      define_option('--relay URI', 'turn on relay mode and set relay address') do |uri|
+      # --relay
+      define_option('--relay=URI', 'turn on relay mode and set relay address') do |uri|
         @relay = uri
       end
 
@@ -60,13 +76,14 @@ TXT
 
       def initialize
         super()
-        @input_dir = nil
-        @base_uri = URI.parse("local:./output/")
+        @input_uri = nil
+        @output_uri = URI.parse("local:./output/")
         @log_path = "log.txt"
         @stream = false
         @params = Parameters.empty
         @dry_run = false
-        @resource = [Util.core_number - 1, 1].max
+        @task_worker = [Util.core_number - 1, 1].max
+        @request_task_worker = 1
         @worker_threads = []
         @stand_alone = false
         @relay = nil
@@ -77,12 +94,18 @@ TXT
       private
 
       def validate_options
-        unless @resource > 0 or (not(@stand_alone) and @resource == 0)
-          abort("error: invalid resource size: %s" % @resource)
+        unless @task_worker > 0 or (not(@stand_alone) and @task_worker == 0)
+          abort("option error: invalid resource size: %s" % @task_worker)
         end
 
-        if @stream and @input_dir.nil?
-          abort("error: no input dir on stream mode")
+        if @stream and @input_uri.nil?
+          abort("option error: no input URI on stream mode")
+        end
+
+        if not(@input_uri.nil?)
+          unless @input_uri.pione? and @input_uri.storage?
+            abort("opiton error: bad URI scheme '%s'." % @input_uri)
+          end
         end
       end
 
@@ -96,14 +119,14 @@ TXT
         @filename = ARGF.filename
 
         @tuple_space_server = TupleSpaceServer.new(
-          task_worker_resource: @resource
+          task_worker_resource: @request_task_worker
         )
 
         # setup base uri
-        case @base_uri.scheme
+        case @output_uri.scheme
         when "local"
-          FileUtils.makedirs(@base_uri.path)
-          @base_uri = @base_uri.absolute
+          FileUtils.makedirs(@output_uri.path)
+          @output_uri = @output_uri.absolute
         when "dropbox"
           # start session
           session = nil
@@ -141,8 +164,8 @@ TXT
           Resource::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
         end
 
-        @base_uri = @base_uri.as_directory.to_s
-        @tuple_space_server.set_base_uri(@base_uri)
+        @output_uri = @output_uri.as_directory.to_s
+        @tuple_space_server.set_base_uri(@output_uri)
       end
 
       def start
@@ -203,7 +226,7 @@ TXT
         # input generators
         generator_method = @stream ? :start_by_stream : :start_by_dir
         gen = Agent[:input_generator].send(
-          generator_method, @tuple_space_server, @input_dir
+          generator_method, @tuple_space_server, @input_uri
         )
         sleep 0.1 while not(gen.counter > 0)
       end
@@ -216,7 +239,7 @@ TXT
       end
 
       def start_workers
-        @resource.times do
+        @task_worker.times do
           Agent[:task_worker].spawn(Global.front, Util.generate_uuid)
         end
       end

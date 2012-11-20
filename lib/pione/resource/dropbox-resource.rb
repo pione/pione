@@ -67,6 +67,9 @@ module Pione
 
       def entries
         metadata = @client.metadata(@path)
+        if not(metadata["is_dir"]) or metadata["is_deleted"]
+          raise NotFound.new(self)
+        end
         metadata["contents"].select{|entry| not(entry["is_dir"]) and not(entry["is_deleted"])}.map do |entry|
           Resource["dropbox:%s" % entry["path"]]
         end

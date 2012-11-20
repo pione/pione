@@ -52,27 +52,22 @@ module Pione
         # Create a generator.
         # @param [TupleSpaceServer] ts_server
         #   tuple space server
-        # @param [Pathname] dir_path
-        #   directory path for loading target
+        # @param [URI] dir_path
+        #   directory URI for loading target
         def initialize(ts_server, dir_path)
+          raise TypeError.new(dir_path) unless dir_path.kind_of?(URI)
           super(ts_server)
           @dir_path = dir_path
           if dir_path
-            @gen = Dir.open(@dir_path).to_enum
+            @gen = Resource[@dir_path].entries.to_enum
           else
             @gen = [].each
           end
         end
 
         def generate
-          name = @gen.next
-          path = File.join(@dir_path, name)
-          uri = "local:#{File.expand_path(path)}"
-          if ['.', '..'].include?(name)
-            generate
-          else
-            InputData.new(name, uri, File.mtime(path))
-          end
+          item = @gen.next
+          InputData.new(item.basename, item.uri, item.mtime)
         end
       end
 
@@ -134,7 +129,8 @@ module Pione
       define_state :sleeping
       define_state :stop_iteration
 
-      define_state_transition :initialized => :generating
+      define_state_transition :initialized => :reading_base_uri
+      define_state_transition :reading_base_uri => :generating
       define_state_transition :generating => :generating
       define_state_transition :stop_iteration => lambda{|agent, res|
         agent.stream? ? :sleeping : :terminated
@@ -161,6 +157,10 @@ module Pione
 
       private
 
+      def transit_to_reading_base_uri
+        @base_uri = read(Tuple[:base_uri].any).uri
+      end
+
       # State generating generates a data from generator and puts it into tuple
       # space.
       def transit_to_generating
@@ -170,7 +170,9 @@ module Pione
             msg.add_record(agent_type, "uuid", uuid)
             msg.add_record(agent_type, "object", input.name)
           end
-          write(Tuple[:data].new(DOMAIN, input.name, input.uri, input.time))
+          input_uri = @base_uri + File.join("input", input.name)
+          Resource[input_uri].create(Resource[input.uri].read)
+          write(Tuple[:data].new(DOMAIN, input.name, input_uri, input.time))
           return input
         end
       end
