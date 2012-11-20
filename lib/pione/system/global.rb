@@ -114,14 +114,14 @@ module Pione
         Pathname.new(Dir.mktmpdir(nil, Global.working_directory_root))
       end
 
-      # root of working directory
+      # root of file cache directory
       define_item(:file_cache_directory_root, true) do
         Pathname.new(File.join(Dir.tmpdir, "pione-file-cache-" + Etc.getlogin)).tap {|path|
           path.mkpath unless path.exist?
         }
       end
 
-      # working directory
+      # file cache directory
       define_item(:file_cache_directory, false) do
         Pathname.new(Dir.mktmpdir(nil, Global.file_cache_directory_root))
       end
