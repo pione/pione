@@ -35,6 +35,12 @@ module Pione
           args << "--presence-port"
           args << Global.presence_port.to_s
         end
+        if self == TupleSpaceProvider
+          Global.presence_notification_addresses.each do |address|
+            args << "--presence-notification-address"
+            args << address.to_s
+          end
+        end
         pid = Process.spawn(*args)
         thread = Process.detach(pid)
         # wait that the provider starts up

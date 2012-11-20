@@ -60,7 +60,7 @@ module Pione
         # open a socket
         socket = UDPSocket.open
         # address to send broadcast
-        addresses = Global.tuple_space_provider_broadcast_addresses
+        addresses = Global.presence_notification_addresses
         begin
           if Global.show_presence_notifier
             args = [Global.front.uri, addresses.join(", "), Time.now]

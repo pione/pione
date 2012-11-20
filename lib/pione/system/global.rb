@@ -193,8 +193,8 @@ module Pione
         )
       end
 
-      # broadcast addresses for presence notification
-      define_item(:tuple_space_provider_broadcast_addresses, true) do
+      # presence notification address
+      define_item(:presence_notification_addresses, true) do
         [URI.parse("broadcast://%s:%s" % ["255.255.255.255", Global.presence_port])]
       end
 
