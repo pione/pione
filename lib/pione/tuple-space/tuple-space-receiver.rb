@@ -93,7 +93,7 @@ module Pione
           # ignore
         end
         if Global.show_presence_notifier
-          puts "presence notifier was received %s" % provider_front.__drburi
+          puts "presence notifier was received: %s" % provider_front.__drburi
         end
       rescue DRb::DRbConnError, DRb::ReplyReaderThreadError, IOError => e
         @socket.close

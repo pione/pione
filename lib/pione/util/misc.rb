@@ -50,6 +50,12 @@ module Pione
       def parse_ip_address(s)
         ":"
       end
+
+      def my_ip_address_list
+        Socket.ip_address_list.select do |addr|
+          addr.ipv4? and not(addr.ipv4_loopback?)
+        end.map {|addr| addr.ip_address}
+      end
     end
 
     extend Misc
