@@ -129,6 +129,9 @@ module Pione
       # system front server
       define_item(:front, false)
 
+      # my ip address
+      define_item(:my_ip_address, true, Util.my_ip_address_list.first)
+
       #
       # pione-client
       #

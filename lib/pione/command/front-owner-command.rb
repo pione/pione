@@ -1,6 +1,10 @@
 module Pione
   module Command
     class FrontOwnerCommand < BasicCommand
+      define_option("--my-ip-address=ADDRESS", "set my IP address") do |address|
+        Global.my_ip_address = address
+      end
+
       # Runs the command.
       def run
         parse_options

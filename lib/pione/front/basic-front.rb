@@ -36,7 +36,7 @@ module Pione
         if port.kind_of?(Range)
           port = port.each
           begin
-            DRb.start_service("druby://:%s" % port.next, self, config)
+            DRb.start_service("druby://%s:%s" % [Global.my_ip_address, port.next], self, config)
           rescue StopIteration => e
             raise FrontError.new("you couldn't start front server.")
           rescue
@@ -44,7 +44,7 @@ module Pione
           end
         else
           begin
-            DRb.start_service(port ? "druby://:%s" % port : nil, self, config)
+            DRb.start_service(port ? "druby://%s:%s" % [Global.my_ip_address, port] : nil, self, config)
           rescue => e
             raise FrontError.new("You couldn't start front server: %s" % e.message)
           end

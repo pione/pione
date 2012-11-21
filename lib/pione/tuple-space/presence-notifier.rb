@@ -35,6 +35,8 @@ module Pione
           args << "--presence-port"
           args << Global.presence_port.to_s
         end
+        args << "--my-ip-address"
+        args << Global.my_ip_address
         if self == TupleSpaceProvider
           Global.presence_notification_addresses.each do |address|
             args << "--presence-notification-address"
