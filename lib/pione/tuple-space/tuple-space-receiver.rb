@@ -78,7 +78,10 @@ module Pione
       # Receives tuple space servers and updates the table.
       # @return [void]
       def receive_tuple_space_servers
-        provider_front = Marshal.load(@socket.recv(1024))
+        data, addr = @socket.recvfrom(1024)
+        port = Marshal.load(data)
+        ip_address = addr[3]
+        provider_front = DRbObject.new_with_uri("druby://%s:%s" % [ip_address, port])
         begin
           # need return of ping in short time
           Timeout.timeout(1) do

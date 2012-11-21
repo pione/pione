@@ -56,18 +56,15 @@ module Pione
       # @return [void]
       def send_packet
         # setup reference data
-        uri = Global.front.uri
-        if md = /druby:\/\/localhost:(\d+)/.match(Global.front.uri)
-          uri = "druby://%s:%s" % [Util.my_ip_address_list.first, md[1]]
-        end
-        @ref ||= Marshal.dump(DRbObject.new_with_uri(uri))
+        port = /druby:\/\/(.*):(\d+)/.match(Global.front.uri)[2].to_i
+        @ref ||= Marshal.dump(port)
         # open a socket
         socket = UDPSocket.open
         # address to send broadcast
         addresses = Global.presence_notification_addresses
         begin
           if Global.show_presence_notifier
-            args = [uri, addresses.join(", "), Time.now]
+            args = [Global.front.uri, addresses.join(", "), Time.now]
             puts "sent presence notifier from %s to %s at %s" % args
           end
           # send packet
