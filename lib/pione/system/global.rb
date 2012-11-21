@@ -132,6 +132,9 @@ module Pione
       # my ip address
       define_item(:my_ip_address, true, Util.my_ip_address_list.first)
 
+      # pwd
+      define_item(:pwd, false, (`pwd -L`.chomp || Dir.pwd))
+
       #
       # pione-client
       #

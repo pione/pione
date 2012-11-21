@@ -20,7 +20,7 @@ module Pione
       # @return [URI]
       #   URI with absolute path
       def absolute
-        uri = URI.parse("%s:%s" % [scheme, File.expand_path(path)])
+        uri = URI.parse("%s:%s" % [scheme, File.expand_path(path, Global.pwd)])
         directory? ? uri.as_directory : uri
       end
     end
