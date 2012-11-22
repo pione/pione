@@ -313,8 +313,8 @@ Rule CreateParcorinfoSort
 Flow
   rule ConvertCorinfoToCorinfo2
   rule CreateParcorinfolst
-  rule CreateParcorinfoSort
-  rule CreateSelectParticle
+  rule ConvertParcorinfolstToParcorinfoSort
+  rule ConvertParcorinfolstsortToSelectParticle
 End
 
 # .corinfo.corinfo2
@@ -334,16 +334,16 @@ Action
   cat {$I[1].join(" ")} > {$TARGET}.parcorinfolst
 End
 
-# CorinfoSort
-Rule CreateParcorinfoSort
+# ConvertParcorinfolstToParcorinfoSort
+Rule ConvertParcorinfolstToParcorinfoSort
   input '{$TARGET}.parcorinfolst'
   output '{$TARGET}.parcorinfolstsort'
 Action
   awk '{ print $1,$2,$3,$4,$5,$6,$7,$8,$9}' {$TARGET}.parcorinfolst | sort -r > {$TARGET}.parcorinfolstsort
 End
 
-# SelectParticle
-Rule CreateSelectParticle
+# ConvertParcorinfolstsortToSelectParticle
+Rule ConvertParcorinfolstsortToSelectParticle
   input '{$TARGET}.parcorinfolstsort'
   output '{$TARGET}.3dlstselect'
 Action
