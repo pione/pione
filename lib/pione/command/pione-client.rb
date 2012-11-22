@@ -11,7 +11,7 @@ module Pione
       set_program_message "Requests to process PIONE document."
 
       # --input-uri
-      define_option('-i URI', '--input-uri=URI', 'set input directory URI') do |uri|
+      define_option('-i URI', '--input=URI', 'set input directory URI') do |uri|
         parsed = URI.parse(uri)
         unless parsed.scheme
           parsed = URI.parse("local:%s" % Pathname.new(uri).expand_path)
@@ -20,7 +20,7 @@ module Pione
       end
 
       # --output-uri
-      define_option('-o URI', '--output-uri=URI', 'set output directory URI') do |uri|
+      define_option('-o URI', '--output=URI', 'set output directory URI') do |uri|
         @output_uri = URI.parse(uri)
       end
 
@@ -91,7 +91,7 @@ module Pione
 
       def validate_options
         unless @task_worker > 0 or (not(@stand_alone) and @task_worker == 0)
-          abort("option error: invalid resource size: %s" % @task_worker)
+          abort("option error: invalid resource size '%s'" % @task_worker)
         end
 
         if @stream and @input_uri.nil?
@@ -100,7 +100,7 @@ module Pione
 
         if not(@input_uri.nil?)
           unless @input_uri.pione? and @input_uri.storage?
-            abort("opiton error: bad URI scheme '%s'." % @input_uri)
+            abort("opiton error: bad URI scheme '%s'" % @input_uri)
           end
         end
       end
