@@ -309,7 +309,7 @@ End
 
 Rule CreateParcorinfoSort
   input '*.corinfo'.all
-  output '{$TARGET}.parcorinfolstsort'
+  output '{$TARGET}.parcorinfolst'
 Flow
   rule ConvertCorinfoToCorinfo2
   rule CreateParcorinfolst
