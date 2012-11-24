@@ -129,11 +129,19 @@ module Pione
       # system front server
       define_item(:front, false)
 
-      # my ip address
-      define_item(:my_ip_address, true, Util.my_ip_address_list.first)
+      # This means the process's IP address.
+      define_item(:my_ip_address, true) do
+        Util.my_ip_address_list.first
+      end
 
-      # pwd
-      define_item(:pwd, false, (`pwd -L`.chomp || Dir.pwd))
+      # This means current working directory. The directory is defined by the
+      # following rule:
+      # - 1. if environment variable "PWD" is defined, use it
+      # - 2. if "pwd" command exists, use the command result with logical option
+      # - 3. otherwise Dir.pwd
+      define_item(:pwd, false) do
+        (Env["PWD"] || `pwd -L`.chomp || Dir.pwd)
+      end
 
       #
       # pione-client
