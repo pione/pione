@@ -64,6 +64,9 @@ module Pione
           revision = {min_server => 1, max_server => -1}
           new_ratios = calc_resource_ratios(revision)
 
+          return unless new_ratios.has_key?(min_server)
+          return unless new_ratios.has_key?(max_server)
+
           if new_ratios[min_server] < new_ratios[max_server]
             # move worker from max server to min server
             max_workers = @broker.task_workers.select do |worker|
