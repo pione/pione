@@ -51,10 +51,14 @@ module Pione
         ":"
       end
 
+      # Returns my IP address list. The list includes IPv4 addresses only.
       def my_ip_address_list
-        Socket.ip_address_list.select do |addr|
-          addr.ipv4? and not(addr.ipv4_loopback?)
-        end.map {|addr| addr.ip_address}
+        addrs = Socket.ip_address_list.select do |addr|
+          addr.ipv4? and not(addr.ipv4_loopback?) and not(addr.ipv4_multicast?)
+        end
+        privates = addrs.select{|addr| addr.ipv4_private?}
+        not_privates = addrs - privates
+        (privates.sort + not_privates.sort).map {|addr| addr.ip_address}
       end
     end
 
