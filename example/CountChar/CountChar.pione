@@ -1,5 +1,5 @@
 Rule Main
-  input '*.txt'.except('summary.txt').all
+  input '*.txt:terminate.cmd'.except('summary.txt').all
   output '*.count'.all
   output 'summary.txt'
 Flow
@@ -13,13 +13,14 @@ Rule CountChar
 Flow
   rule ConvertToUtf8
   rule CountUTF8Char
+  rule Terminate
 End
 
 Rule ConvertToUtf8
   input '*.txt'.except('summary.txt')
   output '{$*}.utf8'
 Action
-  nkf -w {$I[1]} > {$O[1]}
+  iconv -c -f Shift_JIS -t UTF-8 {$I[1]} > {$O[1]}
 End
 
 Rule CountUTF8Char
@@ -54,4 +55,10 @@ Action
   table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
     puts "#{key.inspect[1..-2]}:#{table[key]}"
   end
+End
+
+Rule Terminate
+  input 'terminate.cmd'
+Flow
+  rule &system:Terminate
 End
