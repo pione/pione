@@ -42,9 +42,10 @@ module Pione
       # --params
       define_option('--params="{Var:1,...}"', "set &main:Main rule's parameters") do |str|
         begin
-          @params = DocumentTransformer.new.apply(
+          params = DocumentTransformer.new.apply(
             DocumentParser.new.parameters.parse(str)
           )
+          @params.merge!(params)
         rescue Parslet::ParseFailed => e
           puts "invalid parameters: " + str
           Util::ErrorReport.print(e)
