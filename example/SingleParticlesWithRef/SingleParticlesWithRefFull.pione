@@ -66,7 +66,7 @@ $SNRATIO := 3
 # Rules
 #
 
-Rule Preparation
+Rule Main
   input '{$REFSOURCE}.pdb'
   output '{$TARGET}.3d'
   output '{$TARGET}.ds6'
@@ -77,7 +77,9 @@ Rule Preparation
 Flow
   rule Init
   rule First
+  rule All
 End
+
 
 #
 # Init
@@ -174,10 +176,10 @@ Action
 End
 
 #
-# Main
+# All
 #
 
-Rule Main
+Rule All
   input '*.roi'.all
   input '{$TARGET}.ref3d'
   input '{$TARGET}.ref2d'
@@ -196,6 +198,7 @@ Flow
   rule CreatePlotData
   rule CreateMontageList
 End
+
 
 #
 # 3dinfo
