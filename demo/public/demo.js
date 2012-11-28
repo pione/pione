@@ -54,7 +54,10 @@ function updateInputs(json) {
 	$("#input-list").append($("<li>no inputs</li>"));
     } else {
 	jQuery.each(json, function(){
-	    $("#input-list").append($("<li/>").text(this));
+	    var link = $("<a/>");
+	    link.attr("href", "/input/" + this)
+	    link.text(this);
+	    $("#input-list").append($("<li/>").append(link));
 	});
     }
 };
@@ -65,7 +68,10 @@ function updateOutputs(json) {
 	$("#output-list").append($("<li>no outputs</li>"));
     } else {
 	jQuery.each(json, function(){
-	    $("#output-list").append($("<li/>").text(this));
+	    var link = $("<a/>");
+	    link.attr("href", "/output/" + this)
+	    link.text(this);
+	    $("#output-list").append($("<li/>").append(link));
 	});
     }
 };

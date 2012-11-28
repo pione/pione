@@ -272,3 +272,29 @@ get '/clean' do
   return
 end
 
+#
+# input
+#
+
+get '/input/:name' do |name|
+  if session['input'] and base_uri = session['base-uri']
+    input_uri = URI.parse(session["base-uri"]) + "input/" + File.basename(name)
+    send_file input_uri.path
+  else
+    404
+  end
+end
+
+#
+# output
+#
+
+get '/output/:name' do |name|
+  if base_uri = session['base-uri']
+    output_uri = URI.parse(base_uri) + File.basename(name)
+    send_file output_uri.path
+  else
+    404
+  end
+end
+
