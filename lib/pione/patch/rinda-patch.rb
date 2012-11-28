@@ -118,6 +118,10 @@ module Rinda
         @bin.values.each(*args)
       end
 
+      def size
+        @bin.keys.size
+      end
+
       private
 
       # Returns domain position.
@@ -207,6 +211,10 @@ module Rinda
 
       def each(*args)
         @bin.values.map{|table| table.values}.flatten.each(*args)
+      end
+
+      def size
+        elements.size
       end
 
       private
@@ -344,6 +352,22 @@ module Rinda
         orig_find_all(template)
       end
     end
+
+    def task_size
+      @hash[:task].size
+    end
+
+    def working_size
+      @hash[:working].size
+    end
+
+    def finished_size
+      @hash[:finished].size
+    end
+
+    def data_size
+      @hash[:data].size
+    end
   end
 
   # @api private
@@ -395,6 +419,22 @@ module Rinda
       when :take_waiter
         @take_waiter.all_tuples.map{|tuple| tuple.value}
       end
+    end
+
+    def task_size
+      @bag.task_size
+    end
+
+    def working_size
+      @bag.working_size
+    end
+
+    def finished_size
+      @bag.finished_size
+    end
+
+    def data_size
+      @bag.data_size
     end
 
     private

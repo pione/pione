@@ -10,6 +10,9 @@ module Pione
       define_state_transition :waiting_command => :doing_command
       define_state_transition :doing_command => :waiting_command
 
+      define_exception_handler DRb::DRbConnError => :error
+      define_exception_handler DRb::ReplyReaderThreadError => :error
+
       def hello
       end
 
@@ -32,6 +35,10 @@ module Pione
         when "terminate"
           @target.terminate
         end
+      end
+
+      def transit_to_error(e)
+        terminate
       end
     end
 

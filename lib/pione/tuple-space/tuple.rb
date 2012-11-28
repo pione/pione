@@ -381,6 +381,11 @@ module Pione
       [:digest, String]
     ]
 
+    define_format [:current,
+      [:domain, String],
+      [:digest, String]
+    ]
+
     # task finished notifier
     #   domain  : string    : task domain
     #   status  : symbol    : status of the task processing
@@ -447,6 +452,8 @@ module Pione
     define_format [:dry_run, :availability]
 
     define_format [:attribute, [:key, String], :value]
+
+    define_format [:foreground, :domain, :digest]
 
     # Task is tuple class for representing job of workers.
     class Task

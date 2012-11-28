@@ -69,7 +69,12 @@ module Pione
         @relay = uri
       end
 
+      define_option('--name=NAME') do |name|
+        @name = name
+      end
+
       attr_reader :tuple_space_server
+      attr_reader :name
 
       def initialize
         super()

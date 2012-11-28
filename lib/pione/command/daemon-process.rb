@@ -10,6 +10,7 @@ module Pione
 
       def prepare
         super
+        puts Global.front.uri
         Process.daemon(true, true) if @daemon
       end
     end

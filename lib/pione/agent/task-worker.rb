@@ -86,6 +86,7 @@ module Pione
       def transit_to_task_waiting
         task = take(Tuple[:task].new(features: @features))
         write(Tuple[:working].new(task.domain, task.digest))
+        write(Tuple[:foreground].new(task.domain, task.digest))
         return task
       end
 
@@ -146,11 +147,13 @@ module Pione
                 msg.add_record(agent_type, "uuid", uuid)
                 msg.add_record(agent_type, "object", child.uuid)
               end
+              take0(Tuple[:foreground].new(task.domain, nil)) rescue true
               child.start
             else
               sleep 1
             end
           end
+          write(Tuple[:foreground].new(task.domain, task.digest))
         end
 
         # sleep until execution thread will be terminated
@@ -193,6 +196,7 @@ module Pione
           handler.domain, :succeeded, handler.outputs, task.digest
         )
         write(finished)
+        take0(Tuple[:foreground].new(task.domain, nil))
         terminate if @once
       end
 

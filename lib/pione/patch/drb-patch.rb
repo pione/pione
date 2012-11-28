@@ -88,6 +88,7 @@ module DRb
         ref = load(stream)
         msg_id = load(stream)
         argc = load(stream)
+        # puts "req_id %s, ref %s, msg_id %s, argc %s" % [req_id, ref, msg_id, argc]
         ro = DRb.to_obj(ref)
         raise(DRbConnError, "too many arguments") if @argc_limit < argc
         argv = Array.new(argc, nil)
@@ -169,6 +170,10 @@ module DRb
       end
     end
 
+    def remove_reader_thread_watcher(watcher)
+      @watchers.delete_if {|th| th == watcher}
+    end
+
     # req_id
     def send_reply(req_id, succ, result)
       @msg.send_reply(req_id, stream, succ, result)
@@ -185,6 +190,13 @@ module DRb
 
     def self.table
       @table
+    end
+
+    def self.clear_table
+      @table.values do |val|
+        val.close rescue nil
+      end
+      @table.clear
     end
 
     # @api private
@@ -236,6 +248,7 @@ module DRb
       req_id = @protocol.send_request(ref, msg_id, arg, block)
       @protocol.reader_thread(Thread.current)
       succ, result = DRb.waiter_table.take(req_id, msg_id, arg)
+      @protocol.remove_reader_thread_watcher(Thread.current)
       return succ, result
     end
   end

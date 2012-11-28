@@ -40,12 +40,16 @@ module Pione
           ratio = {}
           # make ratio table
           @broker.tuple_space_servers.each do |ts|
-            rev = revision.has_key?(ts) ? revision[ts] : 0
-            current = ts.current_task_worker_size + rev
-            resource = ts.task_worker_resource
-            # minimum resource is 1
-            resource = 1.0 unless resource > 0
-            ratio[ts] = current / resource.to_f
+            begin
+              rev = revision.has_key?(ts) ? revision[ts] : 0
+              current = timeout(1){ts.current_task_worker_size} + rev
+              resource = ts.task_worker_resource
+              # minimum resource is 1
+              resource = 1.0 unless resource > 0
+              ratio[ts] = current / resource.to_f
+            rescue Exception
+              # ignore
+            end
           end
           return ratio
         end
@@ -139,29 +143,30 @@ module Pione
 
         # Update tuple space server list.
         def update_tuple_space_servers(tuple_space_servers)
-          begin
-            @tuple_space_server_lock.synchronize do
-              del_targets = @tuple_space_servers - tuple_space_servers
-              add_targets = tuple_space_servers - @tuple_space_servers
+          @tuple_space_server_lock.synchronize do
+            del_targets = @tuple_space_servers - tuple_space_servers
+            add_targets = tuple_space_servers - @tuple_space_servers
 
-              # bye
-              del_targets.each do |ts_server|
-                ts_server.write(Tuple[:bye].new(agent_type: agent_type, uuid: uuid))
-              end
-              # hello
-              add_targets.each do |ts_server|
-                ts_server.write(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
-              end
-              # update
-              @tuple_space_servers = tuple_space_servers
+            # bye
+            #del_targets.each do |ts_server|
+            #  ts_server.write(Tuple[:bye].new(agent_type: agent_type, uuid: uuid))
+            #end
+            # hello
+            #add_targets.each do |ts_server|
+            #  ts_server.write(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
+            #end
 
-              if Global.show_presence_notifier
-                puts "broker's tuple space servers: #{@tuple_space_servers}"
+            # update
+            @tuple_space_servers = tuple_space_servers
+
+            if Global.show_presence_notifier
+              timeout(1) do
+                puts "broker's tuple space servers: %s" % [@tuple_space_servers]
               end
             end
-          rescue DRb::DRbConnError, Errno::ECONNREFUSED
-            check_tuple_space_servers
           end
+        rescue Exception
+          check_tuple_space_servers
         end
       end
 
@@ -183,9 +188,7 @@ module Pione
       define_state_transition :sleeping => :count_tuple_space_servers
       define_state_transition :checking_tuple_space_servers => :count_tuple_space_servers
 
-      define_exception_handler DRb::DRbConnError => :checking_tuple_space_servers
-      define_exception_handler Errno::ECONNREFUSED => :checking_tuple_space_servers
-      define_exception_handler DRb::ReplyReaderThreadError => :checking_tuple_space_servers
+      define_exception_handler Exception => :checking_tuple_space_servers
 
       attr_accessor :task_workers
       attr_reader :tuple_space_servers
@@ -228,7 +231,13 @@ module Pione
       # Sends bye message to tuple space servers when the broker is destroyed.
       def finalize
         @tuple_space_server_lock.synchronize do
-          @tuple_space_servers.each {|ts_server| ts_server.bye }
+          @tuple_space_servers.each do |ts_server|
+            begin
+              ts_server.bye
+            rescue Exception
+              # ignore
+            end
+          end
         end
         super
       end
@@ -244,7 +253,7 @@ module Pione
       end
 
       def transit_to_balancing_task_worker
-       @balancer.balance
+        @balancer.balance
       end
 
       def transit_to_checking_tuple_space_servers

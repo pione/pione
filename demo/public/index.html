@@ -1,0 +1,91 @@
+<html>
+  <head>
+    <title>PIONE demo system</title>
+    <script type="text/javascript" src="jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="demo.js"></script>
+    <link rel="stylesheet" href="base.css"/>
+  </head>
+
+  <body>
+    <div id="title">
+      <h1>PIONE</h1>
+      <div id="subtitle"><b>P</b>rocess rule for <b>I</b>nput/<b>O</b>utput <b>N</b>egotiation <b>E</b>nvironment</div>
+    </div>
+
+    <div id="main-box">
+      <!-- request form -->
+      <div id="request-form-box">
+	<h2>Request</h2>
+	<form>
+	  <select id="document" name="document">
+	    <option value="SingleParticlesWithRef">SingleParticlesWithRef</option>
+	    <option value="Fib">Fib</option>
+	    <option value="CountChar">CountChar</option>
+	  </select>
+	  parameters: <input type="text" id="parameters"/>
+	  <button type="button" name="process" id="process-button">
+	    Process
+	  </button>
+	  <button type="button" name="clean" id="clean-button">
+	    Clean
+	  </button>
+	</form>
+      </div>
+
+      <!-- process status -->
+      <div id="process-status-box">
+	<span id="process-status-message">No Process</span>
+      </div>
+
+      <div id="status">
+	<!-- tuple space status -->
+	<div id="tuple-space-status-box">
+	  <h2>Tuple Space Status</h2>
+	  <table id="tuple-space-status">
+	    <thead>
+	      <tr>
+		<th>identifier</th><th>size</th>
+	      </tr>
+	    </thead>
+	    <tbody>
+	      <tr><td>task</td><td id="task-size">0</td></tr>
+	      <tr><td>working</td><td id="working-size">0</td></tr>
+	      <tr><td>finished</td><td id="finished-size">0</td></tr>
+	      <tr><td>data</td><td id="data-size">0</td></tr>
+	    </tbody>
+	  </table>
+	</div>
+
+	<!-- task worker status -->
+	<div id="task-worker-status-box">
+	  <h2>Task Worker Status</h2>
+	  <ul id="task-worker-status">
+	    <li>no task workers</li>
+	  </ul>
+	</div>
+      </div>
+
+      <!-- IO box -->
+      <div id="io-box">
+	<!-- input box -->
+	<div id="input-box">
+	  <h2>Inputs</h2>
+	  <ul id="input-list">
+	    <li>no inputs</li>
+	  </ul>
+	</div>
+
+	<!-- output box -->
+	<div id="output-box">
+	  <h2>Outputs</h2>
+	  <ul id="output-list">
+	    <li>no outputs</li>
+	  </ul>
+	</div>
+      </div>
+
+      <br clear="both">
+    </div>
+  </body>
+</html>
+

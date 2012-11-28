@@ -76,6 +76,13 @@ module Pione
             puts "*** take waiter ***"
             show_bag(tuple_space_server, :take_waiter)
           end
+
+          # summary
+          puts "*** summary ***"
+          puts "task: %s" % tuple_space_server.task_size
+          puts "working: %s" % tuple_space_server.working_size
+          puts "finished: %s" % tuple_space_server.finished_size
+          puts "data: %s" % tuple_space_server.data_size
         end
       end
 

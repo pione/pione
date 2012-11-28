@@ -24,11 +24,7 @@ module Pione
         # subagents
         @tuple_space_server_receiver =
           Agent::TrivialRoutineWorker.new(Proc.new{receive_tuple_space_servers})
-        @updater = Agent::TrivialRoutineWorker.new(
-          Proc.new do
-            update_tuple_space_servers
-          end
-        )
+        @updater = Agent::TrivialRoutineWorker.new(Proc.new{update_tuple_space_servers})
       end
 
       # Registers the agent.
@@ -50,6 +46,7 @@ module Pione
 
       # Send empty tuple space server list.
       def finalize
+        puts "finalize"
         @terminated = true
         @tuple_space_server_receiver.terminate
         @socket.close
@@ -115,7 +112,7 @@ module Pione
               timeout(1) { server.ping }
               # check timespan
               (Time.now - time) > Global.tuple_space_receiver_disconnect_time
-            rescue
+            rescue Exception
               true
             end
           end
@@ -128,15 +125,16 @@ module Pione
               timeout(1) { broker.ping }
               broker.update_tuple_space_servers(tuple_space_servers)
               true
-            rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
-              puts "dead server"
+            rescue Exception => e
+              puts "[[[dead server]]]"
+              ErrorReport.print(e)
               false
             end
           end
         end
 
         sleep 1
-      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+      rescue Exception
         # ignore
       end
     end

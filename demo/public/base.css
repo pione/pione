@@ -1,0 +1,94 @@
+body {
+    background-color: #bee0ce; /* opal green */
+    color: #56256e; /* grape */
+}
+
+#title {
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 5px;
+}
+
+#subtitle {
+    font-size: 75%;
+    margin-bottom: 15px;
+}
+
+#main-box {
+    background-color: #ffffff;
+    margin-left: 100px;
+    margin-right: 100px;
+    padding: 10px 25px 10px 25px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #004d25; /* bottle green */
+}
+
+#process-status-box {
+    border-style: dashed;
+    border-width: 1px;
+    border-color: #004d25; /* bottle green */
+    padding: 5px 10px 5px 10px;
+    text-align: center;
+}
+
+#request-form-box {
+}
+
+h2 {
+    background-color: #56256e; /* grape */
+    color: #fff;
+    padding: 5px 15px;
+}
+
+#main-box h2 {
+    margin-right: 15px;
+}
+
+#tuple-space-status-box {
+    width: 50%;
+    float: left;
+}
+
+#task-worker-status-box {
+    width: 50%;
+    float: right;
+}
+
+table#tuple-space-status {
+    width: 95%;
+    border: 1px #E3E3E3 solid;
+    border-collapse: collapse;
+    border-spacing: 0px;
+    line-height: 120%;
+    text-align: center;
+}
+
+table#tuple-space-status th {
+    font-weight: bold;
+    background: #F5F5F5;
+}
+
+table#tuple-space-status th, table#tuple-space-status td {
+    padding: 5px;
+    border: #E3E3E3 solid;
+    border-width: 0px 0px 1px 1px;
+}
+
+#io-box {
+    clear: both;
+}
+
+#input-box {
+    width: 50%;
+    float: left;
+}
+
+#output-box {
+    width: 50%;
+    float: right;
+}
+
+

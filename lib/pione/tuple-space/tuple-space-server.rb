@@ -121,6 +121,22 @@ module Pione
         @__ts__.all_tuples(*args).compact
       end
 
+      def task_size
+        @__ts__.task_size
+      end
+
+      def working_size
+        @__ts__.working_size
+      end
+
+      def finished_size
+        @__ts__.finished_size
+      end
+
+      def data_size
+        @__ts__.data_size
+      end
+
       # Shutdown the server.
       def finalize
         @terminated = true

@@ -11,12 +11,14 @@ module Pione
 
       attr_reader :command
       attr_reader :uri
+      attr_reader :attrs
 
       # Creates a front server as druby's service.
       def initialize(command, port)
         @command = command
         # @uri = start_service(port, {:verbose => true})
         @uri = start_service(port, {})
+        @attrs = {}
       end
 
       # Returns the pid.

@@ -7,7 +7,7 @@ module Pione
       # @api private
       def validate_options
         if not(@no_parent_mode) and @parent_front.nil?
-          abort("error: no caller front address")
+          abort("option error: no caller front address")
         end
       end
 
@@ -17,7 +17,10 @@ module Pione
 
         # "ppid == 1" means the parent is dead
         terminater = Proc.new do
-          terminate if Process.ppid == 1
+          if Process.ppid == 1
+            abort
+            terminate
+          end
           sleep 3
         end
 
@@ -33,6 +36,7 @@ module Pione
       def terminate
         @watchdog.terminate
         super
+        abort
       end
     end
   end

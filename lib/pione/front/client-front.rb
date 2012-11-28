@@ -7,6 +7,7 @@ module Pione
       include TupleSpaceProviderOwner
 
       def_delegator :@command, :tuple_space_server
+      def_delegator :@command, :name
 
       # Create a new front.
       def initialize(command)
