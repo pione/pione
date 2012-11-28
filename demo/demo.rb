@@ -10,6 +10,17 @@ set :public_folder, File.dirname(__FILE__) + '/public'
 enable :sessions
 
 #
+# variables
+#
+
+$client_watcher = {}
+$client_watcher_lock = Mutex.new
+if ENV["PRESENCE_NOTIFICATION_ADDRESS"]
+  $presence_notification_address = ENV["PRESENCE_NOTIFICATION_ADDRESS"]
+end
+puts $presence_notification_address
+
+#
 # utility functions
 #
 
@@ -25,9 +36,6 @@ def stop_client_process(session)
   end
 end
 
-$client_watcher = {}
-$client_watcher_lock = Mutex.new
-
 # start client process
 def call_client_process(session, document_path, params, output, input)
   pione_client_name = Util.generate_uuid
@@ -37,6 +45,9 @@ def call_client_process(session, document_path, params, output, input)
   args << "--params" << params if params
   args << "--output" << output if output
   args << "--input" << input if input
+  if $presence_notification_address
+    args << "--presence-notification-address" << $presence_notification_address
+  end
   pid = Process.spawn(*args)
   thread = Process.detach(pid)
   $client_watcher_lock.synchronize do
