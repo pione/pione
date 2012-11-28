@@ -6,16 +6,12 @@
 # Variables
 #
 
-# Initial Reference Model
-$INITIAL := "initial"
-
 # Target structure name
 $TARGET := "all"
 
 #
 # Search Area for 3D
 #
-$ROTMODE := "YOYS"
 
 # Rot1
 $ROT1MIN := 0
@@ -41,140 +37,12 @@ $ROTMIN := 0
 $ROTMAX := 359
 $nROT   := 360 / $STEP
 
-# Seletion Step
-$COR_THRESHOLD     := 0.4
-$Y_SHIFT_THRESHOLD := 20
-
 # Pad size for 2D
 $PAD_W := 64
 $PAD_H := 64
 
 #
-# Initial model from PDB
-#
-$REFSOURCE := "121p-shift"
-$DELTA   := 2.5
-$SIZE_X  := 64.0
-$SIZE_Y  := 64.0
-$SIZE_Z  := 64.0
-$START_X := -1.0 * $DELTA * $SIZE_X / 2.0
-$START_Y := -1.0 * $DELTA * $SIZE_Y / 2.0
-$START_Z := -1.0 * $DELTA * $SIZE_Z / 2.0
-$SNRATIO := 3
-
-#
 # Rules
-#
-
-Rule Preparation
-  input '{$REFSOURCE}.pdb'
-  output '{$TARGET}.3d'
-  output '{$TARGET}.ds6'
-  output '{$TARGET}.gnuplotcorinfolst'
-  output '{$TARGET}.gnuplotanglelst'
-  output '{$TARGET}.gnuplotshiftlst'
-  output '{$TARGET}.mon'
-Flow
-  rule Init
-  rule First
-End
-
-#
-# Init
-#
-
-Rule Init
-  input '{$REFSOURCE}.pdb'
-  output '{$INITIAL}.3d'
-  output '*.roi'.all
-Flow
-  rule CreateInitialModel
-  rule CreateTestData.params({rot1: 0, rot2: 0, rot3: 0})
-End
-
-# InitialModel
-Rule CreateInitialModel
-  input '{$REFSOURCE}.pdb'
-  output '{$INITIAL}.3d'
-Action
-  pdb2mrc -i {$REFSOURCE}.pdb -o {$INITIAL}.3d -nx {$SIZE_X.as_int} -ny {$SIZE_Y.as_int} -nz {$SIZE_Z.as_int} -Sx {$START_X.as_int} -Sy {$START_Y.as_int} -Sz {$START_Z.as_int} -dx {$DELTA} -dy {$DELTA} -dz {$DELTA} -m 1
-End
-
-# TestData
-Rule CreateTestData
-  input '{$INITIAL}.3d'
-  output '*.roi'.all
-  param $rot1
-  param $rot2
-  param $rot3
-Flow
-  if $rot1 <= $ROT1MAX
-    if $rot2 <= $ROT2MAX
-      if $rot3 <= $ROT3MAX
-        if ((($rot1 + $ROT1D*2) > $ROT1MAX) and (($rot2 + $ROT2D*2) > $ROT2MAX)).not
-          rule CreateTestData.params({rot1: $rot1, rot2: $rot2 + $ROT2D*2, rot3: $ROT3MIN})
-        end
-        rule ActionTestData.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
-        rule ActionTestDataNoise.params({rot1: $rot1, rot2: $rot2, rot3: $rot3})
-      else
-      end
-    else
-      rule CreateTestData.params({rot1: $rot1 + $ROT1D*2, rot2: $ROT2MIN, rot3: $ROT3MIN})
-    end
-  end
-End
-
-Rule ActionTestData
-  input '{$INITIAL}.3d'
-  output '{$REFSOURCE}-{$rot1}-{$rot2}-{$rot3}.roi'
-  param $rot1
-  param $rot2
-  param $rot3
-Action
-  mrc3Dto2D -i {$INITIAL}.3d -o {$REFSOURCE}-{$rot1}-{$rot2}-{$rot3}.roi \
-    -InterpolationMode 2 -EulerMode {$ROTMODE} \
-    -Rot1 {$rot1} {$rot1} 1 -Rot2 {$rot2} {$rot2} 1 -Rot3 {$rot3} {$rot3} 1
-End
-
-Rule ActionTestDataNoise
-  input '{$REFSOURCE}-{$rot1}-{$rot2}-{$rot3}.roi'
-  output '{$REFSOURCE}-noise-{$rot1}-{$rot2}-{$rot3}.roi'
-  param $rot1
-  param $rot2
-  param $rot3
-Action
-  mrcImageNoiseAdd -i {$I[1]} -o {$O[1]} -SN {$SNRATIO};
-End
-
-#
-# First
-#
-
-Rule First
-  input '{$INITIAL}.3d'
-  output '{$TARGET}.ref3d'.all
-  output '{$TARGET}.ref2d'.all
-Flow
-  rule CreateRef3d
-  rule CreateRef2d
-End
-
-Rule CreateRef3d
-  input  '{$INITIAL}.3d'
-  output '{$TARGET}.ref3d'
-Action
-  cp {$INITIAL}.3d {$TARGET}.ref3d
-End
-
-Rule CreateRef2d
-  input  '{$TARGET}.ref3d'
-  output '{$TARGET}.ref2d'
-Action
-  mrc3Dto2D -i {$TARGET}.ref3d -o {$TARGET}.ref2d -EulerMode {$ROTMODE} -InterpolationMode 2 -Rot2 {$ROT2MIN} {$ROT2MAX} {$ROT2D} -Rot1 {$ROT1MIN} {$ROT1MAX} {$ROT1D} -Rot3 {$ROT3MIN} {$ROT3MAX} {$ROT3D} -m 0
-End
-
-#
-# Main
 #
 
 Rule Main
@@ -182,24 +50,11 @@ Rule Main
   input '{$TARGET}.ref3d'
   input '{$TARGET}.ref2d'
   output '{$TARGET}.3d'
-  output '{$TARGET}.ds6'
-  output '{$TARGET}.gnuplotcorinfolst'
-  output '{$TARGET}.gnuplotanglelst'
-  output '{$TARGET}.gnuplotshiftlst'
-  output '{$TARGET}.mon'
 Flow
   rule Create3dinfo
   rule Create3dlst
   rule Create3d
-  rule CreateDs6
-  rule CreateParcorinfoSort
-  rule CreatePlotData
-  rule CreateMontageList
 End
-
-#
-# 3dinfo
-#
 
 Rule Create3dinfo
   input '*.roi'
@@ -242,10 +97,6 @@ Action
   head -n 1 {$*}.3dinfolst | awk '{print $2,$3,$4,$5,$6,$1}' > {$*}.3dinfo
 End
 
-#
-# 3dlst
-#
-
 # .3dinfo.3dlst
 Rule Create3dlst
   input '*.3dinfo'.all
@@ -263,135 +114,3 @@ Action
   mrc2Dto3D -I {$TARGET}.3dlst -o {$TARGET}.3d -InterpolationMode 2 -Double -DoubleCounter {$TARGET}.3dcounter -CounterThreshold 0.5 -m 1 -WeightMode 2
 End
 
-#
-# Ds6
-#
-
-Rule CreateDs6
-  input  '{$TARGET}.3d'
-  output '{$TARGET}.ds6'
-Flow
-  rule Convert3dTo3dsm
-  rule Convert3dsmTo3dsmCenter
-  rule Convert3dsmCenterToDs6
-End
-
-# .3d.3dsm
-Rule Convert3dTo3dsm
-  input  '{$TARGET}.3d'
-  output '{$TARGET}.3dsm'
-Action
-  mrcImageSmoothing -i {$TARGET}.3d -o {$TARGET}.3dsm -m 1 -M 1 -r 3
-End
-
-# .3dsm.3dsmCenter
-Rule Convert3dsmTo3dsmCenter
-  input  '{$TARGET}.3dsm'
-  output '{$TARGET}.3dsmCenter'
-Action
-  mrcImageCenterGet -i {$TARGET}.3dsm -o {$TARGET}.3dsmCenter -Nx 64 -Ny 64 -Nz 64
-End
-
-# .3dsmCenter.ds6
-Rule Convert3dsmCenterToDs6
-  input  '{$TARGET}.3dsmCenter'
-  output '{$TARGET}.ds6'
-Action
-  mrc2map -i {$TARGET}.3dsmCenter -o {$TARGET}.ds6 -m 3
-End
-
-#
-# ParcorinfoSort
-#
-
-Rule CreateParcorinfoSort
-  input '*.corinfo'.all
-  output '{$TARGET}.parcorinfolst'
-Flow
-  rule ConvertCorinfoToCorinfo2
-  rule CreateParcorinfolst
-  rule ConvertParcorinfolstToParcorinfoSort
-  rule ConvertParcorinfolstsortToSelectParticle
-End
-
-# .corinfo.corinfo2
-Rule ConvertCorinfoToCorinfo2
-  input '*.corinfo'
-  output '{$*}.corinfo2'
-Action
-  awk '/Cor/ { print $18,$16,$2,$3,$4,$5,$9,$11,$12}' {$*}.corinfo | sort -r | sed -e 's/.roi/.fit/' > {$*}.corinfolst
-  head -n 1 {$*}.corinfolst | awk '{if({$PAD_W}-$8>=$8&&{$PAD_H}-$9>=$9) print $1,$2,$3,$4,$5,$6,$7,0+$8,0+$9;else if({$PAD_W}-$8>=$8) print $1,$2,$3,$4,$5,$6,$7,0+$8,{$PAD_H}-$9;else if({$PAD_H}-$9>=$9) print $1,$2,$3,$4,$5,$6,$7,{$PAD_W}-$8,0+$9;else print $1,$2,$3,$4,$5,$6,$7,{$PAD_W}-$8,{$PAD_H}-$9}' > {$*}.corinfo2
-End
-
-# .corinfo2.parcorinfolst
-Rule CreateParcorinfolst
-  input '*.corinfo2'.all
-  output '{$TARGET}.parcorinfolst'
-Action
-  cat {$I[1].join(" ")} > {$TARGET}.parcorinfolst
-End
-
-# ConvertParcorinfolstToParcorinfoSort
-Rule ConvertParcorinfolstToParcorinfoSort
-  input '{$TARGET}.parcorinfolst'
-  output '{$TARGET}.parcorinfolstsort'
-Action
-  awk '{ print $1,$2,$3,$4,$5,$6,$7,$8,$9}' {$TARGET}.parcorinfolst | sort -r > {$TARGET}.parcorinfolstsort
-End
-
-# ConvertParcorinfolstsortToSelectParticle
-Rule ConvertParcorinfolstsortToSelectParticle
-  input '{$TARGET}.parcorinfolstsort'
-  output '{$TARGET}.3dlstselect'
-Action
-  awk '$1 >= {$COR_THRESHOLD} || $9 <= {$Y_SHIFT_THRESHOLD}{print $2,$3,$4,$5,$6,$1}' {$TARGET}.parcorinfolstsort > {$TARGET}.3dlstselect
-End
-
-#
-# Plot data
-#
-
-Rule CreatePlotData
-  input '{$TARGET}.parcorinfolst'
-  output '{$TARGET}.gnuplotcorinfolst'
-  output '{$TARGET}.gnuplotanglelst'
-  output '{$TARGET}.gnuplotshiftlst'
-Flow
-  rule CreateGnuplotCorinfo
-  rule CreateGnuplotAngle
-  rule CreateGnuplotShift
-End
-
-Rule CreateGnuplotCorinfo
-  input '{$TARGET}.parcorinfolst'
-  output '{$TARGET}.gnuplotcorinfolst'
-Action
-  awk '{ print $1,$9}' {$TARGET}.parcorinfolst | sort -r > {$TARGET}.gnuplotcorinfolst
-End
-
-Rule CreateGnuplotAngle
-  input '{$TARGET}.parcorinfolst'
-  output '{$TARGET}.gnuplotanglelst'
-Action
-  awk '{ print $4,$5}' {$TARGET}.parcorinfolst > {$TARGET}.gnuplotanglelst
-End
-
-Rule CreateGnuplotShift
-  input '{$TARGET}.parcorinfolst'
-  output '{$TARGET}.gnuplotshiftlst'
-Action
-  awk '{ print $4,$5}' {$TARGET}.parcorinfolst > {$TARGET}.gnuplotshiftlst
-End
-
-#
-# Montage list
-#
-
-Rule CreateMontageList
-  input '{$TARGET}.3dlst'
-  input '*.fit'.all
-  output '{$TARGET}.mon'
-Action
-  awk '{ print $1}' {$TARGET}.3dlst > {$TARGET}.monlst
-  mrcImageMontageCreate -i {$TARGET}.monlst -o {$TARGET}.mon -nx 15 -ny 10
-End
