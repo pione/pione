@@ -30,10 +30,10 @@ function updateProcessStatusMessage(msg) {
 };
 
 function updateTupleSpaceStatus(json) {
-    $("#task-size").text(json.task);
-    $("#working-size").text(json.working);
-    $("#finished-size").text(json.finished);
-    $("#data-size").text(json.data);
+    if ("task" in json) $("#task-size").text(json.task);
+    if ("working" in json) $("#working-size").text(json.working);
+    if ("fnished" in json) $("#finished-size").text(json.finished);
+    if ("data" in json) $("#data-size").text(json.data);
 };
 
 function updateTaskWorkerStatus(json) {
