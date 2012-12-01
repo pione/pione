@@ -26,6 +26,7 @@ module Rinda
   end
 
   class TupleBag
+    # TupleBin is original array based class.
     class TupleBin
       def elements
         @bin
@@ -72,6 +73,11 @@ module Rinda
       def delete_if
         return @bin unless block_given?
         @bin.delete_if {|key, val| yield(val)}
+      end
+
+      # @api private
+      def elements
+        @bin.values
       end
 
       # Finds a tuple matched by the template. This method searches by index
@@ -228,7 +234,7 @@ module Rinda
       end
     end
 
-    # HashTupleBin is a double hash base bin class.
+    # HashTupleBin is a hash based bin class.
     class HashTupleBin
       def initialize
         @bin = {}
@@ -346,19 +352,19 @@ module Rinda
     end
 
     def task_size
-      @hash[:task].size
+      @hash[:task].size rescue 0
     end
 
     def working_size
-      @hash[:working].size
+      @hash[:working].size rescue 0
     end
 
     def finished_size
-      @hash[:finished].size
+      @hash[:finished].size rescue 0
     end
 
     def data_size
-      @hash[:data].size
+      @hash[:data].size rescue 0
     end
   end
 
