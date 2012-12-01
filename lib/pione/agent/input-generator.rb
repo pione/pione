@@ -29,20 +29,6 @@ module Pione
         end
       end
 
-      # Empty generator.
-      class EmptyGeneratorMethod < GeneratorMethod
-        def initialize(ts_server, dir_path)
-          super(ts_server)
-        end
-
-        def generate
-          name = DataExpr.new(@name).generate(@name_range.next)
-          uri = @base_uri + "./input/#{name}"
-          Resource[uri].create(@value_range.next)
-          InputData.new(name, uri.to_s, now)
-        end
-      end
-
       # Directory based generator.
       class DirGeneratorMethod < GeneratorMethod
         # Create a generator.
@@ -191,17 +177,15 @@ module Pione
         if not(@inputs.empty?) or not(stream?)
           write(Tuple[:command].new("start-root-rule"))
         end
-        if stream?
-          # init stream generator
-          @generator.init
-          @inputs = []
-        else
-          terminate
-        end
+        terminate unless stream?
       end
 
       def transit_to_sleeping
-        sleep 5
+        sleep 3
+
+        # init stream generator
+        @generator.init
+        @inputs = []
       end
     end
 

@@ -10,38 +10,19 @@ describe "Pione::Agent::InputGenerator" do
     DRb.stop_service
   end
 
-  describe 'simple generator' do
-    it 'should provide data by simple generator' do
-      # create generator
-      generator =
-        Agent[:input_generator].start_by_simple(tuple_space_server, "*.a", 1..10, 11..20)
-      # wait finishing
-      generator.wait_till(:terminated)
-      # check exceptions
-      check_exceptions
-      # check data
-      count_tuple(Tuple[:data].any).should == 10
-      should.not.raise(Rinda::RequestExpiredError) do
-        (1..10).each do |i|
-          data = read0(Tuple[:data].new(name: "#{i}.a", domain: "input"))
-          should.not.raise(Resource::NotFound) do
-            Resource[URI(data.uri)].read.should == (i + 10).to_s
-          end
-        end
-      end
-    end
-  end
-
   describe 'dir generator' do
-    it 'should provide files in a directory by dir generator' do
+    it 'should generate inputs from files in the directory' do
       Dir.mktmpdir do |dir|
+        # make local uri
+        uri = URI.parse("local:%s" % dir).as_directory
+
         # create input files
-        File.open(File.join(dir, "1.a"), "w+"){|out| out.write("11") }
-        File.open(File.join(dir, "2.b"), "w+"){|out| out.write("22") }
-        File.open(File.join(dir, "3.c"), "w+"){|out| out.write("33") }
+        Resource[uri + "1.a"].create("11")
+        Resource[uri + "2.b"].create("22")
+        Resource[uri + "3.c"].create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start_by_dir(tuple_space_server, dir)
+        generator = Agent[:input_generator].start_by_dir(tuple_space_server, uri)
         generator.wait_till(:terminated)
 
         # check exceptions
@@ -65,13 +46,16 @@ describe "Pione::Agent::InputGenerator" do
   describe 'with stream generator' do
     it 'should stream' do
       Dir.mktmpdir do |dir|
+        # make local uri
+        uri = URI.parse("local:%s" % dir).as_directory
+
         # create input files
-        File.open(File.join(dir, "1.a"), "w+"){|out| out.write("11") }
-        File.open(File.join(dir, "2.b"), "w+"){|out| out.write("22") }
-        File.open(File.join(dir, "3.c"), "w+"){|out| out.write("33") }
+        Resource[uri + "1.a"].create("11")
+        Resource[uri + "2.b"].create("22")
+        Resource[uri + "3.c"].create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start_by_stream(tuple_space_server, dir)
+        generator = Agent[:input_generator].start_by_stream(tuple_space_server, uri)
         generator.should.stream
         generator.terminate
       end
@@ -80,13 +64,16 @@ describe "Pione::Agent::InputGenerator" do
     it 'should provide files in a directory by stream generator' do
       Dir.mktmpdir do |dir|
         ## initial inputs
+        # make local uri
+        uri = URI.parse("local:%s" % dir).as_directory
+
         # create input files
-        File.open(File.join(dir, "1.a"), "w+"){|out| out.write("11") }
-        File.open(File.join(dir, "2.b"), "w+"){|out| out.write("22") }
-        File.open(File.join(dir, "3.c"), "w+"){|out| out.write("33") }
+        Resource[uri + "1.a"].create("11")
+        Resource[uri + "2.b"].create("22")
+        Resource[uri + "3.c"].create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start_by_stream(tuple_space_server, dir)
+        generator = Agent[:input_generator].start_by_stream(tuple_space_server, uri)
         generator.wait_till(:sleeping)
 
         # check exceptions
@@ -97,8 +84,8 @@ describe "Pione::Agent::InputGenerator" do
 
         ## an addtional input
         # create additional files
-        File.open(File.join(dir, "4.d"), "w+"){|out| out.write("44") }
-        sleep 1
+        Resource[uri + "4.d"].create("44")
+        sleep 3
         generator.wait_till(:sleeping)
 
         # check exceptions
@@ -108,8 +95,8 @@ describe "Pione::Agent::InputGenerator" do
         count_tuple(Tuple[:data].any).should == 4
 
         # create additional files
-        File.open(File.join(dir, "5.e"), "w+"){|out| out.write("55") }
-        sleep 1
+        Resource[uri + "5.e"].create("55")
+        sleep 3
         generator.wait_till(:sleeping)
 
         # check exceptions
