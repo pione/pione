@@ -58,7 +58,9 @@ module Pione
         end
         privates = addrs.select{|addr| addr.ipv4_private?}
         not_privates = addrs - privates
-        (privates.sort + not_privates.sort).map {|addr| addr.ip_address}
+        privates = privates.sort{|a,b| a.ip_address <=> b.ip_address}
+        not_privates = not_privates.sort{|a, b| a.ip_address <=> b.ip_address}
+        (privates + not_privates).map {|addr| addr.ip_address}
       end
     end
 
