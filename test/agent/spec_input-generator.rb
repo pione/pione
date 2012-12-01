@@ -2,12 +2,15 @@ require_relative '../test-util'
 
 describe "Pione::Agent::InputGenerator" do
   before do
+    @orig = Global.input_generator_stream_check_timespan
     DRb.start_service
     create_remote_tuple_space_server
+    Global.input_generator_stream_check_timespan = 0.1
   end
 
   after do
     DRb.stop_service
+    Global.input_generator_stream_check_timespan = @orig
   end
 
   describe 'dir generator' do
@@ -85,7 +88,7 @@ describe "Pione::Agent::InputGenerator" do
         ## an addtional input
         # create additional files
         Resource[uri + "4.d"].create("44")
-        sleep 3
+        sleep 0.2
         generator.wait_till(:sleeping)
 
         # check exceptions
@@ -96,7 +99,7 @@ describe "Pione::Agent::InputGenerator" do
 
         # create additional files
         Resource[uri + "5.e"].create("55")
-        sleep 3
+        sleep 0.2
         generator.wait_till(:sleeping)
 
         # check exceptions

@@ -336,6 +336,11 @@ module Pione
           Global.task_worker_front_port_range_end
         )
       end
+
+      #
+      # input generator
+      #
+      define_item(:input_generator_stream_check_timespan, true, 3)
     end
   end
 end

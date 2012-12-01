@@ -181,7 +181,7 @@ module Pione
       end
 
       def transit_to_sleeping
-        sleep 3
+        sleep Global.input_generator_stream_check_timespan
 
         # init stream generator
         @generator.init
