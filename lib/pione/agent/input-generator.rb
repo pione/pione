@@ -21,7 +21,7 @@ module Pione
           raise RuntimeError
         end
 
-        # Return true if the generator is stream mode.
+        # Return true if the generator is stream.
         # @return [Boolean]
         #   true if the generator is stream mode
         def stream?
@@ -29,14 +29,10 @@ module Pione
         end
       end
 
-      # Simple generator based on range and extension.
-      class SimpleGeneratorMethod < GeneratorMethod
-        def initialize(ts_server, base_uri, name, name_range, value_range)
+      # Empty generator.
+      class EmptyGeneratorMethod < GeneratorMethod
+        def initialize(ts_server, dir_path)
           super(ts_server)
-          @base_uri = base_uri
-          @name = name
-          @name_range = name_range.to_enum
-          @value_range = value_range.to_enum
         end
 
         def generate
@@ -74,35 +70,44 @@ module Pione
       # StreamGeneratorMethod handles stream inputs.
       class StreamGeneratorMethod < GeneratorMethod
         def initialize(ts_server, dir_path)
+          raise TypeError.new(dir_path) unless dir_path.kind_of?(URI) or dir_path.nil?
+          super(ts_server)
           @dir_path = dir_path
           @table = Hash.new
           init
         end
 
         def generate
-          name = @gen.next
-          path = File.join(@dir_path, name)
-          mtime = File.mtime(path)
-          if generate_new_file?(name, mtime)
-            @table[name] = mtime
-            uri = "local:%s" % File.expand_path(path)
-            return InputData.new(name, uri, mtime)
+          item = @gen.next
+          if generate_new_file?(item.basename, item.mtime)
+            @table[item.basename] = item.mtime
+            return InputData.new(item.basename, item.uri, item.mtime)
           else
             return nil
           end
         end
 
-        # Initialize generator.
+        # Initializes the generator. This method is called when root rule is
+        # requested in stream mode.
+        # @retrun [void]
         def init
-          @gen = Dir.open(@dir_path).to_enum
+          if @dir_path
+            @gen = Resource[@dir_path].entries.to_enum
+          else
+            @gen = [].each
+          end
         end
 
+        # @api private
         def stream?
           return true
         end
 
         private
 
+        # Return true if it is new file.
+        # return [Boolean]
+        #   return true if the file is new.
         def generate_new_file?(name, mtime)
           return false if ['.', '..'].include?(name)
           return true unless @table.has_key?(name)
@@ -139,15 +144,14 @@ module Pione
 
       define_exception_handler StopIteration => :stop_iteration
 
-      attr_reader :counter
       attr_reader :generator
 
       # Initialize the agent.
       def initialize(ts_server, generator)
         raise ArgumentError unless generator.kind_of?(GeneratorMethod)
         super(ts_server)
-        @counter = 0
         @generator = generator
+        @inputs = []
       end
 
       # Return true if generator of the agent is stream type.
@@ -165,29 +169,39 @@ module Pione
       # space.
       def transit_to_generating
         if input = @generator.generate
+          @inputs << input
+          # log
           log do |msg|
             msg.add_record(agent_type, "action", "generate_input_data")
             msg.add_record(agent_type, "uuid", uuid)
             msg.add_record(agent_type, "object", input.name)
           end
+          # upload the file
           input_uri = @base_uri + File.join("input", input.name)
           Resource[input_uri].create(Resource[input.uri].read)
+          # make the tuple
           write(Tuple[:data].new(DOMAIN, input.name, input_uri, input.time))
-          return input
         end
       end
 
       # State stop_iteration. StopIteration exception is ignored because it
       # means the input generation was completed.
       def transit_to_stop_iteration(e)
-        @counter += 1
+        # start root rule
+        if not(@inputs.empty?) or not(stream?)
+          write(Tuple[:command].new("start-root-rule"))
+        end
         if stream?
+          # init stream generator
           @generator.init
+          @inputs = []
+        else
+          terminate
         end
       end
 
       def transit_to_sleeping
-        sleep 1
+        sleep 5
       end
     end
 

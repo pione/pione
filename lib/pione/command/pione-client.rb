@@ -177,7 +177,7 @@ module Pione
         start_agents
         start_tuple_space_provider unless @without_tuple_space_provider
         start_workers
-        @agent = Agent[:process_manager].start(@tuple_space_server, @document, @params)
+        @agent = Agent[:process_manager].start(@tuple_space_server, @document, @params, @stream)
         @agent.running_thread.join
         terminate
       end
@@ -230,7 +230,6 @@ module Pione
         gen = Agent[:input_generator].send(
           generator_method, @tuple_space_server, @input_uri
         )
-        sleep 0.1 while not(gen.counter > 0)
       end
 
       # Wakes up tuple space provider process and push my tuple space server to

@@ -30,19 +30,19 @@ module Rinda
       def elements
         @bin
       end
+
+      def size
+        elements.size
+      end
     end
 
     # DomainTupleBin is a domain based TupleBin class.
     # @note
-    #   DomainTupleBin should take tuples that have it's domain only.
+    #   DomainTupleBin should take tuples that have domain.
     class DomainTupleBin < TupleBin
       # Creates a new bin.
       def initialize
         @bin = {}
-      end
-
-      def elements
-        @bin.values
       end
 
       # Adds the tuple.
@@ -116,10 +116,6 @@ module Rinda
       #   iterator of the values
       def each(*args)
         @bin.values.each(*args)
-      end
-
-      def size
-        @bin.keys.size
       end
 
       private
@@ -211,10 +207,6 @@ module Rinda
 
       def each(*args)
         @bin.values.map{|table| table.values}.flatten.each(*args)
-      end
-
-      def size
-        elements.size
       end
 
       private
