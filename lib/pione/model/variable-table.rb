@@ -155,7 +155,7 @@ module Pione::Model
         expr.eval(self).call_pione_method("as_string").to_ruby
       end
       new_str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
-        expr = Transformer.new.apply(Parser.new.expr.parse($1))
+        expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
         expr.eval(self).call_pione_method("as_string").to_ruby
       end
     end

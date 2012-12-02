@@ -9,7 +9,7 @@ describe 'Model::DataExpr' do
     exp.should.be.not.stderr
   end
 
-  it 'should be a name expression with each modifier' do
+  it 'should be each modifier' do
     exp = DataExpr.each('test.a')
     exp.should == DataExpr.new('test.a').each
     exp.should.be.each
@@ -17,7 +17,7 @@ describe 'Model::DataExpr' do
     exp.mode.should.be.nil
   end
 
-  it 'should be a name expression with all modifier' do
+  it 'should be all modifier' do
     exp = DataExpr.all('test.a')
     exp.should == DataExpr.new('test.a').all
     exp.should.be.not.each
@@ -25,13 +25,13 @@ describe 'Model::DataExpr' do
     exp.mode.should.be.nil
   end
 
-  it 'should be a name expression with stdout mode' do
+  it 'should be stdout mode' do
     exp = DataExpr.new('test.a').stdout
     exp.should.be.stdout
     exp.should.be.not.stderr
   end
 
-  it 'should be a name expression with stderr mode' do
+  it 'should be stderr mode' do
     exp = DataExpr.new('test.a').stderr
     exp.should.be.not.stdout
     exp.should.be.stderr
@@ -188,6 +188,13 @@ describe 'Model::DataExpr' do
   it 'should handle exceptions (Case 3)' do
     exp = DataExpr.new('test-1.a').except('*')
     exp.should.not.match 'test-1.a'
+  end
+
+  it 'should handle OR relation' do
+    expr = DataExpr.new('a') | DataExpr.new('b')
+    expr.should.match 'a'
+    expr.should.match 'b'
+    expr.should.not.match 'c'
   end
 
   it 'should expand variables' do

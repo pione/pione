@@ -246,6 +246,21 @@ module Pione::Model
       return name
     end
 
+    # Create OR relation data expression. Self and the other element have the
+    # same attributes.
+    # @example
+    #   expr = DataExpr.new("A") | DataExpr.new("B")
+    #   expr.match("A") # => true
+    #   expr.match("B") # => true
+    #   expr.match("C") # => false
+    # @example
+    #   DataExpr.all("A") | DataExpr.each("B")
+    #   # => raise ArgumentError
+    def |(other)
+      raise ArgumentError.new(other) unless other.kind_of?(DataExpr)
+      return DataExprOr.new(self, other)
+    end
+
     # @api private
     def to_s
       "#<#<#{self.class.name}> #{@name}>"
@@ -291,6 +306,25 @@ module Pione::Model
     # @api private
     def match_exceptions(name)
       not(@exceptions.select{|ex| ex.match(name)}.empty?)
+    end
+  end
+
+  # DataExprOr represents or-relation of data expressions.
+  class DataExprOr < DataExpr
+    extend Forwardable
+    def_delegator :@left, :modifier
+    def_delegator :@left, :mode
+
+    def initialize(left, right)
+      raise ArgumentError.new([left, right]) unless left.modifier == right.modifier
+      raise ArmguentError.new([left, right]) unless left.mode == right.mode
+      @left = left
+      @right = right
+    end
+
+    # @api private
+    def match(name)
+      @left.match(name) or @right.match(name)
     end
   end
 
