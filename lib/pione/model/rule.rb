@@ -240,16 +240,9 @@ module Pione::Model
 
     # @api private
     def make_condition
-      inputs = @main.inputs
-      outputs =
-        if inputs.empty?
-          [DataExpr.all("*")]
-        else
-          [DataExpr.all("*").except("{$INPUT[1]}")]
-        end
       RuleCondition.new(
-        inputs,
-        outputs,
+        @main.inputs,
+        @main.outputs,
         Parameters.empty,
         Feature.empty
       )

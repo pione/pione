@@ -266,13 +266,13 @@ module Pione
       # @return [void]
       def shift_output_resources
         @outputs.flatten.compact.each do |output|
-          old_uri = ::URI.parse(output.uri)
-          new_uri = ::URI.parse(make_output_resource_uri(output.name).to_s)
+          old_uri = URI.parse(output.uri)
+          new_uri = URI.parse(make_output_resource_uri(output.name).to_s)
           unless new_uri.path == old_uri.path
             # shift resource
             Resource[new_uri].shift_from(Resource[old_uri])
             # shift cache if the old is cached in this machine
-             FileCache.shift(old_uri, new_uri)
+            FileCache.shift(old_uri, new_uri)
             # write shift tuple
             write(Tuple[:shift].new(old_uri.to_s, new_uri.to_s))
           end
@@ -311,6 +311,7 @@ module Pione
           copy_data_into_domain(finished.outputs, @domain)
         end
       rescue Rinda::RequestExpiredError
+        # ignore
       end
 
       # Copy data into specified domain and return the tuple list

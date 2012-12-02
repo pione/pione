@@ -6,11 +6,11 @@ module Pione
         "Root"
       end
 
-      # :nodoc:
+      # @api private
       def execute
-        # import inputs from input domain
+        # import initial input tuples from input domain
         copy_data_into_domain(@inputs.flatten, @domain)
-        # handling
+        # execute the rule
         result = super
         # export outputs to output domain
         copy_data_into_domain(@outputs.flatten, '/output')

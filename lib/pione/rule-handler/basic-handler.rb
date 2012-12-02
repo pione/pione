@@ -93,10 +93,12 @@ module Pione
           debug_message("%s:%s" % [i, domain], 1)
         end
 
+        # execute the rule
         outputs = execute
 
         # show output list
         debug_message("%s Rule %s Result:" % [name, handler_digest])
+
         @outputs.compact.each_with_index do |output, i|
           if output.kind_of?(Array)
             output.each_with_index do |o, ii|
@@ -106,6 +108,7 @@ module Pione
             debug_message("%s:%s" % [i, output.name], 1)
           end
         end
+
         # show end message
         user_message_end "End %s Rule: %s" % [name, handler_digest]
 
@@ -159,7 +162,7 @@ module Pione
       # Makes resource uri.
       def make_resource_uri(name, domain)
         if domain == "root" || domain.nil?
-          return URI(@base_uri) + "./%s" % name
+          return URI.parse(@base_uri) + "./%s" % name
         else
           # make relative path
           rule_name = domain.split("_")[0..-2].join("_")
@@ -167,7 +170,7 @@ module Pione
           path = "./.%s/%s/%s" % [rule_name, digest, name]
 
           # make uri
-          return URI(@base_uri) + path
+          return URI.parse(@base_uri) + path
         end
       end
 
