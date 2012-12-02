@@ -152,64 +152,60 @@ module Pione
       #   application informations
       # @return [void]
       def distribute_tasks(applications)
-        thgroup = ThreadGroup.new
         user_message_begin("Start Task Distribution: %s" % handler_digest)
+        canceled = []
 
         applications.uniq.each do |callee, rule, inputs, vtable|
+          # task domain
+          task_domain = ID.domain_id3(rule, inputs, callee)
 
-          thread = Thread.new do
-            # task domain
-            task_domain = ID.domain_id3(rule, inputs, callee)
+          # make a task tuple
+          task = Tuple[:task].new(
+            rule.rule_path,
+            inputs,
+            callee.expr.params,
+            rule.features,
+            task_domain,
+            @call_stack + [@domain] # current call stack + caller
+          )
 
-            # make a task tuple
-            task = Tuple[:task].new(
-              rule.rule_path,
-              inputs,
-              callee.expr.params,
-              rule.features,
-              task_domain,
-              @call_stack + [@domain] # current call stack + caller
-            )
+          # check if same task exists
+          if need_task?(task)
+            # copy input data from the handler domain to task domain
+            copy_data_into_domain(inputs, task_domain)
 
-            # check if same task exists
-            canceled = false
-            if need_task?(task)
-              # copy input data from the handler domain to task domain
-              copy_data_into_domain(inputs, task_domain)
+            # write the task
+            write(task)
 
-              # write the task
-              write(task)
-
-              user_message(
-                "distributed task %s on %s" % [task.digest, handler_digest], 1
-              )
-            else
-              show "cancel task %s on %s" % [task.digest, handler_digest]
-              canceled = true
-            end
-
-            # wait to finish the work
-            template = Tuple[:finished].new(
-              domain: task_domain,
-              status: :succeeded
-            )
-            finished = read(template)
-            unless canceled
-              user_message("finished task %s on %s" % [
-                  finished.domain, handler_digest
-                ], 1)
-            end
-
-            # copy data from task domain to this domain
-            @finished << finished
-            copy_data_into_domain(finished.outputs, @domain)
+            msg = "distributed task %s on %s" % [task.digest, handler_digest]
+            user_message(msg, 1)
+          else
+            show "cancel task %s on %s" % [task.digest, handler_digest]
+            canceled << task_domain
           end
-
-          thgroup.add(thread)
         end
 
         # wait to finish threads
-        thgroup.list.each {|th| th.join}
+        applications.uniq.each do |callee, rule, inputs, vtable|
+          # task domain
+          task_domain = ID.domain_id3(rule, inputs, callee)
+
+          # wait to finish the work
+          template = Tuple[:finished].new(
+            domain: task_domain,
+            status: :succeeded
+          )
+          finished = read(template)
+
+          unless canceled.include?(task_domain)
+            msg = "finished task %s on %s" % [finished.domain, handler_digest]
+            user_message(msg, 1)
+          end
+
+          # copy data from task domain to this domain
+          @finished << finished
+          copy_data_into_domain(finished.outputs, @domain)
+        end
 
         user_message_end("End Task Distribution: %s" % handler_digest)
       end
