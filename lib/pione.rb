@@ -50,6 +50,7 @@ require 'pione/patch/array-patch'
 require 'pione/patch/drb-patch'
 require 'pione/patch/rinda-patch'
 require 'pione/patch/uri-patch'
+require 'pione/patch/monitor-patch'
 
 # system
 require 'pione/system/object'

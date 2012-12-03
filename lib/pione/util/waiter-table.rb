@@ -8,24 +8,22 @@ module Pione
         @cv = {}
         @table = {}
         @waiting = {}
-        @mon = Monitor.new
+        @mon = Mutex.new
       end
 
       def push(req_id, val)
-        @req_mon[req_id] ||= Monitor.new
-        @req_mon[req_id].synchronize do
-          @mon.synchronize {@table[req_id] = val}
-          @cv[req_id].broadcast if @cv[req_id]
-        end
+        @req_mon[req_id] ||= Mutex.new
+        @mon.synchronize {@table[req_id] = val}
+        @cv[req_id].broadcast if @cv[req_id]
       end
 
       def take(req_id, msg_id, args)
-        @req_mon[req_id] ||= Monitor.new
+        @req_mon[req_id] ||= Mutex.new
         @waiting[req_id] = msg_id
         @req_mon[req_id].synchronize do
           unless @table.has_key?(req_id)
-            @cv[req_id] = @req_mon[req_id].new_cond
-            @cv[req_id].wait_until {@table.has_key?(req_id)}
+            @cv[req_id] = ConditionVariable.new
+            @cv[req_id].wait(@req_mon[req_id])
           end
           @cv.delete(req_id)
           @req_mon.delete(req_id)

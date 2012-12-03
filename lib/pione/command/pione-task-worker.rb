@@ -55,6 +55,8 @@ TXT
         # connect caller front
         @parent_front.add_task_worker_front(Global.front, @connection_id)
 
+        abort("pione-task-worker error: no tuple space server") unless @tuple_space_server
+
         # get base uri
         if @tuple_space_server.base_uri.scheme == "dropbox"
           Resource::Dropbox.init(@tuple_space_server)

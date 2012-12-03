@@ -28,7 +28,10 @@ module Pione
           min_server = ratios.key(min)
           max_server = ratios.key(max)
 
-          if @broker.excess_task_workers > 0
+          return unless min_server
+          return unless max_server
+
+          if @broker.excess_task_workers > 0 and min_server
             create_task_worker(min_server)
           else
             adjust_task_worker(min_server, max_server)

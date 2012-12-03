@@ -96,7 +96,7 @@ module Pione
 
       # Return common base uri of the space.
       def base_uri
-        URI(read(Tuple[:base_uri].any).uri)
+        URI.parse(read(Tuple[:base_uri].any).uri)
       end
 
       # Return the worker resource size of the server.
