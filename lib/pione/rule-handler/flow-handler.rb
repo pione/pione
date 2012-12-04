@@ -237,7 +237,7 @@ module Pione
       # @return [Boolean]
       #   true if any task worker is working on the task
       def working?(task)
-        read(Tuple[:working].new(:domain => task.domain), 0)
+        read(Tuple[:working].new(domain: task.domain), 0)
         return true
       rescue Rinda::RequestExpiredError
         return false

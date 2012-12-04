@@ -75,5 +75,13 @@ module Pione::Model
     def hash
       @name.hash
     end
+
+    # @api private
+    def inspect
+      "#<Pione::Model::Variable @name=%s>" % @name.inspect
+    end
+
+    # @api private
+    alias :to_s :inspect
   end
 end

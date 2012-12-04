@@ -26,14 +26,14 @@ module Pione::Model
       # @return [Expr]
       #    empty feature
       def empty
-        EmptyFeature.new
+        empty ||= EmptyFeature.new
       end
 
       # Returns boundless feature
       # @return [Expr]
       #   boundless feature
       def boundless
-        BoundlessFeature.new
+        boundless ||= BoundlessFeature.new
       end
     end
 

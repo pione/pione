@@ -25,6 +25,32 @@ module Rinda
     alias :eql? :"=="
   end
 
+  class WaitTemplateEntry
+    # @note
+    #   removed monitor from original
+    def initialize(place, ary, expires=nil)
+      super(ary, expires)
+      @place = place
+      @found = nil
+    end
+
+    # @note
+    #   thread version(don't use monitor)
+    def wait
+      @thread = Thread.current
+      Thread.stop
+      @thread = nil
+    end
+
+    # @note
+    #   thread version(don't use monitor)
+    def signal
+      if @thread && @thread.status == "sleep"
+        @thread.run
+      end
+    end
+  end
+
   class TupleBag
     # TupleBin is original array based class.
     class TupleBin
@@ -75,7 +101,6 @@ module Rinda
         @bin.delete_if {|key, val| yield(val)}
       end
 
-      # @api private
       def elements
         @bin.values
       end
@@ -342,10 +367,9 @@ module Rinda
       key = bin_key(template)
       if @special_bin[key]
         prepare_table(key)
-        vals = @hash[key].find_all(template) do |tuple|
+        @hash[key].find_all(template) do |tuple|
           tuple.alive? && template.match(tuple)
         end
-        return vals
       else
         orig_find_all(template)
       end
@@ -368,7 +392,6 @@ module Rinda
     end
   end
 
-  # @api private
   class TupleSpace
     alias :orig_initialize :initialize
 
@@ -381,24 +404,26 @@ module Rinda
         :data => TupleBag::DataTupleBin,
         :shift => TupleBag::HashTupleBin
       )
+      @mutex = Mutex.new
     end
 
-    alias :orig_read :read
-    def read(tuple, sec=nil)
-      shift_tuple(orig_read(tuple, sec))
-    end
-
-    alias :orig_read_all :read_all
-    def read_all(tuple)
-      orig_read_all(tuple).map do |res|
-        shift_tuple(res)
-      end
-    end
-
-    alias :orig_write :write
     def write(tuple, *args)
       tuple.timestamp = Time.now
-      orig_write(tuple, *args)
+      real_write(tuple, *args)
+    end
+
+    def move(port, tuple, sec=nil)
+      real_move(port, tuple, sec)
+    end
+
+    def read(tuple, sec=nil)
+      shift_tuple(real_read(tuple, sec))
+    end
+
+    def read_all(tuple)
+      real_read_all(tuple).map do |res|
+        shift_tuple(res)
+      end
     end
 
     # Returns all tuples in the space.
@@ -411,12 +436,20 @@ module Rinda
       when :all
         all_tuples(:bag) + all_tuples(:read_waiter) + all_tuples(:take_waiter)
       when :bag
-        @bag.all_tuples.map{|tuple| tuple.value}
+        @mutex.synchronize{@bag.all_tuples}.map{|tuple| tuple.value}
       when :read_waiter
-        @read_waiter.all_tuples.map{|tuple| tuple.value}
+        @mutex.synchronize{@read_waiter.all_tuples}.map{|tuple| tuple.value}
       when :take_waiter
-        @take_waiter.all_tuples.map{|tuple| tuple.value}
+        @mutex.synchronize{@take_waiter.all_tuples}.map{|tuple| tuple.value}
       end
+    end
+
+    # @note
+    #   mutex version of +notify+
+    def notify(event, tuple, sec=nil)
+      template = NotifyTemplateEntry.new(self, event, tuple, sec)
+      @mutex.synchronize {@notify_waiter.push(template)}
+      template
     end
 
     def task_size
@@ -436,6 +469,125 @@ module Rinda
     end
 
     private
+
+    # @note
+    #   mutex version of +write+
+    def real_write(tuple, sec=nil)
+      entry = create_entry(tuple, sec)
+      if entry.expired?
+        @mutex.synchronize{@read_waiter.find_all_template(entry)}.each do |template|
+          template.read(tuple)
+        end
+        notify_event('write', entry.value)
+        notify_event('delete', entry.value)
+      else
+        @mutex.synchronize {@bag.push(entry)}
+        start_keeper if entry.expires
+        @mutex.synchronize{@read_waiter.find_all_template(entry)}.each do |template|
+          template.read(tuple)
+        end
+        @mutex.synchronize{@take_waiter.find_all_template(entry)}.each do |template|
+          template.signal
+        end
+        notify_event('write', entry.value)
+      end
+      entry
+    end
+
+    # @note
+    #   mutex version of +move+
+    def real_move(port, tuple, sec=nil)
+      template = WaitTemplateEntry.new(self, tuple, sec)
+      yield(template) if block_given?
+
+      entry = @mutex.synchronize {@bag.find(template)}
+      if entry
+        port.push(entry.value) if port
+        @mutex.synchronize {@bag.delete(entry)}
+        notify_event('take', entry.value)
+        return entry.value
+      end
+      raise RequestExpiredError if template.expired?
+
+      begin
+        @mutex.synchronize {@take_waiter.push(template)}
+        start_keeper if template.expires
+        while true
+          raise RequestCanceledError if template.canceled?
+          raise RequestExpiredError if template.expired?
+          entry = @mutex.synchronize {@bag.find(template)}
+          if entry
+            port.push(entry.value) if port
+            @mutex.synchronize {@bag.delete(entry)}
+            notify_event('take', entry.value)
+            return entry.value
+          end
+          template.wait
+        end
+      ensure
+        @mutex.synchronize {@take_waiter.delete(template)}
+      end
+    end
+
+    # @note
+    #   mutex version of +read+
+    def real_read(tuple, sec=nil)
+      template = WaitTemplateEntry.new(self, tuple, sec)
+      yield(template) if block_given?
+
+      entry = @mutex.synchronize {@bag.find(template)}
+      return entry.value if entry
+      raise RequestExpiredError if template.expired?
+
+      begin
+        @mutex.synchronize {@read_waiter.push(template)}
+        start_keeper if template.expires
+        template.wait
+        raise RequestCanceledError if template.canceled?
+        raise RequestExpiredError if template.expired?
+        return template.found
+      ensure
+        @mutex.synchronize {@read_waiter.delete(template)}
+      end
+    end
+
+    # @note
+    #   mutex version of +read_all+
+    def real_read_all(tuple)
+      template = WaitTemplateEntry.new(self, tuple, nil)
+      entry = @mutex.synchronize {@bag.find_all(template)}
+      entry.collect {|e| e.value}
+    end
+
+    # @note
+    #   mutex version of +keep_clean+
+    def keep_clean
+      @mutex.synchronize{@read_waiter.delete_unless_alive}.each do |e|
+        e.signal
+      end
+      @mutex.synchronize{@take_waiter.delete_unless_alive}.each do |e|
+        e.signal
+      end
+      @mutex.synchronize{@notify_waiter.delete_unless_alive}.each do |e|
+        e.notify(['close'])
+      end
+      @mutex.synchronize{@bag.delete_unless_alive}.each do |e|
+        notify_event('delete', e.value)
+      end
+    end
+
+    # @note
+    #   mutex version of +start_keeper+
+    def start_keeper
+      return if @keeper && @keeper.alive?
+      @keeper = Thread.new do
+        while true
+          sleep(@period)
+          break unless need_keeper?
+          keep_clean
+        end
+      end
+    end
 
     def shift_tuple(tuple)
       if Pione::Tuple[tuple.first]

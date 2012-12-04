@@ -42,6 +42,14 @@ module Pione::Model
     def hash
       @value.hash
     end
+
+    # @api private
+    def inspect
+      "#<Pione::Model::PioneInteger @value=%s>" % @value.inspect
+    end
+
+    # @api private
+    alias :to_s :inspect
   end
 
   TypeInteger.instance_eval do

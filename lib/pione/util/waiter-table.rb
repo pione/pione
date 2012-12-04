@@ -4,38 +4,30 @@ module Pione
       include DRbUndumped
 
       def initialize
-        @req_mon = {}
-        @cv = {}
+        @mutex = Mutex.new
         @table = {}
-        @waiting = {}
-        @mon = Mutex.new
+        @waiting_thread = {}
       end
 
       def push(req_id, val)
-        @req_mon[req_id] ||= Mutex.new
-        @mon.synchronize {@table[req_id] = val}
-        @cv[req_id].broadcast if @cv[req_id]
-      end
-
-      def take(req_id, msg_id, args)
-        @req_mon[req_id] ||= Mutex.new
-        @waiting[req_id] = msg_id
-        @req_mon[req_id].synchronize do
-          unless @table.has_key?(req_id)
-            @cv[req_id] = ConditionVariable.new
-            @cv[req_id].wait(@req_mon[req_id])
-          end
-          @cv.delete(req_id)
-          @req_mon.delete(req_id)
-          @waiting.delete(req_id)
-          val = nil
-          @mon.synchronize {val = @table.delete(req_id)}
-          return val
+        @mutex.synchronize {@table[req_id] = val}
+        thread = @mutex.synchronize {@waiting_thread[req_id]}
+        if thread && thread.status == "sleep"
+          thread.run
         end
       end
 
+      def take(req_id, msg_id, args)
+        unless @mutex.synchronize {@table.has_key?(req_id)}
+          @mutex.synchronize {@waiting_thread[req_id] = Thread.current}
+          Thread.stop
+          @mutex.synchronize {@waiting_thread.delete(req_id)}
+        end
+        return @mutex.synchronize {@table.delete(req_id)}
+      end
+
       def to_s
-        @mon.synchronize do
+        @mutex.synchronize do
           table = convert_string(@table)
           waiting = convert_string(@waiting)
           "#<WaiterTable @table=%s @waiting=%s>" % [table, waiting]

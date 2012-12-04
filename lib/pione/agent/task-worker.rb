@@ -14,7 +14,7 @@ module Pione
         end
       end
 
-      @monitor = Monitor.new
+      @mutex = Mutex.new
 
       # Start a task worker agent on a different process.
       # @param [Pione::Front::BasicFront] front
@@ -22,7 +22,7 @@ module Pione
       # @return [Thread]
       #   worker monitor thread
       def self.spawn(front, connection_id)
-        @monitor.synchronize do
+        @mutex.synchronize do
           args = [
             "pione-task-worker",
             "--parent-front", Global.front.uri,
@@ -61,7 +61,28 @@ module Pione
         agent.once ? :terminated : :task_waiting
       }
 
+      attr_reader :task
+      attr_reader :rule
+      attr_reader :handler_thread
+      attr_reader :child_thread
+      attr_reader :child_agent
       attr_accessor :once
+
+      def descendant
+        if @child_agent
+          [@child_agent] + child_agent.descendant
+        else
+          []
+        end
+      end
+
+      def action?
+        @action == true
+      end
+
+      def flow?
+        @flow == true
+      end
 
       private
 
@@ -84,7 +105,10 @@ module Pione
       # @return [Task]
       #   task tuple
       def transit_to_task_waiting
+        @task = nil
+        @rule = nil
         task = take(Tuple[:task].new(features: @features))
+        @task = task
         write(Tuple[:working].new(task.domain, task.digest))
         write(Tuple[:foreground].new(task.domain, task.digest))
         return task
@@ -105,6 +129,7 @@ module Pione
             write(Tuple[:request_rule].new(task.rule_path))
             read(Tuple[:rule].new(rule_path: task.rule_path))
           end
+        @rule = rule.content
         if rule.status == :known
           return task, rule.content
         else
@@ -130,34 +155,50 @@ module Pione
         handler.setenv(ENV)
         @__result_task_execution__ = nil
 
-        th = Thread.new do
+        @handler_thread = Thread.new do
           @__result_task_execution__ = handler.handle
         end
 
         # make sub workers if flow rule
-        if rule.flow?
-          child = nil
-          while th.alive? do
-            if child.nil? or not(child.running_thread.alive?)
-              debug_message "+++ Create Sub Task worker +++"
-              child = self.class.new(tuple_space_server, @features)
-              child.once = true
-              log do |msg|
-                msg.add_record(agent_type, "action", "create_sub_task_worker")
-                msg.add_record(agent_type, "uuid", uuid)
-                msg.add_record(agent_type, "object", child.uuid)
+        @child_thread = Thread.new do
+          if rule.flow?
+            @flow = true
+            @child_agent = nil
+            while @handler_thread.alive? do
+              if @child_agent.nil? or not(@child_agent.running_thread.alive?)
+                debug_message "+++ Create Sub Task worker +++"
+                @child_agent = self.class.new(tuple_space_server, @features)
+                @child_agent.once = true
+                log do |msg|
+                  msg.add_record(agent_type, "action", "create_sub_task_worker")
+                  msg.add_record(agent_type, "uuid", uuid)
+                  msg.add_record(agent_type, "object", @child_agent.uuid)
+                end
+                take0(Tuple[:foreground].new(task.domain, nil)) rescue true
+                @child_agent.start
+              else
+                tail = descendant.last
+                if tail.action?
+                  tail.running_thread.join
+                else
+                  sleep 1
+                end
               end
-              take0(Tuple[:foreground].new(task.domain, nil)) rescue true
-              child.start
-            else
-              sleep 1
             end
+            write(Tuple[:foreground].new(task.domain, task.digest))
           end
-          write(Tuple[:foreground].new(task.domain, task.digest))
+
+          if rule.action?
+            @action = true
+          end
         end
 
         # sleep until execution thread will be terminated
-        th.join
+        @handler_thread.join
+        @child_thread.join
+
+        @flow = nil
+        @action = nil
 
         # remove the working tuple
         take0(Tuple[:working].new(task.domain, nil))
@@ -196,7 +237,7 @@ module Pione
           handler.domain, :succeeded, handler.outputs, task.digest
         )
         write(finished)
-        take0(Tuple[:foreground].new(task.domain, nil))
+        take0(Tuple[:foreground].new(task.domain, nil)) rescue true
         terminate if @once
       end
 
