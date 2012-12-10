@@ -175,7 +175,7 @@ module Pione
       def transit_to_stop_iteration(e)
         # start root rule
         if not(@inputs.empty?) or not(stream?)
-          write(Tuple[:command].new("start-root-rule"))
+          write(Tuple[:command].new("start-root-rule", nil))
         end
         terminate unless stream?
       end

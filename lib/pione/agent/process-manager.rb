@@ -19,7 +19,7 @@ module Pione
       end
 
       def transit_to_sleeping
-        take(Tuple[:command].new("start-root-rule"))
+        take(Tuple[:command].new("start-root-rule", nil))
       end
 
       def transit_to_running

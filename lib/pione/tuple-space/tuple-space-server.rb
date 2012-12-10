@@ -36,7 +36,7 @@ module Pione
         Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
       }
       tuple_space_interface :write, :validator => Proc.new {|*args|
-        args.first.writable? if args.first.kind_of?(Tuple::TupleObject)
+        args.first.writable? if args.first.kind_of?(Tuple::BasicTuple)
       }, :result => lambda{|t|
         # don't return raw tuple entry in PIONE
         nil
