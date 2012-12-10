@@ -5,31 +5,6 @@ module DRb
   end
   module_function :waiter_table
 
-  # module DRbProtocol
-  #   def open(uri, config, first=true)
-  #     @protocol.each do |prot|
-  #       begin
-  #         return prot.open(uri, config)
-  #       rescue DRbBadScheme
-  #       rescue DRbConnError
-  #         raise($!)
-  #       rescue => e
-  #         p e
-  #         e.backtrace.each do |line|
-  #           puts line
-  #         end
-  #         raise DRbConnError.new("#{uri} - #{$!.inspect}")
-  #       end
-  #     end
-  #     if first && (config[:auto_load] != false)
-  #       auto_load(uri, config)
-  #       return open(uri, config, false)
-  #     end
-  #     raise DRbBadURI, 'can\'t parse uri:' + uri
-  #   end
-  #   module_function :open
-  # end
-
   class DRbConnError
     attr_reader :args
 
@@ -151,6 +126,7 @@ module DRb
   class DRbTCPSocket
     # Makes reader thread for receiving unordered replies.
     def reader_thread(watcher)
+      @watcher_mutex ||= Mutex.new
       @watchers ||= Set.new
       @watchers << watcher
       @thread ||= Thread.new do
@@ -161,17 +137,23 @@ module DRb
             DRb.waiter_table.push(req_id, [succ, result])
           end
         rescue Exception => e
-          @watchers.each do |watcher|
-            if watcher.alive?
-              watcher.raise(ReplyReaderThreadError.new(e))
+          @watcher_mutex.synchronize do
+            @watchers.each do |watcher|
+              if watcher.alive?
+                watcher.raise(ReplyReaderThreadError.new(e))
+              end
             end
+            @watchers.delete_if {|watcher| not(watcher.alive?)}
           end
         end
       end
     end
 
     def remove_reader_thread_watcher(watcher)
-      @watchers.delete_if {|th| th == watcher}
+      @watcher_mutex ||= Mutex.new
+      @watcher_mutex.synchronize do
+        @watchers.delete_if {|th| th == watcher}
+      end
     end
 
     # req_id
@@ -254,134 +236,231 @@ module DRb
   end
 
   class DRbServer
-    class InvokeMethod
-      # you can read request id
-      attr_reader :req_id
-
-      # perform without setup_message
-      def perform
-        @result = nil
-        @succ = false
-
-        if $SAFE < @safe_level
-          info = Thread.current['DRb']
-          if @block
-            @result = Thread.new {
-              Thread.current['DRb'] = info
-              $SAFE = @safe_level
-              perform_with_block
-            }.value
-          else
-            @result = Thread.new {
-              Thread.current['DRb'] = info
-              $SAFE = @safe_level
-              perform_without_block
-            }.value
-          end
-        else
-          if @block
-            @result = perform_with_block
-          else
-            @result = perform_without_block
-          end
-        end
-        @succ = true
-        if @msg_id == :to_ary && @result.class == Array
-          @result = DRbArray.new(@result)
-        end
-        return @succ, @result
-      rescue StandardError, ScriptError, Interrupt
-        @result = $!
-        return @succ, @result
+    # ClientRequest represents client's requests.
+    class ClientRequest
+      def self.receive(client)
+        self.new(*client.recv_request)
       end
 
-      public :setup_message
+      attr_reader :req_id
+      attr_reader :obj
+      attr_reader :msg_id
+      attr_reader :argv
+      attr_reader :block
 
-      # with request id
-      def init_with_client
-        req_id, obj, msg, argv, block = @client.recv_request
+      def initialize(req_id, obj, msg_id, argv, block)
         @req_id = req_id
         @obj = obj
-        @msg_id = msg.intern
+        @msg_id = msg_id.intern
         @argv = argv
         @block = block
       end
 
+      def eval
+        @block ? eval_with_block : eval_without_block
+      end
+
+      private
+
       # Checks whether it can invoke method.
-      def ready?
+      def valid?
         return false unless @req_id
         return false unless @msg_id
         return false unless @argv
         return true
       end
+
+      def eval_without_block
+        if Proc === @obj && @msg_id == :__drb_yield
+          ary = @argv.size == 1 ? @argv : [@argv]
+          ary.map(&@obj)[0]
+        else
+          @obj.__send__(@msg_id, *@argv)
+        end
+      end
+
+      def block_yield(x)
+        if x.size == 1 && x[0].class == Array
+          x[0] = DRbArray.new(x[0])
+        end
+        @block.call(*x)
+      end
+
+      def eval_with_block
+        @obj.__send__(@msg_id, *@argv) do |*x|
+          jump_error = nil
+          begin
+            block_value = block_yield(x)
+          rescue LocalJumpError
+            jump_error = $!
+          end
+          if jump_error
+            case jump_error.reason
+            when :break
+              break(jump_error.exit_value)
+            else
+              raise jump_error
+            end
+          end
+          block_value
+        end
+      end
+    end
+
+    class Invoker
+      extend Forwardable
+
+      attr_accessor :thread
+      def_delegators :@request, :req_id, :obj, :msg_id, :argv, :block
+
+      def initialize(drb_server, client, request)
+        @drb_server = drb_server
+        @client = client
+        @request = request
+        check_insecure_method
+      end
+
+      # @api private
+      def inspect
+        "#<Invoker %s#%s(%s)>" % [@request.obj, @request.msg_id, @request.argv]
+      end
+      alias :to_s :inspect
+
+      # perform without setup_message
+      def invoke
+        result = safe_invoke
+        if @request.msg_id == :to_ary && result.class == Array
+          result = DRbArray.new(result)
+        end
+        return true, result
+      rescue StandardError, ScriptError, Interrupt
+        return false, $!
+      end
+
+      private
+
+      def check_insecure_method
+        @drb_server.check_insecure_method(@request.obj, @request.msg_id)
+      end
+
+      def safe_invoke
+        if $SAFE < @drb_server.safe_level
+          info = Thread.current['DRb']
+          Thread.new do
+            Thread.current['DRb'] = info
+            $SAFE = @drb_server.safe_level
+            @request.eval
+          end.value
+        else
+          @request.eval
+        end
+      end
+    end
+
+    class RequestLooper
+      def self.start(server, client)
+        self.new(server).start(client)
+      end
+
+      def initialize(server)
+        @server = server
+      end
+
+      def start(client)
+        Thread.current['DRb'] = {'client' => client, 'server' => @server}
+        @server.add_exported_uri(client.uri)
+
+        loop {handle_request(client)}
+      end
+
+      private
+
+      def handle_request(client)
+        request = ClientRequest.receive(client)
+        invoker = Invoker.new(@server, client, request)
+        Thread.start(invoker) do |iv|
+          Thread.current['DRb'] = {'client' => client, 'server' => @server}
+          call_invoker(client, iv)
+        end
+      rescue DRbConnError => e
+        client.close
+        if Global.show_communication
+          puts "closed socket on server side"
+          ErrorReport.print(e)
+        end
+        raise StopIteration
+      end
+
+      def call_invoker(client, invoker)
+        # perform invoker with retaining the information
+        invoker.thread = Thread.current
+        @server.invokers_mutex.synchronize {@server.invokers << invoker}
+        succ, result = invoker.invoke
+        @server.invokers_mutex.synchronize {@server.invokers.delete(invoker)}
+        invoker.thread = nil
+
+        # error report
+        if !succ && Global.show_communication
+          result.backtrace.each {|x| puts x}
+        end
+
+        # send_reply with req_id
+        client.send_reply(invoker.req_id, succ, result) rescue nil
+      end
     end
 
     def main_loop
       if @protocol.uri =~ /^receiver:/
-        main_loop_receiver
+        RequestLooper.start(self, @protocol)
+        # stop transceiver
+        @thread.kill.join
       else
-        main_loop_others
+        Thread.start(@protocol.accept) do |client|
+          # relay socket doesn't need request receiver loop because its aim is
+          # to get connection only
+          unless @protocol.kind_of?(RelaySocket)
+            RequestLooper.start(self, client)
+          end
+        end
       end
     end
 
-    def main_loop_core(client)
-      @grp.add Thread.current
-      Thread.current['DRb'] = { 'client' => client, 'server' => self }
+    attr_reader :invokers
+    attr_reader :invokers_mutex
+
+    def initialize(uri=nil, front=nil, config_or_acl=nil)
+      if Hash === config_or_acl
+        config = config_or_acl.dup
+      else
+        acl = config_or_acl || @@acl
+        config = {
+          :tcp_acl => acl
+        }
+      end
+
+      @config = self.class.make_config(config)
+
+      @protocol = DRbProtocol.open_server(uri, @config)
+      @uri = @protocol.uri
+      @exported_uri = [@uri]
+
+      @front = front
+      @idconv = @config[:idconv]
+      @safe_level = @config[:safe_level]
+
+      @grp = ThreadGroup.new
+      @thread = run
+
+      # current performing invokers
+      @invokers = []
+      @invokers_mutex = Mutex.new
+
+      DRb.regist_server(self)
+    end
+
+    def add_exported_uri(uri)
       DRb.mutex.synchronize do
-        client_uri = client.uri
-        @exported_uri << client_uri unless @exported_uri.include?(client_uri)
-      end
-      while true do
-        invoke_method = InvokeMethod.new(self, client)
-        begin
-          invoke_method.setup_message
-        rescue DRbConnError => e
-          client.close
-          if Global.show_communication
-            puts "closed socket on server side"
-            puts "%s: %s" % [e.class, e.message]
-            caller.each {|line| puts " "*4 + line}
-          end
-          break
-        end
-        Thread.start(invoke_method) do |invoker|
-          begin
-            @grp.add Thread.current
-            Thread.current['DRb'] = { 'client' => client, 'server' => self }
-            succ, result = invoker.perform
-            if !succ && Global.show_communication
-              result.backtrace.each {|x| puts x}
-            end
-            # req_id
-            client.send_reply(invoker.req_id, succ, result) rescue nil
-          rescue DRbConnError => e
-            client.close
-            if Global.show_communication
-              puts "error in method invocation thread"
-              puts "%s: %s" % [e.class, e.message]
-              caller.each {|line| puts " "*4 + line}
-            end
-          end
-        end
-      end
-    end
-
-    def main_loop_receiver
-      main_loop_core(@protocol)
-
-      # stop transceiver
-      @thread.kill.join
-    end
-
-    # main loop with request id
-    def main_loop_others
-      Thread.start(@protocol.accept) do |client|
-        # relay socket doesn't need request receiver loop because its aim is
-        # to get connection only
-        unless @protocol.kind_of?(RelaySocket)
-          main_loop_core(client)
-        else
-        end
+        @exported_uri << uri unless @exported_uri.include?(uri)
       end
     end
   end

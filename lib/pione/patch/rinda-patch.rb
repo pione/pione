@@ -26,12 +26,20 @@ module Rinda
   end
 
   class WaitTemplateEntry
+    attr_reader :place
+    attr_reader :thread
+    attr_reader :found
+    attr_accessor :signaled
+    attr_accessor :finished
+
     # @note
     #   removed monitor from original
     def initialize(place, ary, expires=nil)
       super(ary, expires)
       @place = place
       @found = nil
+      @signaled = false
+      @finished = false
     end
 
     # @note
@@ -45,10 +53,36 @@ module Rinda
     # @note
     #   thread version(don't use monitor)
     def signal
+      @signaled = true
       if @thread && @thread.status == "sleep"
         @thread.run
       end
     end
+
+    def inspect
+      infos = [
+        "@cancel=%s" % @cancel,
+        "@expires=%s" % @expires,
+        "@tuple=%s" % @tuple.inspect,
+        "@renewer=%s" % @renewer.inspect,
+        "@found=%s" % @found.inspect,
+        "@thread=%s" % @thread.inspect,
+        "@signaled=%s" % @signaled,
+        "@finished=%s" % @finished
+      ]
+      "#<%s:%s %s>" % ["Rinda::WaitTemplateEntry", __id__, infos.join(", ")]
+    end
+    alias :to_s :inspect
+
+    def ==(other)
+      return false unless other.kind_of?(WaitTemplateEntry)
+      return false unless value == other.value
+      return false unless @thread == other.thread
+      return false unless @signaled == other.signaled
+      return false unless @finished == other.finished
+      return true
+    end
+    alias :eql? :"=="
   end
 
   class TupleBag
@@ -60,6 +94,10 @@ module Rinda
 
       def size
         elements.size
+      end
+
+      def delete(tuple)
+       @bin.delete(tuple)
       end
     end
 
@@ -320,6 +358,17 @@ module Rinda
       end
     end
 
+    def initialize
+      @hash = {}
+      @mutex = Mutex.new
+      @enum = enum_for(:each_entry)
+      @special_bin = {}
+    end
+
+    def [](ident)
+      @hash[ident]
+    end
+
     # Sets special bin class table by identifier.
     def set_special_bin(special_bin)
       @special_bin = special_bin
@@ -328,12 +377,21 @@ module Rinda
     def push(tuple)
       key = bin_key(tuple)
       prepare_table(key)
-      @hash[key].add(tuple)
+      @mutex.synchronize {@hash[key].add(tuple)}
+    end
+
+    def delete(tuple)
+      key = bin_key(tuple)
+      bin = @mutex.synchronize {@hash[key]}
+      return nil unless bin
+      @mutex.synchronize {bin.delete(tuple)}
+      @mutex.synchronize {@hash.delete(key) if bin.empty?}
+      return tuple
     end
 
     def prepare_table(key)
-      unless @hash[key]
-        @hash[key] = bin_class(key).new
+      unless @mutex.synchronize {@hash[key]}
+        @mutex.synchronize {@hash[key] = bin_class(key).new}
       end
     end
 
@@ -347,15 +405,16 @@ module Rinda
 
     public
 
+    # Returns all tuples in the bag.
     def all_tuples
-      @hash.values.map{|bin| bin.elements}.flatten
+      @mutex.synchronize{@hash.values}.map{|bin| bin.elements}.flatten
     end
 
     def find(template)
       key = bin_key(template)
       if @special_bin[key]
         prepare_table(key)
-        @hash[key].find(template) do |tuple|
+        @mutex.synchronize{@hash[key]}.find(template) do |tuple|
           tuple.alive? && template.match(tuple)
         end
       else
@@ -367,7 +426,7 @@ module Rinda
       key = bin_key(template)
       if @special_bin[key]
         prepare_table(key)
-        @hash[key].find_all(template) do |tuple|
+        @mutex.synchronize{@hash[key]}.find_all(template) do |tuple|
           tuple.alive? && template.match(tuple)
         end
       else
@@ -375,24 +434,61 @@ module Rinda
       end
     end
 
+    def find_template(tuple)
+      @enum.find do |template|
+        template.alive? && template.match(tuple)
+      end
+    end
+
+    def delete_unless_alive
+      deleted = []
+      @mutex.synchronize do
+        @hash.each do |key, bin|
+          bin.delete_if do |tuple|
+            if tuple.alive?
+              false
+            else
+              deleted.push(tuple)
+              true
+            end
+          end
+        end
+      end
+      deleted
+    end
+
     def task_size
-      @hash[:task].size rescue 0
+      @mutex.synchronize{@hash[:task]}.size rescue 0
     end
 
     def working_size
-      @hash[:working].size rescue 0
+      @mutex.synchronize{@hash[:working]}.size rescue 0
     end
 
     def finished_size
-      @hash[:finished].size rescue 0
+      @mutex.synchronize{@hash[:finished]}.size rescue 0
     end
 
     def data_size
-      @hash[:data].size rescue 0
+      @mutex.synchronize{@hash[:data]}.size rescue 0
+    end
+
+    private
+
+    def each_entry(&blk)
+      @mutex.synchronize do
+        @hash.each do |k, v|
+          v.each(&blk)
+        end
+      end
     end
   end
 
   class TupleSpace
+    attr_reader :bag
+    attr_reader :take_waiter
+    attr_reader :read_waiter
+
     alias :orig_initialize :initialize
 
     def initialize(*args)
@@ -483,11 +579,15 @@ module Rinda
       else
         @mutex.synchronize {@bag.push(entry)}
         start_keeper if entry.expires
+        # send tuple to all matched waiters in read waiter list
         @mutex.synchronize{@read_waiter.find_all_template(entry)}.each do |template|
           template.read(tuple)
         end
-        @mutex.synchronize{@take_waiter.find_all_template(entry)}.each do |template|
-          template.signal
+        # send tuple to one of matched waiters in take waiter list
+        @mutex.synchronize do
+          if template = @take_waiter.find_template(entry)
+            template.signal
+          end
         end
         notify_event('write', entry.value)
       end
@@ -500,11 +600,11 @@ module Rinda
       template = WaitTemplateEntry.new(self, tuple, sec)
       yield(template) if block_given?
 
-      entry = @mutex.synchronize {@bag.find(template)}
-      if entry
+      if entry = @mutex.synchronize {@bag.find(template)}
         port.push(entry.value) if port
         @mutex.synchronize {@bag.delete(entry)}
         notify_event('take', entry.value)
+        template.finished = true
         return entry.value
       end
       raise RequestExpiredError if template.expired?
@@ -515,14 +615,19 @@ module Rinda
         while true
           raise RequestCanceledError if template.canceled?
           raise RequestExpiredError if template.expired?
-          entry = @mutex.synchronize {@bag.find(template)}
-          if entry
+          if entry = @mutex.synchronize {@bag.find(template)}
             port.push(entry.value) if port
             @mutex.synchronize {@bag.delete(entry)}
             notify_event('take', entry.value)
+            template.finished = true
+            @mutex.synchronize do
+              @take_waiter.delete(template)
+            end
             return entry.value
           end
+          Thread.current[:WaitTemplate] = template
           template.wait
+          Thread.current[:WaitTemplate] = nil
         end
       ensure
         @mutex.synchronize {@take_waiter.delete(template)}

@@ -147,6 +147,10 @@ module Pione
       end
 
       alias :terminate :finalize
+
+      def inspect
+        "#<Pione::TupleSpace::TupleSpaceServer:%s>" % object_id
+      end
     end
   end
 end

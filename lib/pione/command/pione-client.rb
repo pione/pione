@@ -230,6 +230,9 @@ module Pione
         gen = Agent[:input_generator].send(
           generator_method, @tuple_space_server, @input_uri
         )
+
+        # command listener
+        @command_listener = Agent[:command_listener].start(@tuple_space_server, self)
       end
 
       # Wakes up tuple space provider process and push my tuple space server to

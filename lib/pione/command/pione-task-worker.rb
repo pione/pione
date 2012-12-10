@@ -51,6 +51,7 @@ TXT
 
         @tuple_space_server = @parent_front.get_tuple_space_server(@connection_id)
         @agent = Pione::Agent[:task_worker].new(@tuple_space_server)
+        @command_listener = Pione::Agent[:command_listener].new(@tuple_space_server, self)
 
         # connect caller front
         @parent_front.add_task_worker_front(Global.front, @connection_id)
@@ -71,6 +72,7 @@ TXT
 
         # start task worker activity
         @agent.start
+        @command_listener.start
 
         # wait...
         begin

@@ -79,18 +79,14 @@ module Pione
         port = Marshal.load(data)
         ip_address = addr[3]
         provider_front = DRbObject.new_with_uri("druby://%s:%s" % [ip_address, port])
-        begin
-          # need return of ping in short time
-          Timeout.timeout(1) do
-            provider_front.ping
-            provider_front.tuple_space_servers.each do |tuple_space_server|
-              @tuple_space_server_lock.synchronize do
-                @tuple_space_servers[tuple_space_server] = Time.now
-              end
+        # need return of ping in short time
+        Timeout.timeout(1) do
+          provider_front.ping
+          provider_front.tuple_space_servers.each do |tuple_space_server|
+            @tuple_space_server_lock.synchronize do
+              @tuple_space_servers[tuple_space_server] = Time.now
             end
           end
-        rescue Exception
-          # ignore
         end
         if Global.show_presence_notifier
           puts "presence notifier was received: %s" % provider_front.__drburi
@@ -101,6 +97,8 @@ module Pione
         if Global.show_presence_notifier
           puts "tuple space receiver disconnected"
         end
+      rescue Exception
+        # ignore
       end
 
       def update_tuple_space_servers

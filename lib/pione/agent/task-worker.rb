@@ -201,7 +201,7 @@ module Pione
         @action = nil
 
         # remove the working tuple
-        take0(Tuple[:working].new(task.domain, nil))
+        take0(Tuple[:working].new(task.domain, nil)) rescue true
 
         debug_message_end "End Task Execution #{rule.rule_path} by worker(#{uuid})"
 

@@ -84,14 +84,10 @@ module Pione
       def initialize(tuple_space_server)
         super()
         set_tuple_space_server(tuple_space_server)
-        unless self.kind_of?(CommandListener)
-          @command_listener = CommandListener.new(tuple_space_server, self)
-        end
       end
 
       def start
         super()
-        @command_listener.start if @command_listener
         return self
       end
 
@@ -104,7 +100,6 @@ module Pione
       def transit_to_terminated
         Util.ignore_exception { bye }
         cancel_current_tuple_entry
-        @command_listener.terminate if @command_listener
       end
 
       # State error

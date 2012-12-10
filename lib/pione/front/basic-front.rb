@@ -12,6 +12,7 @@ module Pione
       attr_reader :command
       attr_reader :uri
       attr_reader :attrs
+      attr_reader :link
 
       # Creates a front server as druby's service.
       def initialize(command, port)
@@ -26,6 +27,10 @@ module Pione
         Process.pid
       end
 
+      def link
+        @__link__
+      end
+
       # Terminates the front.
       def terminate
         DRb.stop_service
@@ -38,9 +43,10 @@ module Pione
         if port.kind_of?(Range)
           port = port.each
           begin
-            DRb.start_service("druby://%s:%s" % [Global.my_ip_address, port.next], self, config)
+            uri = "druby://%s:%s" % [Global.my_ip_address, port.next]
+            @__link__ = DRb.start_service(uri, self, config)
           rescue StopIteration => e
-            raise FrontError.new("you couldn't start front server.")
+            raise FrontError.new("You couldn't start front server.")
           rescue
             retry
           end

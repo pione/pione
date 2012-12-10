@@ -10,8 +10,7 @@ module Pione
       define_state_transition :waiting_command => :doing_command
       define_state_transition :doing_command => :waiting_command
 
-      define_exception_handler DRb::DRbConnError => :error
-      define_exception_handler DRb::ReplyReaderThreadError => :error
+      define_exception_handler Exception => :error
 
       def hello
       end
@@ -19,9 +18,9 @@ module Pione
       def bye
       end
 
-      def initialize(ts_server, obj)
-        @target = obj
-        super(ts_server)
+      def initialize(tuple_space_server, target)
+        @target = target
+        super(tuple_space_server)
       end
 
       def transit_to_waiting_command
@@ -34,6 +33,7 @@ module Pione
         case cmd.type
         when "terminate"
           @target.terminate
+          terminate
         end
       end
 
