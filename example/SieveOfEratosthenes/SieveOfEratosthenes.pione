@@ -1,0 +1,61 @@
+Rule Main
+  output '*.prime'
+  param $MAX := 20
+Flow
+  rule CurrentNumber.params({NUM: 2})
+  rule Sieve.params({MAX: $MAX, NUM: 2})
+End
+
+Rule Sieve
+  input '{$NUM}.current'
+  input '*.not_prime'.all or null
+  output '*.prime'
+  param $MAX
+  param $NUM
+Flow
+  if $NUM <= $MAX
+    if $*.include?($NUM.as_string).not
+      rule CreateNotPrimeAll.params({MAX: $MAX, NUM: $NUM})
+      rule CreatePrime.params({NUM: $NUM})
+    else
+      rule CurrentNumber.params({NUM: $NUM + 1})
+    end
+    rule Sieve.params({MAX: $MAX, NUM: $NUM + 1})
+  end
+End
+
+Rule CurrentNumber
+  output '{$NUM}.current'
+  param $NUM
+Action
+  touch {$NUM}.current
+End
+
+Rule CreateNotPrimeAll
+  output '*.not_prime'
+  output '{$NUM + 1}.current'
+  param $MAX
+  param $NUM
+  param $i := 2
+Flow
+  if $NUM * ($i + 1) <= $MAX
+    rule CreateNotPrimeAll.params({MAX: $MAX, NUM: $NUM, i: $i + 1})
+  end
+  rule CreateNotPrime.params({NUM: $NUM * $i})
+  rule CurrentNumber.params({NUM: $NUM + 1})
+End
+
+Rule CreateNotPrime
+  output '{$NUM}.not_prime'
+  param $NUM
+Action
+  touch {$NUM}.not_prime
+end
+
+Rule CreatePrime
+  output '{$NUM}.prime'
+  param $NUM
+Action
+  touch {$NUM}.prime
+End
+
