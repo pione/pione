@@ -306,9 +306,9 @@ describe 'Feature::Expr' do
 
     testcases.each do |testname, testcase|
       it "should get #{testcase["result"]}: #{testname}" do
-        parser = Parser.new.feature_expr
-        provide = Transformer.new.apply(parser.parse(testcase["provide"]))
-        request = Transformer.new.apply(parser.parse(testcase["request"]))
+        parser = DocumentParser.new.feature_expr
+        provide = DocumentTransformer.new.apply(parser.parse(testcase["provide"]))
+        request = DocumentTransformer.new.apply(parser.parse(testcase["request"]))
         Feature::Sentence.new(provide, request).decide.should == testcase["result"]
       end
     end

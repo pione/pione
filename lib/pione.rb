@@ -80,7 +80,7 @@ require 'pione/relay/relay-client-db'
 require 'pione/relay/relay-account-db'
 
 # model
-require 'pione/model/model'
+require 'pione/model/basic-model'
 require 'pione/model/undefined-value'
 require 'pione/model/list'
 require 'pione/model/boolean'

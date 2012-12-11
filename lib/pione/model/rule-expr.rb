@@ -1,6 +1,6 @@
 module Pione::Model
   # Rule representation in the flow element context.
-  class RuleExpr < PioneModelObject
+  class RuleExpr < BasicModel
     set_pione_model_type TypeRuleExpr
 
     attr_reader :package
@@ -62,7 +62,7 @@ module Pione::Model
     # Evaluates the object with the variable table.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       return self.class.new(

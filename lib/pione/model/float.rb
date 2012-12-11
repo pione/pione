@@ -1,6 +1,6 @@
 module Pione::Model
   # PioneFloat represents float values in PIONE system.
-  class PioneFloat < PioneModelObject
+  class PioneFloat < BasicModel
     set_pione_model_type TypeFloat
 
     attr_reader :value

@@ -5,7 +5,7 @@ module Pione::Model
   #     echo "abc"
   #   End
   #   #=> ActionBlock.new("  echo \"abc\"")
-  class ActionBlock < PioneModelObject
+  class ActionBlock < BasicModel
     attr_reader :content
 
     # Creates a action block.
@@ -19,7 +19,7 @@ module Pione::Model
     # Evaluates the object.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       self.class.new(vtable.expand(@content))
@@ -61,14 +61,14 @@ module Pione::Model
   #   #=> Block.new([ CallRule.new('Test1'),
   #                   CallRule.new('Test2'),
   #                   CallRule.new('Test3') ])
-  class FlowBlock < PioneModelObject
+  class FlowBlock < BasicModel
     attr_reader :elements
 
     # Create a flow block.
-    # @param [Array<PioneModelObject>] elements
+    # @param [Array<BasicModel>] elements
     #   flow elements
     def initialize(*elements)
-      unless elements.all? {|elt| elt.kind_of?(PioneModelObject)}
+      unless elements.all? {|elt| elt.kind_of?(BasicModel)}
         raise ArgumentError.new(elements)
       end
       @elements = elements
@@ -77,7 +77,7 @@ module Pione::Model
     # Evaluates each elements and return it.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       assignments = @elements.select{|elt| elt.kind_of?(Assignment)}
@@ -166,18 +166,18 @@ module Pione::Model
   #          { 'a' => FlowBlock.new(CallRule.new('Test1')),
   #            'b' => FlowBlock.new(CallRule.new('Test2')),
   #            :else => FlowBlock.new(CallRule.new('Test3')) })
-  class ConditionalBlock < PioneModelObject
+  class ConditionalBlock < BasicModel
     attr_reader :condition
     attr_reader :blocks
 
     # Creates a conditional block.
-    # @param [PioneModelObject] condition
+    # @param [BasicModel] condition
     #    condition value
-    # @param [Hash{PioneModelObject => FlowBlock}] blocks
+    # @param [Hash{BasicModel => FlowBlock}] blocks
     #    condition key and block
     def initialize(condition, blocks={})
       unless blocks.all?{|key,val|
-          (key.kind_of?(PioneModelObject) or key == :else) &&
+          (key.kind_of?(BasicModel) or key == :else) &&
           val.kind_of?(FlowBlock)
         }
         raise ArgumentError.new(blocks)
@@ -189,7 +189,7 @@ module Pione::Model
     # Evaluates the condition and returns the flow block.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       value = @condition.eval(vtable)

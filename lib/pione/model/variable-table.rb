@@ -26,9 +26,9 @@ module Pione::Model
     # Creates an error.
     # @param [Variable] variable
     #   double bound variable
-    # @param [PioneModelObject] new_value
+    # @param [BasicModel] new_value
     #   new value
-    # @param [PioneModelObject] old_value
+    # @param [BasicModel] old_value
     #   old value
     def initialize(variable, new_value, old_value)
       @variable = variable
@@ -54,7 +54,7 @@ module Pione::Model
   end
 
   # VariableTable represents variable tables for rule context.
-  class VariableTable < PioneModelObject
+  class VariableTable < BasicModel
     set_pione_model_type TypeVariableTable
 
     # Returns empty variable table.
@@ -65,7 +65,7 @@ module Pione::Model
     end
 
     # Creates a vairable table.
-    # @param [Hash{Variable => PioneModelObject}] table
+    # @param [Hash{Variable => BasicModel}] table
     #   initial values for the variable table
     def initialize(table={})
       @table = table.to_hash.dup
@@ -73,7 +73,7 @@ module Pione::Model
     end
 
     # Returns the variable table as hash.
-    # @return [Hash{Variable => PioneModelObject}]
+    # @return [Hash{Variable => BasicModel}]
     #   hash form of the variable table
     def to_hash
       @table
@@ -97,7 +97,7 @@ module Pione::Model
     # atomic.
     # @param [Variable] var
     #   table key to get the value
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   the value
     def get(var)
       check_argument_type(var, Variable)
@@ -106,7 +106,7 @@ module Pione::Model
       when Variable
         next_val = get(val)
         return next_val.nil? ? val : next_val
-      when PioneModelObject
+      when BasicModel
         return not(val.atomic?) ? val.eval(self) : val
       end
       return val
@@ -116,13 +116,13 @@ module Pione::Model
     # its value already.
     # @param [Variable] variable
     #   table key
-    # @param [PioneModelObject] new_value
+    # @param [BasicModel] new_value
     #   new value
     # @return [VariableTable]
     #   new variable table
     def set(variable, new_value)
       check_argument_type(variable, Variable)
-      check_argument_type(new_value, PioneModelObject)
+      check_argument_type(new_value, BasicModel)
       if old_value = @table[variable]
         unless old_value.kind_of?(UndefinedValue) or new_value == old_value
           raise VariableBindingError.new(variable, new_value, old_value)
@@ -134,12 +134,12 @@ module Pione::Model
     # Sets a variable. This method overrides old variable value.
     # @param [Variable] variable
     #   table key
-    # @param [PioneModelObject] new_value
+    # @param [BasicModel] new_value
     #   new value
     # @return [void]
     def set!(variable, new_value)
       check_argument_type(variable, Variable)
-      check_argument_type(new_value, PioneModelObject)
+      check_argument_type(new_value, BasicModel)
       @table[variable] = new_value
     end
 

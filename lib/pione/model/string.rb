@@ -1,6 +1,6 @@
 module Pione::Model
   # PioneString is a string value in PIONE system.
-  class PioneString < PioneModelObject
+  class PioneString < BasicModel
     set_pione_model_type TypeString
     attr_reader :value
 
@@ -15,7 +15,7 @@ module Pione::Model
     # Evaluates the object with the variable table.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       self.class.new(vtable.expand(@value))

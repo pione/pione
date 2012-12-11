@@ -1,6 +1,6 @@
 module Pione::Model
   # RuleIOElement is a special PIONE model object for matched data name result.
-  class RuleIOElement < PioneModelObject
+  class RuleIOElement < BasicModel
     set_pione_model_type TypeRuleIOElement
 
     attr_accessor :name
@@ -69,7 +69,7 @@ module Pione::Model
   end
 
   # RuleIOList is a input or output list for RuleIOElement.
-  class RuleIOList < PioneModelObject
+  class RuleIOList < BasicModel
     extend Forwardable
 
     set_pione_model_type TypeRuleIOList

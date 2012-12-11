@@ -7,7 +7,7 @@ module Pione::Model
   #   true == false
   # @example
   #   $X * $Y
-  class BinaryOperator < PioneModelObject
+  class BinaryOperator < BasicModel
     attr_reader :symbol
     attr_reader :left
     attr_reader :right
@@ -15,9 +15,9 @@ module Pione::Model
     # Create a binary operator.
     # @param [String] symbol
     #   operator's symbol
-    # @param [PioneModelObject] left
+    # @param [BasicModel] left
     #   left operand
-    # @param [PioneModelObject] right
+    # @param [BasicModel] right
     #   right operand
     def initialize(symbol, left, right)
       @symbol = symbol
@@ -48,7 +48,7 @@ module Pione::Model
     # Evaluates the application expression and returns application result.
     # @param [VariableTable] vtable
     #   variable table for the evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result object
     def eval(vtable)
       left = @left.eval(vtable)

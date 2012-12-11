@@ -1,6 +1,6 @@
 module Pione
   module Model
-    class UndefinedValue < PioneModelObject
+    class UndefinedValue < BasicModel
       set_pione_model_type TypeUndefinedValue
 
       def ==(other)

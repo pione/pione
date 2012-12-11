@@ -1,6 +1,6 @@
 module Pione::Model
   # PioneInteger represents integer value in PIONE system.
-  class PioneInteger < PioneModelObject
+  class PioneInteger < BasicModel
     set_pione_model_type TypeInteger
 
     attr_reader :value

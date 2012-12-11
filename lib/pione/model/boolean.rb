@@ -1,6 +1,6 @@
 module Pione::Model
   # PioneBoolean representes truth value in PIONE system.
-  class PioneBoolean < PioneModelObject
+  class PioneBoolean < BasicModel
     set_pione_model_type TypeBoolean
 
     # Returns the value in ruby.

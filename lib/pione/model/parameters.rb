@@ -1,6 +1,6 @@
 module Pione::Model
   # Parameters is a PIONE mode class for parameters.
-  class Parameters < PioneModelObject
+  class Parameters < BasicModel
     # InvalidParameter is raised when you specify invalid parameter.
     class InvalidParameter < TypeError
       # Creates a error.
@@ -57,13 +57,13 @@ module Pione::Model
     set_pione_model_type TypeParameters
 
     # Creates a parameters object.
-    # @param [Hash{Variable => PioneModelObject}] data
+    # @param [Hash{Variable => BasicModel}] data
     #   parameters data table
     def initialize(data)
       raise TypeError.new(data) unless data.kind_of?(Hash)
       data.each do |key, val|
         raise InvalidParameter.new(key) unless key.kind_of?(Variable)
-        raise InvalidArgument.new(val) unless val.kind_of?(PioneModelObject)
+        raise InvalidArgument.new(val) unless val.kind_of?(BasicModel)
       end
       @data = data
       super()
@@ -72,7 +72,7 @@ module Pione::Model
     # Evaluates the object with variable table.
     # @param [VariableTable] vtable
     #   variable tabale for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluated result
     def eval(vtable)
       return self.class.empty if empty?
@@ -95,7 +95,7 @@ module Pione::Model
     # Returns value of parameter name.
     # @param [String] name
     #   parameter name to get the value
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   the value
     def [](name)
       @data[Variable.new(name)]
@@ -105,7 +105,7 @@ module Pione::Model
     # when the parameter name is kind of a variable.
     # @param [Variable] name
     #   variable to get the value
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   the value
     def get(name)
       raise InvalidParameter.new(name) unless name.kind_of?(Variable)
@@ -114,28 +114,28 @@ module Pione::Model
 
     # Adds the parameter value and return new parameters.
     # @param [Variable] name
-    # @param [PioneModelObject] value
+    # @param [BasicModel] value
     # @return [Parameters]
     #   new parameters with the parameter
     def set(name, value)
       raise InvalidParameter.new(name) unless name.kind_of?(Variable)
-      raise InvalidArgument.new(value) unless value.kind_of?(PioneModelObject)
+      raise InvalidArgument.new(value) unless value.kind_of?(BasicModel)
       self.class.new(@data.merge({name => value}))
     end
 
     # Adds the parameter value.
     # @param [Variable] name
-    # @param [PioneModelObject] value
+    # @param [BasicModel] value
     # @return [void]
     def set!(name, value)
       raise InvalidParameter.new(name) unless name.kind_of?(Variable)
-      raise InvalidArgument.new(value) unless value.kind_of?(PioneModelObject)
+      raise InvalidArgument.new(value) unless value.kind_of?(BasicModel)
       @data.merge!({name => value})
     end
 
     # Adds the parameter value safety and return new parameters.
     # @param [Variable] name
-    # @param [PioneModelObject] value
+    # @param [BasicModel] value
     # @return [Parameters]
     #   new parameters with the parameter
     def set_safety(name, value)
@@ -146,7 +146,7 @@ module Pione::Model
 
     # Adds the parameter value safety.
     # @param [Variable] name
-    # @param [PioneModelObject] value
+    # @param [BasicModel] value
     # @return [void]
     def set_safety!(name, value)
       if not(@data.has_key?(name)) or @data[name].kind_of?(UndefinedValue)
@@ -174,7 +174,7 @@ module Pione::Model
     end
 
     # Updates parameters with the argument and return new parameters with it.
-    # @param [PioneModelObject] other
+    # @param [BasicModel] other
     #   merge target
     # @return [Parameters]
     #   new parameters that merged the target
@@ -192,7 +192,7 @@ module Pione::Model
     end
 
     # Updates parameters with the argument destructively.
-    # @param [PioneModelObject] other
+    # @param [BasicModel] other
     #   merge target
     # @return [void]
     def merge!(other)

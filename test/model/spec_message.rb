@@ -39,8 +39,4 @@ describe 'Model::Message' do
       "substring", "abcdef", Variable.new("FROM"), Variable.new("TO")
     ).should.include_variable
   end
-
-  it 'should textize' do
-    
-  end
 end

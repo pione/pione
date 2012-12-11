@@ -3,7 +3,7 @@ module Pione
     # PioneModelTypeError represents type mismatch error in PIONE modle object system.
     class PioneModelTypeError < StandardError
       # Creates an exception.
-      # @param [PioneModelObject] obj PIONE model object
+      # @param [BasicModel] obj PIONE model object
       # @param [Type] type expected type
       def initialize(obj, type)
         @obj = obj
@@ -30,7 +30,7 @@ module Pione
       # Creates an exception.
       # @param [String, Symbol] name
       #   method name
-      # @param [PioneModelObject] obj
+      # @param [BasicModel] obj
       #   method reciever
       def initialize(name, obj)
         @name = name
@@ -65,7 +65,7 @@ module Pione
       end
 
       # Return true if the type or the pione model object matches.
-      # @param [Type, PioneModelObject] other
+      # @param [Type, BasicModel] other
       #   type or object for match test target
       # @return [Boolean]
       #   true if it matches, or false
@@ -73,7 +73,7 @@ module Pione
         case other
         when Type
           other == TypeAny || @type_string == other.type_string
-        when PioneModelObject
+        when BasicModel
           match(other.pione_model_type)
         when nil
           # do nothing
@@ -272,8 +272,8 @@ module Pione
       end
     end
 
-    # This is a class for pione model object.
-    class PioneModelObject < Pione::PioneObject
+    # BasicModel is a class for pione model object.
+    class BasicModel < Pione::PioneObject
       class << self
         # Sets pione model type of the model.
         # @param [Symbol] type
@@ -320,7 +320,7 @@ module Pione
       # Evaluates the model object in the variable table.
       # @param [VariableTable] vtable
       #   variable table for evaluation
-      # @return [PioneModelObject]
+      # @return [BasicModel]
       #   evaluated object
       def eval(vtable=VariableTable.new)
         return self
@@ -386,7 +386,7 @@ module Pione
       end
 
       # Returns itself.
-      # @return [PioneModelObject]
+      # @return [BasicModel]
       def to_pione
         self
       end

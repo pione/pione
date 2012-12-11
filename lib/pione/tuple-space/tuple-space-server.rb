@@ -140,7 +140,7 @@ module Pione
       # Shutdown the server.
       def finalize
         @terminated = true
-        write(Tuple[:command].new("terminate"))
+        write(Tuple[:command].new("terminate", nil))
         @client_life_checker.terminate
         @client_life_checker.running_thread.join
         sleep 1

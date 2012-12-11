@@ -38,7 +38,7 @@ module Pione::Model
     end
 
     # Expr is a super class for all feature expressions.
-    class Expr < PioneModelObject
+    class Expr < BasicModel
       set_pione_model_type TypeFeature
 
       # Returns itself.

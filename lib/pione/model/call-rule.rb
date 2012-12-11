@@ -12,11 +12,11 @@ module Pione::Model
   #   # with variable:
   #   rule $X
   #   #=> CallRule.new(Variable.new('X'))
-  class CallRule < PioneModelObject
+  class CallRule < BasicModel
     attr_reader :expr
 
     # Creates a callee rule.
-    # @param [PioneModelObject] expr
+    # @param [BasicModel] expr
     #   callee rule
     def initialize(expr)
       @expr = expr
@@ -43,7 +43,7 @@ module Pione::Model
     # Evaluates the expression.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       self.class.new(@expr.eval(vtable))

@@ -1,7 +1,7 @@
 module Pione::Model
   # Variable represent variable name objects. A variable object can evaluates
   # its value with the variable table.
-  class Variable < PioneModelObject
+  class Variable < BasicModel
     set_pione_model_type TypeAny
 
     attr_reader :name
@@ -18,7 +18,7 @@ module Pione::Model
     # the variable name is unbound in the table.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       val = vtable.get(self)

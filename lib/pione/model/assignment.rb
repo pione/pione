@@ -8,7 +8,7 @@ module Pione::Model
   #   # assigning a variable value
   #   $X := $Y
   #   # => Assignment.new(Variable.new('X'), Variable.new('Y'))
-  class Assignment < PioneModelObject
+  class Assignment < BasicModel
     set_pione_model_type TypeAssignment
 
     # Returns the variable part of assignment.
@@ -20,11 +20,11 @@ module Pione::Model
     # Creates an assignment.
     # @param [Variable] variable
     #   variable part of assignment
-    # @param [PioneModelObject] expr
+    # @param [BasicModel] expr
     #   expression part of assignment
     def initialize(variable, expr)
       check_argument_type(variable, Variable)
-      check_argument_type(expr, PioneModelObject)
+      check_argument_type(expr, BasicModel)
       @variable = variable
       @expr = expr
       super()
@@ -35,7 +35,7 @@ module Pione::Model
     # as it is because of lazy evaluation.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   self
     def eval(vtable)
       vtable.set(@variable, @expr)

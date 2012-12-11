@@ -7,7 +7,7 @@ module Pione::Model
   # @example
   #   # incomplete name
   #   DataExpr.new("*.txt")
-  class DataExpr < PioneModelObject
+  class DataExpr < BasicModel
 
     # separator symbol for all modifier
     SEPARATOR = ':'
@@ -145,7 +145,7 @@ module Pione::Model
     # Evaluates the data expression.
     # @param [VariableTable] vtable
     #   variable table for evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       exceptions = @exceptions.map {|exc| exc.eval(vtable)}

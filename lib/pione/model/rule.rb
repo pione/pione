@@ -1,6 +1,6 @@
 module Pione::Model
   # RuleCondition represents rule condition.
-  class RuleCondition < PioneModelObject
+  class RuleCondition < BasicModel
     # Returns the value of attribute inputs.
     # @return [Array<DataExpr, Array<DataExpr>>]
     #   rule inputs condition
@@ -69,7 +69,7 @@ module Pione::Model
   end
 
   # Rule is a class for PIONE rule model.
-  class Rule < PioneModelObject
+  class Rule < BasicModel
     extend Forwardable
 
     # Returns rule type.

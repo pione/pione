@@ -1,6 +1,6 @@
 module Pione::Model
   # Package is a PIONE model class for rule package.
-  class Package < PioneModelObject
+  class Package < BasicModel
     attr_reader :name
     set_pione_model_type TypePackage
 

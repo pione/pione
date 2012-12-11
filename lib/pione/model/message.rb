@@ -4,7 +4,7 @@ module Pione::Model
   #   1.as_string()
   # @example
   #   '*.txt'.except('a*')
-  class Message < PioneModelObject
+  class Message < BasicModel
     attr_reader :name
     attr_reader :receiver
     attr_reader :arguments
@@ -12,9 +12,9 @@ module Pione::Model
     # Creates a message.
     # @param [String] name
     #   message name
-    # @param [PioneModelObject] receiver
+    # @param [BasicModel] receiver
     #   message receiver
-    # @param [PioneModelObject] arguments
+    # @param [BasicModel] arguments
     #   message arguments
     def initialize(name, receiver, *arguments)
       @name = name
@@ -40,7 +40,7 @@ module Pione::Model
 
     # Evaluates the application expression and returns application result.
     # @param [VariableTable] vtable variable table for the evaluation
-    # @return [PioneModelObject]
+    # @return [BasicModel]
     #   evaluation result
     def eval(vtable)
       receiver = @receiver.eval(vtable)

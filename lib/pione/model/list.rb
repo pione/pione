@@ -1,6 +1,6 @@
 module Pione::Model
   # PioneList is a list that include same type elements.
-  class PioneList < PioneModelObject
+  class PioneList < BasicModel
     extend Forwardable
 
     set_pione_model_type TypeList[TypeAny]
@@ -13,7 +13,7 @@ module Pione::Model
     #   elements
     def initialize(*elts)
       unless elts.empty?
-        if elts.find{|val| not(val.kind_of?(PioneModelObject))}
+        if elts.find{|val| not(val.kind_of?(BasicModel))}
           raise ArgumentError.new(elts)
         end
         unless elts.map{|val| val.pione_model_type}.uniq.size == 1
@@ -32,12 +32,12 @@ module Pione::Model
     end
 
     # Returns new list which appended the element.
-    # @param [PioneModelObject] elt
+    # @param [BasicModel] elt
     #   the element object
     # @return [PioneList]
     #   new list with the element
     def add(elt)
-      unless elt.kind_of?(PioneModelObject)
+      unless elt.kind_of?(BasicModel)
         raise ArgumentError.new(elt)
       end
       unless pione_model_type == elt.pione_model_type
