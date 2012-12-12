@@ -333,8 +333,8 @@ module DRb
           result = DRbArray.new(result)
         end
         return true, result
-      rescue StandardError, ScriptError, Interrupt
-        return false, $!
+      rescue StandardError, ScriptError, Interrupt => e
+        return false, e
       end
 
       private

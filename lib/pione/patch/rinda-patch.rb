@@ -1,5 +1,20 @@
 # @api private
 module Rinda
+  class RedundantTupleError < StandardError
+    def initialize(tuple)
+      @tuple = tuple
+    end
+
+    def message
+      "Try to write redundant tuple in tuple space: %s" % @tuple.inspect
+    end
+
+    def inspect
+      "#<Rinda::RedundantTupleError @tuple=%s>" % @tuple.inspect
+    end
+    alias :to_s :inspect
+  end
+
   class Tuple
     def ==(other)
       return false unless other.kind_of?(Tuple)
@@ -97,7 +112,9 @@ module Rinda
       end
 
       def delete(tuple)
-       @bin.delete(tuple)
+        if i = @bin.index(tuple)
+          @bin.delete_at(i)
+        end
       end
     end
 
@@ -116,7 +133,11 @@ module Rinda
       # @return [void]
       def add(tuple)
         if dom = domain(tuple)
-          @bin[dom] = tuple
+          unless @bin[dom]
+            @bin[dom] = tuple
+          else
+            raise RedundantTupleError.new(tuple.value)
+          end
         else
           raise RuntimeError
         end
@@ -217,7 +238,11 @@ module Rinda
       # @return [void]
       def add(tuple)
         prepare_table(domain(tuple))
-        @bin[domain(tuple)][name(tuple)] = tuple
+        unless @bin[domain(tuple)][name(tuple)]
+          @bin[domain(tuple)][name(tuple)] = tuple
+        else
+          raise RedundantTupleError.new(tuple.value)
+        end
       end
 
       def delete(tuple)
@@ -308,7 +333,11 @@ module Rinda
       end
 
       def add(tuple)
-        @bin[key(tuple)] = tuple
+        unless @bin[key(tuple)]
+          @bin[key(tuple)] = tuple
+        else
+          raise RedundantErrorTuple.new(tuple)
+        end
       end
 
       def delete(tuple)
@@ -571,17 +600,24 @@ module Rinda
     def real_write(tuple, sec=nil)
       entry = create_entry(tuple, sec)
       if entry.expired?
+        # why only read_waiter???
         @mutex.synchronize{@read_waiter.find_all_template(entry)}.each do |template|
           template.read(tuple)
         end
         notify_event('write', entry.value)
         notify_event('delete', entry.value)
       else
-        @mutex.synchronize {@bag.push(entry)}
+        # push to bag
+        @mutex.synchronize do
+          @bag.push(entry)
+        end
+        # start keeper
         start_keeper if entry.expires
         # send tuple to all matched waiters in read waiter list
-        @mutex.synchronize{@read_waiter.find_all_template(entry)}.each do |template|
-          template.read(tuple)
+        @mutex.synchronize do
+          @read_waiter.find_all_template(entry).each do |template|
+            template.read(tuple)
+          end
         end
         # send tuple to one of matched waiters in take waiter list
         @mutex.synchronize do

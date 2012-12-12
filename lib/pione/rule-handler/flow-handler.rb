@@ -170,19 +170,25 @@ module Pione
           )
 
           # check if same task exists
-          if need_task?(task)
-            # copy input data from the handler domain to task domain
-            copy_data_into_domain(inputs, task_domain)
+          begin
+            if need_task?(task)
+              # copy input data from the handler domain to task domain
+              copy_data_into_domain(inputs, task_domain)
 
-            # write the task
-            write(task)
+              # write the task
+              write(task)
 
-            msg = "distributed task %s on %s" % [task.digest, handler_digest]
-            user_message(msg, 1)
-          else
-            show "cancel task %s on %s" % [task.digest, handler_digest]
-            canceled << task_domain
+              msg = "distributed task %s on %s" % [task.digest, handler_digest]
+              user_message(msg, 1)
+
+              next
+            end
+          rescue Rinda::RedundantTupleError
+            # ignore
           end
+
+          show "cancel task %s on %s" % [task.digest, handler_digest]
+          canceled << task_domain
         end
 
         # wait to finish threads
@@ -225,7 +231,7 @@ module Pione
       # @return [Boolean]
       #   true if the task exists in the tuple space already
       def exist_task?(task)
-        read(task, 0)
+        read0(task)
         return true
       rescue Rinda::RequestExpiredError
         return false
@@ -237,7 +243,7 @@ module Pione
       # @return [Boolean]
       #   true if any task worker is working on the task
       def working?(task)
-        read(Tuple[:working].new(domain: task.domain), 0)
+        read0(Tuple[:working].new(domain: task.domain))
         return true
       rescue Rinda::RequestExpiredError
         return false
@@ -315,7 +321,11 @@ module Pione
         src_data.flatten.compact.map do |d|
           new_data = d.clone
           new_data.domain = dest_domain
-          write(new_data)
+          begin
+            write(new_data)
+          rescue Rinda::RedundantTupleError
+            # ignore
+          end
           new_data
         end
       end

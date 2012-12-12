@@ -180,20 +180,18 @@ module Pione
         end
 
         state_transition_table = self.class.state_transition_table
-
         begin
           next_state = get_next_state(state_transition_table[current_state])
           set_current_state(next_state)
           p next_state if @show_agent_status
-          @__result__ = call_transition_method(next_state, *@__result__)
+          @__result__ = call_transition_method(current_state, *@__result__)
         rescue Aborting
           raise
         rescue Exception => e
           if error_state = exception_handler(e)
             # known exception : go error state
-            next_state = get_next_state(error_state)
-            set_current_state(next_state)
-            @__result__ = call_transition_method(next_state, e)
+            set_next_state(error_state)
+            @__result__ = [e]
           else
             # unknown exception : raise it to owner thread
             if @__owner_thread__.alive?
@@ -275,13 +273,23 @@ module Pione
         end
       end
 
+      def set_next_state(state)
+        @__next_state__ = state
+      end
+
       def get_next_state(state)
-        next_state = state.kind_of?(Proc) ? state.call(self, @__result__) : state
-        unless next_state
-          msg = "unknown state transition: #{current_state} -> #{state} at #{self}"
-          raise ScriptError.new(msg)
+        if @__next_state__
+          next_state = @__next_state__
+          @__next_state__ = nil
+          return next_state
+        else
+          next_state = state.kind_of?(Proc) ? state.call(self, @__result__) : state
+          unless next_state
+            msg = "unknown state transition: #{current_state} -> #{state} at #{self}"
+            raise ScriptError.new(msg)
+          end
+          return next_state
         end
-        return next_state
       end
 
       # Abort the agent.

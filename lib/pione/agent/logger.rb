@@ -32,10 +32,11 @@ module Pione
 
       # Transits to the state +take_log+.
       def transit_to_take
-        timeout(1) do
+        timeout(2) do
           @logs << take(Tuple[:log].any)
         end
       rescue TimeoutError
+        # ignore
       end
 
       # Transits to the state +store+.

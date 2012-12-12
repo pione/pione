@@ -14,6 +14,9 @@ module Pione
         end
       end
 
+      class Restart < StandardError
+      end
+
       @mutex = Mutex.new
 
       # Start a task worker agent on a different process.
@@ -60,6 +63,8 @@ module Pione
       define_state_transition :task_finishing => lambda {|agent, result|
         agent.once ? :terminated : :task_waiting
       }
+
+      define_exception_handler Restart => :task_waiting
 
       attr_reader :task
       attr_reader :rule
@@ -109,8 +114,12 @@ module Pione
         @rule = nil
         task = take(Tuple[:task].new(features: @features))
         @task = task
-        write(Tuple[:working].new(task.domain, task.digest))
-        write(Tuple[:foreground].new(task.domain, task.digest))
+        begin
+          write(Tuple[:working].new(task.domain, task.digest))
+          write(Tuple[:foreground].new(task.domain, task.digest))
+        rescue Rinda::RedundantTupleError
+          raise Restart.new
+        end
         return task
       end
 
@@ -217,7 +226,13 @@ module Pione
       #   result data tuples
       # @return [Array<Task,RuleHandler>]
       def transit_to_data_outputing(task, handler, result)
-        result.flatten.each {|output| write(output)}
+        result.flatten.each do |output|
+          begin
+            write(output)
+          rescue Rinda::RedundantTupleError
+            # ignore
+          end
+        end
         return task, handler
       end
 
