@@ -209,7 +209,7 @@ module Pione
         else
           # length check
           unless data.size == format.size - 1
-            raise FormatError.new(data, format.identifier)
+            raise FormatError.new(data, format.first)
           end
           # type check
           data.each_with_index do |key, i|
