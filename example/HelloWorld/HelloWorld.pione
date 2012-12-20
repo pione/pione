@@ -1,0 +1,5 @@
+Rule Main
+  output 'message.txt'
+Action
+  echo "Hello, world!" > message.txt
+End
