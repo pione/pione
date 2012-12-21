@@ -1,0 +1,64 @@
+Rule Main
+  output 'result.txt'
+  param $NUM := 10
+Flow
+  rule LucasNumber.params({NUM: $NUM})
+  rule Result
+End
+
+Rule LucasNumber
+  output 'LucasNumber{$NUM}.txt'
+  param $NUM
+Flow
+  case $NUM
+  when 0
+    rule LucasNumber0
+  when 1
+    rule LucasNumber1
+  else
+    if $NUM > 0
+      $NUM1 := $NUM - 1
+      $NUM2 := $NUM - 2
+      $OP := "+"
+    else
+      $NUM1 := $NUM + 1
+      $NUM2 := $NUM + 2
+      $OP := "-"
+    end
+    rule LucasNumber.params({NUM: $NUM1})
+    rule LucasNumber.params({NUM: $NUM2})
+    rule Calc.params({NUM: $NUM, NUM1: $NUM1, NUM2: $NUM2, OP: $OP})
+  end
+End
+
+Rule LucasNumber0
+  output 'LucasNumber0.txt'
+Action
+  echo 2 > LucasNumber0.txt
+End
+
+Rule LucasNumber1
+  output 'LucasNumber1.txt'
+Action
+  echo 1 > LucasNumber1.txt
+End
+
+Rule Calc
+  input 'LucasNumber{$NUM1}.txt'
+  input 'LucasNumber{$NUM2}.txt'
+  output 'LucasNumber{$NUM}.txt'
+  param $NUM
+  param $NUM1
+  param $NUM2
+  param $OP
+Action
+  echo "`cat {$I[2]}` {$OP} `cat {$I[1]}`" | bc > {$O[1]}
+End
+
+Rule Result
+  input 'LucasNumber{$NUM}.txt'
+  output 'result.txt'
+  param $NUM
+Action
+  cat {$I[1]} > {$O[1]}
+End
