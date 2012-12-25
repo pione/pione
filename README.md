@@ -12,13 +12,22 @@ Currently PIONE is beta version under heavy development.
 * task distribution according to RINDA
 * data distribution with network services like Dropbox
 
+## System Requirements
+
+* Ruby 1.9.3 with bundler
+* Linux or Unix-like OSs
+
 ## Installation
 
-Clone the repository from https://github.com/pione/pione.git.
+1. Clone the repository from https://github.com/pione/pione.git.
 
    $ git clone https://github.com/pione/pione.git
 
-And you add paths to pione like the flowing:
+2. Get some libraries.
+
+   $ bundle install --path vender/bundle
+
+3. Add paths to pione like the flowing:
 
    $ cd ${PIONE_REP}
    $ export PATH=$PWD/bin:$PATH
@@ -26,11 +35,11 @@ And you add paths to pione like the flowing:
 
 ## Usage
 
-### Client
+### Process PIONE document on client mode
 
    $ pione-client example/Fib/Fib.pione
 
-### Stand alone mode
+### Stand alone mode(client mode without brokers)
 
    $ pione-client example/Fib/Fib.pione --stand-alone
 
