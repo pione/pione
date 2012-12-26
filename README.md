@@ -21,41 +21,41 @@ Currently PIONE is beta version under heavy development.
 
 1. Clone the repository from https://github.com/pione/pione.git.
 
-   $ git clone https://github.com/pione/pione.git
+    $ git clone https://github.com/pione/pione.git
 
 2. Get some libraries.
 
-   $ bundle install --path vender/bundle
+    $ bundle install --path vender/bundle
 
 3. Add paths to pione like the flowing:
 
-   $ cd ${PIONE_REP}
-   $ export PATH=$PWD/bin:$PATH
-   $ export RUBYLIB=$PWD/lib
+    $ cd ${PIONE_REP}
+    $ export PATH=$PWD/bin:$PATH
+    $ export RUBYLIB=$PWD/lib
 
 ## Usage
 
 ### Process PIONE document on client mode
 
-   $ pione-client example/Fib/Fib.pione
+    $ pione-client example/Fib/Fib.pione
 
 ### Stand alone mode(client mode without brokers)
 
-   $ pione-client example/Fib/Fib.pione --stand-alone
+    $ pione-client example/Fib/Fib.pione --stand-alone
 
 ### Distribution mode
 
 1. Start brokers on machines.
 
-   $ pione-broker
+    $ pione-broker
 
 2. Request process manager to process the rule document.
 
-   $ pione-client example/Fib/Fib.pione
+    $ pione-client example/Fib/Fib.pione
 
 ### Help
 
-   $ pione-client --help
+    $ pione-client --help
 
 ## Contributing
 
