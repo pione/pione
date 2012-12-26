@@ -9,8 +9,8 @@ Currently PIONE is beta version under heavy development.
 
 * multi-agent rule system
 * forward chain reasoning with multipule domains model as extension of production rule system
-* task distribution according to RINDA
-* data distribution with network services like Dropbox
+* task distribution according to LINDA
+* data distribution with network file services like Dropbox
 
 ## System Requirements
 
