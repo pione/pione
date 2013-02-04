@@ -63,6 +63,10 @@ module Pione::Model
       rec.call_pione_method("match")
     end
 
+    define_pione_method("[]", [TypeInteger], TypeAny) do |rec, i|
+      rec.match[i.value-1]
+    end
+
     define_pione_method("as_string", [], TypeString) do |rec|
       rec.name
     end
