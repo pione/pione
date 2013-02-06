@@ -267,16 +267,21 @@ module Pione
       # Shifts output resource locations.
       # @return [void]
       def shift_output_resources
+        # cheker for double shift
+        shifted = []
+        # shift output resources
         @outputs.flatten.compact.each do |output|
           old_uri = URI.parse(output.uri)
           new_uri = URI.parse(make_output_resource_uri(output.name).to_s)
-          unless new_uri.path == old_uri.path
+          unless new_uri.path == old_uri.path or shifted.include?(old_uri.path)
             # shift resource
             Resource[new_uri].shift_from(Resource[old_uri])
             # shift cache if the old is cached in this machine
             FileCache.shift(old_uri, new_uri)
             # write shift tuple
             write(Tuple[:shift].new(old_uri.to_s, new_uri.to_s))
+            # push moved path
+            shifted << old_uri.path
           end
         end
       end
