@@ -109,5 +109,5 @@ desc 'clean'
 task 'clean' do
   sh "rm -rf input/*"
   sh "rm -rf output/*"
-  sh "rm log.txt"
+  sh "rm -rf log.txt"
 end
