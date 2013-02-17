@@ -10,7 +10,7 @@ gem "highline", "~> 1.6.15"
 gem "dropbox-sdk"
 
 group :development do
-  gem "bacon", "~> 1.1.0"
+  gem "bacon", "~> 1.2.0"
   gem "rake"
 end
 
