@@ -10,3 +10,4 @@ vendor/bundle
 .bundle
 pkg
 \#*
+nohup.out
