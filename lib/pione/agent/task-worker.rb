@@ -24,7 +24,7 @@ module Pione
       #   caller front server
       # @return [Thread]
       #   worker monitor thread
-      def self.spawn(front, connection_id)
+      def self.spawn(front, connection_id, features=nil)
         @mutex.synchronize do
           args = [
             "pione-task-worker",
@@ -33,6 +33,7 @@ module Pione
           ]
           args << "--debug" if Pione.debug_mode?
           args << "--show-communication" if Global.show_communication
+          args << "--features" << features if features
           pid = Process.spawn(*args)
           thread = Process.detach(pid)
           # connection check

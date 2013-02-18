@@ -20,6 +20,20 @@ TXT
         @connection_id = id
       end
 
+      # --feature
+      define_option('--feature="FEATURES"', 'set features') do |features|
+        begin
+          params = DocumentTransformer.new.apply(
+            DocumentParser.new.feature_expr.parse(features)
+          )
+          @features = features
+        rescue Parslet::ParseFailed => e
+          puts "invalid parameters: " + str
+          Util::ErrorReport.print(e)
+          abort
+        end
+      end
+
       attr_reader :connection_id
       attr_reader :agent
       attr_reader :tuple_space_server
@@ -50,7 +64,8 @@ TXT
         super
 
         @tuple_space_server = @parent_front.get_tuple_space_server(@connection_id)
-        @agent = Pione::Agent[:task_worker].new(@tuple_space_server)
+        @features = Model::Feature::EmptyFeature.new unless @features
+        @agent = Pione::Agent[:task_worker].new(@tuple_space_server, @features)
         @command_listener = Pione::Agent[:command_listener].new(@tuple_space_server, self)
 
         # connect caller front
