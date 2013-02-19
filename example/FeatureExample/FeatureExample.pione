@@ -1,0 +1,7 @@
+# This task can be done by the worker that has feature "^X".
+Rule Main
+  output 'message.txt'
+  feature +X
+Action
+  echo "I can take the task." > {$O[1]}
+End
