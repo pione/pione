@@ -244,7 +244,7 @@ module Pione
 
       def start_workers
         @task_worker.times do
-          Agent[:task_worker].spawn(Global.front, Util.generate_uuid)
+          Agent[:task_worker].spawn(Global.front, Util.generate_uuid, @features)
         end
       end
 

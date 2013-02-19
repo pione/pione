@@ -21,9 +21,9 @@ TXT
       end
 
       # --feature
-      define_option('--feature="FEATURES"', 'set features') do |features|
+      define_option('--features="FEATURES"', 'set features') do |features|
         begin
-          params = DocumentTransformer.new.apply(
+          features = DocumentTransformer.new.apply(
             DocumentParser.new.feature_expr.parse(features)
           )
           @features = features
