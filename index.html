@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="PIONE Project : PIONE(Process-rule for Input/Output Negotiation Enviromenment) is a rule-based workflow engine." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>PIONE Project</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/pione/pione">View on GitHub</a>
+
+          <h1 id="project_title">PIONE Project</h1>
+          <h2 id="project_tagline">PIONE(Process-rule for Input/Output Negotiation Enviromenment) is a rule-based workflow engine.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/pione/pione/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/pione/pione/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>PIONE</h1>
+
+<p>PIONE(Process-rule for Input/Output Negotiation Enviromenment) is a rule-based
+workflow engine. You can write complex process as simple rules and run it with
+distributing many machines easily.</p>
+
+<p>Currently PIONE is beta version under heavy development.</p>
+
+<h2>Features</h2>
+
+<ul>
+<li>multi-agent rule system</li>
+<li>forward chain reasoning with multipule domains model as extension of production rule system</li>
+<li>task distribution according to LINDA</li>
+<li>data distribution with network file services like Dropbox</li>
+</ul><h2>System Requirements</h2>
+
+<ul>
+<li>Ruby 1.9.3 with bundler</li>
+<li>Linux or Unix-like OSs</li>
+</ul><h2>Installation</h2>
+
+<h3>from gem</h3>
+
+<pre><code>$ gem install pione
+</code></pre>
+
+<h3>from github</h3>
+
+<p>First, clone the repository from <a href="https://github.com/pione/pione.git">https://github.com/pione/pione.git</a>.</p>
+
+<pre><code>$ git clone https://github.com/pione/pione.git
+</code></pre>
+
+<p>And get some libraries.</p>
+
+<pre><code>$ bundle install --path vender/bundle
+</code></pre>
+
+<p>Add paths to pione like the flowing:</p>
+
+<pre><code>$ cd ${PIONE_REP}
+$ export PATH=$PWD/bin:$PATH
+$ export RUBYLIB=$PWD/lib
+</code></pre>
+
+<h2>Usage</h2>
+
+<h3>Process PIONE document on client mode</h3>
+
+<pre><code>$ pione-client example/Fib/Fib.pione
+</code></pre>
+
+<h3>Stand alone mode(client mode without brokers)</h3>
+
+<pre><code>$ pione-client example/Fib/Fib.pione --stand-alone
+</code></pre>
+
+<h3>Distribution mode</h3>
+
+<p>Start brokers on machines.</p>
+
+<pre><code>$ pione-broker
+</code></pre>
+
+<p>Request process manager to process the rule document.</p>
+
+<pre><code>$ pione-client example/Fib/Fib.pione
+</code></pre>
+
+<h3>Help</h3>
+
+<pre><code>$ pione-client --help
+</code></pre>
+
+<h2>Contributing</h2>
+
+<ol>
+<li>Fork it</li>
+<li>Create your feature branch (<code>git checkout -b my-new-feature</code>)</li>
+<li>Commit your changes (<code>git commit -am 'Add some feature'</code>)</li>
+<li>Push to the branch (<code>git push origin my-new-feature</code>)</li>
+<li>Create new Pull Request</li>
+</ol><h2>Licence</h2>
+
+<p>PIONE is free software distributed under MIT licence. Except the above, the
+following files are distributed under same as Ruby's(Ruby license or BSD)
+because these are patches including original codes:</p>
+
+<ul>
+<li>lib/pione/patch/drb-patch.rb</li>
+<li>lib/pione/patch/monitor-patch.rb</li>
+<li>lib/pione/patch/rinda-patch.rb</li>
+</ul><h2>Links</h2>
+
+<ul>
+<li>
+<a href="http://pione.github.com/">PIONE project homepage</a>
+
+<ul>
+<li><a href="https://github.com/pione/pione">repository on github</a></li>
+</ul>
+</li>
+<li>
+<a href="http://www.yasunaga-lab.bio.kyutech.ac.jp/">Yasunaga Laboratory</a>
+
+<ul>
+<li>
+<a href="http://www.yasunaga-lab.bio.kyutech.ac.jp/Eos/">EOS</a>(<a href="http://www.yasunaga-lab.bio.kyutech.ac.jp/EosJ/">ja</a>)</li>
+</ul>
+</li>
+<li>
+<a href="http://www.jst.go.jp/EN/index.html">Japan Science and Technology Agency</a>(<a href="http://www.jst.go.jp/">ja</a>)
+
+<ul>
+<li>
+<a href="http://www.jst.go.jp/sentan/en/">Develoment of Systems and Technology and for Advanced Measurement and Analysis</a>(<a href="http://www.jst.go.jp/sentan/">ja</a>)</li>
+</ul>
+</li>
+<li>
+<a href="http://www.nau.co.jp/index_en.html">NaU Data Institute Inc.</a>(<a href="http://www.nau.co.jp/">ja</a>)</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">PIONE Project maintained by <a href="https://github.com/pione">pione</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
