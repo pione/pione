@@ -49,6 +49,7 @@ module Pione
         end
 
         # Returns all item names.
+        #
         # @return [Symbol]
         #   all item names
         def all_names
@@ -58,17 +59,18 @@ module Pione
         # Initializes global values.
         # @return [void]
         def init
-          @__config__.each do |name, config_name|
-            if val = Global.config[config_name]
-              instance_variable_set("@%s" % name, val)
-            end
-          end
-
           @__initializer__.each do |name, action|
             unless instance_variable_get("@%s" % name)
               instance_variable_set("@%s" % name, action.call)
             end
           end
+        end
+
+        # Return the table of all configurations.
+        #
+        # @return [Hash<Symbol, Object>]
+        def all
+          Hash[all_names.map {|name| [name, Global.send(name)]}]
         end
       end
 
@@ -87,8 +89,6 @@ module Pione
       #
       # system
       #
-
-      define_item(:config, true, Config.new("~/.pione/config.yml"))
 
       # .pione dir
       define_item(:dot_pione_dir, true) do
