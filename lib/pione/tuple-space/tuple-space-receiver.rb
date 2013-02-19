@@ -95,7 +95,7 @@ module Pione
         @socket.close
         @socket = open_socket
         if Global.show_presence_notifier
-          puts "tuple space receiver disconnected"
+          puts "tuple space receiver disconnected: %s" % e
         end
       rescue Exception
         # ignore
