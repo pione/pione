@@ -1,7 +1,8 @@
 # PIONE
 
-PIONE is Process-rule for Input/Output Negotiation Enviromenment. You can write
-complex process as simple rules and run it with distributing many machines easily.
+PIONE(Process-rule for Input/Output Negotiation Enviromenment) is a rule-based
+workflow engine. You can write complex process as simple rules and run it with
+distributing many machines easily.
 
 Currently PIONE is beta version under heavy development.
 
@@ -19,15 +20,21 @@ Currently PIONE is beta version under heavy development.
 
 ## Installation
 
-1. Clone the repository from https://github.com/pione/pione.git.
+### from gem
+
+    $ gem install pione
+
+### from github
+
+First, clone the repository from https://github.com/pione/pione.git.
 
     $ git clone https://github.com/pione/pione.git
 
-2. Get some libraries.
+And get some libraries.
 
     $ bundle install --path vender/bundle
 
-3. Add paths to pione like the flowing:
+Add paths to pione like the flowing:
 
     $ cd ${PIONE_REP}
     $ export PATH=$PWD/bin:$PATH
@@ -45,11 +52,11 @@ Currently PIONE is beta version under heavy development.
 
 ### Distribution mode
 
-1. Start brokers on machines.
+Start brokers on machines.
 
     $ pione-broker
 
-2. Request process manager to process the rule document.
+Request process manager to process the rule document.
 
     $ pione-client example/Fib/Fib.pione
 
@@ -65,10 +72,6 @@ Currently PIONE is beta version under heavy development.
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
-## Contributors
-
-* Keita Yamaguchi<keita.yamaguchi@gmail.com>
-
 ## Licence
 
 PIONE is free software distributed under MIT licence. Except the above, the
@@ -78,4 +81,14 @@ because these are patches including original codes:
 * lib/pione/patch/drb-patch.rb
 * lib/pione/patch/monitor-patch.rb
 * lib/pione/patch/rinda-patch.rb
+
+## Links
+
+* [PIONE project homepage](http://pione.github.com/)
+    * [repository on github](https://github.com/pione/pione)
+* [Yasunaga Laboratory](http://www.yasunaga-lab.bio.kyutech.ac.jp/)
+    * [EOS](http://www.yasunaga-lab.bio.kyutech.ac.jp/Eos/)([ja](http://www.yasunaga-lab.bio.kyutech.ac.jp/EosJ/))
+* [Japan Science and Technology Agency](http://www.jst.go.jp/EN/index.html)([ja](http://www.jst.go.jp/))
+     * [Develoment of Systems and Technology and for Advanced Measurement and Analysis](http://www.jst.go.jp/sentan/en/)([ja](http://www.jst.go.jp/sentan/))
+* [NaU Data Institute Inc.](http://www.nau.co.jp/index_en.html)([ja](http://www.nau.co.jp/))
 
