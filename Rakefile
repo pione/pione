@@ -1,10 +1,15 @@
-require "bundler/setup"
+require "bundler/gem_tasks"
 
-$stand_alone = "bin/pione-stand-alone"
+$stand_alone = "bin/pione-client --stand-aline"
 
 desc 'generate HTML API documentation'
 task :html do
   sh "yard doc -o html --hide-void-return --no-api --private"
+end
+
+desc 'Show undocumented function list'
+task 'html:undoc' do
+  sh 'yard stats --list-undoc --no-api --private'
 end
 
 desc 'count characters in input direcotry'
