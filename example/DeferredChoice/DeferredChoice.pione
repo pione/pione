@@ -1,0 +1,43 @@
+Rule Main
+  output 'result.txt'
+Flow
+  rule UserSelect
+  rule A
+  rule B
+  rule C
+End
+
+Rule UserSelect
+  output 'a.txt:b.txt:c.txt'
+  feature +Interactive
+Action
+  zenity --list --title "select action" --column rule "rule A" "rule B" "rule C" > rule.txt
+  RULE=`cat rule.txt`
+  case "$RULE" in
+    "rule A") touch a.txt ;;
+    "rule B") touch b.txt ;;
+    "rule C") touch c.txt ;;
+  esac
+End
+
+Rule A
+  input 'a.txt'
+  output 'result.txt'
+Action
+  echo 'You selected rule A' > {$O[1]}
+End
+
+Rule B
+  input 'b.txt'
+  output 'result.txt'
+Action
+  echo 'You selected rule B' > {$O[1]}
+End
+
+Rule C
+  input 'c.txt'
+  output 'result.txt'
+Action
+  echo 'You selected rule C' > {$O[1]}
+End
+
