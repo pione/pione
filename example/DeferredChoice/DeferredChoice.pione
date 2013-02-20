@@ -1,7 +1,8 @@
 Rule Main
   output 'result.txt'
+  param $DIALOG := "zenity"
 Flow
-  rule UserSelect
+  rule UserSelect.params({DIALOG: $DIALOG})
   rule A
   rule B
   rule C
@@ -9,9 +10,15 @@ End
 
 Rule UserSelect
   output 'a.txt:b.txt:c.txt'
+  param $DIALOG
   feature +Interactive
 Action
-  zenity --list --title "select action" --column rule "rule A" "rule B" "rule C" > rule.txt
+  if [ "{$DIALOG}" = "zenity" ]
+  then
+    zenity --list --title "select action" --column rule "rule A" "rule B" "rule C" > rule.txt
+  else
+    xmessage -print -buttons "rule A,rule B,rule C" "select action" > rule.txt
+  fi
   RULE=`cat rule.txt`
   case "$RULE" in
     "rule A") touch a.txt ;;
