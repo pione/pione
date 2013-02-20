@@ -91,6 +91,7 @@ module Pione
         @relay = nil
         @filename = "-"
         @without_tuple_space_provider = false
+        @features = "^Interactive"
       end
 
       private
