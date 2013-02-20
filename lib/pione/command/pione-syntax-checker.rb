@@ -16,6 +16,11 @@ TXT
         @transform = true
       end
 
+      define_option('-f', '--file=PATH', 'check syntax of the document') do |path|
+        @document = path
+        @readline_mode = false
+      end
+
       def initialize
         @readline_mode = true
       end
@@ -28,42 +33,50 @@ TXT
 
       def start
         if @readline_mode
-          require 'readline'
-          restore_history
-
-          # start loop
-          while buf = Readline.readline(Terminal.red("> "), true)
-            if /[^\s]/.match(buf)
-              # don't record if previous line is the same
-              if Readline::HISTORY.size > 1 && Readline::HISTORY[-2] == buf
-                Readline::HISTORY.pop
-              end
-              # print parsing result
-              print_result(buf)
-            else
-              # don't record if it is an empty line
-              Readline::HISTORY.pop
-            end
-          end
+          start_readline_mode
         else
-          # print parsing result
-          print_result(@expr)
+          if @document
+            print_result(Pathname.new(@document).read)
+          else
+            # print parsing result
+            print_result(@expr)
+          end
         end
       end
 
       private
 
+      def start_readline_mode
+        require 'readline'
+        restore_history
+
+        # start loop
+        while buf = Readline.readline(Terminal.red("> "), true)
+          if /[^\s]/.match(buf)
+            # don't record if previous line is the same
+            if Readline::HISTORY.size > 1 && Readline::HISTORY[-2] == buf
+              Readline::HISTORY.pop
+            end
+            # print parsing result
+            print_result(buf)
+          else
+            # don't record if it is an empty line
+            Readline::HISTORY.pop
+          end
+        end
+      end
+
       # Prints parsing result of the string
       def print_result(str)
         begin
           puts Terminal.green("syntax:")
-          stree = DocumentParser.new.parse(str).first
+          stree = DocumentParser.new.parse(str)
           pp stree
           if @transform
             puts Terminal.green("model:")
             pp DocumentTransformer.new.apply(stree)
           end
-        rescue Pione::Parser::ParserError, Parslet::UnconsumedInput, Parslet::ParseFailed => e
+        rescue Pione::Parser::ParserError, Parslet::ParseFailed => e
           msg = "Pione syntax error: %s (%s)" % [e.message, e.class.name]
           @readline_mode ? puts(msg) : abort(msg)
         rescue Pione::Model::PioneModelTypeError,
