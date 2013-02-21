@@ -1,0 +1,127 @@
+#
+# Eos for 3D reconstrucion from 2D rois using 3D initail reference
+#
+
+#
+# Variables
+#
+
+# Target structure name
+$TARGET := "all"
+
+#
+# Search Area for 3D
+#
+
+# Rot1
+$ROT1MIN := 0
+$ROT1MAX := 359
+$ROT1D   := 30
+$nRot1   := 12
+
+# Rot2
+$ROT2MIN := 0
+$ROT2MAX := 359
+$ROT2D   := 30
+$nRot2   := 12
+
+# Rot3
+$ROT3MIN := 0
+$ROT3MAX := 0
+$ROT3D   := 30
+$nRot3   := 1
+
+# For 2D
+$STEP   := 12
+$ROTMIN := 0
+$ROTMAX := 359
+$nROT   := 360 / $STEP
+
+# Pad size for 2D
+$PAD_W := 64
+$PAD_H := 64
+
+#
+# Rules
+#
+
+Rule Main
+  input '*.roi'.all
+  input '{$TARGET}.ref3d'
+  input '{$TARGET}.ref2d'
+  output '{$TARGET}.3d'
+  output 'checked'
+Flow
+  rule Create3dinfo
+  rule Create3dlst
+  rule Create3d
+  rule ShowResult
+End
+
+Rule Create3dinfo
+  input '*.roi'
+  input '{$TARGET}.ref2d'
+  output '{$*}.corinfo'
+  output '{$*}.fit'
+  output '{$*}.3dinfo'
+Flow
+  rule ConvertRoiToPad
+  rule ConvertPadToCorinfo
+  rule ConvertCorinfoTo3dinfo
+End
+
+# .roi.pad
+Rule ConvertRoiToPad
+  input '*.roi'
+  output '{$*}.pad'
+Action
+  mrcImageWindowing -i {$*}.roi -o {$*}.mask -W 0.1 0.0 0.05 0.0 -m 18
+  mrcImagePad -i {$*}.mask -o {$*}.padtmp -W {$PAD_W} -H {$PAD_H} -m 3
+  mrcImageWindowing -i {$*}.padtmp -o {$*}.pad -W 0.1 0.0 0.1 0.0 -m 2
+End
+
+# .pad.corinfo
+Rule ConvertPadToCorinfo
+  input '*.pad'
+  input '{$TARGET}.ref2d'
+  output '{$*}.corinfo'
+  output '{$*}.fit'
+Action
+  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n {$nROT} -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
+End
+
+# .corinfo.3dinfo
+Rule ConvertCorinfoTo3dinfo
+  input '*.corinfo'
+  output '{$*}.3dinfo'
+Action
+  awk '/Cor/ { print $7,$16,$2,$3,$4,$5,$9,$11,$12}' {$*}.corinfo | sort -r | sed -e s/.pad/.fit/ > {$*}.3dinfolst
+  head -n 1 {$*}.3dinfolst | awk '{print $2,$3,$4,$5,$6,$1}' > {$*}.3dinfo
+End
+
+# .3dinfo.3dlst
+Rule Create3dlst
+  input '*.3dinfo'.all
+  output '{$TARGET}.3dlst'
+Action
+  cat {$I[1].join(" ")} | sort > {$TARGET}.3dlst
+End
+
+# .3dlst.3d
+Rule Create3d
+  input '{$TARGET}.3dlst'
+  input '*.fit'.all
+  output '{$TARGET}.3d'
+Action
+  mrc2Dto3D -I {$TARGET}.3dlst -o {$TARGET}.3d -InterpolationMode 2 -Double -DoubleCounter {$TARGET}.3dcounter -CounterThreshold 0.5 -m 1 -WeightMode 2
+End
+
+# show result by Display2
+Rule ShowResult
+  input '{$TARGET}.3d'
+  output 'checked'
+Action
+  Display2 -i '{$TARGET}.3d'
+  echo "I checked the result." > checked
+End
+
