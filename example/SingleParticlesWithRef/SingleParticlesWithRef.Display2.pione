@@ -120,6 +120,7 @@ End
 Rule ShowResult
   input '{$TARGET}.3d'
   output 'checked'
+  feature +Interactive
 Action
   Display2 -i '{$TARGET}.3d'
   echo "I checked the result." > checked
