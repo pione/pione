@@ -15,25 +15,25 @@ expr_operator:
     - "/"
 expr_operator_application:
   valid:
-    - true == true
-    - true != false
-    - 10 >= 1
-    - 1 <= 10
-    - 10 > 1
-    - 1 < 10
-    - true && true
-    - true || false
-    - 1 + 1
-    - 1 - 1
-    - 1 * 1
-    - 1 % 1
-    - 1 / 1
+    - "true == true"
+    - "true != false"
+    - "10 >= 1"
+    - "1 <= 10"
+    - "10 > 1"
+    - "1 < 10"
+    - "true && true"
+    - "true || false"
+    - "1 + 1"
+    - "1 - 1"
+    - "1 * 1"
+    - "1 % 1"
+    - "1 / 1"
 message:
   valid:
-    - .abc(1)
-    - .sync
-    - .abc(1, "s", '*.txt')
-    - .abc(1.0.abc(3.def))
+    - ".abc(1)"
+    - ".sync"
+    - ".abc(1, \"s\", '*.txt')"
+    - ".abc(1.0.abc(3.def))"
 rule_expr:
   valid:
     - "&package:rule_name"
@@ -63,20 +63,67 @@ index:
     - "[1,1]"
     - "[1,2,3]"
     - "[1, 2, 3]"
+    - "[\"a\"]"
+    - "[\"a\", \"b\"]"
+    - "[\"a\", \"b\", \"c\"]"
+    - "[1,\n2]"
   invalid:
     - "[]"
-    - "[1,\n2]"
 expr:
   valid:
     - "1"
-    - (1)
+    - "(1)"
     - '"a" == "a"'
     - '"a" != "b"'
-    - true && true
-    - true || false
-    - ($Var1 == "a") && ($Var2 == "b")
-    - ($Var1 == "a") || $Var2
-    - ($Var1 == ($Var2 == "a"))
-    - true == true == true
+    - "true && true"
+    - "true || false"
+    - '($Var1 == "a") && ($Var2 == "b")'
+    - '($Var1 == "a") || $Var2'
+    - '($Var1 == ($Var2 == "a"))'
+    - "true == true == true"
+    # message
+    - 'abc.a'
+    - 'abc.a.b'
+    - 'abc.a.b.c'
+    - 'abc.a("a").b("b").c("c")'
+    # index
     - "abc[1]"
+    - "abc[1,2]"
+    - "abc[1,2,3]"
+    - "abc[1][2]"
+    - "abc[1][2][3]"
+    - "abc[\"a\"]"
+    - "abc[\"a\", \"b\"]"
+    - "abc[\"a\", \"b\", \"c\"]"
+    - "abc[\"a\"][\"b\"]"
+    - "abc[\"a\"][\"b\"][\"c\"]"
+    - "abc [1]"
+    - "abc [1] [2]"
     - "1[1]"
+    # parameters
+    - "abc {}"
+    - "abc {A: 1}"
+    - "abc {A: 1, B: 2}"
+    - "abc{A:1}"
+    - "abc {A:1} {B:2}"
+    # reverse order method
+    - "not :: true"
+    - "not::true"
+    - 'author :: "test"'
+    - 'abc("def") :: "test"'
+    - "a :: (b)"
+    - "a :: (b :: c)"
+    - "a :: b :: c"
+    - "a :: b :: c :: d"
+    # complex form
+    - "abc[1].a"
+    - "abc.a[1]"
+    - "abc.a.b[1][2]"
+    - "abc[1].a"
+    - "abc[1].a.b[2]"
+    - "abc[1] {V:1}"
+  invalid:
+    - "(a) :: b"
+    - "(a :: b) :: c"
+    - "a :: (b :: c) :: d"
+

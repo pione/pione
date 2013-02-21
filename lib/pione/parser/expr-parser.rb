@@ -12,6 +12,10 @@ module Pione
       #   +expr+ matches all expressions in PIONE document.
       #   @return [Parslet::Atoms::Entity] +expr+ atom
       #   @example
+      #     "abc"[0]
+      #   @example
+      #     'abc'.as_string
+      #   @example
       #     1 + 1
       #   @example
       #     (1 + 1).next
@@ -24,10 +28,24 @@ module Pione
       rule(:expr) {
         ( expr_operator_application |
           assignment |
-          (expr_element.as(:receiver) >>
-            (index | message).repeat(1).as(:messages)) |
+          expr_prepositional_messages.as(:reverse_messages) >> pad? >> expr.as(:receiver) |
           expr_element
         ).as(:expr)
+      }
+
+
+      # @!attribute [r] expr_prepositional_messages
+      #   +expr_messages+ matches prepositional messages.
+      #   @return [Parslet::Atoms::Entity] +expr_prepositional_messages+ atom
+      rule(:expr_prepositional_messages) {
+        (pad? >> reverse_message).repeat(1)
+      }
+
+      # @!attribute [r] expr_postpositional_messages
+      #   +expr_messages+ matches postpositional messages.
+      #   @return [Parslet::Atoms::Entity] +expr_post_positional_messages+ atom
+      rule(:expr_postpositional_messages) {
+        (pad? >> (index | message | parameters.as(:postpositional_parameters))).repeat(1)
       }
 
       # @!attribute [r] expr_element
@@ -36,19 +54,26 @@ module Pione
       #   @example
       #     true
       #   @example
-      #     "abc"[0]
-      #   @example
-      #     'abc'.as_string
-      #   @example
       #     (1 + 1)
       #   @example
       #     ("abc".index(1, 1))
       rule(:expr_element) {
-        ( (atomic_expr.as(:receiver) >> indexes) |
-          (atomic_expr.as(:receiver) >> messages) |
-          atomic_expr |
-          lparen >> expr >> rparen
-        )
+        expr_basic_element.as(:receiver) >> expr_postpositional_messages.as(:messages) |
+        expr_basic_element
+      }
+
+      # @!attribute [r] expr_element
+      #   +expr_element+ matches simple expressions.
+      #   @return [Parslet::Atoms::Entity] +expr_element+ atom
+      #   @example
+      #     true
+      #   @example
+      #     (1 + 1)
+      #   @example
+      #     ("abc".index(1, 1))
+      rule(:expr_basic_element) {
+        atomic_expr |
+        lparen >> expr >> rparen
       }
 
       # @!attribute [r] atomic_expr
@@ -56,6 +81,8 @@ module Pione
       #   @return [Parslet::Atoms::Entity] +atomic_expr+ atom
       #   @example
       #     true
+      #   @example
+      #     false
       #   @example
       #     0.1
       #   @example
@@ -66,6 +93,8 @@ module Pione
       #     $var
       #   @example
       #     '*.txt'
+      #   @example
+      #     null
       #   @example
       #     {var: 1}
       #   @example
@@ -151,21 +180,12 @@ module Pione
         ).as(:assignment)
       }
 
-      # @!attribute [r] messages
-      #   +messages+ matches message list.
-      #   @return [Parslet::Atoms::Entity] +messages+ atom
-      #   @example
-      #     .params("-w").sync
-      rule(:messages) {
-        message.repeat(1).as(:messages)
-      }
-
       # @!attribute [r] message
       #   +message+ matches message sending.
       #   @return [Parslet::Atoms::Entity] +message+ atom
       #   @example
       #     # message with no arguments
-      #     .to_string
+      #     .as_string
       #   @example
       #     # message with arguments
       #     .params("-w")
@@ -173,6 +193,23 @@ module Pione
         ( dot >>
           identifier.as(:message_name) >>
           message_parameters.maybe
+        ).as(:message)
+      }
+
+      # @!attribute [r] reverse_message
+      #   +message+ matches reverse message sending.
+      #   @return [Parslet::Atoms::Entity] +reverse_message+ atom
+      #   @example
+      #     # message with no arguments
+      #     as_string ::
+      #   @example
+      #     # message with arguments
+      #     params("-w") ::
+      rule(:reverse_message) {
+        ( identifier.as(:message_name) >>
+          message_parameters.maybe >>
+          pad? >>
+          colon >> colon
         ).as(:message)
       }
 
@@ -211,14 +248,9 @@ module Pione
         pad? >> comma >> pad? >> expr
       }
 
-      # @!attribute [r] indexes
-      #   +indexes+ matches object index list.
-      #   @return [Parslet::Atoms::Entity] +indexes+ atom
-      #   @example
-      #     [1][2][3]
-      rule(:indexes) {
-        index.repeat(1).as(:indexes)
-      }
+      #
+      # INDEX
+      #
 
       # @!attribute [r] index
       #   +index+ matches object index.
@@ -227,13 +259,17 @@ module Pione
       #     [1]
       #     [1,1]
       #     [1,2,3]
+      #     ["a"]
+      #     ["a", "b", "c"]
+      #   @example
+      #     [Var: 1]
       rule(:index) {
         ( lsbracket >>
-          space? >>
+          pad? >>
           ( index_arguments.as(:index) |
             syntax_error("it should be index arguments", :expr)) >>
-          space? >>
-          rsbracket
+          pad? >>
+          (rsbracket | syntax_error("it should be index end ']'"))
         )
       }
 
@@ -245,21 +281,19 @@ module Pione
       #     1,1
       #     1,2,3
       rule(:index_arguments) {
-        expr.repeat(1,1) >> space? >> index_arguments_rest.repeat
+        expr.repeat(1,1) >> pad? >> index_arguments_rest.repeat
       }
 
       # @!attribute [r] index_arguments_rest
-      #   +index_arguments_rest+ matches argument tail of object index.
+      #   +index_arguments_rest+ matches tail elements in index expression.
       #   @return [Parslet::Atoms::Entity] +index_arguments_rest+ atom
       #   @example
       #     ,1
       rule(:index_arguments_rest) {
-        space? >>
+        pad? >>
         comma >>
-        space? >>
-        ( expr |
-          syntax_error("it should be expr", :expr)
-        )
+        pad? >>
+        (expr | syntax_error("it should be expr", :expr))
       }
     end
   end

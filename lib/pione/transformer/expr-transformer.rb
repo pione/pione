@@ -20,19 +20,17 @@ module Pione
       # receiver
       rule({ :receiver => simple(:receiver),
              :messages => sequence(:messages) }) {
-        obj = receiver
-        messages.each do |msg|
-          obj = Model::Message.new(msg.name, obj, *msg.parameters)
+        messages.inject(receiver) do |obj, msg|
+          Model::Message.new(msg.name, obj, *msg.parameters)
         end
-        obj
       }
+
+      # receiver with reverse message
       rule({ :receiver => simple(:receiver),
-             :indexes => sequence(:indexes) }) {
-        obj = receiver
-        indexes.each do |msg|
-          obj = Model::Message.new("[]", obj, *msg.parameters)
+             :reverse_messages => sequence(:messages) }) {
+        messages.reverse.inject(receiver) do |obj, msg|
+          Model::Message.new(msg.name, obj, *msg.parameters)
         end
-        obj
       }
 
       # message
@@ -41,13 +39,13 @@ module Pione
       }
       rule(:message =>
            { :message_name => simple(:name),
-             :message_parameters => sequence(:parameters) }) {
-        MessageArgument.new(name, parameters)
+             :message_parameters => nil }) {
+        MessageArgument.new(name)
       }
       rule(:message =>
            { :message_name => simple(:name),
-             :message_parameters => nil }) {
-        MessageArgument.new(name)
+             :message_parameters => sequence(:parameters) }) {
+        MessageArgument.new(name, parameters)
       }
       rule(:message =>
            { :message_name => simple(:name),
@@ -83,6 +81,10 @@ module Pione
 
       rule(:index => sequence(:args)) {
         MessageArgument.new("[]", args)
+      }
+
+      rule(:postpositional_parameters => simple(:parameters)) {
+        MessageArgument.new("params", parameters)
       }
     end
   end

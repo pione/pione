@@ -30,9 +30,9 @@ Flow
   else
     $P1 := $NUM - 2
     $P2 := $NUM - 1
-    rule Fib.params({NUM: $P1})
-    rule Fib.params({NUM: $P2})
-    rule Calc.params({NUM: $NUM, P1: $P1, P2: $P2})
+    rule Fib {NUM: $P1}
+    rule Fib {NUM: $P2}
+    rule Calc {NUM: $NUM, P1: $P1, P2: $P2}
   end
 End
 
