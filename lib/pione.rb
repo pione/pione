@@ -29,6 +29,7 @@ require 'ostruct'
 require 'net/ftp'
 require 'highline'
 require 'dropbox_sdk'
+require 'hamster'
 
 #
 # load pione
@@ -133,7 +134,7 @@ require 'pione/tuple-space/data-finder'
 require 'pione/tuple-space/update-criteria'
 
 # parser
-require 'pione/parser/syntax-error'
+require 'pione/parser/parslet-extension'
 require 'pione/parser/common-parser'
 require 'pione/parser/literal-parser'
 require 'pione/parser/feature-expr-parser'
