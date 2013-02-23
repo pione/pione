@@ -71,6 +71,14 @@ module Pione
           set_line_and_column(line_and_column)
         end
       end
+
+      # ticket
+      rule(:ticket => simple(:name)) do
+        line_and_column = name.line_and_column
+        Ticket.new(name.to_s) do
+          set_line_and_column(line_and_column)
+        end
+      end
     end
   end
 end
