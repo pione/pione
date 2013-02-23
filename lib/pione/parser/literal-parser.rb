@@ -177,6 +177,20 @@ module Pione
           syntax_error("it should be parameter key", :identifier)
         )
       }
+
+      # @!attribute [r] ticket
+      # +ticket+ matches ticket object.
+      #
+      # @return [Parslet::Atoms::Entity] +ticket+ atom
+      # @example
+      #   &Main
+      rule(:ticket) {
+        less_than >>
+        space? >>
+        identifier.as(:ticket) >>
+        space? >>
+        greater_than
+      }
     end
   end
 end

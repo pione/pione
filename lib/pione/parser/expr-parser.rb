@@ -106,6 +106,7 @@ module Pione
         float |
         integer |
         string |
+        ticket |
         data_name |
         rule_expr |
         feature_expr |
@@ -135,10 +136,12 @@ module Pione
       #   @example
       #     :=, ==, !=, >=, >, <=, <, &&, ||, +, -, *, /, %, or, and
       rule(:expr_operator) {
+        equals >> equals >> greater_than |
         equals >> equals |
         exclamation >> equals |
         less_than >> equals |
         less_than |
+        greater_than >> greater_than >> greater_than |
         greater_than >> equals |
         greater_than |
         ampersand >> ampersand |
