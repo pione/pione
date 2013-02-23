@@ -251,6 +251,9 @@ module Pione
     # rule io element type for PIONE system
     TypeRuleIOElement = Type.new("rule-io-element")
 
+    # ticket type
+    TypeTicket = Type.new("ticket")
+
     # any type for PIONE system
     TypeAny = Type.new("any")
 

@@ -102,6 +102,7 @@ require 'pione/model/assignment'
 require 'pione/model/block'
 require 'pione/model/rule'
 require 'pione/model/rule-io'
+require 'pione/model/ticket'
 
 # tuple
 require 'pione/tuple/basic-tuple'
