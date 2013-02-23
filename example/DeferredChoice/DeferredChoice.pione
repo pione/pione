@@ -17,7 +17,7 @@ Action
   then
     zenity --list --title "select action" --column rule "rule A" "rule B" "rule C" > rule.txt
   else
-    xmessage -print -buttons "rule A,rule B,rule C" "select action" > rule.txt
+    xmessage -print -center -buttons "rule A,rule B,rule C" "select action" > rule.txt
   fi
   RULE=`cat rule.txt`
   case "$RULE" in
