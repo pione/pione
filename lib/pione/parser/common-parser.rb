@@ -103,9 +103,14 @@ module Pione
       rule(:digit) { match('[0-9]') }
 
       # @!attribute [r] space
-      #   +space+ matches sequences of space character or tab.
-      #   @return [Parslet::Atoms::Entity] +space+ atom
-      rule(:space) { match("[ \t]").repeat(1) }
+      #
+      # +space+ matches sequences of space character, tab, or comment.
+      # @return [Parslet::Atoms::Entity] +space+ atom
+      rule(:space) {
+        ( match("[ \t]") |
+          str("#") >> ((str("\n") | any.absent?).absent? >> any).repeat
+        ).repeat(1)
+      }
 
       # @!attribute [r] space?
       #   +space?+ matches +space+ atom or empty.
@@ -113,9 +118,14 @@ module Pione
       rule(:space?) { space.maybe }
 
       # @!attribute [r] pad
-      #   +space?+ matches space character, tab, and newline.
-      #   @return [Parslet::Atoms::Entity] +pad+ atom
-      rule(:pad) { match("[ \t\n]").repeat(1) }
+      # +pad?+ matches space character, tab, newline, or comment.
+      #
+      # @return [Parslet::Atoms::Entity] +pad+ atom
+      rule(:pad) {
+        ( match("[ \t\n]") |
+          str("#") >> any.repeat >> (str("\n") | any.absent?)
+        ).repeat(1)
+      }
 
       # @!attribute [r] pad?
       #   +space?+ matches +pad+ atom or empty.

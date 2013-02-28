@@ -10,10 +10,6 @@ module Pione
       include BlockParser
       include RuleDefinitionParser
 
-      def parse(str)
-        super(str.gsub(/^(?!#!)(.*)#.*/){$1})
-      end
-
       #
       # root
       #
