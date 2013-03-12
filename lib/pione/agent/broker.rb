@@ -265,7 +265,9 @@ module Pione
 
       # Transits to the state +sleeping+.
       def transit_to_sleeping
-        sleep 1
+        unless @excess_task_workers > 0
+          sleep 1
+        end
       end
     end
 
