@@ -25,28 +25,26 @@ module Pione
       # @return [Thread]
       #   worker monitor thread
       def self.spawn(front, connection_id, features=nil)
-        @mutex.synchronize do
-          args = [
-            "pione-task-worker",
-            "--parent-front", Global.front.uri,
-            "--connection-id", connection_id
-          ]
-          args << "--debug" if Pione.debug_mode?
-          args << "--show-communication" if Global.show_communication
-          args << "--features" << features if features
-          pid = Process.spawn(*args)
-          thread = Process.detach(pid)
-          # connection check
-          while thread.alive?
-            break if front.task_worker_front_connection_id.include?(connection_id)
-            sleep 0.1
-          end
-          # error check
-          unless thread.alive?
-            Process.abort("You cannot run pione-task-worker.")
-          end
-          return thread
+        args = [
+          "pione-task-worker",
+          "--parent-front", Global.front.uri,
+          "--connection-id", connection_id
+        ]
+        args << "--debug" if Pione.debug_mode?
+        args << "--show-communication" if Global.show_communication
+        args << "--features" << features if features
+        pid = Process.spawn(*args)
+        thread = Process.detach(pid)
+        # connection check
+        while thread.alive?
+          break if front.task_worker_front_connection_id.include?(connection_id)
+          sleep 0.1
         end
+        # error check
+        unless thread.alive?
+          Process.abort("You cannot run pione-task-worker.")
+        end
+        return thread
       end
 
       define_state :task_waiting

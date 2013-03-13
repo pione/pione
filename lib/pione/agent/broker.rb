@@ -106,7 +106,7 @@ module Pione
 
         # Return excess number of workers belongs to this broker.
         def excess_task_workers
-          @task_worker_resource - @task_workers.size
+          @task_worker_resource - @task_workers.size - @spawnings
         end
 
         # Return task wainting workers.
@@ -128,7 +128,14 @@ module Pione
         def create_task_worker(tuple_space_server)
           connection_id = Util.generate_uuid
           @assignment_table[connection_id] = tuple_space_server
-          Agent[:task_worker].spawn(Global.front, connection_id)
+          Thread.new do
+            begin
+              @spawnings += 1
+              Agent[:task_worker].spawn(Global.front, connection_id)
+            ensure
+              @spawnings -= 1
+            end
+          end
         end
 
         # Deletes unavilable tuple space servers.
@@ -197,6 +204,9 @@ module Pione
       attr_reader :tuple_space_servers
       attr_reader :task_worker_resource
 
+      # current spawning task worker number
+      attr_reader :spawnings
+
       # @api private
       def initialize(data={})
         super()
@@ -206,6 +216,7 @@ module Pione
         @sleeping_time = data[:sleeping_time] || 1
         @assignment_table = {}
         @tuple_space_server_lock = Mutex.new
+        @spawnings = 0
 
         # balancer
         @balancer = EasyBalancer.new(self)
@@ -265,7 +276,7 @@ module Pione
 
       # Transits to the state +sleeping+.
       def transit_to_sleeping
-        unless @excess_task_workers > 0
+        if @tuple_space_servers.size == 0 or excess_task_workers == 0
           sleep 1
         end
       end

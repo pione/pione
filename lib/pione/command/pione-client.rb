@@ -177,7 +177,7 @@ module Pione
         connect_relay if @relay
         start_agents
         start_tuple_space_provider unless @without_tuple_space_provider
-        Thread.new {start_workers}
+        start_workers
         @agent = Agent[:process_manager].start(@tuple_space_server, @document, @params, @stream)
         @agent.running_thread.join
         terminate
@@ -245,7 +245,7 @@ module Pione
 
       def start_workers
         @task_worker.times do
-          Agent[:task_worker].spawn(Global.front, Util.generate_uuid, @features)
+          Thread.new { Agent[:task_worker].spawn(Global.front, Util.generate_uuid, @features) }
         end
       end
 
