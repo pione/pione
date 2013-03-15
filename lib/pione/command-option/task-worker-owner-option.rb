@@ -9,7 +9,7 @@ module Pione
       end
 
       # --features
-      define_option('--features="FEATURES"', 'set features') do |features|
+      define_option('--features=FEATURES', 'set features') do |features|
         @features = features
       end
     end
