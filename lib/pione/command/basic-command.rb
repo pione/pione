@@ -25,13 +25,18 @@ module Pione
     end
 
     module InstanceInterface
-      # Returns program name.
-      # @return [String]
-      #   program name
-      def program_name
-        name, b = self.class.program_name
-        tail = self.instance_exec(&b)
-        "%s %s" % [name, tail]
+      # Setup program name. If the setup process is failed, program name is not
+      # changed.
+      #
+      # @return [void]
+      def setup_program_name
+        begin
+          name, b = self.class.program_name
+          tail = self.instance_exec(&b)
+          $PROGRAM_NAME = "%s %s" % [name, tail]
+        rescue Exception
+          nil
+        end
       end
 
       # Returns program message.
@@ -65,7 +70,7 @@ module Pione
         parse_options
         validate_options
         prepare
-        $PROGRAM_NAME = program_name
+        setup_program_name
         start
       end
 

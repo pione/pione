@@ -61,13 +61,13 @@ TXT
         # start provider activity
         @tuple_space_provider.start
 
-        # set my URI to caller front as its provider
-        unless @no_parent_mode
-          @parent_front.set_tuple_space_provider(Global.front.uri)
-        end
-
-        # wait
         begin
+          # set my URI to caller front as its provider
+          unless @no_parent_mode
+            @parent_front.set_tuple_space_provider(Global.front.uri)
+          end
+
+          # wait
           DRb.thread.join
         rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
           terminate
@@ -76,7 +76,6 @@ TXT
 
       # @api private
       def terminate
-        puts "terminate %s" % program_name
         @tuple_space_provider.terminate
         super
       rescue DRb::DRbConnError, DRb::ReplyReaderThreadError

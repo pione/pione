@@ -176,7 +176,15 @@ module Pione
         write_tuples
         connect_relay if @relay
         start_agents
-        start_tuple_space_provider unless @without_tuple_space_provider
+
+        # start tuple space provider with thread
+        # the thread is terminated when the client terminated
+        unless @without_tuple_space_provider
+          @start_tuple_space_provider_thread = Thread.new do
+            start_tuple_space_provider
+          end
+        end
+
         start_workers
         @agent = Agent[:process_manager].start(@tuple_space_server, @document, @params, @stream)
         @agent.running_thread.join
@@ -184,6 +192,14 @@ module Pione
       end
 
       def terminate
+        # kill the thread for starting tuple space provider
+        if @start_tuple_space_provider_thread
+          if @start_tuple_space_provider_thread.alive?
+            @start_tuple_space_provider_thread.kill
+          end
+        end
+
+        # terminate tuple space provider
         if @tuple_space_provider
           @tuple_space_provider.terminate
         end
