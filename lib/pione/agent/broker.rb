@@ -131,7 +131,7 @@ module Pione
           Thread.new do
             begin
               @spawnings += 1
-              Agent[:task_worker].spawn(Global.front, connection_id)
+              Agent[:task_worker].spawn(Global.front, connection_id, @features)
             ensure
               @spawnings -= 1
             end
@@ -208,7 +208,7 @@ module Pione
       attr_reader :spawnings
 
       # @api private
-      def initialize(data={})
+      def initialize(features, data={})
         super()
         @task_workers = []
         @tuple_space_servers = []
@@ -217,6 +217,7 @@ module Pione
         @assignment_table = {}
         @tuple_space_server_lock = Mutex.new
         @spawnings = 0
+        @features = features
 
         # balancer
         @balancer = EasyBalancer.new(self)
