@@ -11,7 +11,7 @@ module Pione
         validate_options
         setup_front
         prepare
-        $PROGRAM_NAME = program_name
+        setup_program_name
         start
       end
 

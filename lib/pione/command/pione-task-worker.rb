@@ -56,7 +56,10 @@ TXT
         begin
           @parent_front.uuid
         rescue => e
-          abort("pione-task-worker cannot get the parent front server: %s" % e)
+          if Pione.debug_mode?
+            debug_message "pione-task-worker cannot get the parent front server: %s" % e
+          end
+          abort
         end
       end
 

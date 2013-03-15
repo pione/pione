@@ -16,6 +16,7 @@ TXT
 
       def initialize
         @task_worker = [Util.core_number - 1, 1].max
+        @features = nil
       end
 
       def create_front
@@ -30,7 +31,7 @@ TXT
 
       def prepare
         super
-        @broker = Pione::Agent[:broker].new(task_worker_resource: @task_worker)
+        @broker = Pione::Agent[:broker].new(@features, task_worker_resource: @task_worker)
         @tuple_space_receiver = Pione::TupleSpaceReceiver.instance
       end
 
