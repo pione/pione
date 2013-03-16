@@ -1,9 +1,10 @@
+param $NUM := 3
+
 Rule Main
   output 'result.txt'
-  param $NUM := 3
 Flow
-  rule Fib
-  rule Result
+  rule Fib {N: $NUM}
+  rule Result {N: $NUM}
 End
 
 Rule Fib0
@@ -19,28 +20,28 @@ Action
 End
 
 Rule Fib
-  output 'fib{$NUM}.txt'
-  param $NUM
+  output 'fib{$N}.txt'
+  param $N
 Flow
-  case $NUM
+  case $N
   when 0
     rule Fib0
   when 1
     rule Fib1
   else
-    $P1 := $NUM - 2
-    $P2 := $NUM - 1
-    rule Fib {NUM: $P1}
-    rule Fib {NUM: $P2}
-    rule Calc {NUM: $NUM, P1: $P1, P2: $P2}
+    $P1 := $N - 2
+    $P2 := $N - 1
+    rule Fib {N: $P1}
+    rule Fib {N: $P2}
+    rule Calc {N: $N, P1: $P1, P2: $P2}
   end
 End
 
 Rule Calc
   input 'fib{$P1}.txt'
   input 'fib{$P2}.txt'
-  output 'fib{$NUM}.txt'
-  param $NUM
+  output 'fib{$N}.txt'
+  param $N
   param $P1
   param $P2
 Action
@@ -48,9 +49,9 @@ Action
 End
 
 Rule Result
-  input 'fib{$NUM}.txt'
+  input 'fib{$N}.txt'
   output 'result.txt'
-  param $NUM
+  param $N
 Action
   cat {$I[1]} > {$O[1]}
 End

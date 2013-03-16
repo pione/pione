@@ -13,13 +13,13 @@ module Pione
           :rule_header => simple(:rule_expr),
           :rule_conditions => sequence(:conditions),
           :block => simple(:block) }) {
-        inputs = conditions.select{|c| c.type == :input}.map{|c| c.obj}
-        outputs = conditions.select{|c| c.type == :output}.map{|c| c.obj}
+        inputs = conditions.select{|c| c.type == :input}.map{|c| c.expr}
+        outputs = conditions.select{|c| c.type == :output}.map{|c| c.expr}
         params = Parameters.merge(
-          *conditions.select{|c| c.type == :param}.map{|c| c.obj}
+          *conditions.select{|c| c.type == :param}.map{|c| c.expr}
         )
         features = Feature::AndExpr.new(
-          *conditions.select{|c| c.type == :feature}.map{|c| c.obj}
+          *conditions.select{|c| c.type == :feature}.map{|c| c.expr}
         )
         condition = RuleCondition.new(inputs, outputs, params, features)
         case block
@@ -30,7 +30,7 @@ module Pione
         end.new(rule_expr, condition, block)
       }
 
-      ConditionLine = Struct.new(:type, :obj)
+      ConditionLine = Struct.new(:type, :expr)
 
       # input_line
       rule(:input_line => simple(:data_expr)) {

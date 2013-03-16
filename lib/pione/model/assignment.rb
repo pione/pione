@@ -41,8 +41,14 @@ module Pione::Model
       vtable.set(@variable, @expr)
     end
 
+    # Set truth of toplevel assignment.
     def set_toplevel(b)
       @variable.set_toplevel(b)
+    end
+
+    # Set truth of user parameter.
+    def set_user_param(b)
+      @variable.set_user_param(b)
     end
 
     # Returns true if the assignment is defined in toplevel.

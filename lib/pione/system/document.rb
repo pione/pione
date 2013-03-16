@@ -24,6 +24,16 @@ module Pione
         rules = toplevels.select{|elt| elt.kind_of?(Rule)}
         assignments = toplevels.select{|elt| elt.kind_of?(Assignment)}
         assignments.each {|assignment| assignment.set_toplevel(true)}
+        user_params = toplevels.select do |elt|
+          # FIXME
+          elt.kind_of?(Transformer::RuleDefinitionTransformer::ConditionLine) and elt.type == :param
+        end
+        assignments += user_params.map do |param|
+          param.expr.tap do |x|
+            x.set_toplevel(true)
+            x.set_user_param(true)
+          end
+        end
 
         # make document parameters
         params = assignments.inject(VariableTable.empty) do |vtable, a|
@@ -31,9 +41,7 @@ module Pione
         end.to_params
 
         # set document parameters into rules
-        rules.each do |rule|
-          rule.params.merge!(params)
-        end
+        rules.each {|rule| rule.params.merge!(params)}
 
         # make rule table
         table = rules.inject({}) do |tbl, rule|
@@ -43,6 +51,7 @@ module Pione
       end
 
       attr_reader :rules
+      attr_reader :params
 
       # Creates a document.
       def initialize(rules, params)
@@ -74,7 +83,7 @@ module Pione
       # @return [RootRule]
       #   root rule
       def root_rule(params)
-        Rule::RootRule.new(main, params.merge(@params))
+        Rule::RootRule.new(main, @params.merge(params))
       end
     end
   end
