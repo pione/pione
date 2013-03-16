@@ -73,6 +73,11 @@ module Pione
         @name = name
       end
 
+      # --list-parameters
+      define_option('--list-params') do
+        @list_params = true
+      end
+
       attr_reader :tuple_space_server
       attr_reader :name
 
@@ -92,6 +97,7 @@ module Pione
         @filename = "-"
         @without_tuple_space_provider = false
         @features = "^Interactive"
+        @list_params = false
       end
 
       private
@@ -173,6 +179,12 @@ module Pione
 
       def start
         read_process_document
+
+        if @list_params
+          print_parameter_list
+          exit
+        end
+
         write_tuples
         connect_relay if @relay
         start_agents
@@ -284,6 +296,16 @@ module Pione
         abort
       rescue Relay::RelaySocket::AuthError
         abort("You failed authentication to connect the relay server: %s" % @relay_ref.__drburi)
+      end
+
+      # Print parameter list of the document.
+      #
+      # @return [void]
+      def print_parameter_list
+        puts "Parameters:"
+        @document.params.data.select{|var, val| var.user_param}.each do |var, val|
+          puts "  %s := %s" % [var.name, val.textize]
+        end
       end
     end
   end

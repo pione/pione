@@ -6,11 +6,16 @@ module Pione::Model
 
     attr_reader :name
 
+    # true if the variable is user parameter
+    attr_reader :user_param
+
     # Creates a variable with name.
     # @param [String] name
     #   variable name
     def initialize(name)
       @name = name.to_s
+      @toplevel = nil
+      @user_param = nil
       super()
     end
 
@@ -33,8 +38,14 @@ module Pione::Model
       true
     end
 
+    # Set truth of toplevel variable.
     def set_toplevel(b)
       @toplevel = b
+    end
+
+    # Set truth of user parameter.
+    def set_user_param(b)
+      @user_param = b
     end
 
     # Returns true if the variable is defined in toplevel.

@@ -30,12 +30,16 @@ module Pione::Model
       false
     end
 
-    # Returns PIONE model type of the message result according to type
-    # interface.
+    # Return PIONE model type of the message result according to type interface.
+    #
     # @return [Symbol]
     #   PIONE model type
     def pione_model_type
-      @receiver.pione_model_type.method_interface[@name.to_s].output
+      if interface = @receiver.pione_model_type.method_interface[@name.to_s]
+        interface.output
+      else
+        raise MethodNotFound.new(@name.to_s, self)
+      end
     end
 
     # Evaluates the application expression and returns application result.

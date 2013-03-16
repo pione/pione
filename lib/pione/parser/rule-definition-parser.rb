@@ -35,6 +35,7 @@ module Pione
       #     1 + 1
       rule(:toplevel_element) {
         rule_definition |
+        param_line |
         assignment |
         expr
       }
