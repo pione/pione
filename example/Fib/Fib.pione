@@ -45,7 +45,7 @@ Rule Calc
   param $P1
   param $P2
 Action
-  expr `cat {$I[1]}` + `cat {$I[2]}` > {$O[1]}
+  echo "`cat {$I[1]}` + `cat {$I[2]}`" | bc > {$O[1]}
 End
 
 Rule Result
