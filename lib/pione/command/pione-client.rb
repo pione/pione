@@ -74,7 +74,7 @@ module Pione
       end
 
       # --list-parameters
-      define_option('--list-params') do
+      define_option('--list-params', 'show user parameter list in the document') do
         @list_params = true
       end
 
