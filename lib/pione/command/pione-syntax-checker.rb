@@ -30,16 +30,26 @@ TXT
         if @readline_mode
           require 'readline'
           restore_history
+          buf = ""
+          mark = ">"
 
           # start loop
-          while buf = Readline.readline(Terminal.red("> "), true)
+          while buf += Readline.readline(Terminal.red("#{mark} "), true)
             if /[^\s]/.match(buf)
               # don't record if previous line is the same
               if Readline::HISTORY.size > 1 && Readline::HISTORY[-2] == buf
                 Readline::HISTORY.pop
               end
-              # print parsing result
-              print_result(buf)
+              if buf[-1] == "\\"
+                buf[-1] = "\n"
+                mark = "+"
+                next
+              else
+                # print parsing result
+                print_result(buf)
+                buf = ""
+                mark = ">"
+              end
             else
               # don't record if it is an empty line
               Readline::HISTORY.pop
