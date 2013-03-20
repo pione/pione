@@ -29,6 +29,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "parslet", "~> 1.4.0"
   gem.add_dependency "uuidtools", "~> 2.1.3"
   gem.add_dependency "highline", "~> 1.6.15"
+  gem.add_dependency "naming"
 
   # for dropbox resource
   gem.add_dependency "dropbox-sdk"

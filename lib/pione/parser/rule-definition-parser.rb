@@ -10,36 +10,6 @@ module Pione
       include FlowElementParser
       include BlockParser
 
-      # @!attribute [r] rule_definitions
-      #   @return [Parslet::Atoms::Entity] toplevel element list
-      rule(:rule_definitions) {
-        (empty_lines? >> space? >> toplevel_element >> empty_lines?).repeat
-      }
-
-      # @!attribute [r] toplevel_element
-      #   @return [Parslet::Atoms::Entity] toplevel element
-      #   @example
-      #     # document toplevel assignment
-      #     $X := 1
-      #   @example
-      #     # define rule
-      #     Rule Main
-      #       input '*.txt'
-      #       ...
-      #     Flow
-      #       rule SubRule
-      #       ...
-      #     End
-      #   @example
-      #     # you can write any expressions in toplevel but it is ignored
-      #     1 + 1
-      rule(:toplevel_element) {
-        rule_definition |
-        param_line |
-        assignment |
-        expr
-      }
-
       # @!attribute [r] rule_definition
       #   @return [Parslet::Atoms::Entity] rule definition
       #   @example
@@ -51,7 +21,8 @@ module Pione
       #       ...
       #     End
       rule(:rule_definition) {
-        ( rule_header >>
+        ( space? >>
+          rule_header >>
           rule_conditions >>
           block.as(:block)
         ).as(:rule_definition)

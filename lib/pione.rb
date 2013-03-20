@@ -29,6 +29,7 @@ require 'ostruct'
 require 'net/ftp'
 require 'highline'
 require 'dropbox_sdk'
+require 'naming'
 
 #
 # load pione

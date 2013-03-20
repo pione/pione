@@ -46,6 +46,7 @@ TXT
                 next
               else
                 # print parsing result
+                puts buf
                 print_result(buf)
                 buf = ""
                 mark = ">"

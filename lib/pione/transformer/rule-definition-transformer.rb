@@ -13,14 +13,10 @@ module Pione
           :rule_header => simple(:rule_expr),
           :rule_conditions => sequence(:conditions),
           :block => simple(:block) }) {
-        inputs = conditions.select{|c| c.type == :input}.map{|c| c.expr}
-        outputs = conditions.select{|c| c.type == :output}.map{|c| c.expr}
-        params = Parameters.merge(
-          *conditions.select{|c| c.type == :param}.map{|c| c.expr}
-        )
-        features = Feature::AndExpr.new(
-          *conditions.select{|c| c.type == :feature}.map{|c| c.expr}
-        )
+        inputs = Naming::InputLine.values(conditions)
+        outputs = Naming::OutputLine.values(conditions)
+        params = Parameters.merge(*Naming::ParamLine.values(conditions))
+        features = Feature::AndExpr.new(*Naming::FeatureLine.values(conditions))
         condition = RuleCondition.new(inputs, outputs, params, features)
         case block
         when ActionBlock
@@ -30,18 +26,16 @@ module Pione
         end.new(rule_expr, condition, block)
       }
 
-      ConditionLine = Struct.new(:type, :expr)
-
       # input_line
       rule(:input_line => simple(:data_expr)) {
         TypeDataExpr.check(data_expr)
-        ConditionLine.new(:input, data_expr)
+        Naming.InputLine(data_expr)
       }
 
       # output_line
       rule(:output_line => simple(:data_expr)) {
         TypeDataExpr.check(data_expr)
-        ConditionLine.new(:output, data_expr)
+        Naming.OutputLine(data_expr)
       }
 
       # param_line
@@ -49,13 +43,13 @@ module Pione
         unless TypeAssignment.match(param) or TypeParameters.match(param)
           raise PioneModelTypeError.new(param, TypeAssignment)
         end
-        ConditionLine.new(:param, param)
+        Naming.ParamLine(param)
       }
 
       # feature_line
       rule(:feature_line => simple(:feature)) {
         TypeFeature.check(feature)
-        ConditionLine.new(:feature, feature)
+        Naming.FeatureLine(feature)
       }
     end
   end

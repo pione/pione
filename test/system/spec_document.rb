@@ -1,6 +1,15 @@
-require_relative 'test-util'
+require_relative '../test-util'
 
 src = <<DOCUMENT
+Param
+  $P1 := "a"
+  $P2 := "b"
+  $P3 := "c"
+End
+
+param $P4 := "d"
+param $P5 := "e"
+
 $X := 1
 
 Rule Main
@@ -57,7 +66,18 @@ describe 'Document' do
     doc["&main:RuleC"].should.kind_of(Model::Rule)
   end
 
-  it 'should have global variable' do
+  it 'should have document parameters' do
+    doc = Document.parse(src)
+    doc.params["P1"].should == "a".to_pione
+    doc.params["P2"].should == "b".to_pione
+    doc.params["P3"].should == "c".to_pione
+    doc.params["P4"].should == "d".to_pione
+    doc.params["P5"].should == "e".to_pione
+    user_params = doc.params.data.select{|var, val| var.user_param}.map{|var, val| var.name}
+    user_params.sort.should == ["P1", "P2", "P3", "P4", "P5"]
+  end
+
+  it 'should have document variable bindings' do
     doc = Document.parse(src)
     doc["&main:Main"].params["X"].should == 1.to_pione
     doc["&main:RuleA"].params["X"].should == 1.to_pione

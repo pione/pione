@@ -1,0 +1,62 @@
+toplevel_element:
+  valid:
+    # parameter line
+    - "param $X := 1"
+    # parameter block
+    - |
+      Param
+        $X := 1
+        $Y := 2
+        $Z := 3
+      End
+    # rule definition
+    - |
+      Rule Test
+        input '*.txt'
+        output '{$*}.result'
+      Action
+        rev {$I[1]} > {$O[1]}
+      End
+    # assignment
+    - "$X := 1"
+param_block:
+  valid:
+    # empty block
+    - |
+      Param
+      End
+    # one line block
+    - |
+      Param
+        $X := 1
+      End
+    # multi line block
+    - |
+      Param
+        $X := 1
+        $Y := 2
+        $Z := 3
+      End
+    # multi line with empty line
+    - |
+      Param
+        $X := 1
+        
+        $Y := 2
+      End
+    # one line with comment
+    - |
+      Param
+        # param $X := 1
+        $X := 1
+      End
+    # multi line with comments
+    - |
+      Param
+        # param $X := 1
+        $X := 1
+        # param $Y := 2
+        $Y := 2
+        # param $Z := 3
+        $Z := 3
+      End
