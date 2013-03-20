@@ -1,0 +1,13 @@
+# History
+
+## 0.1.1
+
+* Improved performance
+* Added the concept of document parameter
+* Added --list-params option
+* Fixed bugs of features handling
+* Improved comment parser
+
+## 0.1.0
+
+* First gem release

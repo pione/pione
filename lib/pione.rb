@@ -30,6 +30,7 @@ require 'net/ftp'
 require 'highline'
 require 'dropbox_sdk'
 require 'hamster'
+require 'naming'
 
 #
 # load pione

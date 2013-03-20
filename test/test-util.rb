@@ -79,7 +79,7 @@ module TestUtil::Parser
       context.describe name do
         if strings = testcase["valid"]
           strings.each do |string|
-            it "should parse as #{name}: #{string}" do
+            it "should parse as %s:%s%s" % [name, string.include?("\n") ? "\n" : " ", string.chomp] do
               should.not.raise(Parslet::ParseFailed) do
                 parser.new.send(name).parse(string)
               end
@@ -89,7 +89,7 @@ module TestUtil::Parser
 
         if strings = testcase["invalid"]
           strings.each do |string|
-            it "should fail when parsing as #{name}: #{string}" do
+            it "should fail when parsing as %s:%s%s" % [name, string.include?("\n") ? "\n" : "", string.chomp] do
               should.raise(Parslet::ParseFailed) do
                 parser.new.send(name).parse(string)
               end
@@ -120,7 +120,7 @@ module TestUtil::Transformer
     testcases.instance_eval(&b)
     context.describe name do
       testcases.each do |tc|
-        it "should get #{name}: #{tc.string}" do
+        it "should get %s:%s%s" % [name, tc.string.include?("\n") ? "\n" : "", tc.string.chomp] do
           res = DocumentTransformer.new.apply(
             DocumentParser.new.send(parser).parse(tc.string)
           )

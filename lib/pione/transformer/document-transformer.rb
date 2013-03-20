@@ -27,9 +27,13 @@ module Pione
       # statement
       #
 
+      rule(:param_block => sequence(:assignment_list)) {
+        Naming.ParamBlock(assignment_list)
+      }
+
       # package
       rule(:package => subtree(:tree)) {
-        @current_package = Package.new(tree[:package_name].to_s)
+        @current_package = Naming.Package(tree[:package_name].to_s)
       }
     end
   end

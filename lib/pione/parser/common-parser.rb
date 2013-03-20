@@ -65,6 +65,7 @@ module Pione
         :keyword_input => 'input',
         :keyword_output => 'output',
         :keyword_param => 'param',
+        :keyword_Param => 'Param',
         :keyword_feature => 'feature',
         :keyword_rule => 'rule',
         :keyword_if => 'if',
@@ -102,9 +103,11 @@ module Pione
       #   @return [Parslet::Atoms::Entity] +digit+ atom
       rule(:digit) { match('[0-9]') }
 
-      # @!attribute [r] space
+      # @!method space
       #
-      # +space+ matches sequences of space character, tab, or comment.
+      # Return +space+ parser. +space+ matches sequences of space character,
+      # tab, or comment.
+      #
       # @return [Parslet::Atoms::Entity] +space+ atom
       rule(:space) {
         ( match("[ \t]") |
@@ -112,24 +115,33 @@ module Pione
         ).repeat(1)
       }
 
-      # @!attribute [r] space?
-      #   +space?+ matches +space+ atom or empty.
-      #   @return [Parslet::Atoms::Entity] +space?+ atom
+      # @!method space?
+      #
+      # Return +space?+ parser. +space?+ matches +space+ or empty.
+      #
+      # @return [Parslet::Atoms::Entity]
+      #   +space?+ parser
       rule(:space?) { space.maybe }
 
-      # @!attribute [r] pad
-      # +pad?+ matches space character, tab, newline, or comment.
+      # @!method pad
       #
-      # @return [Parslet::Atoms::Entity] +pad+ atom
+      # Return +pad+ parser. +pad+ matches sequences of space character, tab,
+      # newline, or comment.
+      #
+      # @return [Parslet::Atoms::Entity]
+      #   +pad+ parser
       rule(:pad) {
         ( match("[ \t\n]") |
-          str("#") >> any.repeat >> (str("\n") | any.absent?)
+          str("#") >> ((str("\n") | any.absent?).absent? >> any).repeat
         ).repeat(1)
       }
 
-      # @!attribute [r] pad?
-      #   +space?+ matches +pad+ atom or empty.
-      #   @return [Parslet::Atoms::Entity] +pad?+ atom
+      # @!method pad?
+      #
+      # Return +pad?+ parser. +pad?+ matches +pad+ or empty.
+      #
+      # @return [Parslet::Atoms::Entity]
+      #   +pad?+ parser
       rule(:pad?) { pad.maybe }
 
       # @!attribute [r] line_end

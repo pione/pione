@@ -24,12 +24,12 @@ module Pione
         rules = toplevels.select{|elt| elt.kind_of?(Rule)}
         assignments = toplevels.select{|elt| elt.kind_of?(Assignment)}
         assignments.each {|assignment| assignment.set_toplevel(true)}
-        user_params = toplevels.select do |elt|
-          # FIXME
-          elt.kind_of?(Transformer::RuleDefinitionTransformer::ConditionLine) and elt.type == :param
+        user_params = Naming::ParamLine.values(toplevels)
+        Naming::ParamBlock.values(toplevels).each do |elts|
+          user_params += elts
         end
         assignments += user_params.map do |param|
-          param.expr.tap do |x|
+          param.tap do |x|
             x.set_toplevel(true)
             x.set_user_param(true)
           end
