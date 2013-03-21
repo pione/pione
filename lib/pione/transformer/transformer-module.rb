@@ -1,7 +1,10 @@
 module Pione
   module Transformer
+    # TransformerModule enables parslet's transforms to be defined by multiple
+    # modules.
     module TransformerModule
       class << self
+        # @api private
         def included(mod)
           singleton = class << mod; self; end
           create_pair_by(Parslet, Parslet::Transform).each do |name, orig|
@@ -22,14 +25,13 @@ module Pione
 
         private
 
+        # Create module and the methods pair by modules.
+        #
+        # @api private
         def create_pair_by(*mods)
           mods.inject([]) do |list, mod|
-            list += create_pair(mod)
+            list + (mod.methods.sort - Object.methods.sort).map{|m| [m, mod]}
           end
-        end
-
-        def create_pair(mod)
-          (mod.methods.sort - Object.methods.sort).map{|m| [m, mod]}
         end
       end
     end

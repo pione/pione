@@ -120,7 +120,7 @@ module TestUtil::Transformer
     testcases.instance_eval(&b)
     context.describe name do
       testcases.each do |tc|
-        it "should get %s:%s%s" % [name, tc.string.include?("\n") ? "\n" : "", tc.string.chomp] do
+        it "should get %s:%s%s" % [name, tc.string.include?("\n") ? "\n" : " ", tc.string.chomp] do
           res = DocumentTransformer.new.apply(
             DocumentParser.new.send(parser).parse(tc.string)
           )

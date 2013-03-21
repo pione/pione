@@ -1,10 +1,12 @@
 module Pione
   module Transformer
+    # FeatureExprTransformer is a transformer for syntax tree of feature
+    # expressions.
     module FeatureExprTransformer
       include TransformerModule
 
-      # feature_name
-      # convert into plain string
+      # Transform +:feature_name+ as feature expression model corresponding to
+      # the operator.
       rule(:atomic_feature =>
            { :operator => simple(:operator),
              :symbol => simple(:symbol) }
@@ -22,6 +24,8 @@ module Pione
           Feature::RestrictiveExpr.new(symbol.str)
         end
       end
+
+      # Transform +:atomic_feature+ as empty feature or boundless feature.
       rule(:atomic_feature => {:symbol => simple(:symbol)}) {
         case symbol
         when "*"
@@ -31,12 +35,12 @@ module Pione
         end
       }
 
-      # feature expr
+      # Extract the content of +:feature_expr+.
       rule(:feature_expr => simple(:expr)) do
         expr
       end
 
-      # feature conjunction
+      # Transform +:feature conjunction+ as Feature::AndExpr.
       rule(:feature_conjunction => {
              :left => simple(:left),
              :right => simple(:right)
@@ -44,7 +48,7 @@ module Pione
         Feature::AndExpr.new(left, right)
       end
 
-      # feature disjunction
+      # Transform +:feature_disjunction+ as Feature::OrExpr.
       rule(:feature_disjunction => {
              :left => simple(:left),
              :right => simple(:right)
