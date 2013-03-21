@@ -1,37 +1,37 @@
 module Pione
   module Transformer
+    # FlowElementTransformer is a transformer for syntax tree of flow elements.
     module FlowElementTransformer
       include TransformerModule
 
-      # flow_elements returns just elements sequence
+      # Extract the content of +:flow_elements+.
       rule(:flow_elements => sequence(:elements)) {
         elements
       }
 
-      # call_rule
+      # Transform +:call_rule: as Model::CallRule.
       rule(:call_rule => subtree(:rule_expr)) {
         TypeRuleExpr.check(rule_expr)
         CallRule.new(rule_expr)
       }
 
-      # if_block
+      # Trasnform +:if_block+ as Model::ConditionalBlock.
       rule(:if_block =>
            { :condition => simple(:condition),
              :if_true_elements => sequence(:if_true),
              :if_else_block => simple(:if_false)
            }) {
-        block = { PioneBoolean.true => FlowBlock.new(*if_true) }
+        block = { Model::PioneBoolean.true => Model::FlowBlock.new(*if_true) }
         block[:else] = if_false if if_false
-        ConditionalBlock.new(condition, block)
+        Model::ConditionalBlock.new(condition, block)
       }
 
-      # else_block
-      rule(:else_block =>
-           { :elements => sequence(:elements) }) {
-        FlowBlock.new(*elements)
+      # Transform +:else_block+ as Model::FlowBlock.
+      rule(:else_block => {:elements => sequence(:elements)}) {
+        Model::FlowBlock.new(*elements)
       }
 
-      # case_block
+      # Transform +:case_block+ as Model::ConditionalBlock.
       rule(:case_block =>
         { :condition => simple(:condition),
           :when_blocks => sequence(:when_blocks),
@@ -41,26 +41,24 @@ module Pione
           block[when_block.value] = when_block.body
         end
         block[:else] = else_block if else_block
-        ConditionalBlock.new(condition, block)
+        Model::ConditionalBlock.new(condition, block)
       }
 
-      WhenBlock = Struct.new(:value, :body)
-
-      # when_block
+      # Transform +:when_block+ as Model::WhenBlock.
       rule(:when_block =>
         { :value => simple(:value),
-        :elements => sequence(:elements) }
+          :elements => sequence(:elements) }
       ) {
-        WhenBlock.new(value, FlowBlock.new(*elements))
+        OpenStruct.new(value: value, body: Model::FlowBlock.new(*elements))
       }
 
-    # assignment
-    rule(:assignment =>
-      { :symbol => simple(:symbol),
-        :value => simple(:value) }
-    ) {
-      Assignment.new(symbol, value)
-    }
+    # Transform +:assignment+ as Model::Assignment.
+      rule(:assignment =>
+        { :symbol => simple(:symbol),
+          :value => simple(:value) }
+      ) {
+        Model::Assignment.new(symbol, value)
+      }
     end
   end
 end

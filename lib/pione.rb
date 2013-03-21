@@ -145,14 +145,7 @@ require 'pione/parser/rule-definition-parser'
 require 'pione/parser/document-parser'
 
 # transformer
-require 'pione/transformer/transformer-module'
-require 'pione/transformer/literal-transformer'
-require 'pione/transformer/feature-expr-transformer'
-require 'pione/transformer/expr-transformer'
-require 'pione/transformer/flow-element-transformer'
-require 'pione/transformer/block-transformer'
-require 'pione/transformer/rule-definition-transformer'
-require 'pione/transformer/document-transformer'
+require 'pione/transformer'
 
 # resource
 require 'pione/resource/basic-resource'

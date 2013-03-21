@@ -1,12 +1,10 @@
 module Pione
   module Transformer
-    MessageArgument = Struct.new(:name, :parameters)
-    ParametersElement = Struct.new(:key, :value)
-
+    # ExprTransformer is a transformer for syntax tree of expressions.
     module ExprTransformer
       include TransformerModule
 
-      # expr_operator_application
+      # Transform +:expr_operator_application+ as Model::BinaryOperator.
       rule(:expr_operator_application =>
            { :left => simple(:left),
              :operator => simple(:operator),
@@ -14,49 +12,55 @@ module Pione
         Model::BinaryOperator.new(operator, left, right)
       }
 
-      # expr
+      # Extract the content of +:expr+.
       rule(:expr => simple(:obj)) { obj }
 
-      # receiver
+      # Transform receiver and messages as Model::Message.
       rule({ :receiver => simple(:receiver),
              :messages => sequence(:messages) }) {
-        obj = receiver
-        messages.each do |msg|
-          obj = Model::Message.new(msg.name, obj, *msg.parameters)
+        messages.inject(receiver) do |rec, msg|
+          Model::Message.new(msg.name, rec, *msg.parameters)
         end
-        obj
       }
+
+      # Transform receiver and indexes as Model::Message.
       rule({ :receiver => simple(:receiver),
              :indexes => sequence(:indexes) }) {
-        obj = receiver
-        indexes.each do |msg|
-          obj = Model::Message.new("[]", obj, *msg.parameters)
+        indexes.inject(receiver) do |rec, msg|
+          Model::Message.new("[]", rec, *msg.parameters)
         end
-        obj
       }
 
-      # message
+      # Transform +:message+ with no parameters as OpenStruct.
       rule(:message => {:message_name => simple(:name)}) {
-        MessageArgument.new(name)
-      }
-      rule(:message =>
-           { :message_name => simple(:name),
-             :message_parameters => sequence(:parameters) }) {
-        MessageArgument.new(name, parameters)
-      }
-      rule(:message =>
-           { :message_name => simple(:name),
-             :message_parameters => nil }) {
-        MessageArgument.new(name)
-      }
-      rule(:message =>
-           { :message_name => simple(:name),
-             :message_parameters => simple(:arg) }) {
-        MessageArgument.new(name, arg)
+        OpenStruct.new(name: name)
       }
 
-      # rule_expr
+      # Transform +:message+ with parameters as OpenStruct.
+      rule(:message =>
+        { :message_name => simple(:name),
+          :message_parameters => sequence(:parameters) }) {
+        OpenStruct.new(name: name, parameters: parameters)
+      }
+
+      # Transform +:message+ with no parameters as OpenStruct.
+      rule(:message =>
+        { :message_name => simple(:name),
+          :message_parameters => nil }) {
+        OpenStruct.new(name: name)
+      }
+
+      # Transform +:message+ with parameters as OpenStruct.
+      rule(:message =>
+        { :message_name => simple(:name),
+          :message_parameters => simple(:arg) }) {
+        OpenStruct.new(name: name, parameters: arg)
+      }
+
+      # Extract the content of +:rule_expr+.
       rule(:rule_expr => simple(:rule)) { rule }
+
+      # Extract the content of +:rule_expr+ and set the package.
       rule(:rule_expr => {
           :package => simple(:package),
           :expr => simple(:expr)
@@ -64,25 +68,34 @@ module Pione
         expr.set_package(package)
       }
 
-      # parameters
+      # Transform +:parameters+ as emtpy parameters.
       rule(:parameters => nil) { Parameters.new({}) }
+
+      # Transform +:parameters+ as emtpy parameters.
       rule(:parameters => simple(:elt)) {
         Parameters.new({elt.key => elt.value})
       }
+
+      # Transform +:parameters+ as parameters.
       rule(:parameters => sequence(:list)) {
         elts = Hash[*list.map{|elt| [elt.key, elt.value]}.flatten(1)]
         Parameters.new(elts)
       }
 
+      # Transform +:parameters_element+ as key and value pair.
       rule(:parameters_element => {
           :key => simple(:key),
           :value => simple(:value)
         }) {
-        ParametersElement.new(Variable.new(key.to_s), value)
+        var = Variable.new(key.str).tap do |x|
+          x.set_line_and_column(key.line_and_column)
+        end
+        OpenStruct.new(key: var, value: value)
       }
 
+      # Transform +:index+ as name and parameters structure.
       rule(:index => sequence(:args)) {
-        MessageArgument.new("[]", args)
+        OpenStruct.new(name: "[]", parameters: args)
       }
     end
   end

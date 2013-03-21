@@ -1,21 +1,22 @@
 module Pione
   module Transformer
+    # BlockTransformer is a transformer for syntax tree of blocks.
     module BlockTransformer
       include TransformerModule
 
-      # flow_block:
+      # Transform +:flow_block+ as Model::FlowBlock.
       rule(:flow_block => sequence(:elements)) {
         FlowBlock.new(*elements)
       }
 
-      # action_block:
+      # Transform +:action_block+ as Model::ActionBlock.
       rule(:action_block =>
         { :key => simple(:keyword_Action),
           :content => simple(:content) }
       ) {
-        line_and_column = keyword_Action.line_and_column
-        ActionBlock.new(content) do
-          set_line_and_column(line_and_column)
+        val = content.str
+        ActionBlock.new(val).tap do |x|
+          x.set_line_and_column(keyword_Action.line_and_column)
         end
       }
     end

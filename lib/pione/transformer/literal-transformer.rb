@@ -1,74 +1,70 @@
 module Pione
   module Transformer
+    # LiteralTransformer is a transformer for syntax tree of literals.
     module LiteralTransformer
       include TransformerModule
 
-      # boolean
+      # Tranform +:boolean+ as Model::PioneBoolean.
       rule(:boolean => simple(:s)) do
-        line_and_column = s.line_and_column
         val = (s == "true")
-        Model::PioneBoolean.new(val) do
-          set_line_and_column(line_and_column)
+        Model::PioneBoolean.new(val).tap do |x|
+          x.set_line_and_column(s.line_and_column)
         end
       end
 
-      # string
+      # Transform +:string+ as Model::PioneString.
       rule(:string => simple(:s)) do
-        line_and_column = s.line_and_column
-        Model::PioneString.new(s.str.gsub(/\\(.)/){$1}) do
-          set_line_and_column(line_and_column)
+        # convert backslash notations
+        val = s.str.gsub(/\\(.)/){$1}
+        Model::PioneString.new(val).tap do |x|
+          x.set_line_and_column(s.line_and_column)
         end
       end
 
-      # integer
+      # Transform +:integer+ as Model::PioneInteger.
       rule(:integer => simple(:i)) do
-        line_and_column = i.line_and_column
-        Model::PioneInteger.new(i.to_i) do
-          set_line_and_column(line_and_column)
+        Model::PioneInteger.new(i.to_i).tap do |x|
+          x.set_line_and_column(i.line_and_column)
         end
       end
 
-      # float
+      # Transform +:float+ as Model::PioneFloat.
       rule(:float => simple(:f)) do
-        line_and_column = f.line_and_column
-        Model::PioneFloat.new(f.to_f) do
-          set_line_and_column(line_and_column)
+        Model::PioneFloat.new(f.to_f).tap do |x|
+          x.set_line_and_column(f.line_and_column)
         end
       end
 
-      # variable
-      rule(:variable => simple(:v)) do
-        line_and_column = v.line_and_column
-        Model::Variable.new(v) do
-          set_line_and_column(line_and_column)
+      # Transform +:variable+ as Model::Variable.
+      rule(:variable => simple(:var)) do
+        Model::Variable.new(var.str).tap do |x|
+          x.set_line_and_column(var.line_and_column)
         end
       end
 
-      # data_name
-      # escape characters are substituted
+      # Transform +:data_name+ as Model::DataExpr.
       rule(:data_name => simple(:name)) do
-        line_and_column = name.line_and_column
-        Model::DataExpr.new(name.str.gsub(/\\(.)/) {$1}) do
-          set_line_and_column(line_and_column)
+        # convert backslash notations
+        val = name.str.gsub(/\\(.)/){$1}
+        Model::DataExpr.new(val).tap do |x|
+          x.set_line_and_column(name.line_and_column)
         end
       end
 
-      # package_name
+      # Transform +:package_name+ as Model::Package.
       rule(:package_name => simple(:name)) do
-        line_and_column = name.line_and_column
-        Model::Package.new(name) do
-          set_line_and_column(line_and_column)
+        val = name.str
+        Model::Package.new(val).tap do |x|
+          x.set_line_and_column(name.line_and_column)
         end
       end
 
-      # rule_name
+      # Transform +:rule_name+ as Model::RuleExpr.
       rule(:rule_name => simple(:name)) do
-        line_and_column = name.line_and_column
-        RuleExpr.new(
-          Package.new(Thread.current[:current_package_name]),
-          name
-        ) do
-          set_line_and_column(line_and_column)
+        package = Package.new(Thread.current[:current_package_name])
+        val = name.str
+        RuleExpr.new(package, val).tap do |x|
+          x.set_line_and_column(name.line_and_column)
         end
       end
     end

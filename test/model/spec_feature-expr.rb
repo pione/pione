@@ -309,9 +309,9 @@ describe 'Feature::Expr' do
         cases.each do |case_name, testcase|
           it "should unify %s expression by %s(%s)" % [type_name, method_name, case_name] do
             parser = DocumentParser.new.feature_expr
-            expr1 = DocumentTransformer.new.apply(parser.parse(testcase["expr1"]))
-            expr2 = DocumentTransformer.new.apply(parser.parse(testcase["expr2"]))
-            result = DocumentTransformer.new.apply(parser.parse(testcase["result"]))
+            expr1 = Transformer.document(parser.parse(testcase["expr1"]))
+            expr2 = Transformer.document(parser.parse(testcase["expr2"]))
+            result = Transformer.document(parser.parse(testcase["result"]))
             expr1.send(method_name, expr2).should.be.true
           end
         end
@@ -322,8 +322,8 @@ describe 'Feature::Expr' do
     testcases["sentence"].each do |testname, testcase|
       it "should get #{testcase["result"]}: #{testname}" do
         parser = DocumentParser.new.feature_expr
-        provide = DocumentTransformer.new.apply(parser.parse(testcase["provide"]))
-        request = DocumentTransformer.new.apply(parser.parse(testcase["request"]))
+        provide = Transformer.document(parser.parse(testcase["provide"]))
+        request = Transformer.document(parser.parse(testcase["request"]))
         Feature::Sentence.new(provide, request).decide.should == testcase["result"]
       end
     end
