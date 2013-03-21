@@ -1,16 +1,28 @@
-case1:
-  provide: "^X"
-  request: "+X"
-  result: true
-case2:
-  provide: "^X"
-  request: "*"
-  result: true
-case3:
-  provide: "^X"
-  request: "+Y"
-  result: false
-case4:
-  provide: "^X"
-  request: "-X"
-  result: false
+unification:
+  AND:
+    unify_redundant_feature:
+      case1:
+        expr1: "+X & +Y"
+        expr2: "+X"
+        result: "+X & +Y"
+      case2:
+        expr1: "+X & +Y"
+        expr2: "+Y"
+        result: "+X & +Y"
+sentence:
+  case1:
+    provide: "^X"
+    request: "+X"
+    result: true
+  case2:
+    provide: "^X"
+    request: "*"
+    result: true
+  case3:
+    provide: "^X"
+    request: "+Y"
+    result: false
+  case4:
+    provide: "^X"
+    request: "-X"
+    result: false

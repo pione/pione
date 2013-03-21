@@ -304,7 +304,22 @@ describe 'Feature::Expr' do
       r.should == Feature::AndExpr.new(requisite)
     end
 
-    testcases.each do |testname, testcase|
+    testcases["unification"].each do |type_name, methods|
+      methods.each do |method_name, cases|
+        cases.each do |case_name, testcase|
+          it "should unify %s expression by %s(%s)" % [type_name, method_name, case_name] do
+            parser = DocumentParser.new.feature_expr
+            expr1 = DocumentTransformer.new.apply(parser.parse(testcase["expr1"]))
+            expr2 = DocumentTransformer.new.apply(parser.parse(testcase["expr2"]))
+            result = DocumentTransformer.new.apply(parser.parse(testcase["result"]))
+            expr1.send(method_name, expr2).should.be.true
+          end
+        end
+      end
+    end
+
+    # sentence test cases
+    testcases["sentence"].each do |testname, testcase|
       it "should get #{testcase["result"]}: #{testname}" do
         parser = DocumentParser.new.feature_expr
         provide = DocumentTransformer.new.apply(parser.parse(testcase["provide"]))

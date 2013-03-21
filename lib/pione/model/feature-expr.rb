@@ -4,32 +4,46 @@ module Pione::Model
   # Feature is selection system between task and task worker.
   module Feature
     class << self
-      # Returns feature conjunction.
-      # @param [Array<Expr>] exprs
+      # Return feature conjunction.
+      #
+      # @param exprs [Array<Expr>]
       #   feature expression list
       # @return [Expr]
       #   conjuncted expression
+      #
+      # @example
+      #   x = RequisiteExpr.new("X")
+      #   y = RequisiteExpr.new("Y")
+      #   Feature.and(x, y) #=> +X & +Y
       def and(*exprs)
         AndExpr.new(*exprs)
       end
 
-      # Returns feature disjunction.
-      # @param [Array<Expr>] exprs
+      # Return feature disjunction.
+      #
+      # @param exprs [Array<Expr>]
       #   feature expression list
       # @return [Expr]
       #   disjuncted expression
+      #
+      # @example
+      #   x = RequisiteExpr.new("X")
+      #   y = RequisiteExpr.new("Y")
+      #   Feature.or(x, y) #=> +X | +Y
       def or(*exprs)
         OrExpr.new(*exprs)
       end
 
-      # Returns empty feature.
+      # Return empty feature.
+      #
       # @return [Expr]
       #    empty feature
       def empty
         empty ||= EmptyFeature.new
       end
 
-      # Returns boundless feature
+      # Return boundless feature.
+      #
       # @return [Expr]
       #   boundless feature
       def boundless
@@ -41,28 +55,30 @@ module Pione::Model
     class Expr < BasicModel
       set_pione_model_type TypeFeature
 
-      # Returns itself.
+      # Return simplified expression.
+      #
       # @return [Expr]
-      #   itself
+      #   simplified expression
       def simplify
         return self
       end
 
-      # Returns true if the feature is empty.
+      # Return true if the feature is empty.
+      #
       # @return [Boolean]
-      #   false
+      #   true if the feature is empty
       def empty?
         return false
       end
 
-      # Returns true if the other matches the feature.
+      # Return true if the other matches the feature.
+      #
       # @return [Boolean]
       #   true if the other matches the feature
       def match(other)
         raise ArgumentError.new(other) unless other.kind_of?(Expr)
         Sentence.new(self, other).decide
       end
-
       alias :=== :match
     end
 
@@ -75,14 +91,13 @@ module Pione::Model
 
       # @api private
       def textize
-        "#{symbol}"
+        symbol
       end
 
       # @api private
       def ==(other)
         other.kind_of?(self.class)
-      end
-
+       end
       alias :eql? :==
 
       # @api private
@@ -96,14 +111,16 @@ module Pione::Model
     # ability in provider expression and the task has no specific request in
     # request expression.
     class EmptyFeature < SpecialFeature
-      # Returns "*".
-      # return [Boolean]
+      # Return the symbol of empty feature.
+      #
+      # return [String]
       #   "*"
       def symbol
         "*"
       end
 
-      # Returns true because empty feature is empty.
+      # Return true because empty feature is empty.
+      #
       # @return [Boolean]
       #   true
       def empty?
@@ -122,8 +139,17 @@ module Pione::Model
     # ability in provider expression and the task has boundless ability request
     # in request expression.
     class BoundlessFeature < SpecialFeature
+      # Return the symbol of bundless feature.
+      #
+      # return [String]
+      #   "@"
       def symbol
         "@"
+      end
+
+      # @api private
+      def ==(other)
+        other.kind_of?(BoundlessFeature)
       end
     end
 
@@ -134,7 +160,8 @@ module Pione::Model
     class UnaryOperator < Operator
       attr_reader :symbol
 
-      # Returns the operator symbol.
+      # Return the operator symbol.
+      #
       # @return [String]
       #   operator symbol
       # @example
@@ -156,7 +183,8 @@ module Pione::Model
         @operator
       end
 
-      # Creates a new operator.
+      # Create a new operator.
+      #
       # @param [Symbol] symbol
       #   feature symbol
       def initialize(symbol)
@@ -183,7 +211,6 @@ module Pione::Model
       def ==(other)
         other.kind_of?(self.class) and @symbol == other.symbol
       end
-
       alias :eql? :==
 
       # @api private
@@ -203,6 +230,7 @@ module Pione::Model
     end
 
     # RestrictiveExpr is a class for restrictive feature expression.
+    #
     # @example
     #   !X
     class RestrictiveExpr < ProviderExpr
@@ -215,6 +243,7 @@ module Pione::Model
     # Requisite Operator is a class for requisite feature expressions. Requisite
     # Feature are written like as "+X", these represent feature's requiste
     # ability.
+    #
     # @example
     #   +X
     class RequisiteExpr < RequestExpr
@@ -224,8 +253,9 @@ module Pione::Model
     # BlockingExpr is a class for blocking feature expressions. Blocking Feature
     # are written like as "-X", these represent the ability that block to
     # execute the task.
+    #
     # @example
-    #   -X
+    #   BlockingExpr.new("X") #=> -X
     class BlockingExpr < RequestExpr
       @operator = "-"
     end
@@ -233,38 +263,55 @@ module Pione::Model
     # PreferredExpr is a class for preferred feature expressions. Preferred
     # Feature are written like as "?X", these represent that task workers what
     # the feature have take the task.
+    #
+    # @example
+    #   PreferredExpr.new("X") #=> ?X
     class PreferredExpr < RequestExpr
       @operator = "?"
     end
 
     # Connective is a superclass of AndExpr and OrExpr. This represents
-    # connection of some features.
+    # connection of feature expressions.
     class Connective < Expr
+      # @return [Set]
+      #   feature expressions included in the connective
       attr_reader :elements
 
-      # Creates a new connective.
-      # @param [Array<Expr>] elements
-      #   feature list
+      # Create a new connective.
+      #
+      # @param elements [Array<Expr>]
+      #   feature expressions
       def initialize(*elements)
         @elements = Set.new
         elements.each {|elt| add(elt) }
         super()
       end
 
-      # Adds the element from the connective set and unifies by it.
-      # @param [Expr] elt
+      # Add the feature expression as elements of the connective and unify it.
+      #
+      # @param expr [Expr]
       #   feature element
       # @return [void]
-      def add(elt)
-        if elt.kind_of?(self.class)
-          elt.elements.each {|e| unify(e) }
+      #
+      # @example AND expression
+      #   x = RequisiteExpr.new("X")
+      #   y = RequisiteExpr.new("Y")
+      #   AndExpr.new(x).add(y) #=> +X & +Y
+      # @example OR expression
+      #   x = RequisiteExpr.new("X")
+      #   y = RequisiteExpr.new("Y")
+      #   OrExpr.new(x, y).add(x) #=> +X | +Y
+      def add(expr)
+        if expr.kind_of?(self.class)
+          expr.elements.each {|e| unify(e) }
         else
-          unify(elt)
+          unify(expr)
         end
       end
 
-      # Deletes the element from the connective set.
-      # @param [Expr] elt
+      # Delete the element from the connective set.
+      #
+      # @param elt [Expr]
       #   feature element
       # @return [void]
       def delete(elt)
@@ -274,7 +321,8 @@ module Pione::Model
         end
       end
 
-      # Unifies connective set by the element.
+      # Unify connective set by the element.
+      #
       # @param [Expr] elt
       #   feature element
       # @return [void]
@@ -284,9 +332,13 @@ module Pione::Model
         end
       end
 
-      # Simplifies the connective by unifing and up-rising single element.
+      # Simplify the connective by unifing and up-rising single element.
+      #
       # @return [Expr]
       #   simplified feature
+      #
+      # @example
+      #   AndExpr.new(RequisiteExpr.new("X")).simplify #=> +X
       def simplify
         if @elements.size == 1
           return @elements.first.simplify
@@ -298,7 +350,8 @@ module Pione::Model
         end
       end
 
-      # Returns true if the connective set is empty.
+      # Return true if the connective set is empty.
+      #
       # @return [Boolean]
       #   true if the connective set is empty
       def empty?
@@ -317,9 +370,7 @@ module Pione::Model
 
       # @api private
       def textize
-        "#{self.class.name}(%s)" % [
-          @elements.map{|elt| elt.textize}.join(",")
-        ]
+        "#{self.class.name}(%s)" % @elements.map{|elt| elt.textize}.join(",")
       end
 
       # @api private
@@ -327,8 +378,7 @@ module Pione::Model
         return true if empty? and other.kind_of?(Expr) and other.empty?
         other.kind_of?(self.class) and @elements == other.elements
       end
-
-      alias :eql? :==
+      alias :eql? :"=="
 
       # @api private
       def hash
@@ -336,6 +386,7 @@ module Pione::Model
       end
 
       # Clone with cloning the elements set.
+      #
       # @api private
       def clone
         obj = super
@@ -345,6 +396,10 @@ module Pione::Model
       end
     end
 
+    # AndExpr represents conjunction of feature expressions.
+    #
+    # @example
+    #   AndExpr.new(RequisiteExpr.new("X"), RequisiteExpr.new("Y")) #=> +X & +Y
     class AndExpr < Connective
       UNIFICATIONS =
         [ :unify_redundant_feature,
@@ -354,10 +409,21 @@ module Pione::Model
         ]
 
       module UnificationMethod
-        def unify_redundant_feature(elt)
-          # Γ & Γ -> Γ
-          # Δ & Δ -> Δ
-          return @elements.include?(elt)
+        # Unify redundant feature. This unification rule is described as
+        # follows:
+        #
+        # - Γ & Γ -> Γ
+        # - Δ & Δ -> Δ
+        #
+        # @param expr [Expr]
+        #   feature expression
+        #
+        # @example
+        #   x = RequisiteExpr.new("X")
+        #   y = RequisiteExpr.new("Y")
+        #   AndExpr.new(x,y).unify_redundant_feature(x) #=> true
+        def unify_redundant_feature(expr)
+          return @elements.include?(expr)
         end
 
         def summarize_or(elt)
@@ -449,7 +515,7 @@ module Pione::Model
 
       include UnificationMethod
 
-      # Makes an expander for response test.
+      # Make an expander for response test.
       def expander
         # convert or-clause into expander
         elements = @elements.map do |elt|
@@ -463,7 +529,7 @@ module Pione::Model
 
       require 'fiber'
 
-      # Chooses a concrete expression that expand or-clause.
+      # Choose a concrete expression that expand or-clause.
       def choose_concrete_expr(y, orig, list, fiber, i)
         if orig.size == i
           # when reach the terminateion of elements, yield a concrete expression
@@ -503,7 +569,12 @@ module Pione::Model
       end
     end
 
+    # OrExpr represents disjunction of feature expressions.
+    #
+    # @example
+    #   OrExpr.new(RequisiteExpr.new("X"), RequisiteExpr.new("Y")) #=> +X | +Y
     class OrExpr < Connective
+      # unification list
       UNIFICATIONS =
         [ :unify_redundant_feature,
           :summarize_and,
@@ -512,19 +583,37 @@ module Pione::Model
           :neutralize
         ]
 
+      # OrExpr's unification methods.
       module UnificationMethod
-        def unify_redundant_feature(elt)
-          # Γ | Γ -> Γ
-          # Δ | Δ -> Δ
-          return @elements.include?(elt)
+        # Return true if elements include the feature. This unification rule is
+        # described as follows:
+        #
+        # - Γ | Γ -> Γ
+        # - Δ | Δ -> Δ
+        #
+        # @param expr [Expr]
+        #   feature expression
+        #
+        # @example
+        #   x = RequisiteExpr.new("X")
+        #   y = RequisiteExpr.new("Y")
+        #   OrExpr.new(x, y).unify_redundant_feature(x) #=> true
+        def unify_redundant_feature(expr)
+          return @elements.include?(expr)
         end
 
+        # Return true if the expression is summarized by AND connective. This
+        # rule is described as follows:
+        #
+        # - (Γ1 & Γ2) | (Γ1 & Γ3) -> Γ1 & (Γ2 | Γ3)
+        # - Γ1 | (Γ1 & Γ3) -> Γ1
+        # - (Γ1 & Γ2) | Γ1 -> Γ1
         def summarize_and(elt)
           if elt.kind_of?(AndExpr)
+            # (Γ1 & Γ2) | (Γ1 & Γ3) -> Γ1 & (Γ2 | Γ3)
             if target = @elements.find {|e|
                 e.kind_of?(AndExpr) && not((e.elements & elt.elements).empty?)
               }
-              # (Γ1 & Γ2) | (Γ1 & Γ3) -> Γ1 & (Γ2 | Γ3)
               @elements.delete(target)
               union = target.elements & elt.elements
               union_expr = if union.length > 1
@@ -616,7 +705,7 @@ module Pione::Model
 
       include UnificationMethod
 
-      # Makes an expander for response test.
+      # Make an expander for response test.
       def expander
         Enumerator.new do |y|
           @elements.each do |elt|
