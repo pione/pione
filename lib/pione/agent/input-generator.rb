@@ -73,9 +73,10 @@ module Pione
           end
         end
 
-        # Initializes the generator. This method is called when root rule is
+        # Initialize the generator. This method is called when root rule is
         # requested in stream mode.
-        # @retrun [void]
+        #
+        # @return [void]
         def init
           if @dir_path
             @gen = Resource[@dir_path].entries.to_enum
