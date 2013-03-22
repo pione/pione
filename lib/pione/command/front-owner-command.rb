@@ -6,6 +6,8 @@ module Pione
       end
 
       # Runs the command.
+      #
+      # @return [void]
       def run
         parse_options
         validate_options
@@ -15,22 +17,31 @@ module Pione
         start
       end
 
-      # Setups font server.
+      # Setup font server.
+      #
       # @return [void]
       def setup_front
         Global.front = create_front
       end
 
-      # Creates a front server. This method should be overridden in subclasses.
+      # Create a front server. This method should be overridden in subclasses.
+      #
       # @return [BasicFront]
       #   front server
       def create_front
         raise NotImplementedError
       end
 
+      # Terminate PIONE front. Stop DRb service.
+      #
+      # @return [void]
       def terminate
-        super
-        DRb.stop_service
+        Global.monitor.synchronize do
+          # stop DRb service
+          DRb.stop_service
+          # go to other termination processes
+          super
+        end
       end
     end
   end

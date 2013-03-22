@@ -90,6 +90,13 @@ module Pione
       # system
       #
 
+      # @!method monitor
+      # Global monitor object for PIONE system.
+      #
+      # @return [Monitor]
+      #   monitor object
+      define_item(:monitor, false, Monitor.new)
+
       # .pione dir
       define_item(:dot_pione_dir, true) do
         Pathname.new("~/.pione").expand_path.tap {|path|

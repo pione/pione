@@ -123,8 +123,14 @@ module Pione
         raise NotImplementedError
       end
 
+      # Terminate the command. Exit from PIONE system.
+      #
+      # @return [void]
       def terminate
-        exit
+        Global.monitor.synchronize do
+          # exit with no exception
+          exit!
+        end
       end
     end
   end
