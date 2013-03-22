@@ -33,10 +33,14 @@ module Pione
         @watchdog.start
       end
 
+      # Terminate the child front. Kill watchdog.
+      #
+      # @return [void]
       def terminate
+        # kill watchdog
         @watchdog.terminate
+        # go to other termination processes
         super
-        abort
       end
     end
   end

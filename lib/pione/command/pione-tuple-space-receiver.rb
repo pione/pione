@@ -42,13 +42,18 @@ TXT
         # ignore reply reader error
       end
 
+      # Terminate the tuple space recevier.
+      #
+      # @return [void]
       def terminate
-        puts "terminate %s" % program_name
-        begin
-          @tuple_space_receiver.terminate
-        rescue DRb::DRbConnError
+        Global.monitor.synchronize do
+          begin
+            @tuple_space_receiver.terminate
+          rescue DRb::DRbConnError
+            # ignore
+          end
+          super
         end
-        super
       end
     end
   end
