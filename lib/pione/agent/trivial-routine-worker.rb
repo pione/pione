@@ -9,17 +9,18 @@ module Pione
       define_state_transition :initialized => :working
       define_state_transition :working => :working
 
-      # Creates a worker.
-      # @param [Proc] action
+      # Create a trivial routine worker.
+      #
+      # @param action [Proc]
       #   worker's action as proc object
-      # @param [Integer] sec
-      #   sleeping time
       def initialize(action)
         raise ArgumentError.new(action) unless action.kind_of?(Proc)
         @action = action
       end
 
-      # Calls the action.
+      # Call the action.
+      #
+      # @return [void]
       def transit_to_working
         @action.call
       end
