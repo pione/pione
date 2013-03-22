@@ -21,10 +21,10 @@ module Pione
         # @param [Object] val
         #   default value
         # @return [void]
-        def define_item(name, config, val=nil, &b)
+        def define_item(name, configurable, val=nil, &b)
           @__names__ << name
           if config
-            @__config__[name] = config.kind_of?(TrueClass) ? name : config
+            @__config__[name] = configurable ? name : config
           end
 
           singleton_class.module_eval do |mod|
