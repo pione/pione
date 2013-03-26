@@ -1,13 +1,13 @@
 module Pione
   module Util
-    # Message is a set of utility methods for sending messages to user.
-    module Message
+    # ConsoleMessage is a set of utility methods for sending messages to user.
+    module ConsoleMessage
       # @api private
-      MessageQueue = Queue.new
+      MESSAGE_QUEUE = Queue.new
 
       # message queue thread
       Thread.new {
-        while msg = MessageQueue.pop
+        while msg = MESSAGE_QUEUE.pop
           puts msg
         end
       }
@@ -20,7 +20,8 @@ module Pione
       # @api private
       @@quiet_mode = false
 
-      # Evaluates the block in debug mode.
+      # Evaluate the block in debug mode.
+      #
       # @yield []
       #   target block
       # @return [void]
@@ -32,7 +33,8 @@ module Pione
       end
       module_function :debug_mode
 
-      # Sets debug mode.
+      # Set debug mode.
+      #
       # @param [bool] mode
       #   flag of debug mode
       # @return [void]
@@ -42,13 +44,15 @@ module Pione
       module_function :"debug_mode="
 
       # Return true if the system is debug mode.
+      #
       # @return [bool]
       def debug_mode?
         @@debug_mode
       end
       module_function :debug_mode?
 
-      # Evaluates the block in quiet mode.
+      # Evaluate the block in quiet mode.
+      #
       # @yield []
       #   target block
       # @return [void]
@@ -58,9 +62,10 @@ module Pione
         yield
         @@quiet_mode = orig
       end
-      module_function :debug_mode
+      module_function :quiet_mode
 
-      # Sets quiet mode.
+      # Set quiet mode.
+      #
       # @param [bool] mode
       #   flag of quiet mode
       # @return [void]
@@ -70,6 +75,7 @@ module Pione
       module_function :"quiet_mode="
 
       # Return true if the system is quiet mode.
+      #
       # @return [bool]
       def quiet_mode?
         @@quiet_mode
@@ -78,12 +84,13 @@ module Pione
 
       # @!group Message Senders
 
-      # Sends the debug message.
-      # @param [String] msg
+      # Send the debug message.
+      #
+      # @param msg [String]
       #   debug message
-      # @param [Integer] level
+      # @param level [Integer]
       #   indent level
-      # @param [String] type
+      # @param type [String]
       #   message heading type
       # @return [void]
       def debug_message(msg, level=0, type="debug")
@@ -93,28 +100,31 @@ module Pione
       end
       module_function :debug_message
 
-      # Sends the debug message to notify that something begins.
-      # @param [String] msg
+      # Send the debug message to notify that something begins.
+      #
+      # @param msg [String]
       #   debug message
       # @return [void]
       def debug_message_begin(msg)
         debug_message(msg, 0, ">>>")
       end
 
-      # Sends the debug message to notify that something ends.
-      # @param [String] msg
+      # Send the debug message to notify that something ends.
+      #
+      # @param msg [String]
       #   debug message
       # @return [void]
       def debug_message_end(msg)
         debug_message(msg, 0, "<<<")
       end
 
-      # Sends the user message.
-      # @param [String] msg
+      # Send the user message.
+      #
+      # @param msg [String]
       #   user message
-      # @param [Integer] level
+      # @param level [Integer]
       #   indent level
-      # @param [String] type
+      # @param type [String]
       #   message heading type
       # @return [void]
       def user_message(msg, level=0, type="info")
@@ -123,15 +133,17 @@ module Pione
         end
       end
 
-      # Sends the user message to notify that something begins.
-      # @param [String] msg
+      # Send the user message to notify that something begins.
+      #
+      # @param msg [String]
       #   user message
       # @return [void]
       def user_message_begin(msg)
         user_message(msg, 0, ">>>")
       end
 
-      # Sends the debug message to notify that something ends.
+      # Send the debug message to notify that something ends.
+      #
       # @param [String] msg
       #   debug message
       # @return [void]
@@ -139,15 +151,31 @@ module Pione
         user_message(msg, 0, "<<<")
       end
 
-      # use this internal debug only
+      # Show the message.
+      #
+      # @param msg [String]
+      #   the message
+      #
+      # @note
+      #   Use this for debugging only.
+      #
       # @api private
       def show(msg)
         message("show", :red, msg)
       end
 
+      # Print the message with the color.
+      #
+      # @param type [String]
+      #   message type("debug", "info", "show", ">>>", "<<<")
+      # @param color [Symbol]
+      #   type color(:red, :green, :magenta)
+      # @param msg [String]
+      #   message content
+      #
       # @api private
       def message(type, color, msg)
-        MessageQueue.push "%s %s" % [Terminal.color(color, "%5s" % type), msg]
+        MESSAGE_QUEUE.push "%s %s" % [Terminal.color(color, "%5s" % type), msg]
       end
       module_function :message
     end

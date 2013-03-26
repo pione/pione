@@ -9,7 +9,7 @@ end
 
 desc 'Show undocumented function list'
 task 'html:undoc' do
-  sh 'bundle exec yard stats --list-undoc --no-api --private'
+  sh 'bundle exec yard stats --list-undoc --no-api --private --compact'
 end
 
 desc 'count characters in input direcotry'

@@ -16,7 +16,6 @@ module Pione::Model
     # @api private
     def textize
       "#PioneFloat{%s}" % @value
-      # @value.to_s
     end
 
     # Returns ruby's value.

@@ -102,24 +102,33 @@ TXT
         end
       end
 
+      # Terminate the task worker. Kill the agent and disconnect from parent
+      # front.
+      #
+      # @return [void]
       def terminate
-        return if @terminated
-        @agent.terminate
+        Global.monitor.synchronize do
+          begin
+            return if @terminated
+            @agent.terminate
 
-        while true
-          break if @agent.terminated? and @agent.running_thread.stop?
-          sleep 1
+            while true
+              break if @agent.terminated? and @agent.running_thread.stop?
+              sleep 1
+            end
+
+            # disconnect parent front
+            @parent_front.remove_task_worker_front(self, @connection_id)
+
+            # flag
+            @terminated = true
+
+            super
+          rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+            # ignore
+          end
+          super
         end
-
-        # disconnect parent front
-        @parent_front.remove_task_worker_front(self, @connection_id)
-
-        # flag
-        @terminated = true
-
-        super
-      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
-        abort
       end
     end
   end

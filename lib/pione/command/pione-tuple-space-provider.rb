@@ -76,8 +76,10 @@ TXT
 
       # @api private
       def terminate
-        @tuple_space_provider.terminate
-        super
+        Global.monitor.synchronize do
+          @tuple_space_provider.terminate
+          super
+        end
       rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
         abort
       end

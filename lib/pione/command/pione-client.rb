@@ -203,19 +203,26 @@ module Pione
         terminate
       end
 
+      # Terminate pione-client command. Kill tuple space provider.
+      #
+      # @return [void]
       def terminate
-        # kill the thread for starting tuple space provider
-        if @start_tuple_space_provider_thread
-          if @start_tuple_space_provider_thread.alive?
-            @start_tuple_space_provider_thread.kill
+        Global.monitor.synchronize do
+          # kill the thread for starting tuple space provider
+          if @start_tuple_space_provider_thread
+            if @start_tuple_space_provider_thread.alive?
+              @start_tuple_space_provider_thread.kill
+            end
           end
-        end
 
-        # terminate tuple space provider
-        if @tuple_space_provider
-          @tuple_space_provider.terminate
+          # terminate tuple space provider
+          if @tuple_space_provider
+            @tuple_space_provider.terminate
+          end
+
+          # go to other termination processes.
+          super
         end
-        super
       end
 
       private

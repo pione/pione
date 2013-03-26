@@ -20,6 +20,7 @@ module Pione
 
       def terminate
         terminate_task_worker_fronts
+        super
       end
 
       private
