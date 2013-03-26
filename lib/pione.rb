@@ -41,7 +41,7 @@ require 'pione/version'
 # util
 require 'pione/util/misc'
 require 'pione/util/terminal'
-require 'pione/util/message'
+require 'pione/util/console-message'
 require 'pione/util/log'
 require 'pione/util/waiter-table'
 require 'pione/util/error-report'
@@ -220,7 +220,7 @@ module Pione
   include System
   include Relay
   include Util
-  include Util::Message
+  include Util::ConsoleMessage
   include Model
   include TupleSpace
   include Parser
