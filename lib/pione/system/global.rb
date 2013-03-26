@@ -23,7 +23,7 @@ module Pione
         # @return [void]
         def define_item(name, configurable, val=nil, &b)
           @__names__ << name
-          if config
+          if configurable
             @__config__[name] = configurable ? name : config
           end
 
