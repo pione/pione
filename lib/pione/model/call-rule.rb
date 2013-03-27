@@ -49,6 +49,16 @@ module Pione::Model
       self.class.new(@expr.eval(vtable))
     end
 
+    # Return a set of call-rules that the rule expression are expanded.
+    #
+    # @return [Set<CallRule>]
+    #   a set of call-rules
+    def to_set
+      @expr.to_set.map do |expr|
+        self.class.new(expr)
+      end
+    end
+
     # @api private
     def textize
       "call_rule(%s)" % [@expr.textize]

@@ -95,6 +95,7 @@ require 'pione/model/variable-table'
 require 'pione/model/data-expr'
 require 'pione/model/parameters'
 require 'pione/model/package'
+require 'pione/model/ticket-expr'
 require 'pione/model/rule-expr'
 require 'pione/model/binary-operator'
 require 'pione/model/message'
@@ -103,7 +104,6 @@ require 'pione/model/assignment'
 require 'pione/model/block'
 require 'pione/model/rule'
 require 'pione/model/rule-io'
-require 'pione/model/ticket'
 
 # tuple
 require 'pione/tuple/basic-tuple'
@@ -125,6 +125,7 @@ require 'pione/tuple/exception-tuple'
 require 'pione/tuple/log-tuple'
 require 'pione/tuple/rule-tuple'
 require 'pione/tuple/task-worker-resource-tuple'
+require 'pione/tuple/ticket-tuple'
 
 # tuple-space
 require 'pione/tuple-space/tuple-space-server-interface'

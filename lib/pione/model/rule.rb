@@ -1,53 +1,79 @@
 module Pione::Model
   # RuleCondition represents rule condition.
   class RuleCondition < BasicModel
-    # Returns the value of attribute inputs.
+    # the value of attribute inputs
+    #
     # @return [Array<DataExpr, Array<DataExpr>>]
     #   rule inputs condition
     attr_reader :inputs
 
-    # Returns the value of attribute outputs.
+    # the value of attribute outputs
+    #
     # @return [Array<DataExpr, Array<DataExpr>>]
-    #  rule outputs condition
+    #   rule outputs condition
     attr_reader :outputs
 
-    # Returns the value of attribute params.
+    # the value of attribute params
+    #
     # @return [Parameters]
     #   rule parameters table
     attr_reader :params
 
-    # Returns the value of attribute features.
+    # the value of attribute features
+    #
     # @return [Feature]
     #   rule feature condition
     attr_reader :features
 
-    # Creates a rule condition.
-    # @param [Array<DataExpr, Array<DataExpr>>] inputs
+    # input ticket expression
+    #
+    # @return [TicketExpr]
+    #    input ticket expression
+    attr_reader :input_ticket_expr
+
+    # output ticket expression
+    #
+    # @return [TicketExpr]
+    #    output ticket
+    attr_reader :output_ticket_expr
+
+    # Create a rule condition.
+    #
+    # @param inputs [Array<DataExpr, Array<DataExpr>>]
     #   rule inputs
-    # @param [Array<DataExpr, Array<DataExpr>>] outputs
+    # @param outputs [Array<DataExpr, Array<DataExpr>>]
     #   rule outputs
-    # @param [Parameters] params
+    # @param params [Parameters]
     #   rule parameters
-    # @param [Feature] features
+    # @param features [Feature]
     #   rule features
-    def initialize(inputs, outputs, params, features)
+    # @param input_ticket_expr [TicketExpr]
+    #   input ticket expression
+    # @param output_ticket_expr [TicketExpr]
+    #   output ticket expression
+    def initialize(inputs, outputs, params, features, input_ticket_expr, output_ticket_expr)
       check_argument_type(params, Parameters)
       check_argument_type(features, Feature::Expr)
       @inputs = inputs
       @outputs = outputs
       @params = params
       @features = features
+      @input_ticket_expr = input_ticket_expr
+      @output_ticket_expr = output_ticket_expr
       super()
     end
 
-    # Returns true if the condition includes variable.
+    # Return true if the condition includes variable.
+    #
     # @return [Boolean]
     #   true if the condition includes variable, or false
     def include_variable?
       [ @inputs.any? {|input| input.include_variable?},
         @outputs.any? {|output| output.include_variable?},
         @params.include_variable?,
-        @features.include_variable?
+        @features.include_variable?,
+        @input_tickets.any? {|ticket| ticket.include_variable?},
+        @output_tickets.any? {|ticket| ticket.include_variable?}
       ].any?
     end
 
@@ -60,6 +86,7 @@ module Pione::Model
       return true
     end
 
+    # @api private
     alias :eql? :"=="
 
     # @api private
@@ -86,6 +113,7 @@ module Pione::Model
     attr_reader :body
 
     def_delegators :@condition, :inputs, :outputs, :params, :features
+    def_delegators :@condition, :input_ticket_expr, :output_ticket_expr
 
     # Creates a rule.
     # @param [RuleExpr] expr
@@ -211,7 +239,7 @@ module Pione::Model
       @params = params
       condition = make_condition
       super(
-        RuleExpr.new(Package.new("root"), "Root"),
+        RuleExpr.new(Package.new("root"), "Root", Parameters.empty, TicketExpr.empty, TicketExpr.empty),
         condition,
         FlowBlock.new(CallRule.new(@main.expr.set_params(@params)))
       )
@@ -244,7 +272,9 @@ module Pione::Model
         @main.inputs,
         @main.outputs,
         Parameters.empty,
-        Feature.empty
+        Feature.empty,
+        TicketExpr.empty,
+        TicketExpr.empty
       )
     end
 
@@ -263,7 +293,13 @@ module Pione::Model
     # @param [Proc] b
     #   rule process
     def initialize(name, &b)
-      expr = RuleExpr.new(Package.new('system'), name)
+      expr = RuleExpr.new(
+        Package.new('system'),
+        name,
+        Parameters.empty,
+        TicketExpr.empty,
+        TicketExpr.empty
+      )
       condition = make_condition
       super(expr, condition, b)
     end
@@ -273,7 +309,7 @@ module Pione::Model
     # @api private
     def make_condition
       inputs = [DataExpr.new('*')]
-      RuleCondition.new(inputs, [], Parameters.empty, Feature::EmptyFeature.new)
+      RuleCondition.new(inputs, [], Parameters.empty, Feature::EmptyFeature.new, TicketExpr.empty, TicketExpr.empty)
     end
 
     # @api private

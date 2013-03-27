@@ -76,9 +76,6 @@ TXT
           end
           # print parsing result
           print_result(buf)
-        else
-          # don't record if it is an empty line
-          Readline::HISTORY.pop
         end
       end
 

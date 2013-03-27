@@ -9,7 +9,7 @@ module Pione
            { :left => simple(:left),
              :operator => simple(:operator),
              :right => simple(:right) }) {
-        Model::BinaryOperator.new(operator, left, right)
+        Model::BinaryOperator.new(operator.to_s, left, right)
       }
 
       # Extract the content of +:expr+.

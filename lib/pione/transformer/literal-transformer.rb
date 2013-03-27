@@ -63,7 +63,7 @@ module Pione
       rule(:rule_name => simple(:name)) do
         package = Package.new(Thread.current[:current_package_name])
         val = name.str
-        RuleExpr.new(package, val).tap do |x|
+        RuleExpr.new(package, val, Parameters.empty, TicketExpr.empty, TicketExpr.empty).tap do |x|
           x.set_line_and_column(name.line_and_column)
         end
       end
@@ -71,7 +71,7 @@ module Pione
       # ticket
       rule(:ticket => simple(:name)) do
         line_and_column = name.line_and_column
-        Ticket.new(name.to_s) do
+        TicketExpr.new([name.to_s]) do
           set_line_and_column(line_and_column)
         end
       end

@@ -19,7 +19,7 @@ module Pione
         outputs = Naming::OutputLine.values(conditions)
         params = Parameters.merge(*Naming::ParamLine.values(conditions))
         features = Feature::AndExpr.new(*Naming::FeatureLine.values(conditions))
-        condition = RuleCondition.new(inputs, outputs, params, features)
+        condition = RuleCondition.new(inputs, outputs, params, features, TicketExpr.empty, TicketExpr.empty)
         case block
         when ActionBlock
           ActionRule

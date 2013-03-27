@@ -74,7 +74,8 @@ module Pione::Model
       @elements = elements
     end
 
-    # Evaluates each elements and return it.
+    # Evaluate each elements and return it.
+    #
     # @param [VariableTable] vtable
     #   variable table for evaluation
     # @return [BasicModel]

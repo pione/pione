@@ -69,10 +69,35 @@ module Pione
 
       # Finds applicable flow-element rules with inputs and variables.
       def find_applicable_rules(callees)
-        callees.inject([]) do |combinations, callee|
-          # eval callee expr by handling rule context
-          callee = callee.eval(@variable_table)
+        callees = callees.inject([]) do |list, callee|
+          # evaluate callee expr by handling rule context
+          # and expand compositional rule expressions as simple rule expressions
+          list + callee.eval(@variable_table).expr.to_set.to_a.map{|expr| CallRule.new(expr)}
+        end
 
+        # ticket check
+        callees = callees.inject([]) do |list, callee|
+          target = nil
+          # check if tickets exist in the domain
+          names = callee.expr.input_ticket_expr.names
+          if not(names.empty?)
+            if names.all? do |name|
+              begin
+                read0(Tuple[:ticket].new(@domain, name))
+                true
+              rescue Rinda::RequestExpiredError
+                false # when the ticket doesn't exist
+              end
+            end
+              target = callee
+            end
+          else
+            target = callee
+          end
+          target ? list << callee : list
+        end
+
+        callees.inject([]) do |combinations, callee|
           # find callee rule
           rule = find_callee_rule(callee)
 
@@ -211,6 +236,11 @@ module Pione
           # copy data from task domain to this domain
           @finished << finished
           copy_data_into_domain(finished.outputs, @domain)
+
+          # output ticket
+          callee.expr.output_ticket_expr.names.each do |name|
+            write(Tuple[:ticket].new(@domain, name))
+          end
         end
 
         user_message_end("End Task Distribution: %s" % handler_digest)

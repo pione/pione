@@ -213,18 +213,21 @@ module Pione
 
         debug_message_end "End Task Execution #{rule.rule_path} by worker(#{uuid})"
 
-        return task, handler, @__result_task_execution__
+        return task, rule, handler, @__result_task_execution__
       end
 
       # State data_outputing.
-      # @param [Task] task
+      # @param task [Task]
       #   task tuple
+      # @param rule [Rule]
+      #   rule model
       # @param [RuleHandler] handler
       #   rule handler
       # @param [Array<Data>] result
       #   result data tuples
       # @return [Array<Task,RuleHandler>]
-      def transit_to_data_outputing(task, handler, result)
+      def transit_to_data_outputing(task, rule, handler, result)
+        # output data
         result.flatten.each do |output|
           begin
             write(output)
