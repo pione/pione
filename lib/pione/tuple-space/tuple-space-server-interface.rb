@@ -35,12 +35,18 @@ module Pione
       take(tuple, 0)
     end
 
-    # Log a message.
+    # Do the action with loggging the message.
+    #
+    # @param component [String]
+    #   component name
+    # @param data [Hash]
+    #   log content
     # @return [void]
-    def log
-      msg = Log.new
-      yield msg
-      write(Tuple[:log].new(msg))
+    def with_log(component, data)
+      write(Tuple[:log].new(Log.new(component, data.merge({:transition => "start"}))))
+      result = yield
+      write(Tuple[:log].new(Log.new(component, data.merge({:transition => "complete"}))))
+      return result
     end
 
     # Set tuple space server which provides operations.

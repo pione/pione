@@ -130,12 +130,10 @@ module Pione
           begin
             read0(Tuple[:rule].new(rule_path: task.rule_path))
           rescue Rinda::RequestExpiredError
-            log do |msg|
-              msg.add_record(agent_type, "action", "request_rule")
-              msg.add_record(agent_type, "object", task.rule_path)
+            with_log(agent_type, action: "request_rule", uuid: uuid, object: task.rule_path) do
+              write(Tuple[:request_rule].new(task.rule_path))
+              read(Tuple[:rule].new(rule_path: task.rule_path))
             end
-            write(Tuple[:request_rule].new(task.rule_path))
-            read(Tuple[:rule].new(rule_path: task.rule_path))
           end
         @rule = rule.content
         if rule.status == :known
@@ -177,13 +175,10 @@ module Pione
                 debug_message "+++ Create Sub Task worker +++"
                 @child_agent = self.class.new(tuple_space_server, @features)
                 @child_agent.once = true
-                log do |msg|
-                  msg.add_record(agent_type, "action", "create_sub_task_worker")
-                  msg.add_record(agent_type, "uuid", uuid)
-                  msg.add_record(agent_type, "object", @child_agent.uuid)
+                with_log(agent_type, action: "create_sub_task_worker", uuid: uuid, object: @child_agent.uuid) do
+                  take0(Tuple[:foreground].new(task.domain, nil)) rescue true
+                  @child_agent.start
                 end
-                take0(Tuple[:foreground].new(task.domain, nil)) rescue true
-                @child_agent.start
               else
                 tail = descendant.last
                 if tail.action?
@@ -245,15 +240,12 @@ module Pione
       #   the handler
       # @return [void]
       def transit_to_task_finishing(task, handler)
-        log do |msg|
-          msg.add_record(agent_type, "action", "finished_task")
-          msg.add_record(agent_type, "uuid", uuid)
-          msg.add_record(agent_type, "object", task)
+        with_log(agent_type, action: "finished_task", uuid: uuid, object: task) do
+          finished = Tuple[:finished].new(
+            handler.domain, :succeeded, handler.outputs, task.digest
+          )
+          write(finished)
         end
-        finished = Tuple[:finished].new(
-          handler.domain, :succeeded, handler.outputs, task.digest
-        )
-        write(finished)
         take0(Tuple[:foreground].new(task.domain, nil)) rescue true
         terminate if @once
       end

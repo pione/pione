@@ -114,32 +114,21 @@ module Pione
 
       # Redefine hello method with logging.
       def hello
-        log do |msg|
-          msg.add_record(agent_type, "action", "hello")
-          msg.add_record(agent_type, "uuid", uuid)
-        end
-        super
+        with_log(agent_type, action: "hello", uuid: uuid) {super}
       end
 
       # Redefine bye method with logging.
       def bye
-        log do |msg|
-          msg.add_record(agent_type, "action", "bye")
-          msg.add_record(agent_type, "uuid", uuid)
-        end
-        super
+        with_log(agent_type, action: "bye", uuid: uuid) {super}
       end
 
       # Redefine call transition method with logging.
       def call_transition_method(*args)
         unless [:logger, :command_listener].include?(agent_type)
-          log do |msg|
-            msg.add_record(agent_type, "action", "transit")
-            msg.add_record(agent_type, "state", args.first)
-            msg.add_record(agent_type, "uuid", uuid)
-          end
+          with_log(agent_type, action: "transit", state: args.first, uuid: uuid) {super}
+        else
+          super
         end
-        super
       end
     end
   end

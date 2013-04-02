@@ -156,18 +156,14 @@ module Pione
       # space.
       def transit_to_generating
         if input = @generator.generate
-          @inputs << input
-          # log
-          log do |msg|
-            msg.add_record(agent_type, "action", "generate_input_data")
-            msg.add_record(agent_type, "uuid", uuid)
-            msg.add_record(agent_type, "object", input.name)
+          with_log(agent_type, action: "generate_input_data", uuid: uuid, object: input.name) do
+            @inputs << input
+            # upload the file
+            input_uri = @base_uri + File.join("input", input.name)
+            Resource[input_uri].create(Resource[input.uri].read)
+            # make the tuple
+            write(Tuple[:data].new(DOMAIN, input.name, input_uri, input.time))
           end
-          # upload the file
-          input_uri = @base_uri + File.join("input", input.name)
-          Resource[input_uri].create(Resource[input.uri].read)
-          # make the tuple
-          write(Tuple[:data].new(DOMAIN, input.name, input_uri, input.time))
         end
       end
 
