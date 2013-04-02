@@ -1,6 +1,13 @@
 # History
 
-## 0.1.1
+## 0.1.2(2013/04/01)
+
+* Added shorthand notation for setting parameters
+* Added ticket concept for sequential processing
+* Improved termination sequence
+* Refactored parser and transformer
+
+## 0.1.1(2013/03/20)
 
 * Improved performance
 * Added the concept of document parameter
@@ -8,6 +15,6 @@
 * Fixed bugs of features handling
 * Improved comment parser
 
-## 0.1.0
+## 0.1.0(2013/02/19)
 
 * First gem release
