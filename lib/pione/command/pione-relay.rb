@@ -1,42 +1,41 @@
 module Pione
   module Command
+    # PioneRelay is a command for connecting relay server.
     class PioneRelay < FrontOwnerCommand
-      set_program_name("pione-relay") do
-        "--relay-port %s" % [@relay_port]
+      define_info do
+        set_name "pione-relay"
+        set_tail {|cmd| "--relay-port %s" % cmd.option[:relay_port]}
+        set_banner "Run relay process for connecting between clients and brokers."
       end
 
-      set_program_message <<TXT
-Runs relay process for connecting between clients and brokers.
-TXT
+      define_option do
+        default :relay_port, Global.relay_port
 
-      define_option("--realm name", "set relay realm name for client authentification") do |name|
-        Global.relay_realm = name
-      end
+        option("--realm name", "set relay realm name for client authentification") do |data, name|
+          Global.relay_realm = name
+        end
 
-      define_option("--relay-port port", "set relay port") do |port|
-        @relay_port = port
-      end
+        option("--relay-port port", "set relay port") do |data, port|
+          data[:relay_port] = port
+        end
 
-      def initialize
-        @relay_port = Global.relay_port
-      end
-
-      def validate_options
-        abort("error: no realm name") if Global.relay_realm.nil? or Global.relay_realm.empty?
-        abort("error: no relay port") unless @relay_port
+        validate do |data|
+          abort("error: no realm name") if Global.relay_realm.nil? or Global.relay_realm.empty?
+          abort("error: no relay port") unless data[:relay_port]
+        end
       end
 
       def create_front
         Front::RelayFront.new(self)
       end
 
-      def start
+      start do
         # wake up tuple space provider process
         Pione::TupleSpaceProvider.instance
 
         puts DRb.front.uri
         DRb::DRbServer.new(
-          "relay://:%s" % @relay_port,
+          "relay://:%s" % data[:relay_port],
           nil,
           {:SSLCertName => Global.relay_ssl_certname}
         )

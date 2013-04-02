@@ -1,45 +1,44 @@
 module Pione
   module Command
+    # PioneBroker is a command for starting a PIONE broker agent. Brokers
+    # provides task processing ability to the system.
     class PioneBroker < DaemonProcess
-      set_program_name "pione-broker" do
-        "--task-worker %s" % @task_worker
+      define_info do
+        set_name "pione-broker"
+        set_tail {|cmd| "{TaskWorker: %s}" % cmd.option[:task_worker]}
+        set_banner "Run broker agent to launch task workers."
       end
 
-      set_program_message <<TXT
-Runs the broker to launch task workers.
-TXT
+      define_option do
+        use Option::TupleSpaceReceiverOption
+        use Option::TaskWorkerOwnerOption
 
-      use_option_module CommandOption::TupleSpaceReceiverOption
-      use_option_module CommandOption::TaskWorkerOwnerOption
+        validate do |data|
+          unless data[:task_worker] > 0
+            abort("error: no task worker resources")
+          end
+        end
+      end
 
       attr_reader :broker
-
-      def initialize
-        @task_worker = [Util.core_number - 1, 1].max
-        @features = nil
-      end
 
       def create_front
         Front::BrokerFront.new(self)
       end
 
-      def validate_options
-        unless @task_worker > 0
-          abort("error: no task worker resources")
-        end
-      end
-
-      def prepare
-        super
-        @broker = Pione::Agent[:broker].new(@features, task_worker_resource: @task_worker)
+      prepare do
+        @broker = Pione::Agent[:broker].new(
+          option[:features],
+          task_worker_resource: option[:task_worker]
+        )
         @tuple_space_receiver = Pione::TupleSpaceReceiver.instance
       end
 
-      def start
-        # start broker
+      start do
+        # start broker agent
         @broker.start
 
-        # start tuple space receiver
+        # start tuple space receiver with the broker agent
         @tuple_space_receiver.register(@broker)
 
         # wait
@@ -48,6 +47,10 @@ TXT
         rescue DRb::ReplyReaderThreadError
           retry
         end
+      end
+
+      terminate do
+        @broker.terminate
       end
     end
   end

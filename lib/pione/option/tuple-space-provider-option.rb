@@ -1,14 +1,16 @@
 module Pione
-  module CommandOption
+  module Option
+    # TupleSpaceProviderOption provides options for commands that make tuple
+    # space provider agent.
     module TupleSpaceProviderOption
       extend OptionInterface
-      use_option_module PresenceNotifierOption
+      use PresenceNotifierOption
 
       # --presence-notification-address
-      define_option(
+      option(
         "--presence-notification-address=255.255.255.255:%s" % Global.presence_port,
         "set the address for sending presence notifier"
-      ) do |address|
+      ) do |data, address|
         # clear addresses at first time
         unless @__option_notifier_address__
           @__option_notifier_address__ = true

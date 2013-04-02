@@ -1,20 +1,29 @@
 module Pione
   module Command
+    # ChildProcess is a superclass for commands that are children of other
+    # processes.
     class ChildProcess < FrontOwnerCommand
-      use_option_module CommandOption::ChildProcessOption
-      attr_reader :parent_front
+      define_option do
+        default :no_parent_front, false
 
-      # @api private
-      def validate_options
-        if not(@no_parent_mode) and @parent_front.nil?
-          abort("option error: no caller front address")
+        # --parent-front
+        option('--parent-front=URI', 'set parent front URI') do |data, uri|
+          data[:parent_front] = DRbObject.new_with_uri(uri)
+        end
+
+        # --no-parent
+        option('--no-parent', 'turn on no parent mode') do |data|
+          data[:no_parent_mode] = true
+        end
+
+        validate do |data|
+          if not(data[:no_parent_mode]) and data[:parent_front].nil?
+            abort("option error: no caller front address")
+          end
         end
       end
 
-      # @api private
-      def prepare
-        super
-
+      prepare do
         # "ppid == 1" means the parent is dead
         terminater = Proc.new do
           if Process.ppid == 1
@@ -28,19 +37,13 @@ module Pione
         @watchdog = Agent::TrivialRoutineWorker.new(terminater)
       end
 
-      # @api private
-      def start
+      start do
         @watchdog.start
       end
 
-      # Terminate the child front. Kill watchdog.
-      #
-      # @return [void]
-      def terminate
+      terminate do
         # kill watchdog
         @watchdog.terminate
-        # go to other termination processes
-        super
       end
     end
   end

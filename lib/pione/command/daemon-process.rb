@@ -1,17 +1,18 @@
 module Pione
   module Command
+    # DaemonProcess is a class for commands that enable to daemonize.
     class DaemonProcess < FrontOwnerCommand
-      use_option_module CommandOption::DaemonOption
+      define_option do
+        default :daemon, false
 
-      def initialize
-        super
-        @daemon = false
+        # --daemon
+        option("--daemon", "turn on daemon mode") do |data|
+          data[:daemon] = true
+        end
       end
 
-      def prepare
-        super
-        puts Global.front.uri
-        Process.daemon(true, true) if @daemon
+      prepare(:post) do
+        Process.daemon(true, true) if option[:daemon]
       end
     end
   end

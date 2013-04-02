@@ -3,38 +3,59 @@ module Pione
     # This is a class for +pione-task-worker+ command. +pione-task-worker+
     # starts a task worker agent with tuple space server.
     class PioneTaskWorker < ChildProcess
-      set_program_name("pione-task-worker") do
-        parent_front = @no_parent_mode ? "nil" : @parent_front.uri
-        "<front=%s, parent-front=%s>" % [Global.front.uri, parent_front]
-      end
-
-      set_program_message <<TXT
-Runs task worker process. This command is launched by other processes like
+      define_info do
+        set_name "pione-task-worker"
+        set_tail {|cmd|
+          "{Front: %s, ParentFront: %s}" % [
+            Global.front.uri, cmd.option[:no_parent_mode] ? "nil" : cmd.option[:parent_front].uri
+          ]
+        }
+        set_banner <<BANNER
+Run task worker process. This command is launched by other processes like
 pione-client or pione-broker.
-TXT
-
-      use_option_module CommandOption::ChildProcessOption
-
-      # --connection-id
-      define_option('--connection-id=ID', 'set connection id') do |id|
-        @connection_id = id
+BANNER
       end
 
-      # --feature
-      define_option('--features="FEATURES"', 'set features') do |features|
-        begin
-          features = DocumentTransformer.new.apply(
-            DocumentParser.new.feature_expr.parse(features)
-          )
-          @features = features
-        rescue Parslet::ParseFailed => e
-          puts "invalid parameters: " + str
-          Util::ErrorReport.print(e)
-          abort
+      define_option do
+        use Option::ChildProcessOption
+
+        default :features, Model::Feature::EmptyFeature.new
+
+        # --connection-id
+        option('--connection-id=ID', 'set connection id') do |data, id|
+          data[:connection_id] = id
+        end
+
+        # --feature
+        option('--features=FEATURES', 'set features') do |data, features|
+          begin
+            features = DocumentTransformer.new.apply(
+              DocumentParser.new.feature_expr.parse(features)
+            )
+            data[:features] = features
+          rescue Parslet::ParseFailed => e
+            puts "invalid parameters: " + str
+            Util::ErrorReport.print(e)
+            abort
+          end
+        end
+
+        validate do |data|
+          # check requisite options
+          abort("error: no connection id") if data[:connection_id].nil?
+
+          # get the parent front server
+          begin
+            data[:parent_front].uuid
+          rescue => e
+            if Pione.debug_mode?
+              debug_message "pione-task-worker cannot get the parent front server: %s" % e
+            end
+            abort
+          end
         end
       end
 
-      attr_reader :connection_id
       attr_reader :agent
       attr_reader :tuple_space_server
 
@@ -44,35 +65,13 @@ TXT
         Pione::Front::TaskWorkerFront.new(self)
       end
 
-      def validate_options
-        super
-
-        # check requisite options
-        if @connection_id.nil?
-          abort("error: no connection id")
-        end
-
-        # get the parent front server
-        begin
-          @parent_front.uuid
-        rescue => e
-          if Pione.debug_mode?
-            debug_message "pione-task-worker cannot get the parent front server: %s" % e
-          end
-          abort
-        end
-      end
-
-      def prepare
-        super
-
-        @tuple_space_server = @parent_front.get_tuple_space_server(@connection_id)
-        @features = Model::Feature::EmptyFeature.new unless @features
-        @agent = Pione::Agent[:task_worker].new(@tuple_space_server, @features)
+      prepare do
+        @tuple_space_server = option[:parent_front].get_tuple_space_server(option[:connection_id])
+        @agent = Pione::Agent[:task_worker].new(@tuple_space_server, option[:features])
         @command_listener = Pione::Agent[:command_listener].new(@tuple_space_server, self)
 
         # connect caller front
-        @parent_front.add_task_worker_front(Global.front, @connection_id)
+        option[:parent_front].add_task_worker_front(Global.front, option[:connection_id])
 
         abort("pione-task-worker error: no tuple space server") unless @tuple_space_server
 
@@ -85,9 +84,7 @@ TXT
         end
       end
 
-      def start
-        super
-
+      start do
         # start task worker activity
         @agent.start
         @command_listener.start
@@ -95,18 +92,12 @@ TXT
         # wait...
         begin
           @agent.running_thread.join
-          # terminate
-          terminate
         rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
-          terminate
+          # ignore
         end
       end
 
-      # Terminate the task worker. Kill the agent and disconnect from parent
-      # front.
-      #
-      # @return [void]
-      def terminate
+      terminate do
         Global.monitor.synchronize do
           begin
             return if @terminated
@@ -118,7 +109,7 @@ TXT
             end
 
             # disconnect parent front
-            @parent_front.remove_task_worker_front(self, @connection_id)
+            option[:parent_front].remove_task_worker_front(self, option[:connection_id])
 
             # flag
             @terminated = true
@@ -127,7 +118,6 @@ TXT
           rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
             # ignore
           end
-          super
         end
       end
     end

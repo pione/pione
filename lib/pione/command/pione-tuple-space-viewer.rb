@@ -1,55 +1,58 @@
 module Pione
   module Command
+    # PioneTupleSpaceView is a command that shows and searchs tuples in tuple
+    # spaces.
     class PioneTupleSpaceViewer < BasicCommand
-      set_program_name("pione-tuple-space-viewer")
-
-      define_option('-i', '--identifier=NAME', 'show tuples that have the identifier') do |name|
-        @identifiers << name
+      define_info do
+        set_name "pione-tuple-space-viewer"
+        set_banner "Show and search tuples in tuple spaces."
       end
 
-      define_option('-e', '--exclude=NAME', 'exclude the tuple identifier') do |name|
-        @exclusions << name
-      end
+      define_option do
+        default :identifiers, []
+        default :exclusions, []
 
-      define_option('--package=NAME', 'show tuples which domain has the package name') do |name|
-        @package = name
-      end
+        option('-i', '--identifier=NAME', 'show tuples that have the identifier') do |data, name|
+          data[:identifiers] << name
+        end
 
-      define_option('--rule=NAME', 'show tuples which domain has the rule name') do |name|
-        @rule = name
-      end
+        option('-e', '--exclude=NAME', 'exclude the tuple identifier') do |data, name|
+          data[:exclusions] << name
+        end
 
-      define_option('--rule-path=NAME', 'show tuples which domain has the rule path') do |path|
-        @rule_path = path
-      end
+        option('--package=NAME', 'show tuples which domain has the package name') do |data, name|
+          data[:package] = name
+        end
 
-      define_option('--data-name=NAME', 'show tuples that has the the name') do |name|
-        @data_name = name
-      end
+        option('--rule=NAME', 'show tuples which domain has the rule name') do |data, name|
+          data[:rule] = name
+        end
 
-      define_option(
-        '--type=TYPE',
-        'show the bag which has the type("bag", "read_waiter", or "take_waiter")'
-      ) do |bag_type|
-        @bag_type = bag_type.to_sym
-      end
+        option('--rule-path=NAME', 'show tuples which domain has the rule path') do |data, path|
+          data[:rule_path] = path
+        end
 
-      define_option('--client=ADDRESS', 'druby address of target client process') do |address|
-        @address = address
+        option('--data-name=NAME', 'show tuples that has the the name') do |data, name|
+          data[:data_name] = name
+        end
+
+        option(
+          '--type=TYPE',
+          'show the bag which has the type("bag", "read_waiter", or "take_waiter")'
+        ) do |data, bag_type|
+          data[:bag_type] = bag_type.to_sym
+        end
+
+        option('--client=ADDRESS', 'druby address of target client process') do |data, address|
+          data[:address] = address
+        end
       end
 
       def initialize
-        @identifiers = []
-        @exclusions = []
-        @package = nil
-        @rule = nil
-        @rule_path = nil
-        @data_name = nil
-        @bag_type = nil
         @tuple_space_servers = []
       end
 
-      def prepare
+      prepare do
         require 'pp'
         find_tuple_space_servers
 
@@ -59,20 +62,20 @@ module Pione
         end
       end
 
-      def start
+      start do
         # print each bags
         @tuple_space_servers.each do |address, tuple_space_server|
           puts "TupleSpaceServer: %s" % Terminal.red(address)
           puts "-"*78
-          if @bag_type == :bag or @bag_type.nil?
+          if option[:bag_type] == :bag or option[:bag_type].nil?
             puts "*** bag ***"
             show_bag(tuple_space_server, :bag)
           end
-          if @bag_type == :read_waiter or @bag_type.nil?
+          if option[:bag_type] == :read_waiter or option[:bag_type].nil?
             puts "*** read waiter ***"
             show_bag(tuple_space_server, :read_waiter)
           end
-          if @bag_type == :take_waiter or @bag_type.nil?
+          if option[:bag_type] == :take_waiter or option[:bag_type].nil?
             puts "*** take waiter ***"
             show_bag(tuple_space_server, :take_waiter)
           end
@@ -88,14 +91,20 @@ module Pione
 
       private
 
+      # Find tuple space servers.
+      #
+      # @return [void]
       def find_tuple_space_servers
-        if @address
-          @tuple_space_servers << [@address, get_tuple_space_server(@address)]
+        if option[:address]
+          @tuple_space_servers << [option[:address], get_tuple_space_server(option[:address])]
         else
           find_tuple_space_servers_in_range
         end
       end
 
+      # Find tuple space server in some port range. This scans ports of the address.
+      #
+      # @return [void]
       def find_tuple_space_servers_in_range
         Global.client_front_port_range.each do |port|
           begin
@@ -107,31 +116,38 @@ module Pione
         end
       end
 
-      # Gets a tuple space server from the address.
+      # Get a tuple space server from the address.
       def get_tuple_space_server(address)
         ref = DRbObject.new_with_uri(address)
         ref.ping
         ref.tuple_space_server
       end
 
+      # Show tuples of the typed bag in the tuple space server.
+      #
+      # @param tuple_space_server [TupleSpaceServer]
+      #   tuple space server
+      # @param type [Symbol]
+      #   bag type
+      # @return [void]
       def show_bag(tuple_space_server, type)
         tuple_space_server.all_tuples(type).each do |tuple|
-          next if not(@identifiers.empty?) and not(@identifiers.include?(tuple.first.to_s))
-          next if @exclusions.include?(tuple.first.to_s)
+          next if not(option[:identifiers].empty?) and not(option[:identifiers].include?(tuple.first.to_s))
+          next if option[:exclusions].include?(tuple.first.to_s)
 
           t = Tuple.from_array(tuple)
 
           # rule_path
-          if @rule_path
+          if option[:rule_path]
             if t.respond_to?(:domain)
-              next unless /^(#{@rule_path})/.match(t.domain)
+              next unless /^(#{option[:rule_path]})/.match(t.domain)
             else
               next
             end
           end
 
           # name
-          if @data_name
+          if option[:data_name]
             if t.kind_of?(Tuple::Data) and t.respond_to?(:name)
               next unless Model::DataExpr.new(@data_name).match(t.name)
             else

@@ -1,13 +1,14 @@
 module Pione
-  module CommandOption
+  module Option
+    # PresenceNotifierOption provides options for presence notifiers.
     module PresenceNotifierOption
       extend OptionInterface
 
       # --show-presence-notifier
-      define_option(
+      option(
         "--show-presence-notifier",
         "show presence notifier informations"
-      ) do
+      ) do |data|
         Global.show_presence_notifier = true
       end
     end

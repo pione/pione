@@ -46,7 +46,6 @@ module Pione
 
       # Send empty tuple space server list.
       def finalize
-        puts "finalize"
         @terminated = true
         @tuple_space_server_receiver.terminate
         @socket.close
@@ -124,8 +123,10 @@ module Pione
               broker.update_tuple_space_servers(tuple_space_servers)
               true
             rescue Exception => e
-              puts "[[[dead server]]]"
-              ErrorReport.print(e)
+              if Pione.debug_mode?
+                puts "[[[dead server]]]"
+                ErrorReport.print(e)
+              end
               false
             end
           end

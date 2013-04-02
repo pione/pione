@@ -188,33 +188,10 @@ require 'pione/front/tuple-space-receiver-front'
 require 'pione/front/relay-front'
 
 # command-option
-require 'pione/command-option/basic-option'
-require 'pione/command-option/common-option'
-require 'pione/command-option/daemon-option'
-require 'pione/command-option/child-process-option'
-require 'pione/command-option/presence-notifier-option'
-require 'pione/command-option/tuple-space-provider-option'
-require 'pione/command-option/tuple-space-provider-owner-option'
-require 'pione/command-option/tuple-space-receiver-option'
-require 'pione/command-option/task-worker-owner-option'
+require 'pione/option'
 
 # command
-require 'pione/command/basic-command'
-require 'pione/command/front-owner-command'
-require 'pione/command/daemon-process'
-require 'pione/command/child-process'
-require 'pione/command/pione-client'
-require 'pione/command/pione-task-worker'
-require 'pione/command/pione-broker'
-require 'pione/command/pione-tuple-space-provider'
-require 'pione/command/pione-tuple-space-receiver'
-require 'pione/command/pione-tuple-space-viewer'
-require 'pione/command/pione-relay'
-require 'pione/command/pione-relay-client-db'
-require 'pione/command/pione-relay-account-db'
-require 'pione/command/pione-clean'
-require 'pione/command/pione-syntax-checker'
-
+require 'pione/command'
 
 #
 # other settings

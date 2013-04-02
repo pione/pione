@@ -2,86 +2,77 @@ module Pione
   module Command
     # PioneTupleSpaceProvider is for +pione-tuple-space-provider+ command.
     class PioneTupleSpaceProvider < ChildProcess
-      set_program_name("pione-tuple-space-provider") do
-        parent_front = @no_parent_mode ? "nil" : @parent_front.uri
-        "<front=%s, parent-front=%s>" % [Global.front.uri, parent_front]
-      end
-
-      set_program_message <<TXT
-Runs tuple space provider process for sending tuple space presence
-notifier. This command is launched by other processes like pione-client or
-pione-relay normally, but you can force to start by calling with --no-parent
-option.
+      define_info do
+        set_name "pione-tuple-space-provider"
+        set_tail {|cmd|
+          front_uri = begin Global.front.uri rescue "failed" end
+          parent_front = begin cmd.option[:no_parent_mode] ? "nil" : cmd.option[:parent_front].uri rescue "failed" end
+          "{Front: %s, ParentFront: %s}" % [front_uri, parent_front]
+        }
+        set_banner <<TXT
+Run tuple space provider process for sending tuple space presence notifier. This
+command is launched by other processes like pione-client or pione-relay
+normally, but you can force to start by calling with --no-parent option.
 TXT
-
-      use_option_module CommandOption::TupleSpaceProviderOption
-
-      attr_reader :tuple_space_provider
-
-      def initialize
-        super
-        @parent_front = nil
-        @notifier_addresses = []
       end
 
-      # @api private
-      def validate_options
-        super
+      define_option do
+        use Option::TupleSpaceProviderOption
 
-        # broadcast addresses
-        @notifier_addresses.each do |uri|
-          unless uri.scheme == "broadcast"
-            abort("error: invalid broadcast address '%s'" % uri.to_s)
+        default :notifier_addresses, []
+
+        validate do |data|
+          # broadcast addresses
+          data[:notifier_addresses].each do |uri|
+            unless uri.scheme == "broadcast"
+              abort("error: invalid broadcast address '%s'" % uri.to_s)
+            end
           end
         end
       end
+
+      attr_reader :tuple_space_provider
 
       # @api private
       def create_front
         Pione::Front::TupleSpaceProviderFront.new(self)
       end
 
-      # @api private
-      def prepare
-        super
-
+      prepare do
         # setup notifier addresses
-        unless @notifier_addresses.empty?
-          Global.tuple_space_provider_broadcast_addresses = @notifier_addresses
+        unless option[:notifier_addresses].empty?
+          Global.tuple_space_provider_broadcast_addresses = option[:notifier_addresses]
         end
 
         # make tuple space provider
         @tuple_space_provider = TupleSpaceProvider.new
       end
 
-      # @api private
-      def start
-        super
-
+      start do
         # start provider activity
         @tuple_space_provider.start
 
         begin
           # set my URI to caller front as its provider
-          unless @no_parent_mode
-            @parent_front.set_tuple_space_provider(Global.front.uri)
+          unless option[:no_parent_mode]
+            option[:parent_front].set_tuple_space_provider(Global.front.uri)
           end
 
           # wait
           DRb.thread.join
         rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
-          terminate
+          # ignore
         end
       end
 
-      # @api private
-      def terminate
+      terminate do
         Global.monitor.synchronize do
-          @tuple_space_provider.terminate
-          super
+          begin
+            @tuple_space_provider.terminate
+          rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+            abort
+          end
         end
-      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
-        abort
       end
     end
   end

@@ -1,26 +1,14 @@
 module Pione
   module Command
+    # FrontOwnerCommand is a parent of classes that own front server.
     class FrontOwnerCommand < BasicCommand
-      define_option("--my-ip-address=ADDRESS", "set my IP address") do |address|
-        Global.my_ip_address = address
+      define_option do
+        option("--my-ip-address=ADDRESS", "set my IP address") do |data, address|
+          Global.my_ip_address = address
+        end
       end
 
-      # Runs the command.
-      #
-      # @return [void]
-      def run
-        parse_options
-        validate_options
-        setup_front
-        prepare
-        setup_program_name
-        start
-      end
-
-      # Setup font server.
-      #
-      # @return [void]
-      def setup_front
+      prepare do
         Global.front = create_front
       end
 
@@ -32,15 +20,10 @@ module Pione
         raise NotImplementedError
       end
 
-      # Terminate PIONE front. Stop DRb service.
-      #
-      # @return [void]
-      def terminate
+      terminate do
         Global.monitor.synchronize do
           # stop DRb service
-          DRb.stop_service
-          # go to other termination processes
-          super
+          # DRb.stop_service
         end
       end
     end

@@ -1,13 +1,13 @@
 module Pione
   module Command
+    # PioneClean is a command for clearing temporary files of PIONE system.
     class PioneClean < BasicCommand
-      set_program_name("pione-clean")
+      define_info do
+        set_name "pione-clean"
+        set_banner "Clean working directories and file cache directories."
+      end
 
-      set_program_message <<TXT
-Cleans working directories and file cache directories.
-TXT
-
-      def start
+      start do
         FileUtils.remove_entry_secure(Global.working_directory_root)
         FileUtils.remove_entry_secure(Global.file_cache_directory_root)
       end

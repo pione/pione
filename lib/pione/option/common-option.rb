@@ -1,20 +1,21 @@
 module Pione
-  module CommandOption
+  module Option
+    # CommonOption provides common options for pione commands.
     module CommonOption
       extend OptionInterface
 
       # --debug
-      define_option('-d', '--debug', "turn on debug mode") do |name|
+      option('-d', '--debug', "turn on debug mode") do |data, name|
         Pione.debug_mode = true
       end
 
       # --show-communication
-      define_option('--show-communication', "show object communication") do |show|
+      option('--show-communication', "show object communication") do |data, show|
         Global.show_communication = true
       end
 
       # --color
-      define_option('--[no-]color', 'turn on/off color mode') do |str|
+      option('--[no-]color', 'turn on/off color mode') do |data, str|
         bool = nil
         bool = true if str == "true"
         bool = false if str == "false"

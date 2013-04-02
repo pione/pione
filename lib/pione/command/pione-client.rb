@@ -1,141 +1,150 @@
 module Pione
   module Command
+    # PioneClient is a command to request processing.
     class PioneClient < FrontOwnerCommand
-      use_option_module CommandOption::TaskWorkerOwnerOption
-      use_option_module CommandOption::TupleSpaceProviderOwnerOption
-
-      set_program_name("pione-client") do
-        [@filename, "-o %s" % @output_uri, @stream ? "--stream" : ""].join(" ")
+      define_info do
+        set_name "pione-client"
+        set_tail {|cmd|
+          args = [cmd.option[:filename], cmd.option[:output_uri], cmd.option[:stream]]
+          "{Document: %s, OutputURI: %s, Stream: %s}" % args
+        }
+        set_banner "Requests to process PIONE document."
       end
 
-      set_program_message "Requests to process PIONE document."
+      define_option do
+        use Option::TaskWorkerOwnerOption
+        use Option::TupleSpaceProviderOwnerOption
 
-      # --input-uri
-      define_option('-i URI', '--input=URI', 'set input directory URI') do |uri|
-        parsed = URI.parse(uri)
-        unless parsed.scheme
-          parsed = URI.parse("local:%s" % Pathname.new(uri).expand_path)
+        default :output_uri, URI.parse("local:./output/")
+        default :log_path, 'log.txt'
+        default :stream, false
+        default :params, Model::Parameters.empty
+        default :dry_run, false
+        default :task_worker, [Util.core_number - 1, 1].max
+        default :request_task_worker, 1
+        default :stand_alone, false
+        default :relay, nil
+        default :filename, "-"
+        default :without_tuple_space_provider, false
+        default :features, "^Interactive"
+        default :list_params, false
+
+        # --input
+        option('-i URI', '--input=URI', 'set input directory URI') do |data, uri|
+          parsed = URI.parse(uri)
+          unless parsed.scheme
+            parsed = URI.parse("local:%s" % Pathname.new(uri).expand_path)
+          end
+          data[:input_uri] = parsed.as_directory
         end
-        @input_uri = parsed.as_directory
-      end
 
-      # --output-uri
-      define_option('-o URI', '--output=URI', 'set output directory URI') do |uri|
-        @output_uri = URI.parse(uri)
-      end
+        # --output
+        option('-o URI', '--output=URI', 'set output directory URI') do |data, uri|
+          data[:output_uri] = URI.parse(uri)
+        end
 
-      # --log
-      define_option('--log=PATH', 'set log path') do |path|
-        @log_path = path
-      end
+        # --log
+        option('--log=PATH', 'set log path') do |data, path|
+          data[:path] = path
+        end
 
-      # --stream
-      define_option('--stream', 'turn on stream mode') do
-        @stream = true
-      end
+        # --stream
+        option('--stream', 'turn on stream mode') do |data|
+          data[:stream] = true
+        end
 
-      # --request-task-worker
-      define_option('--request-task-worker=N', 'set request number of task workers') do |n|
-        @request_task_worker = n.to_i
-      end
+        # --request-task-worker
+        option('--request-task-worker=N', 'set request number of task workers') do |data, n|
+          data[:request_task_worker] = n.to_i
+        end
 
-      # --params
-      define_option('--params="{Var:1,...}"', "set &main:Main rule's parameters") do |str|
-        begin
-          params = DocumentTransformer.new.apply(
-            DocumentParser.new.parameters.parse(str)
-          )
-          @params.merge!(params)
-        rescue Parslet::ParseFailed => e
-          puts "invalid parameters: " + str
-          Util::ErrorReport.print(e)
-          abort
+        # --params
+        option('--params="{Var:1,...}"', "set &main:Main rule's parameters") do |data, str|
+          begin
+            params = DocumentTransformer.new.apply(
+              DocumentParser.new.parameters.parse(str)
+            )
+            data[:params].merge!(params)
+          rescue Parslet::ParseFailed => e
+            puts "invalid parameters: " + str
+            Util::ErrorReport.print(e)
+            abort
+          end
+        end
+
+        # --stand-alone
+        option('--stand-alone', 'turn on stand alone mode') do |data|
+          data[:stand_alone] = true
+          data[:without_tuple_space_provider] = true
+        end
+
+        # --dry-run
+        option('--dry-run', 'turn on dry run mode') do |data, b|
+          data[:dry_run] = true
+        end
+
+        # --relay
+        option('--relay=URI', 'turn on relay mode and set relay address') do |data, uri|
+          data[:relay] = uri
+        end
+
+        # --name
+        option('--name=NAME') do |data, name|
+          data[:name] = name
+        end
+
+        # --list-parameters
+        option('--list-params', 'show user parameter list in the document') do |data|
+          data[:list_params] = true
+        end
+
+        validate do |data|
+          unless data[:task_worker] > 0 or
+              (not(data[:stand_alone]) and data[:task_worker] == 0)
+            abort("option error: invalid resource size '%s'" % data[:task_worker])
+          end
+
+          if data[:stream] and data[:input_uri].nil?
+            abort("option error: no input URI on stream mode")
+          end
+
+          if not(data[:input_uri].nil?)
+            unless data[:input_uri].pione? and data[:input_uri].storage?
+              abort("opiton error: bad URI scheme '%s'" % data[:input_uri])
+            end
+          end
         end
       end
 
-      # --stand-alone
-      define_option('--stand-alone', 'turn on stand alone mode') do
-        @stand_alone = true
-        @without_tuple_space_provider = true
-      end
-
-      # --dry-run
-      define_option('--dry-run', 'turn on dry run mode') do |b|
-        @dry_run = true
-      end
-
-      # --relay
-      define_option('--relay=URI', 'turn on relay mode and set relay address') do |uri|
-        @relay = uri
-      end
-
-      define_option('--name=NAME') do |name|
-        @name = name
-      end
-
-      # --list-parameters
-      define_option('--list-params', 'show user parameter list in the document') do
-        @list_params = true
-      end
-
+      attr_reader :task_worker
+      attr_reader :features
       attr_reader :tuple_space_server
       attr_reader :name
 
       def initialize
         super()
-        @input_uri = nil
-        @output_uri = URI.parse("local:./output/")
-        @log_path = "log.txt"
-        @stream = false
-        @params = Parameters.empty
-        @dry_run = false
-        @task_worker = [Util.core_number - 1, 1].max
-        @request_task_worker = 1
         @worker_threads = []
-        @stand_alone = false
-        @relay = nil
-        @filename = "-"
-        @without_tuple_space_provider = false
-        @features = "^Interactive"
-        @list_params = false
+        @tuple_space_server = nil
       end
 
       private
-
-      def validate_options
-        unless @task_worker > 0 or (not(@stand_alone) and @task_worker == 0)
-          abort("option error: invalid resource size '%s'" % @task_worker)
-        end
-
-        if @stream and @input_uri.nil?
-          abort("option error: no input URI on stream mode")
-        end
-
-        if not(@input_uri.nil?)
-          unless @input_uri.pione? and @input_uri.storage?
-            abort("opiton error: bad URI scheme '%s'" % @input_uri)
-          end
-        end
-      end
 
       def create_front
         Front::ClientFront.new(self)
       end
 
-      def prepare
-        super
-
+      prepare do
         @filename = ARGF.filename
 
         @tuple_space_server = TupleSpaceServer.new(
-          task_worker_resource: @request_task_worker
+          task_worker_resource: option[:request_task_worker]
         )
 
         # setup base uri
-        case @output_uri.scheme
+        case option[:output_uri].scheme
         when "local"
-          FileUtils.makedirs(@output_uri.path)
-          @output_uri = @output_uri.absolute
+          FileUtils.makedirs(option[:output_uri].path)
+          option[:output_uri] = option[:output_uri].absolute
         when "dropbox"
           # start session
           session = nil
@@ -173,40 +182,36 @@ module Pione
           Resource::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
         end
 
-        @output_uri = @output_uri.as_directory.to_s
-        @tuple_space_server.set_base_uri(@output_uri)
+        option[:output_uri] = option[:output_uri].as_directory.to_s
+        @tuple_space_server.set_base_uri(option[:output_uri])
       end
 
-      def start
+      start do
         read_process_document
 
-        if @list_params
+        if option[:list_params]
           print_parameter_list
           exit
         end
 
         write_tuples
-        connect_relay if @relay
+        connect_relay if option[:relay]
         start_agents
 
         # start tuple space provider with thread
         # the thread is terminated when the client terminated
-        unless @without_tuple_space_provider
+        unless option[:without_tuple_space_provider]
           @start_tuple_space_provider_thread = Thread.new do
             start_tuple_space_provider
           end
         end
 
         start_workers
-        @agent = Agent[:process_manager].start(@tuple_space_server, @document, @params, @stream)
+        @agent = Agent[:process_manager].start(@tuple_space_server, @document, option[:params], option[:stream])
         @agent.running_thread.join
-        terminate
       end
 
-      # Terminate pione-client command. Kill tuple space provider.
-      #
-      # @return [void]
-      def terminate
+      terminate do
         Global.monitor.synchronize do
           # kill the thread for starting tuple space provider
           if @start_tuple_space_provider_thread
@@ -219,14 +224,14 @@ module Pione
           if @tuple_space_provider
             @tuple_space_provider.terminate
           end
-
-          # go to other termination processes.
-          super
         end
       end
 
       private
 
+      # Read PIONE process document.
+      #
+      # @return [void]
       def read_process_document
         # process definition document is not found.
         if ARGF.filename == "-"
@@ -246,15 +251,21 @@ module Pione
         end
       end
 
+      # Write initial tuples.
+      #
+      # @return [void]
       def write_tuples
         [ Tuple[:process_info].new('standalone', 'Standalone'),
-          Tuple[:dry_run].new(@dry_run)
+          Tuple[:dry_run].new(option[:dry_run])
         ].each {|tuple| @tuple_space_server.write(tuple) }
       end
 
+      # Start agent activities.
+      #
+      # @return [void]
       def start_agents
         # logger
-        Agent[:logger].start(@tuple_space_server, File.open(@log_path, "w+"))
+        Agent[:logger].start(@tuple_space_server, File.open(option[:log_path], "w+"))
 
         # rule provider
         @rule_loader = Agent[:rule_provider].start(@tuple_space_server)
@@ -262,34 +273,42 @@ module Pione
         @rule_loader.wait_till(:request_waiting)
 
         # input generators
-        generator_method = @stream ? :start_by_stream : :start_by_dir
+        generator_method = option[:stream] ? :start_by_stream : :start_by_dir
         gen = Agent[:input_generator].send(
-          generator_method, @tuple_space_server, @input_uri
+          generator_method, @tuple_space_server, option[:input_uri]
         )
 
         # command listener
         @command_listener = Agent[:command_listener].start(@tuple_space_server, self)
       end
 
-      # Wakes up tuple space provider process and push my tuple space server to
-      # it.
+      # Wake up tuple space provider process and connect my tuple space server
+      # to it.
       def start_tuple_space_provider
         @tuple_space_provider = Pione::TupleSpaceProvider.instance
         @tuple_space_provider.add_tuple_space_server(@tuple_space_server)
       end
 
+      # Start task workers.
+      #
+      # @return [void]
       def start_workers
-        @task_worker.times do
-          Thread.new { Agent[:task_worker].spawn(Global.front, Util.generate_uuid, @features) }
+        option[:task_worker].times do
+          Thread.new {
+            Agent[:task_worker].spawn(Global.front, Util.generate_uuid, option[:features])
+          }
         end
       end
 
+      # Connect relay server.
+      #
+      # @return [void]
       def connect_relay
         Global.relay_tuple_space_server = @tuple_space_server
-        @relay_ref = DRbObject.new_with_uri(@relay)
+        @relay_ref = DRbObject.new_with_uri(option[:relay])
         @relay_ref.__connect
         if Global.show_communication
-          puts "you connected the relay: %s" % @relay
+          puts "you connected the relay: %s" % option[:relay]
         end
         # watchdog for the relay server
         Thread.start do
