@@ -2,8 +2,6 @@ module Pione
   module System
     # PioneObject is a base class for PIONE system.
     class PioneObject
-      extend Forwardable
-
       # Checks argument type. Raises a type error if the value is not kind of
       # the type.
       # @param [Object] val

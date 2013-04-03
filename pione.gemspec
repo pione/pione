@@ -31,6 +31,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "highline", "~> 1.6.15"
   gem.add_dependency "hamster", "~> 0.4"
   gem.add_dependency "naming"
+  gem.add_dependency "forwardablex"
 
   # for dropbox resource
   gem.add_dependency "dropbox-sdk"
