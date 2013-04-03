@@ -31,6 +31,7 @@ require 'highline'
 require 'dropbox_sdk'
 require 'hamster'
 require 'naming'
+require 'rexml/document'
 
 #
 # load pione
