@@ -43,9 +43,9 @@ module Pione
     #   log content
     # @return [void]
     def with_log(component, data)
-      write(Tuple[:log].new(Log.new(component, data.merge({:transition => "start"}))))
+      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, data.merge({:transition => "start"}))))
       result = yield
-      write(Tuple[:log].new(Log.new(component, data.merge({:transition => "complete"}))))
+      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, data.merge({:transition => "complete"}))))
       return result
     end
 

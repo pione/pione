@@ -27,7 +27,8 @@ module Pione
       start do
         case option[:action]
         when :agent_log
-          Util::AgentXESLogFile.new(option[:file]).format(option[:agent_type]).write($stdout, 2)
+          log_file = Log::ProcessLogFile.read(option[:file])
+          Log::AgentXESFormatter.new(log_file, option[:agent_type]).format.write($stdout, 2)
           $stdout.flush
         end
       end

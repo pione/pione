@@ -44,9 +44,11 @@ require 'pione/version'
 require 'pione/util/misc'
 require 'pione/util/terminal'
 require 'pione/util/console-message'
-require 'pione/util/log'
 require 'pione/util/waiter-table'
 require 'pione/util/error-report'
+
+# log
+require 'pione/log'
 
 # patch
 require 'pione/patch/array-patch'
