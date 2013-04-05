@@ -16,7 +16,7 @@ module Pione
           @tuple_space_server.now
         end
 
-        # Generates an input.
+        # Generate an input.
         def generate
           raise RuntimeError
         end
@@ -29,22 +29,18 @@ module Pione
         end
       end
 
-      # Directory based generator.
+      # DirGeneratorMethod is a directory based generator.
       class DirGeneratorMethod < GeneratorMethod
         # Create a generator.
-        # @param [TupleSpaceServer] ts_server
+        #
+        # @param ts_server [TupleSpaceServer]
         #   tuple space server
-        # @param [URI] dir_path
-        #   directory URI for loading target
-        def initialize(ts_server, dir_path)
-          raise TypeError.new(dir_path) unless dir_path.kind_of?(URI) or dir_path.nil?
-          super(ts_server)
-          @dir_path = dir_path
-          if dir_path
-            @gen = Resource[@dir_path].entries.to_enum
-          else
-            @gen = [].each
-          end
+        # @param dir [BasicLocation]
+        #   input directory location
+        def initialize(tuple_space_server, dir)
+          raise Argument.new(dir) unless dir.kind_of?(Location::BasicLocation) or dir.nil?
+          super(tuple_space_server)
+          @gen = dir ? @dir.entries.to_enum : [].each
         end
 
         def generate
@@ -55,10 +51,10 @@ module Pione
 
       # StreamGeneratorMethod handles stream inputs.
       class StreamGeneratorMethod < GeneratorMethod
-        def initialize(ts_server, dir_path)
-          raise TypeError.new(dir_path) unless dir_path.kind_of?(URI) or dir_path.nil?
+        def initialize(ts_server, dir)
+          raise TypeError.new(dir) unless dir.kind_of?(Location) or dir.nil?
           super(ts_server)
-          @dir_path = dir_path
+          @dir = dir
           @table = Hash.new
           init
         end
@@ -78,11 +74,7 @@ module Pione
         #
         # @return [void]
         def init
-          if @dir_path
-            @gen = Resource[@dir_path].entries.to_enum
-          else
-            @gen = [].each
-          end
+          @gen = dir ? @dir.entries.to_enum : [].each
         end
 
         # @api private
@@ -160,7 +152,7 @@ module Pione
             @inputs << input
             # upload the file
             input_uri = @base_uri + File.join("input", input.name)
-            Resource[input_uri].create(Resource[input.uri].read)
+            Location[input_uri].create(Location[input.uri].read)
             # make the tuple
             write(Tuple[:data].new(DOMAIN, input.name, input_uri, input.time))
           end

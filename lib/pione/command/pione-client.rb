@@ -15,8 +15,7 @@ module Pione
         use Option::TaskWorkerOwnerOption
         use Option::TupleSpaceProviderOwnerOption
 
-        default :output_uri, URI.parse("local:./output/")
-        default :log_path, 'log.txt'
+        default :output_location, Location["local:./output/"]
         default :stream, false
         default :params, Model::Parameters.empty
         default :dry_run, false
@@ -30,22 +29,21 @@ module Pione
         default :list_params, false
 
         # --input
-        option('-i URI', '--input=URI', 'set input directory URI') do |data, uri|
-          parsed = URI.parse(uri)
-          unless parsed.scheme
-            parsed = URI.parse("local:%s" % Pathname.new(uri).expand_path)
+        option('-i LOCATION', '--input=LOCATION', 'set input directory') do |data, uri|
+          begin
+            data[:input_location] = Location[uri]
+          rescue Location::Unknown
+            abort("opiton error: bad location '%s'" % uri)
           end
-          data[:input_uri] = parsed.as_directory
         end
 
         # --output
-        option('-o URI', '--output=URI', 'set output directory URI') do |data, uri|
-          data[:output_uri] = URI.parse(uri)
-        end
-
-        # --log
-        option('--log=PATH', 'set log path') do |data, path|
-          data[:path] = path
+        option('-o LOCATION', '--output=LOCATION', 'set output directory') do |data, uri|
+          begin
+            data[:output_location] = Location[uri]
+          rescue Location::Unknown
+            abort("opiton error: bad location '%s'" % uri)
+          end
         end
 
         # --stream
@@ -104,14 +102,8 @@ module Pione
             abort("option error: invalid resource size '%s'" % data[:task_worker])
           end
 
-          if data[:stream] and data[:input_uri].nil?
+          if data[:stream] and data[:input_location].nil?
             abort("option error: no input URI on stream mode")
-          end
-
-          if not(data[:input_uri].nil?)
-            unless data[:input_uri].pione? and data[:input_uri].storage?
-              abort("opiton error: bad URI scheme '%s'" % data[:input_uri])
-            end
           end
         end
       end
@@ -136,16 +128,19 @@ module Pione
       prepare do
         @filename = ARGF.filename
 
+        # setup log location
+        @log_location = option[:output_location] + Time.now.strftime("pione_%Y%m%d%H%M%S.log")
+
         @tuple_space_server = TupleSpaceServer.new(
           task_worker_resource: option[:request_task_worker]
         )
 
         # setup base uri
-        case option[:output_uri].scheme
-        when "local"
-          FileUtils.makedirs(option[:output_uri].path)
-          option[:output_uri] = option[:output_uri].absolute
-        when "dropbox"
+        case option[:output_location]
+        when Location::LocalLocation
+          option[:output_location] = Location[option[:output_location].path.expand_path]
+          option[:output_location].path.mkpath
+        when Location::DropboxLocation
           # start session
           session = nil
           consumer_key = nil
@@ -154,7 +149,7 @@ module Pione
           cache = Pathname.new("~/.pione/dropbox_api.cache").expand_path
           if cache.exist?
             session = DropboxSession.deserialize(cache.read)
-            Resource::Dropbox.set_session(session)
+            Location::Dropbox.set_session(session)
             consumer_key = session.instance_variable_get(:@consumer_key)
             consumer_secret = session.instance_variable_get(:@consumer_secret)
           else
@@ -162,7 +157,7 @@ module Pione
             consumer_key = api["key"]
             consumer_secret = api["secret"]
             session = DropboxSession.new(consumer_key, consumer_secret)
-            Resource::Dropbox.set_session(session)
+            Location::Dropbox.set_session(session)
             authorize_url = session.get_authorize_url
             puts "AUTHORIZING", authorize_url
             puts "Please visit that web page and hit 'Allow', then hit Enter here."
@@ -179,11 +174,10 @@ module Pione
           end
 
           # share access token in tuple space
-          Resource::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
+          Location::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
         end
 
-        option[:output_uri] = option[:output_uri].as_directory.to_s
-        @tuple_space_server.set_base_uri(option[:output_uri])
+        @tuple_space_server.set_base_location(option[:output_location])
       end
 
       start do
@@ -219,6 +213,8 @@ module Pione
               @start_tuple_space_provider_thread.kill
             end
           end
+
+          @logger.terminate
 
           # terminate tuple space provider
           if @tuple_space_provider
@@ -265,7 +261,7 @@ module Pione
       # @return [void]
       def start_agents
         # logger
-        Agent[:logger].start(@tuple_space_server, File.open(option[:log_path], "w+"))
+        @logger = Agent[:logger].start(@tuple_space_server, @log_location)
 
         # rule provider
         @rule_loader = Agent[:rule_provider].start(@tuple_space_server)
@@ -275,7 +271,7 @@ module Pione
         # input generators
         generator_method = option[:stream] ? :start_by_stream : :start_by_dir
         gen = Agent[:input_generator].send(
-          generator_method, @tuple_space_server, option[:input_uri]
+          generator_method, @tuple_space_server, option[:input_location]
         )
 
         # command listener

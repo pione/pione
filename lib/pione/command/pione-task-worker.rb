@@ -77,8 +77,8 @@ BANNER
 
         # get base uri
         if @tuple_space_server.base_uri.scheme == "dropbox"
-          Resource::Dropbox.init(@tuple_space_server)
-          unless Resource::Dropbox.ready?
+          Location::Dropbox.init(@tuple_space_server)
+          unless Location::Dropbox.ready?
             abort("You aren't ready to access Dropbox.")
           end
         end

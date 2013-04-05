@@ -170,7 +170,7 @@ module Pione
           path = File.join(@working_directory, name)
           if File.ftype(path) == "file"
             uri = make_resource_uri(name, @domain)
-            Resource[uri].link_from(path)
+            Location[uri].link_from(path)
           end
         end
       end

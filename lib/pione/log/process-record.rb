@@ -28,6 +28,11 @@ module Pione
         @data = data
       end
 
+      # Get value of the key.
+      #
+      # @param key [String]
+      #   the key
+      # @return [void]
       def [](key)
         case key
         when "component"
@@ -39,6 +44,12 @@ module Pione
         end
       end
 
+      # Set the value of the key.
+      #
+      # @param key [String]
+      #   the key
+      # @param value [Object]
+      #   the value
       def []=(key, val)
         case key
         when "component"

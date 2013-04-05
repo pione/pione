@@ -37,8 +37,8 @@ module Pione
       # @return [void]
       def restore_data_tuples_from_resource
         uri = root? ? @base_uri : @base_uri + (".%s/%s" % @domain.split("_"))
-        if Resource[uri].exist?
-          Resource[uri].entries.each do |res|
+        if Location[uri].exist?
+          Location[uri].entries.each do |res|
             write(Tuple[:data].new(@domain, res.basename, res.uri.to_s, res.mtime))
           end
         end
@@ -305,7 +305,7 @@ module Pione
           new_uri = URI.parse(make_output_resource_uri(output.name).to_s)
           unless new_uri.path == old_uri.path or shifted.include?(old_uri.path)
             # shift resource
-            Resource[new_uri].shift_from(Resource[old_uri])
+            Location[new_uri].shift_from(Location[old_uri])
             # shift cache if the old is cached in this machine
             FileCache.shift(old_uri, new_uri)
             # write shift tuple

@@ -72,8 +72,13 @@ module Pione
         @client_life_checker = Agent::TupleSpaceServerClientLifeChecker.start(self)
       end
 
-      def set_base_uri(uri)
-        write(Tuple[:base_uri].new(uri: uri))
+      # Set base location.
+      #
+      # @param location [BasicLocation]
+      #   base location
+      # @return [void]
+      def set_base_location(location)
+        write(Tuple[:base_uri].new(location.uri.as_directory.to_s))
       end
 
       def drburi

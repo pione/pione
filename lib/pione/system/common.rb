@@ -18,5 +18,15 @@ module Pione
       Signal.trap(:INT, finalizer)
     end
     module_function :set_signal_trap
+
+    # Return temporary path of the file.
+    #
+    # @param filename [String]
+    #   the file's name
+    # @return [Pathname]
+    #  temporary path of the file
+    def temporary_path(filename)
+      Global.temporary_directory + filename
+    end
   end
 end

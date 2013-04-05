@@ -153,11 +153,8 @@ require 'pione/parser/document-parser'
 # transformer
 require 'pione/transformer'
 
-# resource
-require 'pione/resource/basic-resource'
-require 'pione/resource/local'
-require 'pione/resource/ftp'
-require 'pione/resource/dropbox-resource'
+# location
+require 'pione/location'
 
 # rule-handler
 require 'pione/rule-handler/basic-handler'

@@ -1,17 +1,9 @@
 module Pione
-  module Resource
-    # FTP represents resources on FTP server.
-    class FTP < BasicResource
-      # Creates a resouce.
-      # @param [String, ::URI] uri
-      #   resource URI
-      def initialize(uri)
-        @uri = uri.kind_of?(::URI::Generic) ? uri : ::URI.parse(uri)
-        raise ArgumentError unless @uri.kind_of?(::URI::FTP)
-        @path = uri.path
-      end
+  module Location
+    # FTPLocation represents locations on FTP server.
+    class FTPLocation < BasicLocation
+      set_scheme "ftp"
 
-      # (see BasicResource#create)
       def create(data)
         Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
           pathes = @path.split('/')
@@ -23,7 +15,6 @@ module Pione
         end
       end
 
-      # (see BasicResource#read)
       def read
         begin
           tempfile = Tempfile.new("test")
@@ -36,7 +27,6 @@ module Pione
         end
       end
 
-      # (see BasicResource#update)
       def update(data)
         Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
           begin
@@ -51,15 +41,13 @@ module Pione
         end
       end
 
-      # (see BasicResource#delete)
       def delete
         Net::FTP.open(@uri.host, @uri.user, @uri.password) do |ftp|
           ftp.delete(@path)
         end
       end
 
-      # (see BasicResource#copy_to)
-      def copy_to(dist)
+      def link_to(dist)
         FileUtil.symlink(@path, dist)
       end
 
@@ -78,7 +66,5 @@ module Pione
         end
       end
     end
-
-    @@schemes['ftp'] = FTP
   end
 end

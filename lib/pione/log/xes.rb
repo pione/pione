@@ -35,20 +35,14 @@ module Pione
       end
     end
 
-    # "Concept" XES extension element
-    XESEXT_CONCEPT = XESExtension.new("Concept", "concept", "http://www.xes-standard.org/concept.xesext")
-
-    # "Identity" XES extension element
-    XESEXT_IDENTITY = XESExtension.new("Identity", "identity", "http://www.xes-standard.org/identity.xesext")
-
-    # "Time" XES extension element
-    XESEXT_TIME = XESExtension.new("Time", "time", "http://www.xes-standard.org/time.xesext")
-
-    # "Lifecycle" XES extension element
-    XESEXT_LIFECYCLE = XESExtension.new("Lifecycle", "lifecycle", "http://www.xes-standard.org/lifecycle.xesext")
-
-    # "Organizational" XES extension element
-    XESEXT_ORGANIZATIONAL = XESExtension.new("Organizational", "org", "http://www.xes-standard.org/org.xesext")
+    # known XES extension elements
+    XES_EXTENSION = {
+      :concept => XESExtension.new("Concept", "concept", "http://www.xes-standard.org/concept.xesext"),
+      :identity => XESExtension.new("Identity", "identity", "http://www.xes-standard.org/identity.xesext"),
+      :time => XESExtension.new("Time", "time", "http://www.xes-standard.org/time.xesext"),
+      :lifecycle => XESExtension.new("Lifecycle", "lifecycle", "http://www.xes-standard.org/lifecycle.xesext"),
+      :organizational => XESExtension.new("Organizational", "org", "http://www.xes-standard.org/org.xesext")
+    }
 
     # XESClassifier represents "classifier" element of XES.
     class XESClassifier
@@ -81,9 +75,12 @@ module Pione
       end
     end
 
-    MXML_LEGACY_CLASSIFIER = XESClassifier.new("MXML Legacy Classifier", "concept:name lifecycle:transition")
-    EVENT_NAME = XESClassifier.new("Event Name", "concept:name")
-    RESOURCE = XESClassifier.new("Resource", "org:resource")
+    # known XES classifier elements
+    XES_CLASSIFIER = {
+      :mxml_legacy_classifier => XESClassifier.new("MXML Legacy Classifier", "concept:name lifecycle:transition"),
+      :event_name => XESClassifier.new("Event Name", "concept:name"),
+      :resource => XESClassifier.new("Resource", "org:resource")
+    }
 
     # XESTrace represents "trace" element of XES.
     class XESTrace
@@ -157,6 +154,10 @@ module Pione
         @transition = transition
       end
 
+      # Return true if the element is valid event element.
+      #
+      # @return [Boolean]
+      #   true if the element is valid event element
       def valid?
         return false unless @name
         return false unless @resource
@@ -183,12 +184,12 @@ module Pione
     class AgentXESFormatter
       # Create a XES formatter for agent activities.
       #
-      # @param log [LogFile]
-      #   log file
+      # @param log_file [LogFile]
+      #   PIONE log file
       # @param agent_type [String]
       #   agent type string
-      def initialize(log, agent_type)
-        @log = log
+      def initialize(log_file, agent_type)
+        @log_file = log_file
         @agent_type = agent_type
       end
 
@@ -215,14 +216,14 @@ module Pione
           log.attributes["xes.features"] = ""
           log.attributes["openxes.version"] = "1.0RC7"
           log.attributes["xmlns"] = "http://www.xes-standard.org/"
-          log.elements << XESEXT_CONCEPT.format
-          log.elements << XESEXT_IDENTITY.format
-          log.elements << XESEXT_TIME.format
-          log.elements << XESEXT_LIFECYCLE.format
-          log.elements << XESEXT_ORGANIZATIONAL.format
-          log.elements << MXML_LEGACY_CLASSIFIER.format
-          log.elements << EVENT_NAME.format
-          log.elements << RESOURCE.format
+          log.elements << XES_EXTENSION[:concept].format
+          log.elements << XES_EXTENSION[:identity].format
+          log.elements << XES_EXTENSION[:time].format
+          log.elements << XES_EXTENSION[:lifecycle].format
+          log.elements << XES_EXTENSION[:organizational].format
+          log.elements << XES_CLASSIFIER[:mxml_legacy_classifier].format
+          log.elements << XES_CLASSIFIER[:event_name].format
+          log.elements << XES_CLASSIFIER[:resource].format
           log.add_element("string", {"key" => "concept:name", "value" => "PIONE agent activity log"})
           make_traces.each do |trace|
             if elt = trace.format
@@ -238,7 +239,7 @@ module Pione
       #
       # @return [Array<XESTrace>]
       def make_traces
-        @log.group_by("uuid").map do |uuid, records|
+        @log_file.group_by("uuid").map do |uuid, records|
           XESTrace.new(uuid).tap do |trace|
             records.sort{|a, b| a.timestamp <=> b.timestamp}.map do |record|
               trace.events << XESEvent.new(record["state"], record.component, record.timestamp, record["transition"])

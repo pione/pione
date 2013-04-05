@@ -1,5 +1,6 @@
 module Pione
   module Command
+    # PioneLog is a command for viewing PIONE log or converting into other formats.
     class PioneLog < BasicCommand
       define_info do
         set_name "pione-log"

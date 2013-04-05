@@ -95,8 +95,8 @@ module Pione
             # prepare cache path
             path = prepare_cache_path
 
-            # link the resource file to cache path
-            Resource[uri].link_to(path)
+            # link the file to cache path
+            Location[uri].link_to(path)
             @table[uri.to_s] = path
           end
 
@@ -115,9 +115,9 @@ module Pione
           # make a symbolic link from original location to the cache
           FileUtils.symlink(path, src)
 
-          # copy from cache to the resource file
+          # copy from cache to the file
           @table[uri.to_s] = path
-          Resource[uri].link_from(path)
+          Location[uri].link_from(path)
         end
 
         # @param [String] old_uri

@@ -109,26 +109,81 @@ module Pione
         Global.dot_pione_dir + "config.yml"
       end
 
-      # root of working directory
-      define_item(:working_directory_root, true) do
-        Pathname.new(File.join(Dir.tmpdir, "pione-wd-" + Etc.getlogin)).tap {|path|
-          path.mkpath unless path.exist?
-        }
+      # @!method temporary_directory_root
+      #
+      # Temporary directory's root path. You can change temporary directories
+      # paths by setting this variable.
+      #
+      # @return [Pathname]
+      #   root of all temporary directories
+      #
+      # @example
+      #   Global.temporary_directory_root #=> "/tmp/pione"
+      define_item(:temporary_directory_root, true, Pathname.new(Dir.tmpdir) + "pione")
+
+      # @!method temporary_directory
+      #
+      # Temporary directory for various processings.
+      #
+      # @return [Pathname]
+      #   temporary directory
+      #
+      # @example
+      #   Global.temporary_directory #=> "/tmp/pione/misc_keita"
+      define_item(:temporary_directory, false) do
+        Global.temporary_directory_root + "misc_%s" % Etc.getlogin
       end
 
-      # working directory
+      # @!method working_directory_root
+      #
+      # Root of working directory. This directory is created by each user.
+      #
+      # @return [Pathname]
+      #   root of working directory
+      #
+      # @example
+      #   Global.working_directory_root #=> "/tmp/pione/working_keita"
+      define_item(:working_directory_root, false) do
+        dir = Global.temporary_directory_root + "working_%s" % Etc.getlogin
+        Pathname.new(dir).tap {|path| path.mkpath unless path.exist?}
+      end
+
+      # @!method working_directory
+      #
+      # Working directory for action rules.
+      #
+      # @return [Pathname]
+      #   working directory
+      #
+      # @example
+      #   Global.working_directory #=> "/tmp/pione/working_keita/d20130404-10000-1kg2ezo"
       define_item(:working_directory, false) do
         Pathname.new(Dir.mktmpdir(nil, Global.working_directory_root))
       end
 
-      # root of file cache directory
-      define_item(:file_cache_directory_root, true) do
-        Pathname.new(File.join(Dir.tmpdir, "pione-file-cache-" + Etc.getlogin)).tap {|path|
-          path.mkpath unless path.exist?
-        }
+      # @!method file_cache_directory_root
+      #
+      # Root of file cache directory. This directory is created by each user.
+      #
+      # @return [Pathname]
+      #   root of file cache directory
+      #
+      # @example
+      #   Global.file_cache_directory_root #=> "/tmp/pione/file-cache_keita"
+      define_item(:file_cache_directory_root, false) do
+        dir = Global.temporary_directory_root + "file-cache_%s" % Etc.getlogin
+        Pathname.new(dir).tap {|path| path.mkpath unless path.exist?}
       end
 
-      # file cache directory
+      # @!method file_cache_directory
+      #
+      # File cache directory.
+      #
+      # @return [Pathname]
+      #   file cache directory
+      #
+      # @example
+      #   Global.file_cache_directory #=> "/tmp/pione/file-cache_keita/d20130404-11086-qtu7h0"
       define_item(:file_cache_directory, false) do
         Pathname.new(Dir.mktmpdir(nil, Global.file_cache_directory_root))
       end
