@@ -1,12 +1,12 @@
 module Pione
   module Tuple
-    # ShiftTuple represents resource shift information.
+    # ShiftTuple represents location shift information.
     class ShiftTuple < BasicTuple
       define_format [:shift,
-        # old uri
-        [:old_uri, String],
-        # new uri
-        [:new_uri, String]
+        # old location
+        [:old_location, Location::BasicLocation],
+        # new location
+        [:new_location, Location::BasicLocation]
       ]
     end
   end

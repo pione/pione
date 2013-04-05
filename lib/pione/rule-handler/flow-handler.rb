@@ -33,13 +33,14 @@ module Pione
 
       private
 
-      # Restores data tuples from the domain resource.
+      # Restore data tuples from the domain resource.
+      #
       # @return [void]
       def restore_data_tuples_from_resource
-        uri = root? ? @base_uri : @base_uri + (".%s/%s" % @domain.split("_"))
-        if Location[uri].exist?
-          Location[uri].entries.each do |res|
-            write(Tuple[:data].new(@domain, res.basename, res.uri.to_s, res.mtime))
+        dir = root? ? @base_location : @base_location + (".%s/%s" % @domain.split("_"))
+        if dir.exist?
+          dir.entries.each do |location|
+            write(Tuple[:data].new(@domain, location.basename, location, location.mtime))
           end
         end
       end
@@ -246,7 +247,8 @@ module Pione
         user_message_end("End Task Distribution: %s" % handler_digest)
       end
 
-      # Returns true if we need to write the task into the tuple space.
+      # Return true if we need to write the task into the tuple space.
+      #
       # @param [Task] task
       #   task tuple
       # @return [Boolean]
@@ -255,7 +257,8 @@ module Pione
         not(exist_task?(task) or working?(task))
       end
 
-      # Returns true if the task exists in the tuple space already.
+      # Return true if the task exists in the tuple space already.
+      #
       # @param [Task] task
       #   task tuple
       # @return [Boolean]
@@ -267,7 +270,8 @@ module Pione
         return false
       end
 
-      # Returns true if any task worker is working on the task.
+      # Return true if any task worker is working on the task.
+      #
       # @param [Task] task
       #   task tuple
       # @return [Boolean]
@@ -280,6 +284,7 @@ module Pione
       end
 
       # Find outputs from the domain.
+      #
       # @return [void]
       def find_outputs
         @rule.outputs.each_with_index do |output, i|
@@ -289,29 +294,32 @@ module Pione
           when :all
             @outputs[i] = tuples.find_all {|data| output.match(data.name)}
           when :each
+            # FIXME
             @outputs[i] = tuples.find {|data| output.match(data.name)}
           end
         end
       end
 
-      # Shifts output resource locations.
+      # Shift output data locations.
+      #
       # @return [void]
       def shift_output_resources
         # cheker for double shift
         shifted = []
+
         # shift output resources
         @outputs.flatten.compact.each do |output|
-          old_uri = URI.parse(output.uri)
-          new_uri = URI.parse(make_output_resource_uri(output.name).to_s)
-          unless new_uri.path == old_uri.path or shifted.include?(old_uri.path)
+          old_location = output.location
+          new_location = make_output_location(output.name)
+          unless new_location == old_location or shifted.include?(old_location)
             # shift resource
-            Location[new_uri].shift_from(Location[old_uri])
+            new_location.shift_from(old_location)
             # shift cache if the old is cached in this machine
-            FileCache.shift(old_uri, new_uri)
+            FileCache.shift(old_location, new_location)
             # write shift tuple
-            write(Tuple[:shift].new(old_uri.to_s, new_uri.to_s))
+            write(Tuple[:shift].new(old_location, new_location))
             # push moved path
-            shifted << old_uri.path
+            shifted << old_location
           end
         end
       end
@@ -322,6 +330,7 @@ module Pione
         if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
           raise RuleExecutionError.new(self)
         end
+
         # nil check
         if @outputs.any?{|tuple| tuple.nil?}
           raise RuleExecutionError.new(self)

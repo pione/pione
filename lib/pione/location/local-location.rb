@@ -46,8 +46,6 @@ module Pione
       end
 
       def link_to(dest)
-        dir = File.dirname(dest)
-        FileUtils.makedirs(dir) unless Dir.exist?(dir)
         FileUtils.symlink(@path, dest)
       end
 

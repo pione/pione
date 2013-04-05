@@ -21,8 +21,7 @@ module Pione
       #   message string with invalid data and tuple identifier
       # @api private
       def message
-        msg = @invalid_data.inspect
-        msg += " in %s" % @identifier if @identifier
+        msg = "Format error found in %s tuple: %s" % [@identifier, @invalid_data.inspect]
         return msg
       end
     end
@@ -140,12 +139,13 @@ module Pione
         position_of(:domain)
       end
 
-      # Returns uri position of the format.
-      # @return [Integer, nil]
-      #   position number of URI field, or nil
+      # Return location position of the format.
+      #
+      # @return [Integer or nil]
+      #   position number of location field, or nil
       # @api private
-      def uri_position
-        position_of(:uri)
+      def location_position
+        position_of(:location)
       end
 
       private

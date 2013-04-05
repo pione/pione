@@ -277,7 +277,7 @@ module Pione
         list = get(var)
         list = RuleIOList.new unless list
         elt = RuleIOElement.new(PioneString.new(tuple.name))
-        elt.uri = PioneString.new(tuple.uri)
+        elt.uri = PioneString.new(tuple.location.uri.to_s)
         elt.match = PioneList.new(*md.map{|d| PioneString.new(d)})
 
         # update the list
@@ -308,7 +308,7 @@ module Pione
         # convert each tuples
         tuples.each do |tuple, i|
           elt = RuleIOElement.new(PioneString.new(tuple.name))
-          elt.uri = PioneString.new(tuple.uri)
+          elt.uri = PioneString.new(tuple.location.uri.to_s)
           elt.match = PioneList.new(
             *expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
           )

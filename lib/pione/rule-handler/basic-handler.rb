@@ -27,7 +27,7 @@ module Pione
       attr_reader :inputs
       attr_reader :outputs
       attr_reader :params
-      attr_reader :base_uri
+      attr_reader :base_location
       attr_reader :task_id
       attr_reader :domain
       attr_reader :variable_table
@@ -60,7 +60,7 @@ module Pione
         @content = rule.body
         @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new(@params.data)
-        @base_uri = read(Tuple[:base_uri].any).uri
+        @base_location = read(Tuple[:base_location].any).location
         @dry_run = begin read0(Tuple[:dry_run].any).availability rescue false end
         @task_id = ID.task_id(@inputs, @params)
         @call_stack = call_stack
@@ -159,31 +159,48 @@ module Pione
         )
       end
 
-      # Makes resource uri.
-      def make_resource_uri(name, domain)
+      # Make location by data name and the domain.
+      #
+      # @param name [String]
+      #   data name
+      # @param domain [String]
+      #   domain of the data
+      # @return [BasicLocation]
+      #   the location
+      def make_location(name, domain)
         if domain == "root" || domain.nil?
-          return URI.parse(@base_uri) + "./%s" % name
+          return @base_location + "./%s" % name
         else
           # make relative path
           rule_name = domain.split("_")[0..-2].join("_")
           digest = domain.split("_").last
           path = "./.%s/%s/%s" % [rule_name, digest, name]
 
-          # make uri
-          return URI.parse(@base_uri) + path
+          # make location
+          return @base_location + path
         end
       end
 
-      # Makes output resource uri.
-      def make_output_resource_uri(name)
+      # Make output data location by the name.
+      #
+      # @param name [String]
+      #   data name
+      # @return [BasicLocation]
+      #   output data location
+      def make_output_location(name)
         # get parent domain or root domain
-        make_resource_uri(name, @call_stack.last)
+        make_location(name, @call_stack.last)
       end
 
-      # Make output tuple by name.
+      # Make output tuple by the name.
+      #
+      # @param name [String]
+      #   data name
+      # @return [Tuple::DataTuple]
+      #   data tuple
       def make_output_tuple(name)
-        uri = make_output_resource_uri(name).to_s
-        Tuple[:data].new(name: name, domain: @domain, uri: uri, time: nil)
+        location = make_output_location(name)
+        Tuple[:data].new(name: name, domain: @domain, location: location, time: nil)
       end
 
       # Setup variable table. The following variables are introduced in variable

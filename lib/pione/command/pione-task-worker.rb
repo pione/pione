@@ -76,7 +76,7 @@ BANNER
         abort("pione-task-worker error: no tuple space server") unless @tuple_space_server
 
         # get base uri
-        if @tuple_space_server.base_uri.scheme == "dropbox"
+        if @tuple_space_server.base_location.kind_of?(Location::DropboxLocation)
           Location::Dropbox.init(@tuple_space_server)
           unless Location::Dropbox.ready?
             abort("You aren't ready to access Dropbox.")

@@ -43,6 +43,10 @@ module Pione
         end
       end
 
+      def base_location
+        read(Tuple[:base_location].any).location
+      end
+
       # Protected take.
       def take(*args)
         tuple = super(*args, &method(:set_current_tuple_entry))

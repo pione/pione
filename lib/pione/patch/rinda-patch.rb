@@ -730,28 +730,40 @@ module Rinda
       end
     end
 
+    # Shift the location of the tuple.
+    #
+    # @param tuple [Tuple]
+    #   tuple
     def shift_tuple(tuple)
       if Pione::Tuple[tuple.first]
-        if pos = Pione::Tuple[tuple.first].uri_position
-          if new_uri = shift_uri(tuple[pos])
+        if pos = Pione::Tuple[tuple.first].location_position
+          if new_location = shift_location(tuple[pos])
             tuple = tuple.clone
-            tuple[pos] = new_uri
+            tuple[pos] = new_location
           end
         end
       end
       return tuple
     end
 
-    def shift_uri(uri, old=[])
-      return nil if old.include?(uri)
+    # Shift the location.
+    #
+    # @param location [Location::BasicLocation]
+    #   location that shift from
+    # @param old [Array<Location::BasicLocation>]
+    #   history of shift search
+    # @return [Location::BasicLocation or nil]
+    #   new location that shift to
+    def shift_location(location, old=[])
+      return nil if old.include?(location)
 
-      template = TemplateEntry.new([:shift, uri, nil])
+      template = TemplateEntry.new([:shift, location, nil])
       if shift_tuple = @bag.find(template)
-        next_uri = shift_tuple[2]
-        if last_uri = shift_uri(next_uri, old + [uri])
-          next_uri = last_uri
+        next_location = shift_tuple[2]
+        if last_location = shift_location(next_location, old + [location])
+          next_location = last_location
         end
-        return next_uri
+        return next_location
       end
       return nil
     end

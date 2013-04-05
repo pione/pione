@@ -76,6 +76,9 @@ require 'pione/uri-scheme/local-scheme'
 require 'pione/uri-scheme/dropbox-scheme'
 require 'pione/uri-scheme/broadcast-scheme'
 
+# location
+require 'pione/location'
+
 # relay
 require 'pione/relay/transmitter-socket'
 require 'pione/relay/trampoline'
@@ -122,7 +125,7 @@ require 'pione/tuple/dry-run-tuple'
 require 'pione/tuple/foreground-tuple'
 require 'pione/tuple/request-rule-tuple'
 require 'pione/tuple/task-tuple'
-require 'pione/tuple/base-uri-tuple'
+require 'pione/tuple/base-location-tuple'
 require 'pione/tuple/command-tuple'
 require 'pione/tuple/exception-tuple'
 require 'pione/tuple/log-tuple'
@@ -152,9 +155,6 @@ require 'pione/parser/document-parser'
 
 # transformer
 require 'pione/transformer'
-
-# location
-require 'pione/location'
 
 # rule-handler
 require 'pione/rule-handler/basic-handler'

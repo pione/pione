@@ -22,8 +22,8 @@ module Pione
         write_shell_script {|path| call_shell_script(path) }
         # collect outputs
         collect_outputs
-        # write resouces
-        write_output_resources
+        # write output data
+        write_output_data
         # write tuples
         write_output_tuples
         # write environment info
@@ -54,9 +54,12 @@ module Pione
       end
 
       # Make a working directory.
+      #
+      # @return [Pathname]
+      #   path of working directory
       def make_working_directory
         # build directory path
-        task_dirname = ID.domain_id(
+        dirname = ID.domain_id(
           @rule.expr.package.name,
           @rule.expr.name,
           @inputs,
@@ -64,20 +67,20 @@ module Pione
         )
 
         # create a directory
-        path = Global.working_directory + task_dirname
-        FileUtils.makedirs(path)
-
-        return path
+        return (Global.working_directory + dirname).tap{|path| path.mkpath}
       end
 
       # Synchronize input data into working directory.
       def setup_working_directory
         @inputs.flatten.each do |input|
           # get file path in working directory
-          path = File.join(@working_directory, input.name)
+          path = @working_directory + input.name
           # create a link to cache
-          cache_path = FileCache.get(input.uri)
+          cache_path = FileCache.get(input.location)
           FileUtils.symlink(cache_path, path, {:force => true})
+          unless path.exist?
+            raise RuleExecutionError.new(self)
+          end
         end
       end
 
@@ -122,9 +125,9 @@ module Pione
 
       # Make output tuple by name.
       def make_output_tuple_with_time(name)
-        time = File.mtime(File.join(@working_directory, name))
-        uri = make_output_resource_uri(name).to_s
-        Tuple[:data].new(name: name, domain: @domain, uri: uri, time: time)
+        time = (@working_directory + name).mtime
+        location = make_output_location(name)
+        Tuple[:data].new(name: name, domain: @domain, location: location, time: time)
       end
 
       # Collect output data by names from working directory.
@@ -145,18 +148,20 @@ module Pione
         end
       end
 
-      # Write resources for output data.
-      def write_output_resources
+      # Write output data with caching.
+      #
+      # @return [void]
+      def write_output_data
         @outputs.flatten.compact.each do |output|
-          path = File.join(@working_directory, output.name)
-          FileCache.put(path, output.uri)
+          FileCache.put(@working_directory + output.name, output.location)
         end
       end
 
-      # Writes action environment information file.
+      # Write action environment information file.
+      #
+      # @return [void]
       def write_env_info
-        path = File.join(@working_directory, ".pione-env")
-        File.open(path, "w+") do |out|
+        (@working_directory + ".pione-env").open("w+") do |out|
           @variable_table.variables.each do |var|
             val = @variable_table.get(var)
             out.puts "%s: %s" % [var.name, val.textize]
@@ -164,13 +169,14 @@ module Pione
         end
       end
 
-      # Writes resources for other intermediate files.
+      # Write resources for other intermediate files.
+      #
+      # @return [void]
       def write_other_resources
-        Dir.new(@working_directory).each do |name|
-          path = File.join(@working_directory, name)
+        @working_directory.entries.each do |name|
+          path = @working_directory + name
           if File.ftype(path) == "file"
-            uri = make_resource_uri(name, @domain)
-            Location[uri].link_from(path)
+            make_location(name, @domain).link_from(path)
           end
         end
       end

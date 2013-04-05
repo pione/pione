@@ -62,12 +62,6 @@ module Pione
 
         @terminated = false
 
-        # base uri
-        if data.has_key?(:base_uri)
-          uri = data[:base_uri]
-          write(Tuple[:base_uri].new(uri: uri))
-        end
-
         # start agents
         @client_life_checker = Agent::TupleSpaceServerClientLifeChecker.start(self)
       end
@@ -78,7 +72,7 @@ module Pione
       #   base location
       # @return [void]
       def set_base_location(location)
-        write(Tuple[:base_uri].new(location.uri.as_directory.to_s))
+        write(Tuple[:base_location].new(location.as_directory))
       end
 
       def drburi
@@ -99,9 +93,12 @@ module Pione
         Time.now
       end
 
-      # Return common base uri of the space.
-      def base_uri
-        URI.parse(read(Tuple[:base_uri].any).uri)
+      # Return common base location of the space.
+      #
+      # @return [BasicLocation]
+      #   base location
+      def base_location
+        read(Tuple[:base_location].any).location
       end
 
       # Return the worker resource size of the server.

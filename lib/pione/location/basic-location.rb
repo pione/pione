@@ -64,8 +64,18 @@ module Pione
       #
       # @param name [String]
       #   filename or directory name
+      # @return [BasicLocation]
+      #   new location
       def +(name)
         self.class.new(@uri.as_directory + name)
+      end
+
+      # Create new location that has URI as a directory.
+      #
+      # @return [BasicLocation]
+      #   new location
+      def as_directory
+        self.class.new(@uri.as_directory)
       end
 
       # Creates a location.
@@ -149,6 +159,18 @@ module Pione
       # @return [void]
       def link_from(src)
         raise NotImplementedError
+      end
+
+      # @api private
+      def ==(other)
+        return false unless other.kind_of?(self.class)
+        @uri == other.uri
+      end
+      alias :eql? :"=="
+
+      # @api private
+      def hash
+        @uri.hash
       end
     end
   end

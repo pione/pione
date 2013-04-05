@@ -7,8 +7,8 @@ module Pione
         [:domain, String],
         # data name
         [:name, Type.or(String, Model::DataExpr)],
-        # resource location
-        [:uri, String],
+        # data location
+        [:location, Location::BasicLocation],
         # data created time
         [:time, Time]
       ]

@@ -150,7 +150,7 @@ module Pione
       list = new_vtable.get(var)
       list = RuleIOList.new unless list
       elt = RuleIOElement.new(PioneString.new(tuple.name))
-      elt.uri = PioneString.new(tuple.uri)
+      elt.uri = PioneString.new(tuple.location.uri.to_s)
       elt.match = PioneList.new(*md.map{|d| PioneString.new(d)})
       new_vtable.set!(var, list.add(elt))
 

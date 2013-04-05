@@ -2,76 +2,94 @@ module Pione
   module System
     # FileCache is a caching system for task workers.
     module FileCache
-      # Returns file cache class.
+      # Return file cache class.
+      #
       # @return [Class]
       #   CacheMethod class
       def self.cache_method
         @klass || SimpleCacheMethod
       end
 
-      # Sets a file cache class.
-      # @param [Class] klass
+      # Set a file cache class.
+      #
+      # @param klass [Class]
       #   CacheMethod class
       # @return [void]
       def self.set_cache_method(klass)
         @klass = klass
       end
 
-      # Returns the singleton.
+      # Return the singleton.
+      #
       # @return [CacheMethod]
       #   cache method instance
       def self.instance
         @instance ||= cache_method.new
       end
 
-      # Gets cached data path from the uri resource.
-      # @param [String] uri
-      #   uri to get
-      # @return [String]
-      #   cached path string
-      def self.get(uri)
-        instance.get(uri)
+      # Get cached data path from the uri resource.
+      #
+      # @param location [BasicLocation]
+      #   data location
+      # @return [Pathname]
+      #   cached path
+      def self.get(location)
+        instance.get(location)
       end
 
-      # Puts the data to uri resource and caches it.
-      def self.put(src, uri)
-        instance.put(src, uri)
-      end
-
-      # Shifts the resource from old uri to new uri.
-      # @param [String] old_uri
-      #   old resource uri
-      # @param [String] new_uri
-      #   new resource uri
+      # Put the data to the location and caches it.
+      #
+      # @param src [String]
+      #   source path
+      # @param location [BasicLocation]
+      #   destination location
       # @return [void]
-      def self.shift(old_uri, new_uri)
-        instance.shift(old_uri, new_uri)
+      def self.put(src, location)
+        instance.put(src, location)
+      end
+
+      # Shift the resource from old uri to new uri.
+      #
+      # @param old_location [BasicLocation]
+      #   old data location
+      # @param new_location [BasicLocation]
+      #   new data location
+      # @return [void]
+      def self.shift(old_location, new_location)
+        instance.shift(old_location, new_location)
       end
 
       # FileCache is an interface class of cache methods.
       class FileCacheMethod
-        # Gets the cache location path of the URI.
-        # @param [String] uri
-        #   resource uri
-        # @return [String]
+        # Get the cache path of the location.
+        #
+        # @param location [BasicLocation]
+        #   data location
+        # @return [Pathname]
         #   cached path
-        def get(uri)
+        def get(location)
           raise NotImplementedError
         end
 
-        # Puts the file into cache with the URI.
+        # Cache the source data of the location.
+        #
+        # @param src [Pathname]
+        #   source path
+        # @param location [BasicLocation]
+        #   destination
         # @return [void]
-        def put(src, uri)
+        def put(src, location)
           raise NotImplementedError
         end
 
-        # Shitfs the URI.
-        # @param [String] old_uri
-        #   old resource uri
-        # @param [String] new_uri
-        #   new resource uri
+        # Shift the data.
+        #
+        # @param old_location [BasicLocation]
+        #   old resource location
+        # @param new_location [BasicLocation]
+        #   new resource location
         # @return [void]
-        def shift(old_uri, new_uri)
+        def shift(old_location, new_location)
           raise NotImplementedError
         end
       end
@@ -84,28 +102,26 @@ module Pione
           @tmpdir = Global.file_cache_directory
         end
 
-        # Gets cached data path from the uri resource.
-        # @param [String] uri
-        #   resource uri
-        # @return [String]
-        #   cached path
-        def get(uri)
+        def get(location)
+          raise ArgumentError.new(location) unless location.kind_of?(Location::BasicLocation)
+
           # check cached or not
-          unless @table.has_key?(uri)
+          unless @table.has_key?(location)
             # prepare cache path
             path = prepare_cache_path
 
             # link the file to cache path
-            Location[uri].link_to(path)
-            @table[uri.to_s] = path
+            location.link_to(path)
+            @table[location] = path
           end
 
-          return @table[uri.to_s]
+          return @table[location]
         end
 
-        # Puts the data to uri resource and caches it in local.
-        # @return [void]
-        def put(src, uri)
+        def put(src, location)
+          raise ArgumentError.new(src) unless src.kind_of?(Pathname)
+          raise ArgumentError.new(location) unless location.kind_of?(Location::BasicLocation)
+
           # prepare cache path
           path = prepare_cache_path
 
@@ -116,31 +132,31 @@ module Pione
           FileUtils.symlink(path, src)
 
           # copy from cache to the file
-          @table[uri.to_s] = path
-          Location[uri].link_from(path)
+          @table[location] = path
+          location.link_from(path)
         end
 
-        # @param [String] old_uri
-        #   old resource uri
-        # @param [String] new_uri
-        #   new resource uri
-        # @return [void]
-        def shift(old_uri, new_uri)
-          if path = @table[old_uri.to_s]
-            if new_uri.scheme == "local"
-              FileUtils.symlink(new_uri.path, path, :force => true)
+        def shift(old_location, new_location)
+          raise ArgumentError.new(old_location) unless old_location.kind_of?(Location::BasicLocation)
+          raise ArgumentError.new(new_location) unless new_location.kind_of?(Location::BasicLocation)
+
+          if path = @table[old_location]
+            if new_location.kind_of?(Location::LocalLocation)
+              FileUtils.symlink(new_location.path, path, :force => true)
             end
-            @table[new_uri.to_s] = path
+            @table[new_location] = path
           end
         end
 
         private
 
-        # Makes new cache path.
-        # @api private
+        # Make new cache path.
+        #
+        # @return [Pathname]
+        #   cache path
         def prepare_cache_path
           cache = Tempfile.new("", Global.file_cache_directory)
-          path = cache.path
+          path = Pathname.new(cache.path)
           cache.close(true)
           return path
         end

@@ -33,7 +33,7 @@ module Pione
       class DirGeneratorMethod < GeneratorMethod
         # Create a generator.
         #
-        # @param ts_server [TupleSpaceServer]
+        # @param tuple_space_server [TupleSpaceServer]
         #   tuple space server
         # @param dir [BasicLocation]
         #   input directory location
@@ -94,11 +94,6 @@ module Pione
         end
       end
 
-      # Create a input generator agent by simple method.
-      def self.start_by_simple(ts_server, *args)
-        start(ts_server, SimpleGeneratorMethod.new(ts_server, ts_server.base_uri, *args))
-      end
-
       # Create a input generator agent by directory method.
       def self.start_by_dir(ts_server, *args)
         start(ts_server, DirGeneratorMethod.new(ts_server, *args))
@@ -113,8 +108,7 @@ module Pione
       define_state :sleeping
       define_state :stop_iteration
 
-      define_state_transition :initialized => :reading_base_uri
-      define_state_transition :reading_base_uri => :generating
+      define_state_transition :initialized => :generating
       define_state_transition :generating => :generating
       define_state_transition :stop_iteration => lambda{|agent, res|
         agent.stream? ? :sleeping : :terminated
@@ -140,8 +134,8 @@ module Pione
 
       private
 
-      def transit_to_reading_base_uri
-        @base_uri = read(Tuple[:base_uri].any).uri
+      def transit_to_initialized
+        @base_location = base_location
       end
 
       # State generating generates a data from generator and puts it into tuple
@@ -151,10 +145,10 @@ module Pione
           with_log(agent_type, action: "generate_input_data", uuid: uuid, object: input.name) do
             @inputs << input
             # upload the file
-            input_uri = @base_uri + File.join("input", input.name)
-            Location[input_uri].create(Location[input.uri].read)
+            input_location = @base_location + File.join("input", input.name)
+            input_location.create(Location[input.uri].read)
             # make the tuple
-            write(Tuple[:data].new(DOMAIN, input.name, input_uri, input.time))
+            write(Tuple[:data].new(DOMAIN, input.name, input_location, input.time))
           end
         end
       end
