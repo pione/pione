@@ -23,16 +23,45 @@ module Pione
 
     private
 
-    # Reads a tuple without waiting.
-    # @return [Tuple]
-    def read0(tuple)
-      read(tuple, 0)
+    # Read a tuple with no waiting time. If there are no matched tuples, return
+    # +nil+.
+    #
+    # @param tuple [BasicTuple]
+    #   template tuple for query
+    # @return [BasicTuple, nil]
+    #   query result
+    def read!(tuple)
+      begin
+        read(tuple, 0)
+      rescue Rinda::RequestExpiredError
+        nil
+      end
     end
 
-    # Takes a tuple without wainting.
-    # @return [Tuple]
-    def take0(tuple)
-      take(tuple, 0)
+    # Take a tuple with no waiting time. If there are no matched tuples, return
+    # +nil+.
+    #
+    # @param tuple [BasicTuple]
+    #   template tuple for query
+    # @return [BasicTuple, nil]
+    #   query result
+    def take!(tuple)
+      begin
+        take(tuple, 0)
+      rescue Rinda::RequestExpiredError
+        nil
+      end
+    end
+
+    # Write log tuple of the component activity with the data.
+    #
+    # @param component [String]
+    #   component name
+    # @param data [Hash{Symbol => Object}]
+    #   data
+    # @return [void]
+    def log(component, data)
+      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, data.merge({:transition => "complete"}))))
     end
 
     # Do the action with loggging the message.
@@ -47,6 +76,15 @@ module Pione
       result = yield
       write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, data.merge({:transition => "complete"}))))
       return result
+    end
+
+    # Send a processing error.
+    #
+    # @param msg [String]
+    #   error message
+    # @return [void]
+    def processing_error(msg)
+      write(Tuple[:command].new(name: "terminate", args: {message: msg}))
     end
 
     # Set tuple space server which provides operations.

@@ -1,24 +1,24 @@
 module Pione
   module RuleHandler
-    # FlowHandler represents a handler for flow actions.
+    # FlowHandler is a rule handler for flow elements.
     class FlowHandler < BasicHandler
       def self.message_name
         "Flow"
       end
 
-      # @api private
       def initialize(*args)
         super
         @data_finder = DataFinder.new(tuple_space_server, @domain)
         @finished = []
       end
 
-      # Starts to process flow elements. This processes rule application, output
+      # Start to process flow elements. This processes rule application, output
       # search, resource shift, and output validation.
+      #
       # @return [void]
       def execute
-        # restore data tuples from resource
-        restore_data_tuples_from_resource
+        # restore data tuples from domain_location
+        restore_data_tuples_from_domain_location
         # rule application
         apply_rules(@rule.body.eval(@variable_table).elements)
         # find outputs
@@ -33,10 +33,11 @@ module Pione
 
       private
 
-      # Restore data tuples from the domain resource.
+      # Restore data tuples from the domain location. This reads files in the
+      # location and write it as data tuples.
       #
       # @return [void]
-      def restore_data_tuples_from_resource
+      def restore_data_tuples_from_domain_location
         dir = root? ? @base_location : @base_location + (".%s/%s" % @domain.split("_"))
         if dir.exist?
           dir.entries.each do |location|
@@ -45,34 +46,36 @@ module Pione
         end
       end
 
-      # Applies target input data to rules.
-      # @param [Array<CallRule>] callees
+      # Apply input data to rules.
+      #
+      # @param callees [Array<CallRule>]
       #   elements of call rule lines
       # @return [void]
       def apply_rules(callees)
         user_message_begin("Start Rule Application: %s" % handler_digest)
 
-        # apply flow-element rules
         while true do
           # find updatable rule applications
           applications = select_updatables(find_applicable_rules(callees))
 
-          unless applications.empty?
-            # push task tuples into tuple space
-            distribute_tasks(applications)
-          else
-            break # finish applications
-          end
+          # check wheather applications completed
+          break if applications.empty?
+
+          # push tasks into tuple space
+          distribute_tasks(applications)
         end
 
         user_message_end("End Rule Application: %s" % handler_digest)
       end
 
-      # Finds applicable flow-element rules with inputs and variables.
+      # Find applicable rules with inputs and variables.
+      #
+      # @param callees [Array<CallRule>]
+      #   callee rules
       def find_applicable_rules(callees)
         callees = callees.inject([]) do |list, callee|
-          # evaluate callee expr by handling rule context
-          # and expand compositional rule expressions as simple rule expressions
+          # evaluate callee by handling rule context and expand compositional
+          # rule expressions as simple rule expressions
           list + callee.eval(@variable_table).expr.to_set.to_a.map{|expr| CallRule.new(expr)}
         end
 
@@ -82,14 +85,7 @@ module Pione
           # check if tickets exist in the domain
           names = callee.expr.input_ticket_expr.names
           if not(names.empty?)
-            if names.all? do |name|
-              begin
-                read0(Tuple[:ticket].new(@domain, name))
-                true
-              rescue Rinda::RequestExpiredError
-                false # when the ticket doesn't exist
-              end
-            end
+            if names.all? {|name| read!(Tuple[:ticket].new(@domain, name))}
               target = callee
             end
           else
@@ -100,7 +96,7 @@ module Pione
 
         callees.inject([]) do |combinations, callee|
           # find callee rule
-          rule = find_callee_rule(callee)
+          rule = find_callee_rule_tuple(callee).content
 
           # update callee parameters
           @variable_table.variables.each do |var|
@@ -131,23 +127,22 @@ module Pione
         end
       end
 
-      # Finds the rule of the callee.
-      def find_callee_rule(callee)
-        return read(Tuple[:rule].new(rule_path: callee.rule_path), 0).content
-      rescue Rinda::RequestExpiredError
-        debug_message "Request loading a rule #{callee.rule_path}"
-        write(Tuple[:request_rule].new(callee.rule_path))
-        tuple = read(Tuple[:rule].new(rule_path: callee.rule_path))
-
-        # check whether known or unknown
-        if tuple.status == :known
-          return tuple.content
+      # Find the rule tuple of the callee.
+      #
+      # @param callee [CallRule]
+      #   callee rule
+      # @return [RuleTuple]
+      #   rule tuple
+      def find_callee_rule_tuple(callee)
+        if rule = read!(Tuple[:rule].new(rule_path: callee.rule_path))
+          return rule
         else
-          raise UnknownRule.new(callee.rule_path)
+          write(Tuple[:request_rule].new(callee.rule_path))
+          return read(Tuple[:rule].new(rule_path: callee.rule_path))
         end
       end
 
-      # Finds inputs and variables for flow element rules.
+      # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
         combinations.select do |callee, rule, inputs, vtable|
           # task domain
@@ -173,7 +168,8 @@ module Pione
         end
       end
 
-      # Distributes tasks.
+      # Distribute tasks.
+      #
       # @param [Array] applications
       #   application informations
       # @return [void]
@@ -197,7 +193,7 @@ module Pione
 
           # check if same task exists
           begin
-            if need_task?(task)
+            if need_to_process_task?(task)
               # copy input data from the handler domain to task domain
               copy_data_into_domain(inputs, task_domain)
 
@@ -249,38 +245,22 @@ module Pione
 
       # Return true if we need to write the task into the tuple space.
       #
-      # @param [Task] task
+      # @param [TaskTuple] task
       #   task tuple
       # @return [Boolean]
       #   true if we need to write the task into the tuple space
-      def need_task?(task)
-        not(exist_task?(task) or working?(task))
-      end
-
-      # Return true if the task exists in the tuple space already.
-      #
-      # @param [Task] task
-      #   task tuple
-      # @return [Boolean]
-      #   true if the task exists in the tuple space already
-      def exist_task?(task)
-        read0(task)
-        return true
-      rescue Rinda::RequestExpiredError
-        return false
+      def need_to_process_task?(task)
+        not(read!(task) or working?(task))
       end
 
       # Return true if any task worker is working on the task.
       #
-      # @param [Task] task
+      # @param task [TaskTuple]
       #   task tuple
       # @return [Boolean]
       #   true if any task worker is working on the task
       def working?(task)
-        read0(Tuple[:working].new(domain: task.domain))
-        return true
-      rescue Rinda::RequestExpiredError
-        return false
+        read!(Tuple[:working].new(domain: task.domain))
       end
 
       # Find outputs from the domain.
@@ -324,7 +304,7 @@ module Pione
         end
       end
 
-      # Validates outputs size.
+      # Validate outputs size.
       def validate_outputs
         # size check
         if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
@@ -342,7 +322,8 @@ module Pione
         end
       end
 
-      # Imports finished tuple's outputs from the domain.
+      # Import finished tuple's outputs from the domain.
+      #
       # @param [String] task_domain
       #   target task domain
       # @return [void]
@@ -353,11 +334,10 @@ module Pione
             domain: task_domain,
             status: :succeeded
           )
-          finished = read0(template)
-          copy_data_into_domain(finished.outputs, @domain)
+          if finished = read!(template)
+            copy_data_into_domain(finished.outputs, @domain)
+          end
         end
-      rescue Rinda::RequestExpiredError
-        # ignore
       end
 
       # Copy data into specified domain and return the tuple list

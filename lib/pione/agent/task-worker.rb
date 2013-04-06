@@ -106,13 +106,11 @@ module Pione
 
       # Transition method for the state +task_waiting+. The agent takes a +task+
       # tuple and writes a +working+ tuple.
+      #
       # @return [Task]
       #   task tuple
       def transit_to_task_waiting
-        @task = nil
-        @rule = nil
         task = take(Tuple[:task].new(features: @features))
-        @task = task
         begin
           write(Tuple[:working].new(task.domain, task.digest))
           write(Tuple[:foreground].new(task.domain, task.digest))
@@ -126,21 +124,14 @@ module Pione
       # @return [Array<Task, Rule>]
       #   task tuple and the rule
       def transit_to_rule_loading(task)
-        rule =
-          begin
-            read0(Tuple[:rule].new(rule_path: task.rule_path))
-          rescue Rinda::RequestExpiredError
-            with_log(agent_type, action: "request_rule", uuid: uuid, object: task.rule_path) do
-              write(Tuple[:request_rule].new(task.rule_path))
-              read(Tuple[:rule].new(rule_path: task.rule_path))
-            end
+        rule = read!(Tuple[:rule].new(rule_path: task.rule_path))
+        unless rule
+          with_log(agent_type, action: "request_rule", uuid: uuid, object: task.rule_path) do
+            write(Tuple[:request_rule].new(task.rule_path))
+            rule = read(Tuple[:rule].new(rule_path: task.rule_path))
           end
-        @rule = rule.content
-        if rule.status == :known
-          return task, rule.content
-        else
-          raise UnknownRuleError.new(task)
         end
+        return task, rule.content
       end
 
       # Transition method for the state +task_executing+.
@@ -176,7 +167,7 @@ module Pione
                 @child_agent = self.class.new(tuple_space_server, @features)
                 @child_agent.once = true
                 with_log(agent_type, action: "create_sub_task_worker", uuid: uuid, object: @child_agent.uuid) do
-                  take0(Tuple[:foreground].new(task.domain, nil)) rescue true
+                  take!(Tuple[:foreground].new(task.domain, nil))
                   @child_agent.start
                 end
               else
@@ -204,7 +195,7 @@ module Pione
         @action = nil
 
         # remove the working tuple
-        take0(Tuple[:working].new(task.domain, nil)) rescue true
+        take!(Tuple[:working].new(task.domain, nil))
 
         debug_message_end "End Task Execution #{rule.rule_path} by worker(#{uuid})"
 
@@ -246,7 +237,7 @@ module Pione
           )
           write(finished)
         end
-        take0(Tuple[:foreground].new(task.domain, nil)) rescue true
+        take!(Tuple[:foreground].new(task.domain, nil))
         terminate if @once
       end
 

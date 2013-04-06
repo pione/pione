@@ -1,11 +1,11 @@
 module Pione
   module Agent
+    # RuleProvider is an agent for providing rules to other agents.
     class RuleProvider < TupleSpaceClient
-
       set_agent_type :rule_provider
 
-      def initialize(ts_server)
-        super(ts_server)
+      def initialize(tuple_space_server)
+        super(tuple_space_server)
         @table = {}
 
         # import system rules
@@ -44,14 +44,11 @@ module Pione
       end
 
       def transit_to_rule_loading(request)
-        out = Tuple[:rule].new(rule_path: request.rule_path)
         if known_rule?(request.rule_path)
-          out.status = :known
-          out.content = @table[request.rule_path]
+          write(Tuple[:rule].new(rule_path: request.rule_path, content: @table[request.rule_path]))
         else
-          out.status = :unknown
+          processing_error("rule '%s' is unknonw" % request.rule_path)
         end
-        write(out)
       end
 
       def known_rule?(rule_path)

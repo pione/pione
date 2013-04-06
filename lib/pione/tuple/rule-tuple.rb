@@ -4,7 +4,7 @@ module Pione
     class RuleTuple < BasicTuple
       #   rule_path : rule location path
       #   content   : rule content
-      define_format [:rule, :rule_path, :content, :status]
+      define_format [:rule, :rule_path, :content]
     end
   end
 end

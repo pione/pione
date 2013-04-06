@@ -1,5 +1,5 @@
 module Pione
-  # RuleHandler is a handler for rule execution.
+  # RuleHandler is a handler for rule application.
   module RuleHandler
     # Exception class for rule execution failure.
     class RuleExecutionError < StandardError
@@ -34,6 +34,7 @@ module Pione
       attr_reader :call_stack
 
       # Create a new handler for rule.
+      #
       # @param [TupleSpaceServer] ts_server
       #   tuple space server
       # @param [Rule] rule
@@ -60,15 +61,16 @@ module Pione
         @content = rule.body
         @domain = get_handling_domain(opts)
         @variable_table = VariableTable.new(@params.data)
-        @base_location = read(Tuple[:base_location].any).location
-        @dry_run = begin read0(Tuple[:dry_run].any).availability rescue false end
+        @base_location = read!(Tuple[:base_location].any).location
+        @dry_run = begin read!(Tuple[:dry_run].any).availability rescue false end
         @task_id = ID.task_id(@inputs, @params)
         @call_stack = call_stack
 
         setup_variable_table
       end
 
-      # Puts environment variable into pione variable table.
+      # Put environment variable into pione variable table.
+      #
       # @param [Hash{String => String}] env
       #   environment table
       # @return [void]
@@ -78,7 +80,8 @@ module Pione
         end
       end
 
-      # Handles the rule and returns the outputs.
+      # Handle the rule and returns the outputs.
+      #
       # @return [Array<Data,Array<Data>>]
       #   outputs
       def handle
