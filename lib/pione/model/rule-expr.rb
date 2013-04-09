@@ -84,7 +84,7 @@ module Pione
       # @return [RuleExpr]
       #   new rule expression with the package name
       def set_package(package)
-        return self.class.new(package, @name, @params)
+        return self.class.new(package, @name, @params, @input_ticket_expr, @output_ticket_expr)
       end
 
       # Set parameters and returns a new expression.
