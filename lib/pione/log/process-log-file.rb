@@ -8,35 +8,27 @@ module Pione
         # @return [ProcessLogFile]
         #   log object
         def read(path)
-          new(path).tap{|x| x.read}
+          records = path.each_line.inject([]) do |records, line|
+            data = JSON.parse(line)
+            component = data.delete("component")
+            timestamp = data.delete("timestamp")
+            records << ProcessRecord.new(component, timestamp, data)
+          end
+          new(records)
         end
       end
 
-      # @return [Pathname]
-      attr_reader :path
+      forward! :@records, :map
 
       # @return [Array<ProcessRcord>]
       attr_reader :records
 
-      # Create a log file model object.
+      # Create a log model object.
       #
-      # @param path [Pathname]
-      #   log file path
-      def initialize(path)
-        @path = path
-        @records = []
-      end
-
-      # Read records from the path.
-      #
-      # @return [void]
-      def read
-        @path.each_line do |line|
-          data = JSON.parse(line)
-          component = data.delete("component")
-          timestamp = data.delete("timestamp")
-          @records << ProcessRecord.new(component, timestamp, data)
-        end
+      # @param records [Pathname]
+      #   records of log file
+      def initialize(records)
+        @records = records
       end
 
       # Return the hash table grouped by the key.
@@ -48,6 +40,10 @@ module Pione
           table[record[key]] ||= []
           table.tap {|x| x[record[key]] << record}
         end
+      end
+
+      def select(&b)
+        self.class.new(@records.select(&b))
       end
     end
   end

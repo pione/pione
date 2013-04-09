@@ -96,7 +96,7 @@ module Pione
       #   UUID
       # @param events [Array<XESEvent>]
       #   events that trace contains
-      def initialize(uuid, events=[])
+      def initialize(uuid=nil, events=[])
         @uuid = uuid
         @events = events
       end
@@ -109,7 +109,7 @@ module Pione
         events = @events.select {|e| e.valid?}
         unless events.empty?
           REXML::Element.new("trace").tap do |trace|
-            trace.add_element("id", {"key" => "identity:id", "value" => @uuid})
+            trace.add_element("id", {"key" => "identity:id", "value" => @uuid}) if @uuid
             trace.add_element("string", {"key" => "concept:name", "value" => "%s_%s" % [agent_type, @uuid]})
             events.each {|e| trace.elements << e.format}
           end
@@ -180,17 +180,28 @@ module Pione
       end
     end
 
-    # AgentXESFormatter is a log formatter for agent activities
-    class AgentXESFormatter
-      # Create a XES formatter for agent activities.
+    class XESFormatter
+      class << self
+        attr_reader :log_title
+
+        # Set log titile as +concept:name+ attribute in log element.
+        #
+        # @param log_title [String]
+        #   log title
+        # @return [void]
+        def set_log_title(log_title)
+          @log_title = log_title
+        end
+      end
+
+      forward :class, :log_title
+
+      # Create a XES formatter.
       #
       # @param log_file [LogFile]
       #   PIONE log file
-      # @param agent_type [String]
-      #   agent type string
-      def initialize(log_file, agent_type)
-        @log_file = log_file
-        @agent_type = agent_type
+      def initialize(process_log)
+        @process_log = process_log.select {|record| target?(record)}
       end
 
       # Format as a XML document.
@@ -202,6 +213,14 @@ module Pione
           doc.elements << make_root
           doc << REXML::XMLDecl.new
         end
+      end
+
+      # Return true if the record is target in this formatter.
+      #
+      # @param record [Record]
+      #   true if the record is target in this formatter
+      def target?(record)
+        raise NotImplementedError
       end
 
       private
@@ -224,28 +243,61 @@ module Pione
           log.elements << XES_CLASSIFIER[:mxml_legacy_classifier].format
           log.elements << XES_CLASSIFIER[:event_name].format
           log.elements << XES_CLASSIFIER[:resource].format
-          log.add_element("string", {"key" => "concept:name", "value" => "PIONE agent activity log"})
+          log.add_element("string", {"key" => "concept:name", "value" => log_title})
           make_traces.each do |trace|
-            if elt = trace.format
-              if @agent_type.nil? or trace.agent_type == @agent_type
-                log.elements << elt
-              end
-            end
+            log.elements << trace.format
           end
         end
+      end
+    end
+
+    # AgentXESFormatter is a log formatter for agent activities
+    class AgentXESFormatter < XESFormatter
+      set_log_title "PIONE agent activity log"
+
+      # Create a XES formatter for agent activities.
+      #
+      # @param process_log [LogFile]
+      #   PIONE process log
+      # @param agent_type [String]
+      #   agent type string
+      def initialize(process_log, agent_type)
+        super(process_log)
+        @agent_type = agent_type
+      end
+
+      def target?(record)
+        record.component == @agent_type
       end
 
       # Make trace objects.
       #
       # @return [Array<XESTrace>]
       def make_traces
-        @log_file.group_by("uuid").map do |uuid, records|
+        @process_log.group_by("uuid").map do |uuid, records|
           XESTrace.new(uuid).tap do |trace|
             records.sort{|a, b| a.timestamp <=> b.timestamp}.map do |record|
               trace.events << XESEvent.new(record["state"], record.component, record.timestamp, record["transition"])
             end
           end
         end
+      end
+    end
+
+    class RuleProcessXESFormatter < XESFormatter
+      set_log_title "PIONE rule process log"
+
+      def target?(record)
+        record.component == "rule-handler"
+      end
+
+      def make_traces
+        trace = XESTrace.new.tap do |trace|
+          @process_log.map do |record|
+            trace.events << XESEvent.new(record["name"], "pione", record.timestamp, record["transition"])
+          end
+        end
+        return [trace]
       end
     end
   end

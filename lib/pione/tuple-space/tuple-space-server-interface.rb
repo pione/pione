@@ -61,7 +61,7 @@ module Pione
     #   data
     # @return [void]
     def log(component, data)
-      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, data.merge({:transition => "complete"}))))
+      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, ({:transition => "complete"}.merge(data)))))
     end
 
     # Do the action with loggging the message.

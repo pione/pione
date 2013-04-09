@@ -86,6 +86,8 @@ module Pione
       # @return [Array<Data,Array<Data>>]
       #   outputs
       def handle
+        log("rule-handler", name: handler_digest, transition: "start")
+
         name = self.class.message_name
 
         # show begin message
@@ -118,6 +120,8 @@ module Pione
 
         # show end message
         user_message_end "End %s Rule: %s" % [name, handler_digest]
+
+        log("rule-handler", name: handler_digest, transition: "complete")
 
         return outputs.compact
       end
