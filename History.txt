@@ -1,5 +1,13 @@
 # History
 
+## 0.1.3(2013/04/XX)
+
+* Changed log location to be in output location
+* Changed log format to JSON
+* Added pione-log command that generates agent activity log as XES format
+* Use locations in tuples
+* Enabled to test FTP location handling without setting up FTP server
+
 ## 0.1.2(2013/04/01)
 
 * Added shorthand notation for setting parameters
