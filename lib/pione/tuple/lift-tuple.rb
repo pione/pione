@@ -1,8 +1,9 @@
 module Pione
   module Tuple
-    # ShiftTuple represents location shift information.
-    class ShiftTuple < BasicTuple
-      define_format [:shift,
+    # LiftTuple represents data movement information from old location to new
+    # location.
+    class LiftTuple < BasicTuple
+      define_format [:lift,
         # old location
         [:old_location, Location::BasicLocation],
         # new location

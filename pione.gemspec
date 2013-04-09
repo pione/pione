@@ -32,9 +32,11 @@ Gem::Specification.new do |gem|
   gem.add_dependency "hamster", "~> 0.4"
   gem.add_dependency "naming"
   gem.add_dependency "forwardablex"
+  gem.add_dependency "temppath"
 
-  # for dropbox resource
+  # for locations
   gem.add_dependency "dropbox-sdk"
+  gem.add_dependency "em-ftpd"
 
   # for web client only
   gem.add_dependency "sinatra"

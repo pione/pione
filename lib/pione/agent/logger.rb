@@ -22,8 +22,8 @@ module Pione
       def initialize(tuple_space_server, location)
         super(tuple_space_server)
         @location = location
-        @temporary = Pione.temporary_path(Time.now.strftime("pione_%Y%m%d%H%M%S.log"))
-        @out = @temporary.open("w+")
+        @temporary = Location[Pione.temporary_path(@location.basename)]
+        @out = @temporary.path.open("w+")
         @records = []
       end
 
@@ -74,8 +74,8 @@ module Pione
 
       # State terminated.
       def transit_to_terminated
-        Util.ignore_exception { @out.close }
-        @location.link_from(@out.path)
+        Util.ignore_exception {@out.close}
+        @temporary.copy(@location)
         super
       end
     end

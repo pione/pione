@@ -81,7 +81,7 @@ module Pione
       end
 
       def delete
-        @client.delete_file(@path)
+        @client.file_delete(@path)
       end
 
       def mtime
@@ -99,10 +99,6 @@ module Pione
         end
       end
 
-      def basename
-        Pathname.new(@path).basename.to_s
-      end
-
       def exist?
         metadata = @client.metadata(@path)
         return not(metadata["is_deleted"])
@@ -110,19 +106,33 @@ module Pione
         return false
       end
 
-      def link_to(dist)
-        File.open(dist, "w") do |out|
-          out.write read
+      def move(dest)
+        if dest.scheme == scheme
+          @client.file_move(@path, dest.path)
+        else
+          copy(dest)
+          delete
         end
       end
 
-      def link_from(other)
-        update(File.read(other))
+      def copy(dest)
+        if dest.scheme == scheme
+          @client.file_copy(@path, dest.path)
+        else
+          dest.update(read)
+        end
       end
 
-      # @api private
-      def shift_from(other)
-        @client.file_move(other.path, @path)
+      def link(orig)
+        if orig.scheme == scheme
+          orig.copy(link)
+        else
+          update(orig.read)
+        end
+      end
+
+      def turn(dest)
+        copy(dest)
       end
     end
   end

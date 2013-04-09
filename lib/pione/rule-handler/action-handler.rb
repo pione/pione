@@ -131,6 +131,8 @@ module Pione
       end
 
       # Collect output data by names from working directory.
+      #
+      # @return [void]
       def collect_outputs
         list = Dir.entries(@working_directory)
         @rule.outputs.each_with_index do |output, i|
@@ -153,7 +155,7 @@ module Pione
       # @return [void]
       def write_output_data
         @outputs.flatten.compact.each do |output|
-          FileCache.put(@working_directory + output.name, output.location)
+          FileCache.put(Location[@working_directory + output.name], output.location)
         end
       end
 
@@ -176,7 +178,7 @@ module Pione
         @working_directory.entries.each do |name|
           path = @working_directory + name
           if File.ftype(path) == "file"
-            make_location(name, @domain).link_from(path)
+            Location[path].move(make_location(name, @domain))
           end
         end
       end

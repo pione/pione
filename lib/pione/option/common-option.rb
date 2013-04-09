@@ -21,7 +21,7 @@ module Pione
         bool = false if str == "false"
         if bool.nil?
           puts "invalid color option: %s" % bool
-          exit
+          exit!
         end
         Terminal.color_mode = bool
       end

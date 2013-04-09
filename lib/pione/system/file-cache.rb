@@ -48,15 +48,15 @@ module Pione
         instance.put(src, location)
       end
 
-      # Shift the resource from old uri to new uri.
+      # Synchronize cache of old location with new location.
       #
       # @param old_location [BasicLocation]
       #   old data location
       # @param new_location [BasicLocation]
       #   new data location
       # @return [void]
-      def self.shift(old_location, new_location)
-        instance.shift(old_location, new_location)
+      def self.sync(old_location, new_location)
+        instance.sync(old_location, new_location)
       end
 
       # FileCache is an interface class of cache methods.
@@ -82,14 +82,14 @@ module Pione
           raise NotImplementedError
         end
 
-        # Shift the data.
+        # Synchronize cache of old location with new location.
         #
         # @param old_location [BasicLocation]
-        #   old resource location
+        #   old data location
         # @param new_location [BasicLocation]
-        #   new resource location
+        #   new data location
         # @return [void]
-        def shift(old_location, new_location)
+        def sync(old_location, new_location)
           raise NotImplementedError
         end
       end
@@ -103,62 +103,33 @@ module Pione
         end
 
         def get(location)
-          raise ArgumentError.new(location) unless location.kind_of?(Location::BasicLocation)
-
-          # check cached or not
+          # cache if record doesn't exist
           unless @table.has_key?(location)
-            # prepare cache path
-            path = prepare_cache_path
-
-            # link the file to cache path
-            location.link_to(path)
-            @table[location] = path
+            cache_location = Location[Temppath.create(nil, @tmpdir)]
+            location.turn(cache_location)
+            @table[location] = cache_location
           end
-
-          return @table[location]
+          return @table[location].path
         end
 
-        def put(src, location)
-          raise ArgumentError.new(src) unless src.kind_of?(Pathname)
-          raise ArgumentError.new(location) unless location.kind_of?(Location::BasicLocation)
+        def put(orig, location)
+          # prepare cache location
+          cache_location = Location[Temppath.create(nil, @tmpdir)]
 
-          # prepare cache path
-          path = prepare_cache_path
+          # move the file from the working directory to cache and make a link
+          # from original to the cache
+          orig.turn(cache_location)
 
-          # move the file from the working directory to cache
-          FileUtils.mv(src, path)
+          cache_location.turn(location)
 
-          # make a symbolic link from original location to the cache
-          FileUtils.symlink(path, src)
-
-          # copy from cache to the file
-          @table[location] = path
-          location.link_from(path)
+          # record from location to cache location
+          @table[location] = cache_location
         end
 
-        def shift(old_location, new_location)
-          raise ArgumentError.new(old_location) unless old_location.kind_of?(Location::BasicLocation)
-          raise ArgumentError.new(new_location) unless new_location.kind_of?(Location::BasicLocation)
-
-          if path = @table[old_location]
-            if new_location.kind_of?(Location::LocalLocation)
-              FileUtils.symlink(new_location.path, path, :force => true)
-            end
-            @table[new_location] = path
+        def sync(old_location, new_location)
+          if cache_location = @table[old_location]
+            @table[new_location] = cache_location
           end
-        end
-
-        private
-
-        # Make new cache path.
-        #
-        # @return [Pathname]
-        #   cache path
-        def prepare_cache_path
-          cache = Tempfile.new("", Global.file_cache_directory)
-          path = Pathname.new(cache.path)
-          cache.close(true)
-          return path
         end
       end
     end

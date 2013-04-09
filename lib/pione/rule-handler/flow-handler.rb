@@ -12,8 +12,7 @@ module Pione
         @finished = []
       end
 
-      # Start to process flow elements. This processes rule application, output
-      # search, resource shift, and output validation.
+      # Start to process flow elements.
       #
       # @return [void]
       def execute
@@ -23,8 +22,8 @@ module Pione
         apply_rules(@rule.body.eval(@variable_table).elements)
         # find outputs
         find_outputs
-        # shift resource
-        shift_output_resources
+        # lift output data from child domains to this domain
+        lift_output_data
         # check output validation
         validate_outputs
 
@@ -280,27 +279,24 @@ module Pione
         end
       end
 
-      # Shift output data locations.
+      # Lift output data from child domains to this domain.
       #
       # @return [void]
-      def shift_output_resources
-        # cheker for double shift
-        shifted = []
-
-        # shift output resources
-        @outputs.flatten.compact.each do |output|
+      def lift_output_data
+        @outputs.flatten.compact.inject([]) do |lifted, output|
           old_location = output.location
           new_location = make_output_location(output.name)
-          unless new_location == old_location or shifted.include?(old_location)
-            # shift resource
-            new_location.shift_from(old_location)
-            # shift cache if the old is cached in this machine
-            FileCache.shift(old_location, new_location)
-            # write shift tuple
-            write(Tuple[:shift].new(old_location, new_location))
-            # push moved path
-            shifted << old_location
+          unless new_location == old_location or lifted.include?(old_location)
+            # move data from old to new
+            old_location.move(new_location)
+            # sync cache if the old is cached in this machine
+            FileCache.sync(old_location, new_location)
+            # write lift tuple
+            write(Tuple[:lift].new(old_location, new_location))
+            # push history
+            lifted << old_location
           end
+          lifted
         end
       end
 

@@ -65,6 +65,7 @@ module Pione
         @dry_run = begin read!(Tuple[:dry_run].any).availability rescue false end
         @task_id = ID.task_id(@inputs, @params)
         @call_stack = call_stack
+        @domain_location = make_location("", @domain)
 
         setup_variable_table
       end
@@ -95,6 +96,9 @@ module Pione
         @call_stack.each_with_index do |domain, i|
           debug_message("%s:%s" % [i, domain], 1)
         end
+
+        # save rule condition informations
+        save_rule_condition_infos
 
         # execute the rule
         outputs = execute
@@ -144,7 +148,27 @@ module Pione
 
       private
 
+      # Save rule informations.
+      #
+      # @return [void]
+      def save_rule_condition_infos
+        info = {}
+        info["uname"] = `uname -a`.chomp
+        info["params"] = @params.textize
+        info["original_params"] = @original_params.textize
+        info["inputs"] = "[%s]" % @inputs.map{|input| input.to_s}.join(", ")
+        info["domain"] = @domain
+        info["domain_location"] = @domain_location.inspect
+        info["task_id"] = @task_id.to_s
+        info["dry_run"] = @dry_run.to_s
+        text = "== %s\n\n" % Time.now
+        text << info.map{|key, val| "- %s: %s" % [key,val]}.join("\n")
+        text << "\n\n"
+        (@domain_location + ".rule_info").append(text)
+      end
+
       # Executes the rule.
+      #
       # @return [Array<Data,Array<Data>>]
       #   outputs
       # @api private

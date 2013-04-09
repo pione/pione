@@ -527,7 +527,7 @@ module Rinda
         :finished => TupleBag::DomainTupleBin,
         :working => TupleBag::DomainTupleBin,
         :data => TupleBag::DataTupleBin,
-        :shift => TupleBag::HashTupleBin
+        :lift => TupleBag::HashTupleBin
       )
       @mutex = Mutex.new
     end
@@ -542,12 +542,12 @@ module Rinda
     end
 
     def read(tuple, sec=nil)
-      shift_tuple(real_read(tuple, sec))
+      lift_tuple(real_read(tuple, sec))
     end
 
     def read_all(tuple)
       real_read_all(tuple).map do |res|
-        shift_tuple(res)
+        lift_tuple(res)
       end
     end
 
@@ -730,14 +730,16 @@ module Rinda
       end
     end
 
-    # Shift the location of the tuple.
+    # Lift the location of the tuple.
     #
-    # @param tuple [Tuple]
+    # @param tuple [BasicTuple]
     #   tuple
-    def shift_tuple(tuple)
+    # @return [BasicTuple]
+    #   lifted tuple
+    def lift_tuple(tuple)
       if Pione::Tuple[tuple.first]
         if pos = Pione::Tuple[tuple.first].location_position
-          if new_location = shift_location(tuple[pos])
+          if new_location = lift_location(tuple[pos])
             tuple = tuple.clone
             tuple[pos] = new_location
           end
@@ -746,24 +748,21 @@ module Rinda
       return tuple
     end
 
-    # Shift the location.
+    # Lift the location.
     #
     # @param location [Location::BasicLocation]
-    #   location that shift from
-    # @param old [Array<Location::BasicLocation>]
-    #   history of shift search
+    #   location that lift from
+    # @param history [Array<Location::BasicLocation>]
+    #   history of lifted location
     # @return [Location::BasicLocation or nil]
-    #   new location that shift to
-    def shift_location(location, old=[])
-      return nil if old.include?(location)
+    #   new location
+    def lift_location(location, history=[])
+      return nil if history.include?(location)
 
-      template = TemplateEntry.new([:shift, location, nil])
-      if shift_tuple = @bag.find(template)
-        next_location = shift_tuple[2]
-        if last_location = shift_location(next_location, old + [location])
-          next_location = last_location
-        end
-        return next_location
+      template = TemplateEntry.new([:lift, location, nil])
+      if lift_tuple = @bag.find(template)
+        new_location = lift_tuple[2]
+        return lift_location(new_location, history << location) || new_location
       end
       return nil
     end

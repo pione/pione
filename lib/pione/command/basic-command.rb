@@ -275,7 +275,8 @@ module Pione
             puts "%s(%s):%s:%s" % [info.name, name, *proc.source_location] if Pione.debug_mode?
             begin
               receiver.instance_eval(&proc)
-            rescue Object
+            rescue Object => e
+              p e
             end
           end
         end

@@ -1,39 +1,89 @@
-require 'tempfile'
 require_relative '../test-util'
 
 describe 'Location::LocalLocation' do
   before do
-    path = Tempfile.new("spec_resource_").path
-    @uri = URI.parse("local:%s" % path)
-    @local = Location[@uri]
+    @local = Location[Temppath.create]
+  end
+
+  after do
+    @local.delete
   end
 
   it 'should create a file' do
-    @local.create("abc")
-    File.read(@uri.path).should == "abc"
+    @local.create("A")
+    @local.path.read.should == "A"
+  end
+
+  it 'should raise exception when the file exists already' do
+    @local.create("A")
+    should.raise(Location::ExistAlready) {@local.create("B")}
+  end
+
+  it 'should append data' do
+    @local.create("A")
+    @local.append("B")
+    @local.read.should == "AB"
+  end
+
+  it "should not raise exception when the file doesn't exist" do
+    @local.should.not.exist
+    @local.append("A")
+    @local.read.should == "A"
   end
 
   it 'should read a file' do
-    @local.create("abc")
-    @local.read.should == "abc"
-    @local.read.should == "abc"
-    @local.read.should.not == "def"
-    File.delete(@uri.path)
-    should.raise(Location::NotFound) { @local.read }
+    @local.create("A")
+    @local.read.should == "A"
   end
 
   it 'should update a file' do
-    @local.create("abc")
-    @local.read.should == "abc"
-    @local.update("defg")
-    @local.read.should == "defg"
-    @local.update("hi")
-    @local.read.should == "hi"
+    @local.create("A")
+    @local.read.should == "A"
+    @local.update("B")
+    @local.read.should == "B"
+    @local.update("C")
+    @local.read.should == "C"
   end
 
   it 'should delete a file' do
-    should.not.raise { @local.delete }
-    @local.create("abc")
-    @local.delete
+    should.not.raise {@local.delete}
+    @local.should.not.exist
+    should.not.raise {@local.delete}
+  end
+
+  it 'should link' do
+    desc = Location[Temppath.create].tap {|x| x.create("A")}
+    @local.link(desc)
+    @local.read.should == "A"
+    @local.path.ftype.should == "link"
+  end
+
+  it 'should move' do
+    dest = Location[Temppath.create]
+    @local.create("A")
+    @local.move(dest)
+    dest.read.should == "A"
+    dest.path.ftype.should == "file"
+    @local.should.not.exist
+  end
+
+  it 'should copy' do
+    dest = Location[Temppath.create]
+    @local.create("A")
+    @local.copy(dest)
+    dest.read.should == "A"
+    dest.path.ftype.should == "file"
+    @local.read.should == "A"
+    @local.path.ftype.should == "file"
+  end
+
+  it 'should turn' do
+    dest = Location[Temppath.create]
+    @local.create("A")
+    @local.turn(dest)
+    dest.read.should == "A"
+    dest.path.ftype.should == "file"
+    @local.read.should == "A"
+    @local.path.ftype.should == "link"
   end
 end

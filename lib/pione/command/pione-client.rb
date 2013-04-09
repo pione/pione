@@ -32,7 +32,7 @@ module Pione
         option('-i LOCATION', '--input=LOCATION', 'set input directory') do |data, uri|
           begin
             data[:input_location] = Location[uri]
-          rescue Location::Unknown
+          rescue ArgumentError
             abort("opiton error: bad location '%s'" % uri)
           end
         end
@@ -41,7 +41,7 @@ module Pione
         option('-o LOCATION', '--output=LOCATION', 'set output directory') do |data, uri|
           begin
             data[:output_location] = Location[uri]
-          rescue Location::Unknown
+          rescue ArgumentError
             abort("opiton error: bad location '%s'" % uri)
           end
         end
@@ -185,7 +185,7 @@ module Pione
 
         if option[:list_params]
           print_parameter_list
-          exit
+          exit!
         end
 
         write_tuples
