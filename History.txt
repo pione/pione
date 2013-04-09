@@ -7,6 +7,7 @@
 * Added pione-log command that generates agent activity log as XES format
 * Use locations in tuples
 * Enabled to test FTP location handling without setting up FTP server
+* Added the feature to create domain information files
 
 ## 0.1.2(2013/04/01)
 
