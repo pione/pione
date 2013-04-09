@@ -126,7 +126,7 @@ module Pione
       # convert each tuples
       tuples.each do |tuple, i|
         elt = RuleIOElement.new(PioneString.new(tuple.name))
-        elt.uri = PioneString.new(tuple.uri)
+        elt.uri = PioneString.new(tuple.location.uri)
         elt.match = PioneList.new(
           *expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
         )

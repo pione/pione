@@ -117,6 +117,14 @@ module Pione
         Location["%s://%s%s%s%s" % [scheme, auth, host, port, path]]
       end
 
+      # Return true if the location is cached.
+      #
+      # @return [Boolean]
+      #   true if the location is cached
+      def cached?
+        System::FileCache.cached?(self)
+      end
+
       # Creates a location.
       #
       # @param data [String]

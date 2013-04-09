@@ -59,21 +59,36 @@ module Pione
         instance.sync(old_location, new_location)
       end
 
+      # Return true if the location is cached.
+      #
+      # @return [Boolean]
+      #   true if the location is cached
+      def self.cached?(location)
+        instance.cached?(location)
+      end
+
+      # Clear cache.
+      #
+      # @return [void]
+      def self.clear
+        instance.clear
+      end
+
       # FileCache is an interface class of cache methods.
       class FileCacheMethod
         # Get the cache path of the location.
         #
         # @param location [BasicLocation]
         #   data location
-        # @return [Pathname]
+        # @return [BasicLocalLocation]
         #   cached path
         def get(location)
           raise NotImplementedError
         end
 
-        # Cache the source data of the location.
+        # Put and cache the source data at the location.
         #
-        # @param src [Pathname]
+        # @param src [BasicLocation]
         #   source path
         # @param location [BasicLocation]
         #   destination
@@ -90,6 +105,21 @@ module Pione
         #   new data location
         # @return [void]
         def sync(old_location, new_location)
+          raise NotImplementedError
+        end
+
+        # Return true if the location is cached.
+        #
+        # @return [Boolean]
+        #   true if the location is cached
+        def cached?(location)
+          raise NotImplementedError
+        end
+
+        # Clear cache.
+        #
+        # @return [void]
+        def clear
           raise NotImplementedError
         end
       end
@@ -109,27 +139,29 @@ module Pione
             location.turn(cache_location)
             @table[location] = cache_location
           end
-          return @table[location].path
+          unless @table[location].exist?
+            location.turn(@table[location])
+          end
+          return @table[location]
         end
 
-        def put(orig, location)
-          # prepare cache location
-          cache_location = Location[Temppath.create(nil, @tmpdir)]
-
-          # move the file from the working directory to cache and make a link
-          # from original to the cache
-          orig.turn(cache_location)
-
-          cache_location.turn(location)
-
-          # record from location to cache location
-          @table[location] = cache_location
+        def put(src, dest)
+          # make cache from source and link between cache and destination
+          @table[dest] = get(src).tap{|cache_location| cache_location.turn(dest)}
         end
 
         def sync(old_location, new_location)
           if cache_location = @table[old_location]
             @table[new_location] = cache_location
           end
+        end
+
+        def cached?(location)
+          @table.has_key?(location)
+        end
+
+        def clear
+          @table.clear
         end
       end
     end

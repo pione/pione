@@ -74,11 +74,11 @@ module Pione
       def setup_working_directory
         @inputs.flatten.each do |input|
           # get file path in working directory
-          path = @working_directory + input.name
+          wd_location = @working_directory + input.name
           # create a link to cache
-          cache_path = FileCache.get(input.location)
-          FileUtils.symlink(cache_path, path, {:force => true})
-          unless path.exist?
+          cache_location = FileCache.get(input.location)
+          wd_location.make_symlink(cache_location.path)
+          unless wd_location.exist?
             raise RuleExecutionError.new(self)
           end
         end
@@ -155,7 +155,9 @@ module Pione
       # @return [void]
       def write_output_data
         @outputs.flatten.compact.each do |output|
-          FileCache.put(Location[@working_directory + output.name], output.location)
+          src = Location[@working_directory + output.name]
+          dest = output.location
+          FileCache.put(src, dest)
         end
       end
 
