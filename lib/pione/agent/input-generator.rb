@@ -142,14 +142,30 @@ module Pione
       # space.
       def transit_to_generating
         if input = @generator.generate
-          with_log(agent_type, action: "generate_input_data", uuid: uuid, object: input.name) do
-            @inputs << input
-            # upload the file
-            input_location = @base_location + File.join("input", input.name)
-            input_location.create(Location[input.uri].read)
-            # make the tuple
-            write(Tuple[:data].new(DOMAIN, input.name, input_location, input.time))
+          # put into history
+          @inputs << input
+
+          # build original location
+          orig_location = Location[input.uri]
+
+          # build input location
+          input_location = @base_location + File.join("input", input.name)
+
+          # make process log record
+          record = Log::PutDataProcessRecord.new.tap do |record|
+            record.agent_type = agent_type
+            record.agent_uuid = uuid
+            record.location = input_location
+            record.size = orig_location.size
           end
+
+          # upload the file
+          with_process_log(record) do
+            orig_location.copy(input_location)
+          end
+
+          # put data tuple into tuple space
+          write(Tuple[:data].new(DOMAIN, input.name, input_location, input.time))
         end
       end
 

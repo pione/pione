@@ -82,6 +82,16 @@ describe 'Location::FTPLocation' do
       @ftp.read.should == "A"
     end
 
+    it 'should get mtime information' do
+      @ftp.create("A")
+      @ftp.mtime.should.kind_of Time
+    end
+
+    it 'should get size information' do
+      @ftp.create("ABC")
+      @ftp.size.should == 3
+    end
+
   else
     it 'cannot do ftp test in your environment' do
       true.should.true

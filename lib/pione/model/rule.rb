@@ -112,8 +112,9 @@ module Pione
       attr_reader :condition
       attr_reader :body
 
-      def_delegators :@condition, :inputs, :outputs, :params, :features
-      def_delegators :@condition, :input_ticket_expr, :output_ticket_expr
+      forward! :@condition, :inputs, :outputs, :params, :features
+      forward! :@condition, :input_ticket_expr, :output_ticket_expr
+      forward :class, :rule_type
 
       # Create a rule.
       #
@@ -153,7 +154,7 @@ module Pione
       # @return [Boolean]
       #   true if this is a kind of action rule, or false
       def action?
-        self.class.rule_type == :action
+        rule_type == :action
       end
 
       # Return true if this is a kind of flow rule.
@@ -161,7 +162,7 @@ module Pione
       # @return [Boolean]
       #   true if this is a kind of flow rule, or false
       def flow?
-        self.class.rule_type == :flow
+        rule_type == :flow
       end
 
       # Make a task handler object for the rule.

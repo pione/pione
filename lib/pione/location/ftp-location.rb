@@ -62,6 +62,10 @@ module Pione
         connect {|ftp| exist? ? ftp.mtime(@path.to_s) : (raise NotFound.new(self))}
       end
 
+      def size
+        connect {|ftp| exist? ? ftp.size(@path.to_s) : (raise NotFound.new(self))}
+      end
+
       def entries
         connect do |ftp|
           ftp.nlst(@path.to_s).map do |entry|

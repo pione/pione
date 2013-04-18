@@ -33,6 +33,7 @@ require 'dropbox_sdk'
 require 'hamster'
 require 'naming'
 require 'temppath'
+require 'xes'
 
 #
 # load pione

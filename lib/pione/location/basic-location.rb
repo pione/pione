@@ -175,6 +175,14 @@ module Pione
         raise NotImplementedError
       end
 
+      # Return byte size of data in the location.
+      #
+      # @return [Integer]
+      #   byte size of data
+      def size
+        raise NotImplementedError
+      end
+
       # Return entries of the resource path.
       #
       # @return [Array<Location>]

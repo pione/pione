@@ -1,8 +1,9 @@
 module Pione
   # Log is a name space for log models.
-  module Log; end
+  module Log
+  end
 end
 
 require 'pione/log/process-record'
-require 'pione/log/process-log-file'
-require 'pione/log/xes'
+require 'pione/log/process-log'
+require 'pione/log/xes-log'

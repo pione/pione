@@ -217,6 +217,8 @@ end
 
 begin
   require 'em-ftpd'
+  require 'pione/patch/em-ftpd-patch'
+
   module EM::FTPD::Files
     def puts(*args)
       # ignored
@@ -242,16 +244,19 @@ module TestUtil
     class OnMemoryFS
       attr_reader :directory
       attr_reader :file
+      attr_reader :mtime
 
       def initialize
         @directory = {"/" => Set.new}
         @file = {}
+        @mtime = {}
       end
 
       def clear
         @directory.clear
         @directory["/"] = Set.new
         @file.clear
+        @mtime.clear
       end
     end
 
@@ -293,6 +298,7 @@ module TestUtil
     def initialize
       @directory = FS.directory
       @file = FS.file
+      @mtime = FS.mtime
       @user = AUTH_INFO.user
       @password = AUTH_INFO.password
     end
@@ -349,6 +355,7 @@ module TestUtil
       if @directory.has_key?(dir) and filename
         @directory[dir] << filename
         @file[path.to_s] = File.read(data)
+        @mtime[path.to_s] = Time.now
         yield data.size
       else
         yield false
@@ -362,6 +369,7 @@ module TestUtil
       if @directory.has_key?(dir) and @directory[dir].include?(filename)
         @directory[dir].delete(dir)
         @file.delete(path.to_s)
+        @mtime.delete(path.to_s)
         yield true
       else
         yield false
@@ -397,6 +405,15 @@ module TestUtil
         @directory[path.to_s] = Set.new
         @directory[dir] << basename
         yield true
+      end
+    end
+
+    def mtime(path)
+      path = Pathname.new(path).cleanpath.to_s
+      if @file[path]
+        yield @mtime[path]
+      else
+        yield false
       end
     end
 

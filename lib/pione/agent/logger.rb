@@ -49,31 +49,44 @@ module Pione
         end
       end
 
-      private
-
-      # Transits to the state +take_log+.
-      def transit_to_take
-        timeout(2) do
-          @records << take(Tuple[:log].any)
-        end
-      rescue TimeoutError
-        # ignore
-      end
-
-      # Transits to the state +store+.
-      def transit_to_store
+      def store_records
         unless @records.empty?
-          @records.sort{|a,b| a.timestamp <=> b.timestamp}.each do |log|
-            @out.puts log.message.format
-            @out.flush
-            @out.sync
+          @records.sort{|a,b| a.timestamp <=> b.timestamp}.each do |record|
+            @out.puts record.format
           end
+          @out.flush
+          @out.fsync
           @records = []
         end
       end
 
+      private
+
+      # Transits to the state +take+.
+      def transit_to_take
+        timeout(2) do
+          loop do
+            if @current_tuple = take(Tuple[:log].any)
+              @records << @current_tuple.message
+              @current_tuple = nil
+            end
+          end
+        end
+      rescue TimeoutError
+        if @current_tuple
+          @records << @current_tuple.message
+          @current_tuple = nil
+        end
+      end
+
+      # Transits to the state +store+.
+      def transit_to_store
+        store_records
+      end
+
       # State terminated.
       def transit_to_terminated
+        store_records
         Util.ignore_exception {@out.close}
         @temporary.copy(@location)
         super

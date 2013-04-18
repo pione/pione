@@ -51,6 +51,10 @@ module Pione
         @path.exist? ? @path.mtime : (raise NotFound.new(self))
       end
 
+      def size
+        @path.exist? ? @path.size : (raise NotFound.new(self))
+      end
+
       def entries
         @path.entries.select{|entry| (@path + entry).file?}.map do |entry|
           Location["local:%s" % (@path + entry).expand_path]

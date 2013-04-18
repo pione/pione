@@ -126,10 +126,8 @@ module Pione
       def transit_to_rule_loading(task)
         rule = read!(Tuple[:rule].new(rule_path: task.rule_path))
         unless rule
-          with_log(agent_type, action: "request_rule", uuid: uuid, object: task.rule_path) do
-            write(Tuple[:request_rule].new(task.rule_path))
-            rule = read(Tuple[:rule].new(rule_path: task.rule_path))
-          end
+          write(Tuple[:request_rule].new(task.rule_path))
+          rule = read(Tuple[:rule].new(rule_path: task.rule_path))
         end
         return task, rule.content
       end
@@ -166,9 +164,15 @@ module Pione
                 debug_message "+++ Create Sub Task worker +++"
                 @child_agent = self.class.new(tuple_space_server, @features)
                 @child_agent.once = true
-                with_log(agent_type, action: "create_sub_task_worker", uuid: uuid, object: @child_agent.uuid) do
-                  take!(Tuple[:foreground].new(task.domain, nil))
-                  @child_agent.start
+
+                Log::CreateChildTaskWorkerProcessRecord.new.tap do |record|
+                  record.parent = uuid
+                  record.child = @child_agent.uuid
+
+                  with_process_log(record) do
+                    take!(Tuple[:foreground].new(task.domain, nil))
+                    @child_agent.start
+                  end
                 end
               else
                 tail = descendant.last
@@ -231,13 +235,19 @@ module Pione
       #   the handler
       # @return [void]
       def transit_to_task_finishing(task, handler)
-        with_log(agent_type, action: "finished_task", uuid: uuid, object: task) do
-          finished = Tuple[:finished].new(
-            handler.domain, :succeeded, handler.outputs, task.digest
-          )
-          write(finished)
-        end
+        # put finished tuple
+        finished = Tuple[:finished].new(
+          handler.domain, :succeeded, handler.outputs, task.digest
+        )
+        write(finished)
+        # log task process
+        record = handler.task_process_record.merge(transition: "complete")
+        process_log(record)
+
+        # remove foreground
         take!(Tuple[:foreground].new(task.domain, nil))
+
+        # terminate if the agent is child
         terminate if @once
       end
 

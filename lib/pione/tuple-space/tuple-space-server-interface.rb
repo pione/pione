@@ -53,28 +53,29 @@ module Pione
       end
     end
 
-    # Write log tuple of the component activity with the data.
+    # Put a log tuple with the data as a process record into tuple space. The
+    # record's value of transition is "complete" by default and the timestamp
+    # set automatically.
     #
-    # @param component [String]
-    #   component name
-    # @param data [Hash{Symbol => Object}]
-    #   data
+    # @param record [Log::ProcessRecord]
+    #   process log record
     # @return [void]
-    def log(component, data)
-      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, ({:transition => "complete"}.merge(data)))))
+    def process_log(record)
+      record = record.merge(transition: "complete") unless record.transition
+      write(Tuple[:log].new(record))
     end
 
-    # Do the action with loggging the message.
+    # Do the action with loggging.
     #
-    # @param component [String]
-    #   component name
-    # @param data [Hash]
-    #   log content
+    # @param record [Log::ProcessRecord]
+    #   process log record
+    # @yield
+    #   the action
     # @return [void]
-    def with_log(component, data)
-      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, data.merge({:transition => "start"}))))
+    def with_process_log(record)
+      process_log(record.merge(transition: "start"))
       result = yield
-      write(Tuple[:log].new(Log::ProcessRecord.new(component, nil, data.merge({:transition => "complete"}))))
+      process_log(record.merge(transition: "complete"))
       return result
     end
 

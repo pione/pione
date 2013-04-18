@@ -118,18 +118,33 @@ module Pione
 
       # Redefine hello method with logging.
       def hello
-        with_log(agent_type, action: "hello", uuid: uuid) {super}
+        record = Log::AgentConnectionProcessRecord.new.tap do |record|
+          record.agent_type = agent_type
+          record.agent_uuid = uuid
+          record.message = "hello"
+        end
+        with_process_log(record) {super}
       end
 
       # Redefine bye method with logging.
       def bye
-        with_log(agent_type, action: "bye", uuid: uuid) {super}
+        record = Log::AgentConnectionProcessRecord.new.tap do |record|
+          record.agent_type = agent_type
+          record.agent_uuid = uuid
+          record.message = "bye"
+        end
+        with_process_log(record) {super}
       end
 
-      # Redefine call transition method with logging.
+      # Override call transition method with logging.
       def call_transition_method(*args)
         unless [:logger, :command_listener].include?(agent_type)
-          with_log(agent_type, action: "transit", state: args.first, uuid: uuid) {super}
+          record = Log::AgentActivityProcessRecord.new.tap do |rec|
+            rec.agent_type = agent_type
+            rec.agent_uuid = uuid
+            rec.state = args.first
+          end
+          with_process_log(record) {super}
         else
           super
         end

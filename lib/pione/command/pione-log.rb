@@ -8,41 +8,52 @@ module Pione
       end
 
       define_option do
-        default :file, Pathname.new("log.txt")
-        default :agent_type, "task_worker"
+        default :format, :xes
+        default :trace_filter, []
+        default :output, Location["local:./output"]
 
-        option("--agent-log", "generate agent activity log") do |data|
-          data[:action] = :agent_log
+        option("--agent-activity[=TYPE]", "output only agent activity log") do |data, name|
+          data[:trace_filter] << Proc.new do |trace|
+            trace.attributes.include?(XES.string("pione:traceType", "agent_activity")) and
+              (name.nil? or trace.events.first.org_resource == name)
+          end
         end
 
-        option("--rule-process-log", "generate rule process log") do |data|
-          data[:action] = :rule_process_log
+        option("--rule-process", "generate rule process log") do |data|
+          data[:trace_filter] << Proc.new do |trace|
+            trace.attributes.include?(XES.string("pione:traceType", "rule_process"))
+          end
         end
 
-        option("--agent-type=TYPE", "set agent type for agent log") do |data, type|
-          data[:agent_type] = type
+        option("--task-process", "generate task process log") do |data|
+          data[:trace_filter] << Proc.new do |trace|
+            trace.attributes.include?(XES.string("pione:traceType", "task_process"))
+          end
         end
 
-        option("-f PATH", "--file=PATH", "set log file path") do |data, path|
-          data[:file] = Pathname.new(path)
+        option("--location=LOCATION", "set log location of PIONE process") do |data, location|
+          data[:output] = Location[location]
+        end
+
+        option("--format=(XES|JSON|HTML)", "set format type") do |data, name|
+          data[:format] = name.downcase.to_sym
         end
 
         validate do |data|
-          if data[:action].nil?
-            puts "should specify --agent-log or --rule-process-log"
+          unless data[:output].exist?
+            abort("File or directory not found in the location: %s" % data[:output].uri.to_s)
           end
         end
       end
 
       start do
-        log_file = Log::ProcessLogFile.read(option[:file])
-        case option[:action]
-        when :agent_log
-          Log::AgentXESFormatter.new(log_file, option[:agent_type]).format.write($stdout, 2)
-          $stdout.flush
-        when :rule_process_log
-          Log::RuleProcessXESFormatter.new(log_file).format.write($stdout, 2)
-          $stdout.flush
+        Log::ProcessLog[option[:format]].tap do |formatter|
+          if formatter
+            $stdout.puts(formatter.read(option[:output]).format(option[:trace_filter]))
+            $stdout.flush
+          else
+            abort("Unknown format: %s" % option[:format])
+          end
         end
       end
     end

@@ -86,4 +86,14 @@ describe 'Location::LocalLocation' do
     @local.read.should == "A"
     @local.path.ftype.should == "link"
   end
+
+  it 'should get mtime information' do
+    @local.create("A")
+    @local.mtime.should.kind_of Time
+  end
+
+  it 'should get size information' do
+    @local.create("A")
+    @local.size.should == 1
+  end
 end

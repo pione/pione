@@ -176,6 +176,9 @@ module Pione
         user_message_begin("Start Task Distribution: %s" % handler_digest)
         canceled = []
 
+        process_log(@task_process_record.merge(transition: "suspend"))
+        process_log(@rule_process_record.merge(transition: "suspend"))
+
         applications.uniq.each do |callee, rule, inputs, vtable|
           # task domain
           task_domain = ID.domain_id3(rule, inputs, callee)
@@ -198,6 +201,17 @@ module Pione
 
               # write the task
               write(task)
+
+              # put task schedule process log
+              task_process_record = Log::TaskProcessRecord.new.tap do |record|
+                record.name = task.digest
+                record.rule_name = rule.rule_path
+                record.rule_type = rule.rule_type
+                record.inputs = inputs.flatten.map{|input| input.name}.join(",")
+                record.parameters = callee.expr.params.textize
+                record.transition = "schedule"
+              end
+              process_log(task_process_record)
 
               msg = "distributed task %s on %s" % [task.digest, handler_digest]
               user_message(msg, 1)
@@ -239,6 +253,8 @@ module Pione
           end
         end
 
+        process_log(@rule_process_record.merge(transition: "resume"))
+        process_log(@task_process_record.merge(transition: "resume"))
         user_message_end("End Task Distribution: %s" % handler_digest)
       end
 

@@ -32,6 +32,8 @@ module Pione
       attr_reader :domain
       attr_reader :variable_table
       attr_reader :call_stack
+      attr_reader :rule_process_record
+      attr_reader :task_process_record
 
       # Create a new handler for rule.
       #
@@ -67,6 +69,31 @@ module Pione
         @call_stack = call_stack
         @domain_location = make_location("", @domain)
 
+        caller = @call_stack[-1]
+
+        # build rule process record
+        @rule_process_record = Log::RuleProcessRecord.new.tap do |record|
+          record.name = "&%s:%s" % [@rule.expr.package.name, @rule.expr.name]
+          record.rule_type = @rule.rule_type
+          record.caller = caller.split("_").first.tap do |dname|
+            if dname.include?("-")
+              package, name = dname.split("-")
+              break "&%s:%s" % [package, name]
+            else
+              break "&root:Root"
+            end
+          end if caller
+        end
+
+        # build task process record
+        @task_process_record = Log::TaskProcessRecord.new.tap do |record|
+          record.name = handler_digest
+          record.rule_name = "&%s:%s" % [@rule.expr.package.name, @rule.expr.name]
+          record.rule_type = @rule.rule_type
+          record.inputs = @inputs.flatten.map{|input| input.name}.join(",")
+          record.parameters = @params.textize
+        end
+
         setup_variable_table
       end
 
@@ -86,7 +113,9 @@ module Pione
       # @return [Array<Data,Array<Data>>]
       #   outputs
       def handle
-        log("rule-handler", name: handler_digest, transition: "start")
+        # put rule and task process log
+        process_log(@task_process_record.merge(transition: "start"))
+        process_log(@rule_process_record.merge(transition: "start"))
 
         name = self.class.message_name
 
@@ -121,7 +150,9 @@ module Pione
         # show end message
         user_message_end "End %s Rule: %s" % [name, handler_digest]
 
-        log("rule-handler", name: handler_digest, transition: "complete")
+        # put rule and task process log
+        process_log(@rule_process_record.merge(transition: "complete"))
+        process_log(@task_process_record.merge(transition: "complete"))
 
         return outputs.compact
       end
