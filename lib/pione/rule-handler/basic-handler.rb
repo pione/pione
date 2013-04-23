@@ -199,7 +199,7 @@ module Pione
         text = "== %s\n\n" % Time.now
         text << info.map{|key, val| "- %s: %s" % [key,val]}.join("\n")
         text << "\n\n"
-        (@domain_location + ".rule_info").append(text)
+        (@domain_location + ".domain_info").append(text)
       end
 
       # Executes the rule.
