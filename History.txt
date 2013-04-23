@@ -2,12 +2,14 @@
 
 ## 0.1.3(2013/04/XX)
 
+* Added new data expression literal "null" for accepting data nonexistence
+* Added new data expression property keyword "neglect" and "care" for the update criterion about data mtime
 * Changed log location to be in output location
 * Changed log format to JSON
 * Added pione-log command that generates agent activity log as XES format
 * Use locations in tuples
 * Enabled to test FTP location handling without setting up FTP server
-* Added the feature to create domain information files
+* Added the feature to create domain information files(".domain_info")
 
 ## 0.1.2(2013/04/01)
 
