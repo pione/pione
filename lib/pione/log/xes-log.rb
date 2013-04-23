@@ -12,7 +12,7 @@ module Pione
         filter = Proc.new {|trace| trace_filters.empty? or trace_filters.any?{|filter| filter.call(trace)}}
         StringIO.new.tap do |out|
           XES::Document.new.tap do |doc|
-            doc.log = XES::Log.new.tap do |log|
+            doc.log = XES::Log.default.tap do |log|
               log.concept_name = "PIONE process log"
               log.traces += [format_agent_activity + format_rule_process + format_task_process].flatten.select(&filter)
               log.traces.flatten!
