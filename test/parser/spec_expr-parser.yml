@@ -36,6 +36,10 @@ message:
     - ".sync"
     - ".abc(1, \"s\", '*.txt')"
     - ".abc(1.0.abc(3.def))"
+data_expr:
+  valid:
+    - "'test.a'"
+    - "null"
 rule_expr:
   valid:
     - "&package:rule_name"

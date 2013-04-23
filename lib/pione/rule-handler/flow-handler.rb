@@ -40,7 +40,9 @@ module Pione
         dir = root? ? @base_location : @base_location + (".%s/%s" % @domain.split("_"))
         if dir.exist?
           dir.entries.each do |location|
-            write(Tuple[:data].new(@domain, location.basename, location, location.mtime))
+            unless location.basename[0] == "."
+              write(Tuple[:data].new(@domain, location.basename, location, location.mtime))
+            end
           end
         end
       end
@@ -282,9 +284,9 @@ module Pione
       #
       # @return [void]
       def find_outputs
+        tuples = read_all(Tuple[:data].new(domain: @domain))
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
-          tuples = read_all(Tuple[:data].new(domain: @domain))
           case output.modifier
           when :all
             @outputs[i] = tuples.find_all {|data| output.match(data.name)}
@@ -329,8 +331,11 @@ module Pione
         end
 
         # empty list check
-        if @outputs.any?{|tuple| tuple.kind_of?(Array) && tuple.empty?}
-          raise RuleExecutionError.new(self)
+        @outputs.each_with_index do |tuple, i|
+          output = @rule.outputs[i].eval(@variable_table)
+          if tuple.kind_of?(Array) && tuple.empty? && not(output.accept_nonexistence?)
+            raise RuleExecutionError.new(@outputs.inspect)
+          end
         end
       end
 

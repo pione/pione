@@ -25,6 +25,16 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
   end
 
+  transformer_spec("data_expr", :expr) do
+    tc "'test.a'" do
+      DataExpr.new("test.a")
+    end
+
+    tc "null" do
+      DataExprNull.instance
+    end
+  end
+
   transformer_spec("message", :expr) do
     tc "1.next" do
       Message.new("next", 1.to_pione)
@@ -43,7 +53,8 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
 
     tc "abc.sync" do
-      Message.new("sync", RuleExpr.new(Package.new("main"), "abc"))
+      rule = RuleExpr.new(Package.new("main"), "abc", Parameters.empty, TicketExpr.empty, TicketExpr.empty)
+      Message.new("sync", rule)
     end
 
     tc "'*.txt'.all" do

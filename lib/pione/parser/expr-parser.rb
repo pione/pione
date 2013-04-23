@@ -107,11 +107,16 @@ module Pione
         integer |
         string |
         ticket |
-        data_name |
+        data_expr |
         rule_expr |
         feature_expr |
         parameters |
         variable
+      }
+
+      # +data_expr+ matches data expressions.
+      rule(:data_expr) {
+        data_name | keyword_null.as(:data_null)
       }
 
       # @!attribute [r] rule_expr

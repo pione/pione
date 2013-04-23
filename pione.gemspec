@@ -31,7 +31,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "highline", "~> 1.6.15"
   gem.add_dependency "hamster", "~> 0.4"
   gem.add_dependency "naming"
-  gem.add_dependency "forwardablex"
+  gem.add_dependency "forwardablex", "~> 0.1.3"
   gem.add_dependency "temppath"
   gem.add_dependency "ruby-xes", "~> 0.1"
 

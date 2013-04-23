@@ -37,6 +37,18 @@ describe 'Model::DataExpr' do
     exp.should.be.stderr
   end
 
+  it 'should neglect update criteria' do
+    exp = DataExpr.new('test.a').neglect
+    exp.should.neglect
+    exp.should.not.care
+  end
+
+  it 'should care update criteria' do
+    exp = DataExpr.new('test.a').care
+    exp.should.not.neglect
+    exp.should.care
+  end
+
   it 'should match the same name' do
     exp = DataExpr.new('test.a')
     exp.should.match 'test.a'
@@ -50,9 +62,8 @@ describe 'Model::DataExpr' do
 
   it 'should handle multi characters matcher (Case 1)' do
     exp = DataExpr.new('test-*.a')
-    exp.should.match 'test-.a'
-    { 'test-.a' => '',
-      'test-1.a'=> '1',
+    exp.should.not.match 'test-.a'
+    { 'test-1.a'=> '1',
       'test-2.a' => '2',
       'test-3.a' => '3',
       'test-A.a' => 'A',
@@ -75,9 +86,7 @@ describe 'Model::DataExpr' do
     exp.should.match 'test-abc-xyz.a'
     exp.match('test-abc-xyz.a')[1].should == 'abc'
     exp.match('test-abc-xyz.a')[2].should == 'xyz'
-    exp.should.match 'test--.a'
-    exp.match('test--.a')[1].should == ''
-    exp.match('test--.a')[2].should == ''
+    exp.should.not.match 'test--.a'
     exp.should.not.match('test-1.a')
     exp.should.not.match('test-1-2.b')
     exp.should.not.match('test-1-2')
@@ -307,6 +316,120 @@ describe 'Model::DataExpr' do
         DataExpr.new('test.a').stderr
       DataExpr.new('test.a').stderr.call_pione_method("stderr").should ==
         DataExpr.new('test.a').stderr
+    end
+  end
+
+  describe 'pione method: or' do
+    it 'should get OR-relation data expression' do
+      a = DataExpr.new('test.a')
+      b = DataExpr.new('test.b')
+      a.call_pione_method('or', b).should == DataExprOr.new(a, b)
+    end
+  end
+
+  describe 'pione method: join' do
+    it 'should join with the connective' do
+      DataExpr.new('A:B').call_pione_method('join', PioneString.new(",")).should ==
+        PioneString.new("A,B")
+    end
+  end
+
+  describe "pione method: as_string" do
+    it "should convert to string" do
+      DataExpr.new('A').call_pione_method('as_string').should ==
+        PioneString.new("A")
+      DataExpr.new('A:B').call_pione_method('as_string').should ==
+        PioneString.new("A:B")
+      DataExprNull.instance.call_pione_method('as_string').should ==
+        PioneString.new("")
+    end
+  end
+end
+
+describe "Model::DataExprNull" do
+  before do
+    @null = Model::DataExprNull.instance
+  end
+
+  it "should not initialize" do
+    should.raise(NoMethodError) do
+      Model::DataExprNull.new
+    end
+  end
+
+  it "should not match any data" do
+    @null.should.not.match('test.a')
+  end
+
+  it "should accept nonexistance" do
+    @null.should.accept_nonexistence
+  end
+end
+
+describe "Model::DataExprOr" do
+  before do
+    @a_each = Model::DataExpr.new('A')
+    @a_all = Model::DataExpr.new('A').all
+    @b_each = Model::DataExpr.new('B')
+    @b_all = Model::DataExpr.new('B').all
+    @null = Model::DataExprNull.instance
+  end
+
+  it "should match" do
+    expr = Model::DataExprOr.new(@a_each, @b_each)
+    expr.should.match('A')
+    expr.should.match('B')
+    expr.should.not.match('C')
+    expr.modifier.should == :each
+  end
+
+  it "should get the modifier" do
+    Model::DataExprOr.new(@a_each, @b_each).modifier.should == :each
+    Model::DataExprOr.new(@a_all, @b_all).modifier.should == :all
+    Model::DataExprOr.new(@a_all, @null).modifier.should == :all
+    Model::DataExprOr.new(@null, @a_all).modifier.should == :all
+    Model::DataExprOr.new(@a_each, @null).modifier.should == :each
+    Model::DataExprOr.new(@null, @a_each).modifier.should == :each
+  end
+
+  it "should have modifier predicate" do
+    Model::DataExprOr.new(@a_each, @b_each).should.each
+    Model::DataExprOr.new(@a_all, @b_all).should.all
+    Model::DataExprOr.new(@a_all, @null).should.all
+    Model::DataExprOr.new(@null, @a_all).should.all
+    Model::DataExprOr.new(@a_each, @null).should.each
+    Model::DataExprOr.new(@null, @a_each).should.each
+  end
+
+  it "should not accept nonexistance" do
+    expr = Model::DataExprOr.new(DataExpr.new('test.a'), DataExpr.new('test.b'))
+    expr.should.not.accept_nonexistence
+  end
+end
+
+#
+# test cases
+#
+yamlname = 'spec_data-expr.yml'
+ymlpath = File.join(File.dirname(__FILE__), yamlname)
+testcases = YAML.load_file(ymlpath)
+
+describe "Model::DataExpr variation tests" do
+  testcases.each do |expr, testcase|
+    data_expr = DocumentTransformer.new.apply(
+      DocumentParser.new.expr.parse(expr)
+    )
+
+    testcase['match'].map do |name|
+      it "#{expr} should match #{name}" do
+        data_expr.eval(VariableTable.new).should.match(name)
+      end
+    end
+
+    testcase['unmatch'].map do |name|
+      it "#{expr} should unmatch #{name}" do
+        data_expr.eval(VariableTable.new).should.not.match(name)
+      end
     end
   end
 end

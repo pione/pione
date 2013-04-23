@@ -256,7 +256,7 @@ module Pione
         prefix = (type == :input ? "I" : "O")
         case expr.modifier
         when :all
-          make_io_auto_variables_by_all(type, prefix, expr, data)
+          make_io_auto_variables_by_all(type, prefix, expr, data, index)
         when :each
           make_io_auto_variables_by_each(prefix, expr, data, index)
         end
@@ -293,7 +293,7 @@ module Pione
       # expression.
       #
       # @api private
-      def make_io_auto_variables_by_all(type, prefix, expr, tuples)
+      def make_io_auto_variables_by_all(type, prefix, expr, tuples, index)
         # FIXME: output
         return if type == :output
 
@@ -305,14 +305,23 @@ module Pione
         list = RuleIOList.new unless list
         io_list = RuleIOList.new()
 
+        asterisk = []
+
         # convert each tuples
         tuples.each do |tuple, i|
+          asterisk << expr.match(tuple.name).to_a[1]
+
           elt = RuleIOElement.new(PioneString.new(tuple.name))
           elt.uri = PioneString.new(tuple.location.uri.to_s)
           elt.match = PioneList.new(
             *expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
           )
           io_list.add!(elt)
+        end
+
+        # set special variable if index equals 1
+        if prefix == 'I' && index == 1
+          set(Variable.new("*"), PioneString.new(asterisk.join(":")))
         end
 
         # update

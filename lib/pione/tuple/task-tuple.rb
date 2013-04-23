@@ -24,7 +24,11 @@ module Pione
         "%s([%s],{%s})" % [
           rule_path,
           inputs.map{|i|
-            i.kind_of?(Array) ? "[%s, ...]" % i[0].name : i.name
+            if i.kind_of?(Array)
+              i.empty? ? "[]" : "[%s, ...]" % i[0].name
+            else
+              i.name
+            end
           }.join(","),
           params.data.select{|k,_|
             not(k.toplevel?)

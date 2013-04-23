@@ -1,61 +1,62 @@
+param $MAX := 20
+
 Rule Main
-  output '*.prime'
-  param $MAX := 20
+  output '*.prime'.all
 Flow
-  rule CurrentNumber.params({NUM: 2})
-  rule Sieve.params({MAX: $MAX, NUM: 2})
+  rule Sieve
 End
 
 Rule Sieve
-  input '{$NUM}.current'
-  input '*.not_prime'.all or null
-  output '*.prime'
-  param $MAX
-  param $NUM
+  input '*-*.not_prime'.all or null
+  output '*.current'.all or '*.prime'.all
+  param $NUM := 2
 Flow
-  if $NUM <= $MAX
-    if $*.include?($NUM.as_string).not
-      rule CreateNotPrimeAll.params({MAX: $MAX, NUM: $NUM})
-      rule CreatePrime.params({NUM: $NUM})
+  $NEXT_NUM := $NUM + 1
+  $NEXT_RULE := Sieve {NUM: $NEXT_NUM}
+  rule Current {N: $NUM}
+  if not :: $*.as_data_expr.match?($NUM.as_string)
+    rule CreatePrime {N: $NUM}
+    if ($NUM * $NUM) <= $MAX
+      rule CreateNotPrimeAll {P: $NUM} >>> $NEXT_RULE
     else
-      rule CurrentNumber.params({NUM: $NUM + 1})
+      rule $NEXT_RULE
     end
-    rule Sieve.params({MAX: $MAX, NUM: $NUM + 1})
+  else
+    if $NEXT_NUM <= $MAX
+      rule $NEXT_RULE
+    end
   end
-End
-
-Rule CurrentNumber
-  output '{$NUM}.current'
-  param $NUM
-Action
-  touch {$NUM}.current
 End
 
 Rule CreateNotPrimeAll
-  output '*.not_prime'
-  output '{$NUM + 1}.current'
-  param $MAX
-  param $NUM
-  param $i := 2
+  output '*-{$P}.not_prime'.all
+  param $P
+  param $INDEX := 2
 Flow
-  if $NUM * ($i + 1) <= $MAX
-    rule CreateNotPrimeAll.params({MAX: $MAX, NUM: $NUM, i: $i + 1})
+  if ($P * ($INDEX + 1)) <= $MAX
+    rule CreateNotPrimeAll {P: $P, INDEX: $INDEX + 1}
   end
-  rule CreateNotPrime.params({NUM: $NUM * $i})
-  rule CurrentNumber.params({NUM: $NUM + 1})
+  rule CreateNotPrime {P: $P, N: $P * $INDEX}
 End
 
 Rule CreateNotPrime
-  output '{$NUM}.not_prime'
-  param $NUM
+  output '{$N}-{$P}.not_prime'
+  param $P
+  param $N
 Action
-  touch {$NUM}.not_prime
-end
-
-Rule CreatePrime
-  output '{$NUM}.prime'
-  param $NUM
-Action
-  touch {$NUM}.prime
+  touch {$N}-{$P}.not_prime
 End
 
+Rule CreatePrime
+  output '{$N}.prime'
+  param $N
+Action
+  touch {$N}.prime
+End
+
+Rule Current
+  output '{$N}.current'
+  param $N
+Action
+  touch {$N}.current
+End

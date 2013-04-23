@@ -97,6 +97,10 @@ module Pione
         PioneBoolean.new(rec.value.include?(str.value))
       end
 
+      define_pione_method("as_data_expr", [], TypeDataExpr) do |rec|
+        DataExpr.new(rec.value)
+      end
+
       define_pione_method("substring",
         [TypeInteger, TypeInteger],
         TypeString) do |rec, nth, len|

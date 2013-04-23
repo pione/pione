@@ -55,7 +55,7 @@ module Pione
       rule(:message =>
         { :message_name => simple(:name),
           :message_parameters => sequence(:parameters) }) {
-        OpenStruct.new(name, parameters)
+        OpenStruct.new(name: name, parameters: parameters)
       }
 
       # Transform +:message+ with parameters as OpenStruct.
@@ -63,6 +63,11 @@ module Pione
         { :message_name => simple(:name),
           :message_parameters => simple(:arg) }) {
         OpenStruct.new(name: name, parameters: arg)
+      }
+
+      # data null
+      rule(:data_null => simple(:obj)) {
+        Model::DataExprNull.instance
       }
 
       # Extract the content of +:rule_expr+.

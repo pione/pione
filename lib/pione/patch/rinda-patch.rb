@@ -127,17 +127,14 @@ module Rinda
         @bin = {}
       end
 
-      # Adds the tuple.
+      # Add the tuple into the tuple space.
+      #
       # @param [Array] tuple
       #   the tuple
       # @return [void]
       def add(tuple)
         if dom = domain(tuple)
-          unless @bin[dom]
-            @bin[dom] = tuple
-          else
-            raise RedundantTupleError.new(tuple.value)
-          end
+          @bin[dom] = tuple
         else
           raise RuntimeError
         end

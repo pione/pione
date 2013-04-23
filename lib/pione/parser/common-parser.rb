@@ -78,7 +78,8 @@ module Pione
         :keyword_true => 'true',
         :keyword_false => 'false',
         :keyword_and => 'and',
-        :keyword_or => 'or'
+        :keyword_or => 'or',
+        :keyword_null => 'null'
       }
 
       # make keywords
@@ -95,7 +96,7 @@ module Pione
       #     line end.
       #   @return [Parslet::Atoms::Entity] +identifier+ atom
       rule(:identifier) {
-        ((space | symbols | line_end).absent? >> any).repeat(1)
+        ((space | symbols | line_end).absent? >> any).repeat(1) >> question.maybe
       }
 
       # @!attribute [r] digit

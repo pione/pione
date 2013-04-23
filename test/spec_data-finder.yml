@@ -4,7 +4,7 @@ case1:
     - 2.a
     - 3.a
   query:
-    - { name: 1.a }
+    - "'1.a'"
   results:
     - [ 1.a ]
 
@@ -14,7 +14,7 @@ case2:
     - 2.a
     - 3.a
   query:
-    - { name: "*.a" }
+    - "'*.a'"
   results:
     - [ 1.a ]
     - [ 2.a ]
@@ -26,7 +26,7 @@ case3:
     - 2.a
     - 3.a
   query:
-    - { name: "*.a", modifier: all}
+    - "'*.a'.all"
   results:
     - [ [1.a, 2.a, 3.a] ]
 
@@ -39,8 +39,8 @@ case4:
     - 3.a
     - 3.b
   query:
-    - { name: "*.a" }
-    - { name: "{$*}.b" }
+    - "'*.a'"
+    - "'{$*}.b'"
   results:
     - [ 1.a, 1.b ]
     - [ 2.a, 2.b ]
@@ -55,8 +55,8 @@ case5:
     - 3.a
     - 3.b
   query:
-    - { name: "*.a", modifier: all }
-    - { name: "*.b" }
+    - "'*.a'.all"
+    - "'*.b'"
   results:
     - [ [1.a, 2.a, 3.a], 1.b ]
     - [ [1.a, 2.a, 3.a], 2.b ]
@@ -71,8 +71,8 @@ case6:
     - 3.a
     - 3.b
   query:
-    - { name: "*.a" }
-    - { name: "*.b", modifier: all }
+    - "'*.a'"
+    - "'*.b'.all"
   results:
     - [ 1.a, [1.b, 2.b, 3.b] ]
     - [ 2.a, [1.b, 2.b, 3.b] ]
@@ -87,8 +87,8 @@ case7:
     - 3.a
     - 3.b
   query:
-    - { name: "*.a", modifier: all }
-    - { name: "*.b", modifier: all }
+    - "'*.a'.all"
+    - "'*.b'.all"
   results:
     - [ [1.a, 2.a, 3.a], [1.b, 2.b, 3.b] ]
 
@@ -101,8 +101,8 @@ case8:
     - 3.a
     - 3.b
   query:
-    - { name: "*.a" }
-    - { name: "*.b" }
+    - "'*.a'"
+    - "'*.b'"
   results:
     - [ 1.a, 1.b ]
     - [ 1.a, 2.b ]
@@ -113,3 +113,32 @@ case8:
     - [ 3.a, 1.b ]
     - [ 3.a, 2.b ]
     - [ 3.a, 3.b ]
+
+case9:
+  tuples:
+    - 1.a
+    - 2.a
+    - 3.a
+  query:
+    - "'*.a'"
+    - "'*.b' or null"
+  results:
+    - [ 1.a, [] ]
+    - [ 2.a, [] ]
+    - [ 3.a, [] ]
+
+case10:
+  tuples:
+    - 1.a
+    - 1.b
+    - 2.a
+    - 2.b
+    - 3.a
+    - 3.b
+  query:
+    - "'*.a'"
+    - "'*.b'.all or null"
+  results:
+    - [ 1.a, [1.b, 2.b, 3.b] ]
+    - [ 2.a, [1.b, 2.b, 3.b] ]
+    - [ 3.a, [1.b, 2.b, 3.b] ]

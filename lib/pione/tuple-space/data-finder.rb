@@ -55,18 +55,31 @@ module Pione
     private
 
     # Finds all data tuples by the expression from a tuple space server.
+    #
     # @param [DataExpr] expr
     #   query expression of data
     # @return [DataFinderResult]
     #   query result
-    # @api private
     def find_by_expr(expr)
       expr = DataExpr.new(expr) if expr.kind_of?(String)
       query = Tuple[:data].new(name: expr, domain: @domain)
-      return tuple_space_server.read_all(query)
+      return tuple_space_server.read_all(query).map do |tuple|
+        tuple.update_criteria = expr.update_criteria; tuple
+      end
     end
 
     # Find input tuple combinatioins recursively.
+    #
+    # @param type [Symbol]
+    #   input or output
+    # @param exprs [Array<DataExpr>]
+    #   data expressions
+    # @param index
+    #   index
+    # @param vtable [VariableTable]
+    #   variable table
+    # @return [Array<DataFinderResult>]
+    #   the result
     def find_rec(type, exprs, index, vtable)
       # return empty when we reach the recuirsion end
       return [DataFinderResult.new([], vtable)] if exprs.empty?
@@ -78,12 +91,17 @@ module Pione
       # find an input data by name from tuple space server
       tuples = find_by_expr(head)
 
+      # the case for accepting noexistance data
+      if tuples.empty? and head.accept_nonexistence?
+        return find_rec_sub(type, tail, index, tuples, vtable)
+      end
+
       # make combination results
       prefix = (type == :input ? "I" : "O")
       if head.all?
         # case all modifier
         new_vtable =
-          make_auto_variables_by_all(prefix, head, tuples, vtable)
+          make_auto_variables_by_all(prefix, head, tuples, vtable, index)
         unless tuples.empty?
           return find_rec_sub(type, tail, index, tuples, new_vtable)
         end
@@ -111,7 +129,7 @@ module Pione
 
     # Make auto-variables by the name modified 'all'.
     # @api private
-    def make_auto_variables_by_all(prefix, expr, tuples, vtable)
+    def make_auto_variables_by_all(prefix, expr, tuples, vtable, index)
       # create new table
       new_vtable = VariableTable.new(vtable)
       # variable
@@ -123,14 +141,23 @@ module Pione
       io_list = RuleIOList.new
       new_vtable.set!(var, list.add(io_list))
 
+      asterisk = []
+
       # convert each tuples
       tuples.each do |tuple, i|
+        asterisk << expr.match(tuple.name).to_a[1]
+
         elt = RuleIOElement.new(PioneString.new(tuple.name))
         elt.uri = PioneString.new(tuple.location.uri)
         elt.match = PioneList.new(
           *expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
         )
         io_list.add!(elt)
+      end
+
+      # set special variable if index equals 1
+      if prefix == 'I' && index == 1
+        new_vtable.set(Variable.new("*"), PioneString.new(asterisk.join(":")))
       end
 
       return new_vtable

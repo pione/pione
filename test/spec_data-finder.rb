@@ -9,11 +9,11 @@ testcases = YAML.load_file(ymlpath)
 
 describe 'DataFinder' do
   before do
-    create_remote_tuple_space_server
+    create_tuple_space_server
   end
 
   after do
-    tuple_space_server.terminate
+    #tuple_space_server.terminate
   end
 
   it 'should find a data tuple by complete name' do
@@ -59,24 +59,30 @@ describe 'DataFinder' do
 
       # tuples
       testcase['tuples'].map {|name|
-        Tuple[:data].new(name: name, domain: 'test')
+        Tuple[:data].new(name: name, domain: 'test', location: Location[name])
       }.each do |tuple|
         tuple_space_server.write(tuple)
       end
 
       # query
       query = testcase['query'].map {|d|
-        modifier = d["modifier"] == "all" ? :all : :each
-        DataExpr.new(d["name"], modifier)
+        if d.kind_of?(Hash)
+          modifier = d["modifier"] == "all" ? :all : :each
+          DataExpr.new(d["name"], modifier)
+        else
+          DocumentTransformer.new.apply(
+            DocumentParser.new.expr.parse(d)
+          )
+        end
       }
 
       # results
       results = testcase['results'].map {|res|
         res.map {|name|
           if name.kind_of?(Array)
-            name.map {|n| Tuple[:data].new(name: n, domain: 'test') }
+            name.map {|n| Tuple[:data].new(name: n, domain: 'test', location: Location[n]) }
           else
-            Tuple[:data].new(name: name, domain: 'test')
+            Tuple[:data].new(name: name, domain: 'test', location: Location[name])
           end
         }
       }
