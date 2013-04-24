@@ -1,5 +1,5 @@
 Rule Main
-  input '*.txt:terminate.cmd'.except('summary.txt').all
+  input ('*.txt' or 'terminate.cmd').except('summary.txt').all
   output '*.count'.all
   output 'summary.txt'
 Flow

@@ -54,7 +54,7 @@ module Pione
           if self == DataExpr and name.include?(SEPARATOR)
             name.split(SEPARATOR).map do |single_name|
               orig_new(single_name, *args.drop(1))
-            end.tap {|exprs| return DataExprOr.new(*exprs)}
+            end.tap {|exprs| return DataExprOr.new(exprs)}
           end
 
           # other cases
@@ -117,13 +117,15 @@ module Pione
       set_pione_model_type TypeDataExpr
 
       attr_reader :name
+      alias :core :name
       forward_as_key! :@data, :modifier, :mode, :exceptions, :update_criteria
 
       # Create a data expression.
       #
       # @param name [String]
       #   data expression name
-      # @param opts [Hash] options of the expression
+      # @param opts [Hash]
+      #   options of the expression
       # @option opts [Symbol] :modifier
       #   :all or :each
       # @option opts [Symbol] :mode
@@ -276,7 +278,7 @@ module Pione
         update_criteria == :care
       end
 
-      # Create new data expression with a exception name.
+      # Create new data expression with appending the exception.
       #
       # @param exc [DataExpr, String]
       #   data name for exceptions
@@ -284,7 +286,7 @@ module Pione
       #   new data name with the exception
       def except(exc)
         new_exceptions = exceptions + [exc.kind_of?(DataExpr) ? exc : DataExpr.new(exc)]
-        return self.class.new(name, @data.merge(exceptions: new_exceptions))
+        return self.class.new(core, @data.merge(exceptions: new_exceptions))
       end
 
       # Return matched data if the name is matched with the expression.
@@ -343,7 +345,7 @@ module Pione
       #   # => raise ArgumentError
       def |(other)
         raise ArgumentError.new(other) unless other.kind_of?(DataExpr)
-        return DataExprOr.new(self, other)
+        return DataExprOr.new([self, other])
       end
 
       # @api private
@@ -399,6 +401,17 @@ module Pione
     class DataExprNull < DataExpr
       include Singleton
 
+      # null returns itself for property change methods
+      def return_self
+        self
+      end
+      alias :all :return_self
+      alias :each :return_self
+      alias :stdout :return_self
+      alias :stderr :return_self
+      alias :neglect :return_self
+      alias :care :return_self
+
       def initialize
         @data = {}
       end
@@ -441,27 +454,34 @@ module Pione
     # same properties about modifier and mode.
     class DataExprOr < DataExpr
       attr_reader :elements
+      alias :core :elements
 
       forward! Proc.new{find_not_null_element}, :modifier, :mode, :update_criteria
 
-      # @param args [Array<DataExpr>]
+      # @param elements [Array<DataExpr>]
       #   elements that have OR relation
-      def initialize(*args)
-        @elements = args
+      # @param data [Hash]
+      #   options of the expression
+      # @option opts [Array<DataExpr>] :exceptions
+      #   exceptional expressions
+      def initialize(elements, data={})
+        @elements = elements
+        @data = {}
+        @data[:exceptions] = data[:exceptions] || []
 
         # check whether all elements have same modifier
-        unless args.all?{|arg| find_not_null_element.modifier == arg.modifier or arg.kind_of?(DataExprNull)}
-          raise ArgumentError.new(args)
+        unless elements.all?{|elt| modifier == elt.modifier or elt.kind_of?(DataExprNull)}
+          raise ArgumentError.new(elements)
         end
 
         # check whether all elements have same mode
-        unless args.all?{|arg| args.first.mode == arg.mode or arg.kind_of?(DataExprNull)}
-          raise ArmguentError.new(args)
+        unless elements.all?{|elt| mode == elt.mode or elt.kind_of?(DataExprNull)}
+          raise ArmguentError.new(elements)
         end
 
         # check whether all elements have same mode
-        unless args.all?{|arg| args.first.update_criteria == arg.update_criteria or arg.kind_of?(DataExprNull)}
-          raise ArmguentError.new(args)
+        unless elements.all?{|elt| update_criteria == elt.update_criteria or elt.kind_of?(DataExprNull)}
+          raise ArmguentError.new(elements)
         end
       end
 
@@ -472,6 +492,9 @@ module Pione
       # @return [MatchedData,nil]
       #   the matchde data, or nil
       def match(name)
+        # check exceptions
+        return false if match_exceptions(name)
+        # check to match the expression
         @elements.each do |element|
           if md = element.match(name)
             return md
@@ -487,14 +510,64 @@ module Pione
         @elements.any?{|element| element.accept_nonexistence?}
       end
 
-      # Evaluate the data expression.
+      # Return a new instance that has elements with "all" modifier.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with "all" modifier
+      def all
+        self.class.new(@elements.map{|elt| elt.all}, @data)
+      end
+
+      # Return a new instance that has elements with "each" modifier.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with "each" modifier
+      def each
+        self.class.new(@elements.map{|elt| elt.each}, @data)
+      end
+
+      # Return a new instance that has elements with stdout mode.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with stdout mode
+      def stdout
+        self.class.new(@elements.map{|elt| elt.stdout}, @data)
+      end
+
+      # Return a new instance that has elements with stderr mode.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with stderr mode
+      def stderr
+        self.class.new(@elements.map{|elt| elt.stderr}, @data)
+      end
+
+      # Return a new instance that has elements with neglecting update criteria.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with neglecting update criteria
+      def neglect
+        self.class.new(@elements.map{|elt| elt.neglect}, @data)
+      end
+
+      # Return a new instance that has elements with caring update criteria.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with caring update criteria
+      def care
+        self.class.new(@elements.map{|elt| elt.care}, @data)
+      end
+
+      # Evaluate the data expression. This evaluates all elements of the expression.
       #
       # @param vtable [VariableTable]
       #   variable table for evaluation
       # @return [BasicModel]
       #   evaluation result
       def eval(vtable)
-        self.class.new(*@elements.map {|elt| elt.eval(vtable)})
+        new_elements = @elements.map {|elt| elt.eval(vtable)}
+        new_exceptions = exceptions.map {|exc| exc.eval(vtable)}
+        self.class.new(new_elements, @data.merge(exceptions: new_exceptions))
       end
 
       def textize
@@ -503,7 +576,7 @@ module Pione
 
       # @api private
       def to_s
-        "#<#<#{self.class.name}> #{@elements}>"
+        "#<#<#{self.class.name}> #{@elements} #{@data}>"
       end
 
       # @api private
@@ -563,7 +636,7 @@ module Pione
       end
 
       define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |rec, other|
-        DataExprOr.new(rec, other)
+        DataExprOr.new([rec, other])
       end
 
       define_pione_method("join", [TypeString], TypeString) do |rec, connective|
