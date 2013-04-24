@@ -27,11 +27,14 @@ module Pione
       attr_reader :inputs
       attr_reader :outputs
       attr_reader :params
+      attr_reader :original_params
       attr_reader :base_location
+      attr_reader :dry_run
       attr_reader :task_id
       attr_reader :domain
       attr_reader :variable_table
       attr_reader :call_stack
+      attr_reader :domain_location
       attr_reader :rule_process_record
       attr_reader :task_process_record
 
@@ -183,23 +186,11 @@ module Pione
 
       private
 
-      # Save rule informations.
+      # Save domain information file.
       #
       # @return [void]
       def save_rule_condition_infos
-        info = {}
-        info["uname"] = `uname -a`.chomp
-        info["params"] = @params.textize
-        info["original_params"] = @original_params.textize
-        info["inputs"] = "[%s]" % @inputs.map{|input| input.to_s}.join(", ")
-        info["domain"] = @domain
-        info["domain_location"] = @domain_location.inspect
-        info["task_id"] = @task_id.to_s
-        info["dry_run"] = @dry_run.to_s
-        text = "== %s\n\n" % Time.now
-        text << info.map{|key, val| "- %s: %s" % [key,val]}.join("\n")
-        text << "\n\n"
-        (@domain_location + ".domain_info").append(text)
+        Log::DomainInfo.new(self).save
       end
 
       # Executes the rule.
