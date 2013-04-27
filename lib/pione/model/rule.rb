@@ -252,7 +252,7 @@ module Pione
         @params = params
         condition = make_condition
         super(
-          RuleExpr.new(Package.new("root"), "Root", Parameters.empty, TicketExpr.empty, TicketExpr.empty),
+          RuleExpr.new(Package.new("root"), "Root"),
           condition,
           FlowBlock.new(CallRule.new(@main.expr.set_params(@params)))
         )
@@ -309,10 +309,7 @@ module Pione
       def initialize(name, &b)
         expr = RuleExpr.new(
           Package.new('system'),
-          name,
-          Parameters.empty,
-          TicketExpr.empty,
-          TicketExpr.empty
+          name
         )
         condition = make_condition
         super(expr, condition, b)

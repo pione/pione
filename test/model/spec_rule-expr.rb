@@ -14,6 +14,16 @@ describe 'Model::RuleExpr' do
     @a.should.not == @b
   end
 
+  it 'should set/get input ticket expression' do
+    ticket = TicketExpr.new(["A"])
+    @a.add_input_ticket_expr(ticket).input_ticket_expr.should == ticket
+  end
+
+  it 'should set/get output ticket expression' do
+    ticket = TicketExpr.new(["A"])
+    @a.add_output_ticket_expr(ticket).output_ticket_expr.should == ticket
+  end
+
   describe 'pione method ==' do
     it 'should true' do
       @a.call_pione_method(
@@ -60,7 +70,7 @@ describe 'Model::RuleExpr' do
     it 'should set parameters' do
       params = Parameters.new({Variable.new("a") => PioneBoolean.true})
       @a.call_pione_method("params", params).should ==
-        RuleExpr.new(Package.new("main"), "a", params)
+        RuleExpr.new(Package.new("main"), "a", params: params)
     end
   end
 end

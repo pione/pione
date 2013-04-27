@@ -4,11 +4,19 @@ module Pione
     class RuleExpr < BasicModel
       set_pione_model_type TypeRuleExpr
 
+      # @return [String]
+      #   package name
       attr_reader :package
+
+      # @return [String]
+      #   rule name
       attr_reader :name
-      attr_reader :params
-      attr_reader :input_ticket_expr
-      attr_reader :output_ticket_expr
+
+      # @return [Hash]
+      #   attributes of the rule expression
+      attr_reader :attributes
+
+      forward_as_key! :@attributes, :params, :input_ticket_expr, :output_ticket_expr
 
       # Create a rule expression.
       #
@@ -16,18 +24,21 @@ module Pione
       #   package name
       # @param name [String]
       #   rule name
-      # @param params [Parameters]
-      #   parameters
-      # @param input_ticket_expr [TicketExpr]
+      # @param attributes [Hash]
+      #   attributes of the expression
+      # @option attributes [Model::Parameters] :params
+      #   rule parameters
+      # @option attributes [Model::TicketExpr] :input_ticket_expr
       #   input ticket condition
-      # @param output_ticket_expr [TicketExpr]
+      # @option attributes [Model::TicketExpr] :output_ticket_expr
       #   output ticket condition
-      def initialize(package, name, params, input_ticket_expr, output_ticket_expr)
+      def initialize(package, name, attributes={})
         @package = package
         @name = name
-        @params = params
-        @input_ticket_expr = input_ticket_expr
-        @output_ticket_expr = output_ticket_expr
+        @attributes = {}
+        @attributes[:params] = attributes[:params] || Model::Parameters.empty
+        @attributes[:input_ticket_expr] = attributes[:input_ticket_expr] || Model::TicketExpr.empty
+        @attributes[:output_ticket_expr] = attributes[:output_ticket_expr] || Model::TicketExpr.empty
         super()
       end
 
@@ -63,7 +74,8 @@ module Pione
       # @return [RuleExpr]
       #   new rule expression
       def add_input_ticket_expr(ticket_expr)
-        return self.class.new(@package, @name, @params, @input_ticket_expr + ticket_expr, @output_ticket_expr)
+        new_attributes = @attributes.merge(input_ticket_expr: @attributes[:input_ticket_expr] + ticket_expr)
+        return self.class.new(@package, @name, new_attributes)
       end
 
       # Create a new rule expression with adding the ticket expression as output
@@ -74,7 +86,8 @@ module Pione
       # @return [RuleExpr]
       #   new rule expression
       def add_output_ticket_expr(ticket_expr)
-        return self.class.new(@package, @name, @params, @input_ticket_expr, @output_ticket_expr + ticket_expr)
+        new_attributes = @attributes.merge(output_ticket_expr: @attributes[:output_ticket_expr] + ticket_expr)
+        return self.class.new(@package, @name, new_attributes)
       end
 
       # Sets a package name and returns a new expression.
@@ -84,7 +97,7 @@ module Pione
       # @return [RuleExpr]
       #   new rule expression with the package name
       def set_package(package)
-        return self.class.new(package, @name, @params, @input_ticket_expr, @output_ticket_expr)
+        return self.class.new(package, @name, @attributes)
       end
 
       # Set parameters and returns a new expression.
@@ -94,23 +107,19 @@ module Pione
       # @return [RuleExpr]
       #   new rule expression with the parameters
       def set_params(params)
-        return self.class.new(@package, @name, params, @input_ticket_expr, @output_ticket_expr)
+        new_attributes = @attributes.merge(params: params)
+        return self.class.new(@package, @name, new_attributes)
       end
 
       # Evaluate the object with the variable table.
       #
       # @param vtable [VariableTable]
       #   variable table for evaluation
-      # @return [BasicModel]
+      # @return [RuleExpr]
       #   evaluation result
       def eval(vtable)
-        return self.class.new(
-          @package.eval(vtable),
-          @name,
-          @params.eval(vtable),
-          @input_ticket_expr.eval(vtable),
-          @output_ticket_expr.eval(vtable)
-        )
+        new_attributes = Hash[@attributes.map{|key, val| [key, val.eval(vtable)]}]
+        return self.class.new(@package.eval(vtable), @name, new_attributes)
       end
 
       # Return true if the package or parameters include variables.
@@ -118,11 +127,7 @@ module Pione
       # @return [Boolean]
       #   true if the package or parameters include variables
       def include_variable?
-        [ @package.include_variable?,
-          @params.include_variable?,
-          @input_ticket_expr.include_variable?,
-          @output_ticket_expr.include_variable?
-        ].any?
+        @package.include_variable? or @attributes.values.any?{|val| val.include_variable?}
       end
 
       # @api private
@@ -130,14 +135,14 @@ module Pione
         return false unless other.kind_of?(self.class)
         return false unless @package = other.package
         return false unless @name == other.name
-        return false unless @params == other.params
+        return false unless @attributes == other.attributes
         return true
       end
       alias :eql? :"=="
 
       # @api private
       def hash
-        @package.hash + @name.hash + @params.hash
+        @package.hash + @name.hash + @attributes.hash
       end
 
       # Return a set that contains self as a single element.

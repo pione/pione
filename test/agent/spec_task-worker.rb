@@ -70,7 +70,7 @@ describe 'Pione::Agent::TaskWorker' do
         ID.domain_id("main", "Test", [], Parameters.empty),
         []
       )
-      rule = Tuple[:rule].new('&main:Test', :fake_content, :known)
+      rule = Tuple[:rule].new('&main:Test', :fake_content)
       write(rule)
       task2, result = @worker.__send__(:transit_to_rule_loading, task1)
       result.should == :fake_content
@@ -86,7 +86,7 @@ describe 'Pione::Agent::TaskWorker' do
         ID.domain_id("main", "Test", [], Parameters.empty),
         []
       )
-      rule = Tuple[:rule].new('&main:Test', :fake_content, :unknown)
+      rule = Tuple[:rule].new('&main:Test', :fake_content)
       write(rule)
       should.raise(Agent::TaskWorker::UnknownRuleError) do
         @worker.__send__(:transit_to_rule_loading, task)
@@ -109,11 +109,13 @@ describe 'Pione::Agent::TaskWorker' do
           [],
           [DataExpr.new('out.txt')],
           Parameters.empty,
-          Feature.empty
+          Feature.empty,
+          TicketExpr.empty,
+          TicketExpr.empty
         ),
         ActionBlock.new("expr 1 + 2 > out.txt")
       )
-      Pione.quiet_mode do
+      quiet_mode do
         task2, handler, result =
           @worker.__send__(:transit_to_task_executing, task1, rule)
         task2.should == task1
@@ -133,7 +135,7 @@ describe 'Pione::Agent::TaskWorker' do
       write(Tuple[:working].new(task1.domain, "test"))
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
-        RuleCondition.new([], [], Parameters.empty, Feature.empty),
+        RuleCondition.new([], [], Parameters.empty, Feature.empty, TicketExpr.empty, TicketExpr.empty),
         :dummy
       )
       handler1 = RuleHandler::FlowHandler.new(
@@ -159,7 +161,7 @@ describe 'Pione::Agent::TaskWorker' do
       write(Tuple[:working].new(task.domain, "test"))
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
-        RuleCondition.new([], [], Parameters.empty, Feature.empty),
+        RuleCondition.new([], [], Parameters.empty, Feature.empty, TicketExpr.empty, TicketExpr.empty),
         :dummy
       )
       handler = RuleHandler::FlowHandler.new(
@@ -177,7 +179,7 @@ describe 'Pione::Agent::TaskWorker' do
       DRb.start_service
       create_remote_tuple_space_server
 
-      Agent[:logger].start(tuple_space_server, File.open("out.txt", "w+"))
+      Agent[:logger].start(tuple_space_server, Location["out.txt"])
 
       # process info
       write(Tuple[:process_info].new('spec_task-worker', 'testid'))
@@ -188,9 +190,9 @@ describe 'Pione::Agent::TaskWorker' do
       @worker3 = Agent[:task_worker].start(tuple_space_server)
 
       # make a task
-      @uri = "local:/tmp/1.a"
-      Resource[@uri].create "abc"
-      @data = Tuple[:data].new(domain: 'test', name: "1.a", uri: @uri)
+      @location = Location[Temppath.create]
+      @location.create "abc"
+      @data = Tuple[:data].new(domain: 'test', name: "1.a", location: @location)
       @task1 = Tuple[:task].new(
         "&main:test",
         [@data],
@@ -212,8 +214,7 @@ describe 'Pione::Agent::TaskWorker' do
       write(
         Tuple[:rule].new(
           rule_path: "&main:test",
-          content: doc["&main:test"],
-          status: :known
+          content: doc["&main:test"]
         )
       )
 
