@@ -118,7 +118,7 @@ module Pione
 
       attr_reader :name
       alias :core :name
-      forward_as_key! :@data, :modifier, :mode, :exceptions, :update_criteria
+      forward_as_key! :@data, :modifier, :mode, :exceptions, :update_criteria, :operation
 
       # Create a data expression.
       #
@@ -145,6 +145,7 @@ module Pione
         @data[:mode] = data[:mode]
         @data[:exceptions] = data[:exceptions] || []
         @data[:update_criteria] = data[:update_criteria] || :care
+        @data[:operation] = data[:operation] || :append
 
         super()
       end
@@ -195,6 +196,22 @@ module Pione
       #    new data expression with regarding update-criteria
       def care
         return self.class.new(@name, @data.merge(update_criteria: :care))
+      end
+
+      # Return new data expression with append operation.
+      #
+      # @return [DataExpr]
+      #   new data expression with append operation.
+      def append
+        return self.class.new(@name, @data.merge(operation: :append))
+      end
+
+      # Return new data expression with remove operation.
+      #
+      # @return [DataExpr]
+      #   new data expression with remove operation
+      def remove
+        return self.class.new(@name, @data.merge(operation: :remove))
       end
 
       # Evaluate the data expression.
@@ -276,6 +293,22 @@ module Pione
       #   true if the data regards update criteria
       def care?
         update_criteria == :care
+      end
+
+      # Return true if the data expression has the attribute of append operation.
+      #
+      # @return [Boolean]
+      #   true  if the data expression has the attribute of append operation
+      def append?
+        operation == :append
+      end
+
+      # Return true if the data expression has the attribute of remove operation.
+      #
+      # @return [Boolean]
+      #   true  if the data expression has the attribute of remove operation
+      def remove?
+        operation == :remove
       end
 
       # Create new data expression with appending the exception.
@@ -398,6 +431,7 @@ module Pione
       end
     end
 
+    # DataExprNull is a data exppresion that accepts data nonexistence.
     class DataExprNull < DataExpr
       include Singleton
 
@@ -411,6 +445,8 @@ module Pione
       alias :stderr :return_self
       alias :neglect :return_self
       alias :care :return_self
+      alias :append :return_self
+      alias :remove :return_self
 
       def initialize
         @data = {}
@@ -456,7 +492,7 @@ module Pione
       attr_reader :elements
       alias :core :elements
 
-      forward! Proc.new{find_not_null_element}, :modifier, :mode, :update_criteria
+      forward! Proc.new{find_not_null_element}, :modifier, :mode, :update_criteria, :operation
 
       # @param elements [Array<DataExpr>]
       #   elements that have OR relation
@@ -469,20 +505,11 @@ module Pione
         @data = {}
         @data[:exceptions] = data[:exceptions] || []
 
-        # check whether all elements have same modifier
-        unless elements.all?{|elt| modifier == elt.modifier or elt.kind_of?(DataExprNull)}
-          raise ArgumentError.new(elements)
-        end
-
-        # check whether all elements have same mode
-        unless elements.all?{|elt| mode == elt.mode or elt.kind_of?(DataExprNull)}
-          raise ArmguentError.new(elements)
-        end
-
-        # check whether all elements have same mode
-        unless elements.all?{|elt| update_criteria == elt.update_criteria or elt.kind_of?(DataExprNull)}
-          raise ArmguentError.new(elements)
-        end
+        # check attribute consistency
+        check_attribute_consistency(:modifier)
+        check_attribute_consistency(:mode)
+        check_attribute_consistency(:update_criteria)
+        check_attribute_consistency(:operation)
       end
 
       # Match if the name is matched one of elements.
@@ -558,6 +585,22 @@ module Pione
         self.class.new(@elements.map{|elt| elt.care}, @data)
       end
 
+      # Return a new instance that has elements with append operation.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with append operation
+      def append
+        self.class.new(@elements.map{|elt| elt.append}, @data)
+      end
+
+      # Return a new instance that has elements with remove operation.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with remove operation
+      def remove
+        self.class.new(@elements.map{|elt| elt.remove}, @data)
+      end
+
       # Evaluate the data expression. This evaluates all elements of the expression.
       #
       # @param vtable [VariableTable]
@@ -582,7 +625,15 @@ module Pione
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)
-        (@elements - other.elements).empty?
+        if (@elements - other.elements).empty?
+          return false unless mode == other.mode
+          return false unless modifier == other.modifier
+          return false unless update_criteria == other.update_criteria
+          return false unless operation == other.operation
+          return true
+        else
+          return false
+        end
       end
       alias :eql? :"=="
 
@@ -592,6 +643,15 @@ module Pione
       end
 
       private
+
+      # Check attribute consistency.
+      #
+      # @return [void]
+      def check_attribute_consistency(name)
+        unless @elements.all?{|elt| send(name) == elt.send(name) or elt.kind_of?(DataExprNull)}
+          raise ArgumentError.new(@elements)
+        end
+      end
 
       def find_not_null_element
         @elements.find{|elt| not(elt.kind_of?(DataExprNull))}
@@ -611,8 +671,16 @@ module Pione
         rec.all
       end
 
+      define_pione_method("all?", [], TypeBoolean) do |rec|
+        rec.all?
+      end
+
       define_pione_method("each", [], TypeDataExpr) do |rec|
         rec.each
+      end
+
+      define_pione_method("each?", [], TypeBoolean) do |rec|
+        rec.each?
       end
 
       define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |rec, target|
@@ -623,16 +691,32 @@ module Pione
         rec.stdout
       end
 
+      define_pione_method("stdout?", [], TypeBoolean) do |rec|
+        rec.stdout?
+      end
+
       define_pione_method("stderr", [], TypeDataExpr) do |rec|
         rec.stderr
+      end
+
+      define_pione_method("stderr?", [], TypeBoolean) do |rec|
+        rec.stderr?
       end
 
       define_pione_method("neglect", [], TypeDataExpr) do |rec|
         rec.neglect
       end
 
+      define_pione_method("neglect?", [], TypeBoolean) do |rec|
+        rec.neglect?
+      end
+
       define_pione_method("care", [], TypeDataExpr) do |rec|
         rec.care
+      end
+
+      define_pione_method("care?", [], TypeBoolean) do |rec|
+        rec.care?
       end
 
       define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |rec, other|

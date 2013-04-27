@@ -49,6 +49,20 @@ describe 'Model::DataExpr' do
     exp.should.care
   end
 
+  it 'should have append operation' do
+    expr = DataExpr.new('A').append
+    expr.should.append
+    expr.should.not.remove
+    expr.operation.should == :append
+  end
+
+  it 'should have remove operation' do
+    expr = DataExpr.new('A').remove
+    expr.should.not.append
+    expr.should.remove
+    expr.operation.should == :remove
+  end
+
   it 'should match the same name' do
     exp = DataExpr.new('test.a')
     exp.should.match 'test.a'
@@ -368,6 +382,8 @@ describe "Model::DataExprNull" do
     @null.stderr.should == @null
     @null.neglect.should == @null
     @null.care.should == @null
+    @null.append.should == @null
+    @null.remove.should == @null
   end
 
   it "should accept nonexistance" do
