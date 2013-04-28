@@ -145,7 +145,7 @@ module Pione
         @data[:mode] = data[:mode]
         @data[:exceptions] = data[:exceptions] || []
         @data[:update_criteria] = data[:update_criteria] || :care
-        @data[:operation] = data[:operation] || :append
+        @data[:operation] = data[:operation] || :write
 
         super()
       end
@@ -198,12 +198,12 @@ module Pione
         return self.class.new(@name, @data.merge(update_criteria: :care))
       end
 
-      # Return new data expression with append operation.
+      # Return new data expression with write operation.
       #
       # @return [DataExpr]
-      #   new data expression with append operation.
-      def append
-        return self.class.new(@name, @data.merge(operation: :append))
+      #   new data expression with write operation.
+      def write
+        return self.class.new(@name, @data.merge(operation: :write))
       end
 
       # Return new data expression with remove operation.
@@ -212,6 +212,14 @@ module Pione
       #   new data expression with remove operation
       def remove
         return self.class.new(@name, @data.merge(operation: :remove))
+      end
+
+      # Return new data expression with touch operation.
+      #
+      # @return [DataExpr]
+      #   new data expression with touch operation
+      def touch
+        return self.class.new(@name, @data.merge(operation: :touch))
       end
 
       # Evaluate the data expression.
@@ -295,12 +303,12 @@ module Pione
         update_criteria == :care
       end
 
-      # Return true if the data expression has the attribute of append operation.
+      # Return true if the data expression has the attribute of write operation.
       #
       # @return [Boolean]
-      #   true  if the data expression has the attribute of append operation
-      def append?
-        operation == :append
+      #   true  if the data expression has the attribute of write operation
+      def write?
+        operation == :write
       end
 
       # Return true if the data expression has the attribute of remove operation.
@@ -309,6 +317,14 @@ module Pione
       #   true  if the data expression has the attribute of remove operation
       def remove?
         operation == :remove
+      end
+
+      # Return true if the data expression has the attribute of touch operation.
+      #
+      # @return [Boolean]
+      #   true  if the data expression has the attribute of touch operation
+      def touch?
+        operation == :touch
       end
 
       # Create new data expression with appending the exception.
@@ -445,8 +461,9 @@ module Pione
       alias :stderr :return_self
       alias :neglect :return_self
       alias :care :return_self
-      alias :append :return_self
+      alias :write :return_self
       alias :remove :return_self
+      alias :touch :return_self
 
       def initialize
         @data = {}
@@ -585,12 +602,12 @@ module Pione
         self.class.new(@elements.map{|elt| elt.care}, @data)
       end
 
-      # Return a new instance that has elements with append operation.
+      # Return a new instance that has elements with write operation.
       #
       # @return [DataExprOr]
-      #   a new instance that has elements with append operation
-      def append
-        self.class.new(@elements.map{|elt| elt.append}, @data)
+      #   a new instance that has elements with write operation
+      def write
+        self.class.new(@elements.map{|elt| elt.write}, @data)
       end
 
       # Return a new instance that has elements with remove operation.
@@ -599,6 +616,14 @@ module Pione
       #   a new instance that has elements with remove operation
       def remove
         self.class.new(@elements.map{|elt| elt.remove}, @data)
+      end
+
+      # Return a new instance that has elements with touch operation.
+      #
+      # @return [DataExprOr]
+      #   a new instance that has elements with touch operation
+      def touch
+        self.class.new(@elements.map{|elt| elt.touch}, @data)
       end
 
       # Evaluate the data expression. This evaluates all elements of the expression.
@@ -717,6 +742,30 @@ module Pione
 
       define_pione_method("care?", [], TypeBoolean) do |rec|
         rec.care?
+      end
+
+      define_pione_method("write", [], TypeDataExpr) do |rec|
+        rec.write
+      end
+
+      define_pione_method("write?", [], TypeBoolean) do |rec|
+        rec.write?
+      end
+
+      define_pione_method("remove", [], TypeDataExpr) do |rec|
+        rec.remove
+      end
+
+      define_pione_method("remove?", [], TypeBoolean) do |rec|
+        rec.remove?
+      end
+
+      define_pione_method("touch", [], TypeDataExpr) do |rec|
+        rec.touch
+      end
+
+      define_pione_method("touch?", [], TypeBoolean) do |rec|
+        rec.touch?
       end
 
       define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |rec, other|

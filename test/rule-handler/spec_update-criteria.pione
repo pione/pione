@@ -1,0 +1,49 @@
+Rule NoOutputConditions
+  input '*'
+Action
+
+End
+
+Rule A2B
+  input '*.a'
+  output '*.b'
+Action
+  cat {$I[1]} > {$O[1]}
+End
+
+Rule A2Null
+  input '*.a'
+  output null
+Action
+
+End
+
+Rule RemoveA
+  input '*.a'
+  output '*.a'.remove
+Action
+
+End
+
+Rule RemoveAB
+  input '*.a'
+  input '*.b'
+  output '*.a'.remove
+  output '*.b'.remove
+Action
+
+End
+
+Rule TouchA
+  input '*.a'
+  output '*.a'.touch
+Action
+
+End
+
+Rule NeglectOutput
+  input '*.a'
+  output '*.b'.neglect
+Action
+  echo {$I[1]} > {$O[1]}
+End

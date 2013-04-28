@@ -142,7 +142,6 @@ require 'pione/tuple-space/tuple-space-server'
 require 'pione/tuple-space/tuple-space-receiver'
 require 'pione/tuple-space/tuple-space-provider'
 require 'pione/tuple-space/data-finder'
-require 'pione/tuple-space/update-criteria'
 
 # parser
 require 'pione/parser/parslet-extension'
@@ -160,6 +159,7 @@ require 'pione/transformer'
 
 # rule-handler
 require 'pione/rule-handler/basic-handler'
+require 'pione/rule-handler/update-criteria'
 require 'pione/rule-handler/flow-handler'
 require 'pione/rule-handler/action-handler'
 require 'pione/rule-handler/root-handler'

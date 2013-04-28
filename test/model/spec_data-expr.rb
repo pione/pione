@@ -49,18 +49,28 @@ describe 'Model::DataExpr' do
     exp.should.care
   end
 
-  it 'should have append operation' do
-    expr = DataExpr.new('A').append
-    expr.should.append
+  it 'should have write operation' do
+    expr = DataExpr.new('A').write
+    expr.should.write
     expr.should.not.remove
-    expr.operation.should == :append
+    expr.should.not.touch
+    expr.operation.should == :write
   end
 
   it 'should have remove operation' do
     expr = DataExpr.new('A').remove
-    expr.should.not.append
+    expr.should.not.write
     expr.should.remove
+    expr.should.not.touch
     expr.operation.should == :remove
+  end
+
+  it 'should have touch operation' do
+    expr = DataExpr.new('A').touch
+    expr.should.not.write
+    expr.should.not.remove
+    expr.should.touch
+    expr.operation.should == :touch
   end
 
   it 'should match the same name' do
@@ -382,8 +392,9 @@ describe "Model::DataExprNull" do
     @null.stderr.should == @null
     @null.neglect.should == @null
     @null.care.should == @null
-    @null.append.should == @null
+    @null.write.should == @null
     @null.remove.should == @null
+    @null.touch.should == @null
   end
 
   it "should accept nonexistance" do
@@ -393,25 +404,15 @@ end
 
 describe "Model::DataExprOr" do
   before do
-    @a_each = Model::DataExpr.new('A')
-    @a_all = Model::DataExpr.new('A').all
-    @a_stdout = Model::DataExpr.new('A').stdout
-    @a_stderr = Model::DataExpr.new('A').stderr
-    @a_neglect = Model::DataExpr.new('A').neglect
-    @a_care = Model::DataExpr.new('A').care
+    @a = Model::DataExpr.new('A')
     @a_aster = Model::DataExpr.new('A*')
     @aa_each = Model::DataExpr.new('AA')
-    @b_each = Model::DataExpr.new('B')
-    @b_all = Model::DataExpr.new('B').all
-    @b_stdout = Model::DataExpr.new('B').stdout
-    @b_stderr = Model::DataExpr.new('B').stderr
-    @b_neglect = Model::DataExpr.new('B').neglect
-    @b_care = Model::DataExpr.new('B').care
+    @b = Model::DataExpr.new('B')
     @null = Model::DataExprNull.instance
   end
 
   it "should match" do
-    expr = Model::DataExprOr.new([@a_each, @b_each])
+    expr = Model::DataExprOr.new([@a.each, @b.each])
     expr.should.match('A')
     expr.should.match('B')
     expr.should.not.match('C')
@@ -419,8 +420,8 @@ describe "Model::DataExprOr" do
   end
 
   it 'should get/set modifier' do
-    [ [@a_each, @b_each, @null],
-      [@a_all, @b_all, @null] ].each do |vars|
+    [ [@a.each, @b.each, @null],
+      [@a.all, @b.all, @null] ].each do |vars|
       vars.combination(2) do |left, right|
         Model::DataExprOr.new([left, right]).all.modifier.should == :all
         Model::DataExprOr.new([left, right]).each.modifier.should == :each
@@ -429,9 +430,9 @@ describe "Model::DataExprOr" do
   end
 
   it 'should get/set the mode' do
-    [ [@a_each, @b_each, @null],
-      [@a_stdout, @b_stdout, @null],
-      [@a_stderr, @b_stderr, @null] ].each do |vars|
+    [ [@a.each, @b.each, @null],
+      [@a.stdout, @b.stdout, @null],
+      [@a.stderr, @b.stderr, @null] ].each do |vars|
       vars.combination(2) do |left, right|
         Model::DataExprOr.new([left, right]).stdout.mode.should == :stdout
         Model::DataExprOr.new([left, right]).stderr.mode.should == :stderr
@@ -440,9 +441,9 @@ describe "Model::DataExprOr" do
   end
 
   it 'should get/set the update criteria' do
-    [ [@a_each, @b_each, @null],
-      [@a_neglect, @b_neglect, @null],
-      [@a_care, @b_care, @null] ].each do |vars|
+    [ [@a.each, @b.each, @null],
+      [@a.neglect, @b.neglect, @null],
+      [@a.care, @b.care, @null] ].each do |vars|
       vars.combination(2) do |left, right|
         Model::DataExprOr.new([left, right]).neglect.update_criteria.should == :neglect
         Model::DataExprOr.new([left, right]).care.update_criteria.should == :care
@@ -451,88 +452,94 @@ describe "Model::DataExprOr" do
   end
 
   it "should have each modifier" do
-    Model::DataExprOr.new([@a_each, @b_each]).should.each
-    Model::DataExprOr.new([@a_each, @null]).should.each
-    Model::DataExprOr.new([@null, @a_each]).should.each
+    Model::DataExprOr.new([@a.each, @b.each]).should.each
+    Model::DataExprOr.new([@a.each, @null]).should.each
+    Model::DataExprOr.new([@null, @a.each]).should.each
   end
 
   it "should not have all modifier" do
-    Model::DataExprOr.new([@a_all, @b_all]).should.not.each
-    Model::DataExprOr.new([@a_all, @null]).should.not.each
-    Model::DataExprOr.new([@null, @a_all]).should.not.each
+    Model::DataExprOr.new([@a.all, @b.all]).should.not.each
+    Model::DataExprOr.new([@a.all, @null]).should.not.each
+    Model::DataExprOr.new([@null, @a.all]).should.not.each
   end
 
   it "should have all modifier" do
-    Model::DataExprOr.new([@a_all, @b_all]).should.all
-    Model::DataExprOr.new([@a_all, @null]).should.all
-    Model::DataExprOr.new([@null, @a_all]).should.all
+    Model::DataExprOr.new([@a.all, @b.all]).should.all
+    Model::DataExprOr.new([@a.all, @null]).should.all
+    Model::DataExprOr.new([@null, @a.all]).should.all
   end
 
   it "should not have all modifier" do
-    Model::DataExprOr.new([@a_each, @b_each]).should.not.all
-    Model::DataExprOr.new([@a_each, @null]).should.not.all
-    Model::DataExprOr.new([@null, @a_each]).should.not.all
+    Model::DataExprOr.new([@a.each, @b.each]).should.not.all
+    Model::DataExprOr.new([@a.each, @null]).should.not.all
+    Model::DataExprOr.new([@null, @a.each]).should.not.all
   end
 
   it "should be stdout mode" do
-    Model::DataExprOr.new([@a_stdout, @b_stdout]).should.stdout
-    Model::DataExprOr.new([@a_stdout, @null]).should.stdout
-    Model::DataExprOr.new([@null, @a_stdout]).should.stdout
+    Model::DataExprOr.new([@a.stdout, @b.stdout]).should.stdout
+    Model::DataExprOr.new([@a.stdout, @null]).should.stdout
+    Model::DataExprOr.new([@null, @a.stdout]).should.stdout
   end
 
   it "should be not stdout mode" do
-    Model::DataExprOr.new([@a_stderr, @b_stderr]).should.not.stdout
-    Model::DataExprOr.new([@a_stderr, @null]).should.not.stdout
-    Model::DataExprOr.new([@null, @a_stderr]).should.not.stdout
+    Model::DataExprOr.new([@a.stderr, @b.stderr]).should.not.stdout
+    Model::DataExprOr.new([@a.stderr, @null]).should.not.stdout
+    Model::DataExprOr.new([@null, @a.stderr]).should.not.stdout
   end
 
   it "should be stderr mode" do
-    Model::DataExprOr.new([@a_stderr, @b_stderr]).should.stderr
-    Model::DataExprOr.new([@a_stderr, @null]).should.stderr
-    Model::DataExprOr.new([@null, @a_stderr]).should.stderr
+    Model::DataExprOr.new([@a.stderr, @b.stderr]).should.stderr
+    Model::DataExprOr.new([@a.stderr, @null]).should.stderr
+    Model::DataExprOr.new([@null, @a.stderr]).should.stderr
   end
 
   it "should be not stderr mode" do
-    Model::DataExprOr.new([@a_stdout, @b_stdout]).should.not.stderr
-    Model::DataExprOr.new([@a_stdout, @null]).should.not.stderr
-    Model::DataExprOr.new([@null, @a_stdout]).should.not.stderr
+    Model::DataExprOr.new([@a.stdout, @b.stdout]).should.not.stderr
+    Model::DataExprOr.new([@a.stdout, @null]).should.not.stderr
+    Model::DataExprOr.new([@null, @a.stdout]).should.not.stderr
   end
 
   it "should neglect update criteria" do
-    Model::DataExprOr.new([@a_neglect, @b_neglect]).should.neglect
-    Model::DataExprOr.new([@a_neglect, @null]).should.neglect
-    Model::DataExprOr.new([@null, @a_neglect]).should.neglect
+    Model::DataExprOr.new([@a.neglect, @b.neglect]).should.neglect
+    Model::DataExprOr.new([@a.neglect, @null]).should.neglect
+    Model::DataExprOr.new([@null, @a.neglect]).should.neglect
   end
 
   it "should not neglect update criteria" do
-    Model::DataExprOr.new([@a_care, @b_care]).should.not.neglect
-    Model::DataExprOr.new([@a_care, @null]).should.not.neglect
-    Model::DataExprOr.new([@null, @a_care]).should.not.neglect
+    Model::DataExprOr.new([@a.care, @b.care]).should.not.neglect
+    Model::DataExprOr.new([@a.care, @null]).should.not.neglect
+    Model::DataExprOr.new([@null, @a.care]).should.not.neglect
   end
 
   it "should care update criteria" do
-    Model::DataExprOr.new([@a_care, @b_care]).should.care
-    Model::DataExprOr.new([@a_care, @null]).should.care
-    Model::DataExprOr.new([@null, @a_care]).should.care
+    Model::DataExprOr.new([@a.care, @b.care]).should.care
+    Model::DataExprOr.new([@a.care, @null]).should.care
+    Model::DataExprOr.new([@null, @a.care]).should.care
   end
 
   it "should not care update criteria" do
-    Model::DataExprOr.new([@a_neglect, @b_neglect]).should.not.care
-    Model::DataExprOr.new([@a_neglect, @null]).should.not.care
-    Model::DataExprOr.new([@null, @a_neglect]).should.not.care
+    Model::DataExprOr.new([@a.neglect, @b.neglect]).should.not.care
+    Model::DataExprOr.new([@a.neglect, @null]).should.not.care
+    Model::DataExprOr.new([@null, @a.neglect]).should.not.care
+  end
+
+  it "should have write operation" do
+    Model::DataExprOr.new([@a.write, @b.write]).should.write
+    Model::DataExprOr.new([@a.write, @null]).should.write
+    Model::DataExprOr.new([@null, @a.write]).should.write
   end
 
   it "should accept nonexistance" do
-    Model::DataExprOr.new([@a_each, @null]).should.accept_nonexistence
-    Model::DataExprOr.new([@null, @a_each]).should.accept_nonexistence
+    Model::DataExprOr.new([@a.each, @null]).should.accept_nonexistence
+    Model::DataExprOr.new([@null, @a.each]).should.accept_nonexistence
   end
 
   it "should not accept nonexistance" do
-    Model::DataExprOr.new([@a_each, @b_each]).should.not.accept_nonexistence
+    Model::DataExprOr.new([@a.each, @b.each]).should.not.accept_nonexistence
   end
 
   it "should get/set exceptions" do
-    Model::DataExprOr.new([@a_aster, @b_each]).except(@aa_each).tap do |expr|
+    Model::DataExprOr.new([@a_aster, @b.each]).except(@aa_each).tap do |expr|
       expr.exceptions.should == [@aa_each]
       expr.should.match("AAA")
       expr.should.match("B")
