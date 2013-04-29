@@ -21,6 +21,13 @@ describe 'Pione::Transformer::BlockTransformer' do
         CallRule.new(RuleExpr.new(Package.new("main"), "Test"))
       )
     end
+  end
 
+  transformer_spec("empty_block", :empty_block) do
+    tc(<<-STRING) do
+      End
+    STRING
+      EmptyBlock.instance
+    end
   end
 end

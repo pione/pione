@@ -89,6 +89,17 @@ require 'pione/relay/relay-socket'
 require 'pione/relay/relay-client-db'
 require 'pione/relay/relay-account-db'
 
+# tuple-space
+require 'pione/tuple-space/tuple-space-server-interface'
+require 'pione/tuple-space/presence-notifier'
+require 'pione/tuple-space/tuple-space-server'
+require 'pione/tuple-space/tuple-space-receiver'
+require 'pione/tuple-space/tuple-space-provider'
+require 'pione/tuple-space/data-finder'
+
+# rule-handler
+require 'pione/rule-handler.rb'
+
 # model
 require 'pione/model/basic-model'
 require 'pione/model/undefined-value'
@@ -135,14 +146,6 @@ require 'pione/tuple/rule-tuple'
 require 'pione/tuple/task-worker-resource-tuple'
 require 'pione/tuple/ticket-tuple'
 
-# tuple-space
-require 'pione/tuple-space/tuple-space-server-interface'
-require 'pione/tuple-space/presence-notifier'
-require 'pione/tuple-space/tuple-space-server'
-require 'pione/tuple-space/tuple-space-receiver'
-require 'pione/tuple-space/tuple-space-provider'
-require 'pione/tuple-space/data-finder'
-
 # parser
 require 'pione/parser/parslet-extension'
 require 'pione/parser/common-parser'
@@ -156,14 +159,6 @@ require 'pione/parser/document-parser'
 
 # transformer
 require 'pione/transformer'
-
-# rule-handler
-require 'pione/rule-handler/basic-handler'
-require 'pione/rule-handler/update-criteria'
-require 'pione/rule-handler/flow-handler'
-require 'pione/rule-handler/action-handler'
-require 'pione/rule-handler/root-handler'
-require 'pione/rule-handler/system-handler'
 
 # agent
 require 'pione/agent/basic-agent'

@@ -241,5 +241,22 @@ module Pione
         @condition.hash + @blocks.hash
       end
     end
+
+    # EmptyBlock is no elements block.
+    class EmptyBlock < BasicModel
+      include Singleton
+
+      def eval(vtable)
+        return self
+      end
+
+      def include_variable?
+        false
+      end
+
+      def textize
+        "empty_block()"
+      end
+    end
   end
 end

@@ -83,3 +83,12 @@ flow_block:
     - |
       Flow
         rule Test
+action_block:
+  valid:
+    - |
+      Action
+        echo "abc" > A.txt
+      End
+empty_block:
+  valid:
+    - "End"

@@ -41,9 +41,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         RuleExpr.new(Package.new("main"), "Test"),
         RuleCondition.new(
           [ DataExpr.new('*.a') ],
-          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
-          Parameters.empty,
-          Feature.empty
+          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
         ),
         ActionBlock.new("        echo \"test\" > {$OUTPUT[1].NAME}\n")
       )
@@ -62,9 +60,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         RuleExpr.new(Package.new("main"), "Test"),
         RuleCondition.new(
           [ DataExpr.new('*.a') ],
-          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
-          Parameters.empty,
-          Feature.empty
+          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
         ),
         FlowBlock.new(
           CallRule.new(RuleExpr.new(Package.new("main"), "TestA")),
@@ -94,8 +90,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
               DataExpr.new("*.txt"),
               DataExpr.new("summary.txt"))],
           [DataExpr.new("summary.txt")],
-          Parameters.new({Variable.new("ConvertCharSet") => PioneBoolean.true}),
-          Feature.empty
+          params: Parameters.new({Variable.new("ConvertCharSet") => PioneBoolean.true}),
         ),
         FlowBlock.new(
           ConditionalBlock.new(
@@ -117,6 +112,20 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         )
       )
     end
+
+    tc(<<-STRING) do
+      Rule EmptyRule
+        input '*.a'
+        output '*.a'.touch
+      End
+    STRING
+      rule_expr = RuleExpr.new(Package.new("main"), "EmptyRule")
+      condition = RuleCondition.new(
+        [DataExpr.new("*.a")], [Message.new("touch", DataExpr.new("*.a"))]
+      )
+      EmptyRule.new(rule_expr, condition, EmptyBlock.instance)
+    end
+
   end
 
   transformer_spec("rule_definitions", :toplevel_elements) do
@@ -140,9 +149,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
           RuleExpr.new(Package.new("main"), "TestA"),
           RuleCondition.new(
             [ DataExpr.new("*.a") ],
-            [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ],
-            Parameters.empty,
-            Feature.empty
+            [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
           ),
           ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         ),
@@ -150,9 +157,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
           RuleExpr.new(Package.new("main"), "TestB"),
           RuleCondition.new(
             [ DataExpr.new("*.b") ],
-            [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ],
-            Parameters.empty,
-            Feature.empty
+            [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ]
           ),
           ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         )

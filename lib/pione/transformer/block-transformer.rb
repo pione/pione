@@ -19,6 +19,10 @@ module Pione
           x.set_line_and_column(keyword_Action.line_and_column)
         end
       }
+
+      rule(:empty_block => simple(:any)) {
+        EmptyBlock.instance
+      }
     end
   end
 end

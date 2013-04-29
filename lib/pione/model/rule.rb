@@ -2,65 +2,39 @@ module Pione
   module Model
     # RuleCondition represents rule condition.
     class RuleCondition < BasicModel
-      # the value of attribute inputs
-      #
       # @return [Array<DataExpr, Array<DataExpr>>]
-      #   rule inputs condition
+      #   input data condition
       attr_reader :inputs
 
-      # the value of attribute outputs
-      #
       # @return [Array<DataExpr, Array<DataExpr>>]
-      #   rule outputs condition
+      #   output data condition
       attr_reader :outputs
 
-      # the value of attribute params
-      #
-      # @return [Parameters]
-      #   rule parameters table
-      attr_reader :params
-
-      # the value of attribute features
-      #
-      # @return [Feature]
-      #   rule feature condition
-      attr_reader :features
-
-      # input ticket expression
-      #
-      # @return [TicketExpr]
-      #    input ticket expression
-      attr_reader :input_ticket_expr
-
-      # output ticket expression
-      #
-      # @return [TicketExpr]
-      #    output ticket
-      attr_reader :output_ticket_expr
+      forward_as_key! :@condition, :params, :features, :input_ticket_expr, :output_ticket_expr
 
       # Create a rule condition.
       #
-      # @param inputs [Array<DataExpr, Array<DataExpr>>]
-      #   rule inputs
-      # @param outputs [Array<DataExpr, Array<DataExpr>>]
-      #   rule outputs
-      # @param params [Parameters]
+      # @param inputs [Array<DataExpr>]
+      #   input conditions
+      # @param outputs [Array<DataExpr>]
+      #   output conditions
+      # @param condition [Hash]
+      # @option condition [Parameters] params
       #   rule parameters
-      # @param features [Feature]
+      # @option condition [Feature] features
       #   rule features
-      # @param input_ticket_expr [TicketExpr]
-      #   input ticket expression
-      # @param output_ticket_expr [TicketExpr]
-      #   output ticket expression
-      def initialize(inputs, outputs, params, features, input_ticket_expr, output_ticket_expr)
-        check_argument_type(params, Parameters)
-        check_argument_type(features, Feature::Expr)
+      # @option condition [TicketExpr] input_ticket_expr
+      #   input ticket
+      # @option condition [TicketExpr] output_ticket_expr
+      #   output ticket
+      def initialize(inputs, outputs, condition={})
         @inputs = inputs
         @outputs = outputs
-        @params = params
-        @features = features
-        @input_ticket_expr = input_ticket_expr
-        @output_ticket_expr = output_ticket_expr
+        @condition = {}
+        @condition[:params] = condition[:params] || Parameters.empty
+        @condition[:features] = condition[:features] || Feature.empty
+        @condition[:input_ticket_expr] = condition[:input_ticket_expr] || TicketExpr.empty
+        @condition[:output_ticket_expr] = condition[:output_ticket_expr] || TicketExpr.empty
         super()
       end
 
@@ -69,73 +43,82 @@ module Pione
       # @return [Boolean]
       #   true if the condition includes variable, or false
       def include_variable?
-        [ @inputs.any? {|input| input.include_variable?},
-          @outputs.any? {|output| output.include_variable?},
-          @params.include_variable?,
-          @features.include_variable?,
-          @input_tickets.any? {|ticket| ticket.include_variable?},
-          @output_tickets.any? {|ticket| ticket.include_variable?}
-        ].any?
+        return true if @inputs.any? {|input| input.include_variable?}
+        return true if @outputs.any? {|output| output.include_variable?}
+        return true if @condition.any? {|key, val| val.include_variable?}
+        return false
+      end
+
+      def to_hash
+        @condition.merge(inputs: @inputs, outputs: @outputs)
       end
 
       # @api private
       def ==(other)
-        return false unless @inputs == other.inputs
-        return false unless @outputs == other.outputs
-        return false unless @params == other.params
-        return false unless @features == other.features
-        return true
+        to_hash == other.to_hash
       end
       alias :eql? :"=="
 
       # @api private
       def hash
-        @inputs.hash + @outputs.hash + @params.hash + @features.hash
+        @inputs.hash + @outputs.hash + @condition.hash
       end
     end
 
     # Rule is a class for PIONE rule model.
     class Rule < BasicModel
-      extend Forwardable
+      class << self
+        attr_reader :rule_type
+        attr_reader :handler_class
 
-      # Returns rule type.
-      def self.rule_type
-        @rule_type
+        # Declare rule type of the class.
+        #
+        # @param rule_type [Symbol]
+        #   rule type
+        # @return [void]
+        def set_rule_type(rule_type)
+          @rule_type = rule_type
+        end
+
+        # Declare rule handler class of the class.
+        #
+        # @param handler_class [Class]
+        #   handler class
+        # @return [void]
+        def set_handler_class(handler_class)
+          @handler_class = handler_class
+        end
       end
 
-      # Return the value of attribute expr.
-      #
-      # @return [Array<DataExpr, Array<DataExpr>>]
-      #   rule inputs condition
-      attr_reader :expr
+      # @return [RuleExpr]
+      #   rule expression
+      attr_reader :rule_expr
 
+      # @return [RuleCondition]
+      #   rule condition
       attr_reader :condition
+
+      # @return [Object]
+      #   rule body
       attr_reader :body
 
       forward! :@condition, :inputs, :outputs, :params, :features
       forward! :@condition, :input_ticket_expr, :output_ticket_expr
-      forward :class, :rule_type
+      forward! :class, :rule_type, :handler_class
+      forward! :@rule_expr, :rule_path
 
       # Create a rule.
       #
-      # @param expr [RuleExpr]
+      # @param rule_expr [RuleExpr]
       #   rule expression
       # @param condition [RuleCondition]
       #   rule condition
       # @param [Block] body
       #   rule body block
-      def initialize(expr, condition, body)
-        @expr = expr
+      def initialize(rule_expr, condition, body)
+        @rule_expr = rule_expr
         @condition = condition
         @body = body
-      end
-
-      # Return the rule path.
-      #
-      # @return [String]
-      #   rule path
-      def rule_path
-        @expr.rule_path
       end
 
       # Return true if expression, condition, or body include variables.
@@ -143,7 +126,7 @@ module Pione
       # @return [Boolean]
       #   true if expression, condition, or body include variables
       def include_variable?
-        return true if @expr.include_variable?
+        return true if @rule_expr.include_variable?
         return true if @condition.include_variable?
         return true if @body.include_variable?
         return false
@@ -169,7 +152,7 @@ module Pione
       #
       # @param ts_server [TupleSpaceServer]
       #   tuple space server
-      # @param inputs [Array<Data, Array<Data>>]
+      # @param inputs [Array<DataTuple, Array<DataTuple>>]
       #   input tuples
       # @param params [Parameters]
       #   rule parameters
@@ -181,17 +164,10 @@ module Pione
         handler_class.new(ts_server, self, inputs, params, call_stack, opts)
       end
 
-      # Return a rule handler class.
-      #
-      # @api private
-      def handler_class
-        raise NotImplementedError
-      end
-
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)
-        return false unless @expr == other.expr
+        return false unless @rule_expr == other.rule_expr
         return false unless @condition == other.condition
         return false unless @body == other.body
         return true
@@ -201,39 +177,42 @@ module Pione
 
       # @api private
       def hash
-        @expr.hash + @condition.hash + @body.hash
+        @rule_expr.hash + @condition.hash + @body.hash
       end
     end
 
-    # ActionRule is a rule writing action.
+    # ActionRule is a rule that have some actions. This rule makes data
+    # processing.
     class ActionRule < Rule
-      @rule_type = :action
-
-      # @api private
-      def handler_class
-        RuleHandler::ActionHandler
-      end
+      set_rule_type :action
+      set_handler_class RuleHandler::ActionHandler
     end
 
-    # FlowRule represents a flow structured rule. This rule is consisted by flow
-    # elements and executes elements actions.
+    # FlowRule is a rule that have flow elements. This rule makes flows of PIONE
+    # processing.
     class FlowRule < Rule
-      @rule_type = :flow
-
-      # @api private
-      def handler_class
-        RuleHandler::FlowHandler
-      end
+      set_rule_type :flow
+      set_handler_class RuleHandler::FlowHandler
     end
 
-    # RootRule is a hidden toplevel flow rule like the following:
+    # EmptyRule is a rule that have no body. This rule is useful when you need
+    # no flows and no actions.
+    class EmptyRule < Rule
+      set_rule_type :action
+      set_handler_class RuleHandler::EmptyHandler
+    end
+
+    # RootRule is a hidden toplevel rule. This rule has same flow as the follow:
     #   Rule Root
     #     input  '*'.all
     #     output '*'.all.except('{$INPUT[1]}')
     #   Flow
     #     rule &main:Main
     #   End
-    class RootRule < FlowRule
+    class RootRule < Rule
+      set_rule_type :flow
+      set_handler_class RuleHandler::RootHandler
+
       INPUT_DOMAIN = 'input'
 
       # root domain has no digest and no package
@@ -253,7 +232,7 @@ module Pione
         condition = make_condition
         super(
           RuleExpr.new(Package.new("root"), "Root"),
-          condition,
+          RuleCondition.new(@main.inputs, @main.outputs),
           FlowBlock.new(CallRule.new(@main.expr.set_params(@params)))
         )
         @domain = ROOT_DOMAIN
@@ -276,30 +255,14 @@ module Pione
           {:domain => @domain}
         )
       end
-
-      private
-
-      # @api private
-      def make_condition
-        RuleCondition.new(
-          @main.inputs,
-          @main.outputs,
-          Parameters.empty,
-          Feature.empty,
-          TicketExpr.empty,
-          TicketExpr.empty
-        )
-      end
-
-      # @api private
-      def handler_class
-        RuleHandler::RootHandler
-      end
     end
 
     # SystemRule represents built-in rule definition. System rules belong to
     # 'system' package.
-    class SystemRule < ActionRule
+    class SystemRule < Rule
+      set_rule_type :action
+      set_handler_class RuleHandler::SystemHandler
+
       # Create a system rule model.
       #
       # @param name [String]
@@ -307,25 +270,9 @@ module Pione
       # @param [Proc] b
       #   rule process
       def initialize(name, &b)
-        expr = RuleExpr.new(
-          Package.new('system'),
-          name
-        )
-        condition = make_condition
+        expr = RuleExpr.new(Package.new('system'), name)
+        condition = RuleCondition.new([DataExpr.new('*').all], [])
         super(expr, condition, b)
-      end
-
-      private
-
-      # @api private
-      def make_condition
-        inputs = [DataExpr.new('*')]
-        RuleCondition.new(inputs, [], Parameters.empty, Feature::EmptyFeature.new, TicketExpr.empty, TicketExpr.empty)
-      end
-
-      # @api private
-      def handler_class
-        RuleHandler::SystemHandler
       end
     end
 
