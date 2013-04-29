@@ -1,0 +1,51 @@
+param $MAX := 20
+
+Rule Main
+  output '*.prime'.all
+Flow
+  rule MakeUndefinedNumers
+  rule Sieve
+End
+
+Rule MakeUndefinedNumers
+  output '*.undef'.all
+  param $N := 2
+Flow
+  if $N != $MAX
+    rule MakeUndefinedNumbers {N: $N+1}
+  end
+  if $N <= $MAX
+    rule MakeUndefinedNumber {N: $N}
+  end
+End
+
+Rule MakeUndefinedNumber
+  output '{$N}.undef'.touch
+  param $N
+End
+
+Rule Sieve
+  input '*.prime'.all or null
+  input '*.undef'.all or null
+  output '*.prime'.all
+  N := 2
+Flow
+  if $I[2].size > 0
+    Sieve {N: $N+1}
+  end
+  rule (CreatePrime {N: $N}) >>> RemoveUndefs
+End
+
+Rule RemoveUndefs
+  input '*.prime'
+  input '*.undef'
+  output '*.undef'.remove
+  N := $I[2][1].as_int
+  P := $I[1][1].as_int
+  test $N.mod($P) == 0
+End
+
+Rule CreatePrime
+  output '{$N}.prime'.touch
+  param $N
+End

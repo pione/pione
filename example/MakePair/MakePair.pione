@@ -8,7 +8,5 @@ End
 Rule MakePair
   input '*.i'
   input '{$*.as_int + 1}.i'
-  output '{$*}-{$*.as_int + 1}.pair'
-Action
-  touch {$O[1]}
+  output '{$*}-{$*.as_int + 1}.pair'.touch
 End
