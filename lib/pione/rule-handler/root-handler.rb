@@ -9,11 +9,15 @@ module Pione
       # @api private
       def execute
         # import initial input tuples from input domain
-        copy_data_into_domain(@inputs.flatten, @domain)
+        @inputs.flatten.each do |input|
+          copy_data_into_domain(input, @domain)
+        end
         # execute the rule
         result = super
         # export outputs to output domain
-        copy_data_into_domain(@outputs.flatten, '/output')
+        @outputs.flatten.each do |output|
+          copy_data_into_domain(output, '/output')
+        end
         # substantiate symbolic links
         # substantiate_date
 

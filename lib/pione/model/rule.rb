@@ -229,11 +229,10 @@ module Pione
       def initialize(main, params=Parameters.empty)
         @main = main
         @params = params
-        condition = make_condition
         super(
           RuleExpr.new(Package.new("root"), "Root"),
           RuleCondition.new(@main.inputs, @main.outputs),
-          FlowBlock.new(CallRule.new(@main.expr.set_params(@params)))
+          FlowBlock.new(CallRule.new(@main.rule_expr.set_params(@params)))
         )
         @domain = ROOT_DOMAIN
       end

@@ -47,8 +47,8 @@ module Pione
       # @return [String]
       #   domain string
       def domain_id3(rule, inputs, callee)
-        package_name = rule.expr.package.name
-        rule_name = rule.expr.name
+        package_name = rule.rule_expr.package.name
+        rule_name = rule.rule_expr.name
         params = callee.expr.params
         return domain_id(package_name, rule_name, inputs, params)
       end

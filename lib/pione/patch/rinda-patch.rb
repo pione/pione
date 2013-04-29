@@ -235,11 +235,7 @@ module Rinda
       # @return [void]
       def add(tuple)
         prepare_table(domain(tuple))
-        unless @bin[domain(tuple)][name(tuple)]
-          @bin[domain(tuple)][name(tuple)] = tuple
-        else
-          raise RedundantTupleError.new(tuple.value)
-        end
+        @bin[domain(tuple)][name(tuple)] = tuple
       end
 
       def delete(tuple)

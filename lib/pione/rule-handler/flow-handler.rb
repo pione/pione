@@ -80,7 +80,7 @@ module Pione
           list + callee.eval(@variable_table).expr.to_set.to_a.map{|expr| CallRule.new(expr)}
         end
 
-        # ticket check
+        # check input tickets
         callees = callees.inject([]) do |list, callee|
           target = nil
           # check if tickets exist in the domain
@@ -119,7 +119,8 @@ module Pione
               callee,
               rule,
               res.combination,
-              res.variable_table
+              res.variable_table,
+              ID.domain_id3(rule, res.combination, callee)
             ]
           end
 
@@ -145,13 +146,7 @@ module Pione
 
       # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
-        combinations.select do |callee, rule, inputs, vtable|
-          # task domain
-          task_domain = ID.domain_id3(rule, inputs, callee)
-
-          # import finished tuples's data
-          import_finished_outputs(task_domain)
-
+        combinations.map do |callee, rule, inputs, vtable, task_domain|
           # find outputs combination
           outputs_combination = @data_finder.find(
             :output,
@@ -163,10 +158,14 @@ module Pione
           outputs_combination = [[]] if outputs_combination.empty?
 
           # check update criterias
-          outputs_combination.any?{|outputs|
-            UpdateCriteria.satisfy?(rule, inputs, outputs, vtable)
+          orders = outputs_combination.map {|outputs|
+            UpdateCriteria.order(rule, inputs, outputs, vtable)
           }
-        end
+          order = nil
+          order = :weak if orders.include?(:weak)
+          order = :force if orders.include?(:force)
+          [callee, rule, inputs, vtable, task_domain, order]
+        end.select {|_, _, _, _, _, order| not(order.nil?)}
       end
 
       # Distribute tasks.
@@ -181,10 +180,7 @@ module Pione
         process_log(@task_process_record.merge(transition: "suspend"))
         process_log(@rule_process_record.merge(transition: "suspend"))
 
-        applications.uniq.each do |callee, rule, inputs, vtable|
-          # task domain
-          task_domain = ID.domain_id3(rule, inputs, callee)
-
+        applications.uniq.each do |callee, rule, inputs, vtable, task_domain, order|
           # make a task tuple
           task = Tuple[:task].new(
             rule.rule_path,
@@ -195,44 +191,40 @@ module Pione
             @call_stack + [@domain] # current call stack + caller
           )
 
-          # check if same task exists
-          begin
-            if need_to_process_task?(task)
-              # copy input data from the handler domain to task domain
-              copy_data_into_domain(inputs, task_domain)
+          # check if the same task exists or finished already
+          if need_to_process_task?(task, order)
+            # clear finished tuple
+            remove_finished_tuple(task.domain)
 
-              # write the task
-              write(task)
+            # copy input data from this domain to the task domain
+            inputs.flatten.each {|input| copy_data_into_domain(input, task_domain)}
 
-              # put task schedule process log
-              task_process_record = Log::TaskProcessRecord.new.tap do |record|
-                record.name = task.digest
-                record.rule_name = rule.rule_path
-                record.rule_type = rule.rule_type
-                record.inputs = inputs.flatten.map{|input| input.name}.join(",")
-                record.parameters = callee.expr.params.textize
-                record.transition = "schedule"
-              end
-              process_log(task_process_record)
+            # write the task
+            write(task)
 
-              msg = "distributed task %s on %s" % [task.digest, handler_digest]
-              user_message(msg, 1)
-
-              next
+            # put task schedule process log
+            task_process_record = Log::TaskProcessRecord.new.tap do |record|
+              record.name = task.digest
+              record.rule_name = rule.rule_path
+              record.rule_type = rule.rule_type
+              record.inputs = inputs.flatten.map{|input| input.name}.join(",")
+              record.parameters = callee.expr.params.textize
+              record.transition = "schedule"
             end
-          rescue Rinda::RedundantTupleError
-            # ignore
-          end
+            process_log(task_process_record)
 
-          show "cancel task %s on %s" % [task.digest, handler_digest]
-          canceled << task_domain
+            # message
+            msg = "distributed task %s on %s" % [task.digest, handler_digest]
+            user_message(msg, 1)
+          else
+            # cancel the task
+            show "cancel task %s on %s" % [task.digest, handler_digest]
+            canceled << task_domain
+          end
         end
 
         # wait to finish threads
-        applications.uniq.each do |callee, rule, inputs, vtable|
-          # task domain
-          task_domain = ID.domain_id3(rule, inputs, callee)
-
+        applications.uniq.each do |callee, rule, inputs, vtable, task_domain, order|
           # wait to finish the work
           template = Tuple[:finished].new(
             domain: task_domain,
@@ -240,16 +232,16 @@ module Pione
           )
           finished = read(template)
 
+          # show message about canceled tasks
           unless canceled.include?(task_domain)
             msg = "finished task %s on %s" % [finished.domain, handler_digest]
             user_message(msg, 1)
           end
 
-          # copy data from task domain to this domain
-          @finished << finished
-          copy_data_into_domain(finished.outputs, @domain)
+          # copy write operation data tuple from the task domain to this domain
+          update_by_finished_tuple(rule, finished, vtable)
 
-          # output ticket
+          # publish tickets into the domain
           callee.expr.output_ticket_expr.names.each do |name|
             write(Tuple[:ticket].new(@domain, name))
           end
@@ -262,22 +254,21 @@ module Pione
 
       # Return true if we need to write the task into the tuple space.
       #
-      # @param [TaskTuple] task
-      #   task tuple
-      # @return [Boolean]
-      #   true if we need to write the task into the tuple space
-      def need_to_process_task?(task)
-        not(read!(task) or working?(task))
-      end
-
-      # Return true if any task worker is working on the task.
-      #
       # @param task [TaskTuple]
       #   task tuple
+      # @param order [Symbol]
+      #   update order type
       # @return [Boolean]
-      #   true if any task worker is working on the task
-      def working?(task)
-        read!(Tuple[:working].new(domain: task.domain))
+      #   true if we need to write the task into the tuple space
+      def need_to_process_task?(task, order)
+        # reuse task finished result if order is weak update
+        if order == :weak
+          if read!(Tuple[:finished].new(domain: task.domain, status: :succeeded))
+            return false
+          end
+        end
+        # check task status
+        not(read!(task) or read!(Tuple[:working].new(domain: task.domain)))
       end
 
       # Find outputs from the domain.
@@ -339,36 +330,71 @@ module Pione
         end
       end
 
+      # Remove finished tuple.
+      #
+      # @param domain [String]
+      #   domain of the finished tuple
+      # @return [void]
+      def remove_finished_tuple(domain)
+        take!(Tuple[:finished].new(domain: domain))
+      end
+
       # Import finished tuple's outputs from the domain.
       #
       # @param [String] task_domain
       #   target task domain
       # @return [void]
-      def import_finished_outputs(task_domain)
-        return if @finished.any?{|t| t.domain == task_domain}
-        if task_domain != @domain
-          template = Tuple[:finished].new(
-            domain: task_domain,
-            status: :succeeded
-          )
-          if finished = read!(template)
-            copy_data_into_domain(finished.outputs, @domain)
+      def update_by_finished_tuple(rule, finished, vtable)
+        finished.outputs.each_with_index do |output, i|
+          data_expr = rule.outputs[i].eval(vtable)
+          case data_expr.operation
+          when :write
+            if output.kind_of?(Array)
+              output.each {|o| copy_data_into_domain(o, @domain)}
+            else
+              copy_data_into_domain(output, @domain)
+            end
+          when :remove
+            if output.kind_of?(Array)
+              output.each {|o| remove_data_from_domain(o, @domain)}
+            else
+              remove_data_from_domain(output, @domain)
+            end
+          when :touch
+            if output.kind_of?(Array)
+              output.each {|o| touch_in_domain(o, @domain)}
+            else
+              touch_in_domain(output, @domain)
+            end
           end
         end
       end
 
-      # Copy data into specified domain and return the tuple list
-      def copy_data_into_domain(src_data, dest_domain)
-        src_data.flatten.compact.map do |d|
-          new_data = d.clone
-          new_data.domain = dest_domain
-          begin
-            write(new_data)
-          rescue Rinda::RedundantTupleError
-            # ignore
-          end
-          new_data
+      # Copy the data tuple with the specified domain and return the tuple list.
+      #
+      # @param data [DataTuple]
+      #   target data tuple
+      # @param domain [String]
+      #   new domain of the copied data tuple
+      # @return [DataTuple]
+      #   new data tuple with the domain
+      def copy_data_into_domain(data, domain)
+        new_data = data.clone.tap {|x| x.domain = domain}
+        write(new_data)
+        return new_data
+      end
+
+      # Remove the data from the domain.
+      def remove_data_from_domain(data, domain)
+        take!(Tuple[:data].new(name: data.name, domain: domain))
+      end
+
+      def touch_data_in_domain(data, domain)
+        if target = read!(Tuple[:data].new(name: data.name, domain: domain))
+          data = target
         end
+        new_data = data.clone.tap {|x| x.domain = domain; x.time = Time.now}
+        write(new_data)
       end
     end
   end

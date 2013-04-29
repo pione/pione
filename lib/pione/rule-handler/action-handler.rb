@@ -60,8 +60,8 @@ module Pione
       def make_working_directory
         # build directory path
         dirname = ID.domain_id(
-          @rule.expr.package.name,
-          @rule.expr.name,
+          @rule.rule_expr.package.name,
+          @rule.rule_expr.name,
           @inputs,
           @original_params
         )

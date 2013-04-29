@@ -40,7 +40,7 @@ module Pione
             if data_expr.write?
               case data_expr.modifier
               when :all
-                if outputs[i].select{|data| data_expr.match(data.name)}.empty?
+                if outputs[i].nil? or outputs[i].select{|data| data_expr.match(data.name)}.empty?
                   result = true
                 end
               when :each
@@ -120,7 +120,7 @@ module Pione
           return output_oldest_time < input_last_time
         end
 
-        # Return true if we need to update.
+        # Return update order name if we need to update.
         #
         # @param [Rule] rule
         #   rule
@@ -130,19 +130,22 @@ module Pione
         #   output tuples
         # @param [VariableTable] vtable
         #   variable table
-        # @return [Boolean]
-        #   true if inputs are newer than outputs
-        def satisfy?(rule, inputs, outputs, vtable)
-          CRITERIA.any?{|name| self.send(name, rule, inputs, outputs, vtable)}
+        # @return [Symbol,nil]
+        #   update order or nil
+        def order(rule, inputs, outputs, vtable)
+          if FORCE_UPDATE.any? {|name| self.send(name, rule, inputs, outputs, vtable)}
+            return :force
+          end
+          if WEAK_UPDATE.any? {|name| self.send(name, rule, inputs, outputs, vtable)}
+            return :weak
+          end
         end
 
-        # PIONE data update criteria
-        CRITERIA = [
-          :no_output_conditions?,
-          :not_exist_output_data?,
-          :exist_output_data?,
-          :exist_newer_input_data?
-        ]
+        # force update criteria
+        FORCE_UPDATE = [:no_output_conditions?, :exist_newer_input_data?]
+
+        # update criteria
+        WEAK_UPDATE = [:not_exist_output_data?, :exist_output_data?]
       end
     end
   end

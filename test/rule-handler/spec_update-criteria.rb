@@ -27,17 +27,24 @@ describe 'RuleHandler::UpdateCriteria' do
     describe rule_name do
       cases.each do |case_name, testcase|
         describe case_name do
+          inputs = testcase["inputs"].map do |input|
+            input.kind_of?(Array) ? input.map {|i| tuple[i]} : tuple[input]
+          end
+          outputs = (testcase["outputs"] || []).map do |output|
+            output.kind_of?(Array) ? output.map {|i| tuple[i]} : tuple[output]
+          end
+          vtable = VariableTable.new
+
           testcase["criteria"].each do |criterion, truth|
             it "should be %s on criterion of %s" % [truth, criterion] do
-              inputs = testcase["inputs"].map do |input|
-                input.kind_of?(Array) ? input.map {|i| tuple[i]} : tuple[input]
-              end
-              outputs = (testcase["outputs"] || []).map do |output|
-                output.kind_of?(Array) ? output.map {|i| tuple[i]} : tuple[output]
-              end
-              vtable = VariableTable.new
               UC.send("%s?" % criterion, rule, inputs, outputs, vtable).should == truth
             end
+          end
+
+          it "should get update order" do
+            order = testcase["order"]
+            order = order.to_sym if order
+            UC.order(rule, inputs, outputs, vtable).should == order
           end
         end
       end
