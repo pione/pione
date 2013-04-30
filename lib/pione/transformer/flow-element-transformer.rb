@@ -11,7 +11,6 @@ module Pione
 
       # Transform +:call_rule: as Model::CallRule.
       rule(:call_rule => subtree(:rule_expr)) {
-        TypeRuleExpr.check(rule_expr)
         CallRule.new(rule_expr)
       }
 

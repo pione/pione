@@ -1,0 +1,17 @@
+Rule Main
+  input '*.i'.all
+  output '*.res'.all
+Flow
+  rule OddFilter >>> MakeResult
+End
+
+Rule OddFilter
+  input '*.i'
+  output '*.i'.remove
+  constraint ($I[1][1].i % 2) == 0
+End
+
+Rule MakeResult
+  input '*.i'
+  output '{$*}.res'.touch
+End

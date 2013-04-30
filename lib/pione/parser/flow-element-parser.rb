@@ -64,7 +64,7 @@ module Pione
         ( if_block_begin >>
           flow_element.repeat.as(:if_true_elements) >>
           else_block.maybe.as(:if_else_block) >>
-          conditional_block_end
+          (conditional_block_end | syntax_error("keyword 'end' not found", [:end]))
         ).as(:if_block)
       }
 
@@ -77,7 +77,7 @@ module Pione
         space? >>
         keyword_if >>
         space? >>
-        expr.as(:condition) >>
+        (expr.as(:condition) | syntax_error("condition not found", [:expr])) >>
         line_end
       }
 
