@@ -100,5 +100,9 @@ module Pione::Model
     define_pione_method("as_string", [], TypeString) do |rec|
       PioneString.new(rec.values.to_s)
     end
+
+    define_pione_method("str", [], TypeString) do |rec|
+      rec.call_pione_method("as_string")
+    end
   end
 end

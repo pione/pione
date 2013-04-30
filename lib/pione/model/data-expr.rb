@@ -794,6 +794,10 @@ module Pione
           PioneString.new(rec.name)
         end
       end
+
+      define_pione_method("str", [], TypeString) do |rec|
+        rec.call_pione_method("as_string")
+      end
     end
   end
 end

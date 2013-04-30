@@ -108,12 +108,24 @@ module Pione
         PioneString.new(rec.value.to_s)
       end
 
+      define_pione_method("str", [], TypeString) do |rec|
+        rec.call_pione_method("as_string")
+      end
+
       define_pione_method("as_int", [], TypeInteger) do |rec|
         rec
       end
 
+      define_pione_method("i", [], TypeInteger) do |rec|
+        rec.call_pione_method("as_int")
+      end
+
       define_pione_method("as_float", [], TypeFloat) do |rec|
         PioneFloat.new(rec.value.to_f)
+      end
+
+      define_pione_method("f", [], TypeFloat) do |rec|
+        rec.call_pione_method("as_float")
       end
 
       define_pione_method("next", [], TypeInteger) do |rec|

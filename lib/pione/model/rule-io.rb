@@ -71,6 +71,10 @@ module Pione
       define_pione_method("as_string", [], TypeString) do |rec|
         rec.name
       end
+
+      define_pione_method("str", [], TypeString) do |rec|
+        rec.call_pione_method("as_string")
+      end
     end
 
     # RuleIOList is a input or output list for RuleIOElement.
@@ -164,6 +168,10 @@ module Pione
             elt.call_pione_method("as_string").to_ruby
           }.join(DataExpr::SEPARATOR)
         )
+      end
+
+      define_pione_method("str", [], TypeString) do |rec|
+        rec.call_pione_method("as_string")
       end
     end
   end

@@ -240,6 +240,10 @@ module Pione
         PioneString.new(rec.name)
       end
 
+      define_pione_method("str", [], TypeString) do |rec|
+        rec.call_pione_method("as_string")
+      end
+
       define_pione_method("==>", [TypeTicketExpr], TypeRuleExpr) do |rec, ticket_expr|
         rec.add_output_ticket_expr(ticket_expr)
       end
