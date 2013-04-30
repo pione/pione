@@ -121,6 +121,7 @@ require 'pione/model/message'
 require 'pione/model/call-rule'
 require 'pione/model/assignment'
 require 'pione/model/block'
+require 'pione/model/constraints'
 require 'pione/model/rule'
 require 'pione/model/rule-io'
 

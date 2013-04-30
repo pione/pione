@@ -65,7 +65,7 @@ module Pione
       end
 
       define_pione_method("[]", [TypeInteger], TypeAny) do |rec, i|
-        rec.match[i.value-1]
+        rec.match[i.value]
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|

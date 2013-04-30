@@ -10,7 +10,7 @@ module Pione
       #   output data condition
       attr_reader :outputs
 
-      forward_as_key! :@condition, :params, :features, :input_ticket_expr, :output_ticket_expr
+      forward_as_key! :@condition, :params, :features, :constraints, :input_ticket_expr, :output_ticket_expr
 
       # Create a rule condition.
       #
@@ -33,6 +33,7 @@ module Pione
         @condition = {}
         @condition[:params] = condition[:params] || Parameters.empty
         @condition[:features] = condition[:features] || Feature.empty
+        @condition[:constraints] = condition[:constraints] || Constraints.empty
         @condition[:input_ticket_expr] = condition[:input_ticket_expr] || TicketExpr.empty
         @condition[:output_ticket_expr] = condition[:output_ticket_expr] || TicketExpr.empty
         super()
@@ -102,7 +103,7 @@ module Pione
       #   rule body
       attr_reader :body
 
-      forward! :@condition, :inputs, :outputs, :params, :features
+      forward! :@condition, :inputs, :outputs, :params, :features, :constraints
       forward! :@condition, :input_ticket_expr, :output_ticket_expr
       forward! :class, :rule_type, :handler_class
       forward! :@rule_expr, :rule_path

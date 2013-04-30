@@ -121,7 +121,7 @@ module Pione
               res.combination,
               res.variable_table,
               ID.domain_id3(rule, res.combination, callee)
-            ]
+            ] if rule.constraints.satisfy?(res.variable_table)
           end
 
           # find next

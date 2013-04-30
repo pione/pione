@@ -79,7 +79,8 @@ module Pione
         :keyword_false => 'false',
         :keyword_and => 'and',
         :keyword_or => 'or',
-        :keyword_null => 'null'
+        :keyword_null => 'null',
+        :keyword_constraint => 'constraint'
       }
 
       # make keywords

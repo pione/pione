@@ -292,7 +292,7 @@ module Pione
         tuples = read_all(Tuple[:data].new(domain: @domain))
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
-          case output.operation
+          case output.modifier
           when :all
             @outputs[i] = tuples.find_all {|data| output.match(data.name)}
           when :each

@@ -2,27 +2,28 @@ Rule Main
   input '*.i'.all
   output '*.pair'.all
 Flow
-  rule SuccPair
+  rule SuccessorPair
   rule PermutationPair
   rule CombinationPair
 End
 
-Rule SuccPair
+Rule SuccessorPair
   input '*.i'
-  input '{$*.as_int + 1}.i'
-  output 'succ-{$*}-{$*.as_int + 1}.pair'.touch
+  input '*.i'
+  output 'succ-{$I[1][1]}-{$I[2][1]}.pair'.touch
+  constraint ($I[1][1].i + 1) == $I[2][1].i
 End
 
 Rule PermutationPair
   input '*.i'
   input '*.i'
   output 'perm-{$I[1][1]}-{$I[2][1]}.pair'.touch
-  constraint $I[1][1] != $I[2][1]
+  constraint $I[1][1].i != $I[2][1].i
 End
 
 Rule CombinationPair
   input '*.i'
   input '*.i'
   output 'comb-{$I[1][1]}-{$I[2][1]}.pair'.touch
-  constraint $I[1][1] < $I[2][1]
+  constraint $I[1][1].i < $I[2][1].i
 End

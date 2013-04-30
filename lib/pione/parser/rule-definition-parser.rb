@@ -64,7 +64,8 @@ module Pione
         input_line |
         output_line |
         param_line |
-        feature_line
+        feature_line |
+        constraint_line
       }
 
       #
@@ -129,6 +130,17 @@ module Pione
           ) >>
           line_end
         ).as(:feature_line)
+      }
+
+      rule(:constraint_line) {
+        ( space? >>
+          keyword_constraint >>
+          space? >>
+          ( expr.as(:expr) |
+            syntax_error("it should be expr", :expr)
+          ) >>
+          line_end
+        ).as(:constraint_line)
       }
     end
   end

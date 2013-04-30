@@ -19,7 +19,8 @@ module Pione
         outputs = Naming::OutputLine.values(conditions)
         params = Parameters.merge(*Naming::ParamLine.values(conditions))
         features = Feature::AndExpr.new(*Naming::FeatureLine.values(conditions))
-        condition = RuleCondition.new(inputs, outputs, params: params, features: features)
+        constraints = Constraints.new(Naming::ConstraintLine.values(conditions))
+        condition = RuleCondition.new(inputs, outputs, params: params, features: features, constraints: constraints)
         case block
         when ActionBlock
           ActionRule
@@ -54,6 +55,10 @@ module Pione
       rule(:feature_line => simple(:feature)) {
         TypeFeature.check(feature)
         Naming.FeatureLine(feature)
+      }
+
+      rule(:constraint_line => simple(:constraint)) {
+        Naming.ConstraintLine(constraint)
       }
     end
   end
