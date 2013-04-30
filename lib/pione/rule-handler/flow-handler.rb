@@ -271,23 +271,6 @@ module Pione
         not(read!(task) or read!(Tuple[:working].new(domain: task.domain)))
       end
 
-      # Find outputs from the domain.
-      #
-      # @return [void]
-      def find_outputs
-        tuples = read_all(Tuple[:data].new(domain: @domain))
-        @rule.outputs.each_with_index do |output, i|
-          output = output.eval(@variable_table)
-          case output.modifier
-          when :all
-            @outputs[i] = tuples.find_all {|data| output.match(data.name)}
-          when :each
-            # FIXME
-            @outputs[i] = tuples.find {|data| output.match(data.name)}
-          end
-        end
-      end
-
       # Lift output data from child domains to this domain.
       #
       # @return [void]
@@ -362,9 +345,9 @@ module Pione
             end
           when :touch
             if output.kind_of?(Array)
-              output.each {|o| touch_in_domain(o, @domain)}
+              output.each {|o| touch_data_in_domain(o, @domain)}
             else
-              touch_in_domain(output, @domain)
+              touch_data_in_domain(output, @domain)
             end
           end
         end

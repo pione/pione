@@ -285,6 +285,28 @@ module Pione
         ]
       end
 
+      # Find outputs from the domain.
+      #
+      # @return [void]
+      def find_outputs
+        tuples = read_all(Tuple[:data].new(domain: @domain))
+        @rule.outputs.each_with_index do |output, i|
+          output = output.eval(@variable_table)
+          case output.operation
+          when :all
+            @outputs[i] = tuples.find_all {|data| output.match(data.name)}
+          when :each
+            # FIXME
+            @outputs[i] = tuples.find {|data| output.match(data.name)}
+          end
+          # touch operation
+          if output.touch? and @outputs[i].nil?
+            location = @domain_location + output.name
+            location.create("") unless location.exist?
+            @outputs[i] = Tuple[:data].new(name: output.name, domain: @domain, location: location)
+          end
+        end
+      end
     end
   end
 end
