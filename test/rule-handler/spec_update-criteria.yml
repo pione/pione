@@ -75,37 +75,46 @@ RemoveAB:
       exist_output_data: true
       exist_newer_input_data: true
     order: "force"
-TouchA:
+Touch:
   case1:
     inputs:
       - "t1.a"
-    outputs:
-      - "t1.a"
     criteria:
       no_output_conditions: false
-      not_exist_output_data: false
-      exist_output_data: true
+      not_exist_output_data: true
+      exist_output_data: false
       exist_newer_input_data: false
     order: "weak"
   case2:
     inputs:
       - "t1.a"
+    outputs:
+      - "t1.b"
     criteria:
       no_output_conditions: false
-      not_exist_output_data: true
+      not_exist_output_data: false
       exist_output_data: false
       exist_newer_input_data: false
-    order: "force"
   case3:
     inputs:
       - "t1.a"
     outputs:
-      - "t2.a"
+      - "t2.b"
     criteria:
       no_output_conditions: false
-      not_exist_output_data: true
+      not_exist_output_data: false
       exist_output_data: false
       exist_newer_input_data: false
+  case4:
+    inputs:
+      - "t2.a"
+    outputs:
+      - "t1.b"
+    criteria:
+      no_output_conditions: false
+      not_exist_output_data: false
+      exist_output_data: false
+      exist_newer_input_data: true
     order: "force"
 NeglectOutput:
   case1:

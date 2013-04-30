@@ -73,7 +73,7 @@ module Pione
           result = false
           rule.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
-            if data_expr.remove? or data_expr.touch?
+            if data_expr.remove?
               case data_expr.modifier
               when :all
                 if not(outputs[i].nil? or outputs[i].select{|data| data_expr.match(data.name)}.empty?)

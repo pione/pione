@@ -26,9 +26,9 @@ Rule RemoveAB
   output '*.b'.remove
 End
 
-Rule TouchA
+Rule Touch
   input '*.a'
-  output '*.a'.touch
+  output '*.b'.touch
 End
 
 Rule NeglectOutput
