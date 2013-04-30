@@ -3,49 +3,52 @@ param $MAX := 20
 Rule Main
   output '*.prime'.all
 Flow
-  rule MakeUndefinedNumers
-  rule Sieve
+  rule CreateUndeterminedNumers >>> Sieve
 End
 
-Rule MakeUndefinedNumers
-  output '*.undef'.all
+Rule CreateUndeterminedNumers
+  output '*.ud'.all
   param $N := 2
 Flow
   if $N != $MAX
-    rule MakeUndefinedNumbers {N: $N+1}
+    rule CreateUndeterminedNumbers {N: $N+1}
   end
   if $N <= $MAX
-    rule MakeUndefinedNumber {N: $N}
+    rule CreateData {NAME: "{$N}.ud"}
   end
-End
-
-Rule MakeUndefinedNumber
-  output '{$N}.undef'.touch
-  param $N
 End
 
 Rule Sieve
   input '*.prime'.all or null
-  input '*.undef'.all or null
+  input '*.ud'.all or null
   output '*.prime'.all
-  N := 2
+  param $N := 2
 Flow
-  if $I[2].size > 0
+  if $I[2][1].as_data_expr.match($N.str)
+    if ($N * $N) <= $MAX
+      rule ((CreateData {NAME: "{$N}.prime"}) >>> RemoveUndeterminedNumber) >>> Sieve {N: $N+1}
+    else
+      rule Undetermined2Prime
+    end
+  else
     Sieve {N: $N+1}
   end
-  rule (CreatePrime {N: $N}) >>> RemoveUndefs
 End
 
-Rule RemoveUndefs
+Rule RemoveUndeterminedNumber
   input '*.prime'
-  input '*.undef'
-  output '*.undef'.remove
-  N := $I[2][1].as_int
-  P := $I[1][1].as_int
-  test $N.mod($P) == 0
+  input '*.ud'
+  output '*.ud'.remove
+  constraint $I[2][1].i.mod($I[1][1].i) == 0
 End
 
-Rule CreatePrime
-  output '{$N}.prime'.touch
-  param $N
+Rule Undetermined2Prime
+  input '*.ud'
+  output '{$*}.prime'.touch
+  output $I[1].remove
+End
+
+Rule CreateData
+  param $NAME
+  output $NAME.as_data_expr.touch
 End
