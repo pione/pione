@@ -5,18 +5,14 @@ describe 'Model::RuleCondition' do
     a = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      Parameters.new(Variable.new("var") => "a".to_pione),
-      Feature.and(Feature::RequisiteExpr.new("a")),
-      TicketExpr.empty,
-      TicketExpr.empty
+      params: Parameters.new(Variable.new("var") => "a".to_pione),
+      features: Feature.and(Feature::RequisiteExpr.new("a"))
     )
     b = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      Parameters.new(Variable.new("var") => "a".to_pione),
-      Feature.and(Feature::RequisiteExpr.new("a")),
-      TicketExpr.empty,
-      TicketExpr.empty
+      params: Parameters.new(Variable.new("var") => "a".to_pione),
+      features: Feature.and(Feature::RequisiteExpr.new("a"))
     )
     a.should == b
   end
@@ -25,18 +21,14 @@ describe 'Model::RuleCondition' do
     a = RuleCondition.new(
       [DataExpr.new("a")],
       [DataExpr.new("a")],
-      Parameters.new(Variable.new("var") => "a".to_pione),
-      Feature.and(Feature::RequisiteExpr.new("a")),
-      TicketExpr.empty,
-      TicketExpr.empty
+      parmas: Parameters.new(Variable.new("var") => "a".to_pione),
+      features: Feature.and(Feature::RequisiteExpr.new("a"))
     )
     b = RuleCondition.new(
       [DataExpr.new("b")],
       [DataExpr.new("b")],
-      Parameters.new(Variable.new("var") => "b".to_pione),
-      Feature.and(Feature::RequisiteExpr.new("b")),
-      TicketExpr.empty,
-      TicketExpr.empty
+      params: Parameters.new(Variable.new("var") => "b".to_pione),
+      features: Feature.and(Feature::RequisiteExpr.new("b"))
     )
     a.should.not == b
   end
@@ -45,18 +37,14 @@ end
 condition_a = RuleCondition.new(
   [DataExpr.new("a")],
   [DataExpr.new("a")],
-  Parameters.new(Variable.new("var") => "a".to_pione),
-  Feature.and(Feature::RequisiteExpr.new("a")),
-  TicketExpr.empty,
-  TicketExpr.empty
+  params: Parameters.new(Variable.new("var") => "a".to_pione),
+  features: Feature.and(Feature::RequisiteExpr.new("a"))
 )
 condition_b = RuleCondition.new(
   [DataExpr.new("b")],
   [DataExpr.new("b")],
-  Parameters.new(Variable.new("var") => "b".to_pione),
-  Feature.and(Feature::RequisiteExpr.new("b")),
-  TicketExpr.empty,
-  TicketExpr.empty
+  params: Parameters.new(Variable.new("var") => "b".to_pione),
+  features: Feature.and(Feature::RequisiteExpr.new("b"))
 )
 
 describe 'Model::ActionRule' do
