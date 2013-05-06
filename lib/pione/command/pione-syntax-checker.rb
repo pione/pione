@@ -40,9 +40,9 @@ module Pione
         when :readline
           action_readline_mode
         when :file
-          print_result(Pathname.new(option[:document]).read)
+          print_result(DocumentParser.new, Pathname.new(option[:document]).read)
         when :expr
-          print_result(option[:expr])
+          print_result(DocumentParser.new.expr, option[:expr])
         end
       end
 
@@ -109,10 +109,10 @@ module Pione
       # @param str [String]
       #   PIONE expression
       # @return [void]
-      def print_result(str)
+      def print_result(parser, str)
         begin
           puts Terminal.green("syntax:")
-          stree = DocumentParser.new.parse(str)
+          stree = parser.parse(str)
           pp stree
           if option[:transform]
             puts Terminal.green("model:")

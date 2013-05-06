@@ -64,59 +64,69 @@ module Pione
       end
     end
 
+    class PioneStringSequence < BasicSequence
+      set_pione_model_type TypeString
+      set_element_class PioneString
+
+      def value
+        @value ||= @elements.map{|elt| elt.value}.join
+      end
+
+      def set_annotation_type(type)
+        self.class.new(@elements, @attribute.merge(annotation_type: type))
+      end
+    end
+
     TypeString.instance_eval do
-      define_pione_method("==", [TypeString], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.value == other.value)
-      end
-
-      define_pione_method("!=", [TypeString], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other))
-      end
-
       define_pione_method("+", [TypeString], TypeString) do |rec, other|
-        PioneString.new(rec.value + other.value)
+        raise Model::AttributeError.new(other.attribute) unless rec.attribute == other.attribute
+        rec.elements.map do |rec_elt|
+          other.elements.map do |other_elt|
+            PioneString.new(rec_elt.value + other_elt.value)
+          end
+        end.flatten.tap {|x| break PioneStringSequence.new(x, rec.attribute)}
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|
         rec
       end
 
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("as_string")
-      end
-
-      define_pione_method("as_int", [], TypeInteger) do |rec|
-        PioneInteger.new(rec.value.to_i)
-      end
-
-      define_pione_method("i", [], TypeInteger) do |rec|
-        rec.call_pione_method("as_int")
+      define_pione_method("as_integer", [], TypeInteger) do |rec|
+        PioneIntegerSequence.new([PioneInteger.new(rec.value.to_i)])
       end
 
       define_pione_method("as_float", [], TypeFloat) do |rec|
-        PioneFloat.new(rec.value.to_f)
-      end
-
-      define_pione_method("f", [], TypeFloat) do |rec|
-        rec.call_pione_method("as_float")
-      end
-
-      define_pione_method("length", [], TypeInteger) do |rec|
-        PioneInteger.new(rec.value.size)
-      end
-
-      define_pione_method("include?", [TypeString], TypeBoolean) do |rec, str|
-        PioneBoolean.new(rec.value.include?(str.value))
+        PioneFloatSequence.new([PioneFloat.new(rec.value.to_f)])
       end
 
       define_pione_method("as_data_expr", [], TypeDataExpr) do |rec|
         DataExpr.new(rec.value)
       end
 
+      define_pione_method("count", [], TypeInteger) do |rec|
+        rec.elements.map do |elt|
+          PioneIntegerSequence.new([PioneInteger.new(elt.value.size)])
+        end.tap {|x| break PioneIntegerSequence.new(x)}
+      end
+
+      define_pione_method("include?", [TypeString], TypeBoolean) do |rec, target|
+        rec_method = rec.every? ? :all? : :any?
+        rec.elements.send(rec_method) do |elt|
+          target_method = target.every? ? :all? : :any?
+          target.elements.send(target_method) do |target_elt|
+            elt.value.include?(target_elt.value)
+          end
+        end.tap {|x| break PioneBooleanSequence.new([PioneBoolean.new(x)])}
+      end
+
       define_pione_method("substring",
         [TypeInteger, TypeInteger],
         TypeString) do |rec, nth, len|
-        PioneString.new(rec.value[nth.value, len.value])
+        PioneStringSequence.new([PioneString.new(rec.value[nth.value-1, len.value])], rec.attribute)
+      end
+
+      define_pione_method("author", [], TypeString) do |rec|
+        rec.set_annotation_type(:author)
       end
     end
   end

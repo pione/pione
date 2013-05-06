@@ -164,11 +164,11 @@ module Pione
         variables = to_hash
         new_str = str.to_s.gsub(/\{(\$.+?)\}/) do
           expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
-          expr.eval(self).call_pione_method("as_string").to_ruby
+          expr.eval(self).call_pione_method("as_string").value
         end
         new_str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
           expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
-          expr.eval(self).call_pione_method("as_string").to_ruby
+          expr.eval(self).call_pione_method("as_string").value
         end
       end
 

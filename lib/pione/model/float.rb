@@ -42,6 +42,15 @@ module Pione
       end
     end
 
+    class PioneFloatSequence < BasicSequence
+      set_pione_model_type TypeFloat
+      set_element_class PioneFloat
+
+      def value
+        @value ||= @elements.inject(0.0){|n, elt| n + elt.value}
+      end
+    end
+
     TypeFloat.instance_eval do
       # Return true if the other equals self.
       #

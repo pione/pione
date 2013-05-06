@@ -169,6 +169,31 @@ class Bacon::Context
   end
 end
 
+module TestUtil
+  def test_pione_method(name)
+    #
+    # test cases
+    #
+    yamlname = 'spec_%s.yml' % name
+    ymlpath = File.join(File.dirname(__FILE__), 'model', yamlname)
+    testcases = YAML.load_file(ymlpath)
+
+    describe "pione method test cases" do
+      testcases.each do |testcase|
+        expect = testcase.keys.first
+        expr = testcase[expect].to_s
+        expect = expect.to_s
+        vtable = VariableTable.new
+        it '%s should be %s' % [expr, expect] do
+          expect = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expect))
+          expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expr))
+          expect.eval(vtable).should == expr.eval(vtable)
+        end
+      end
+    end
+  end
+end
+
 module Pione::TupleSpace
   class TupleSpaceServer
     # Return all tuples of the tuple space.

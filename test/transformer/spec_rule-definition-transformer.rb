@@ -15,10 +15,19 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
 
   transformer_spec("param_line", :param_line) do
     tc("param {var: 1}") do
-      Naming.ParamLine({"var" => 1}.to_params)
+      Naming.ParamLine(
+        Parameters.new(
+          {Variable.new("var") => PioneIntegerSequence.new([PioneInteger.new(1)])}
+        )
+      )
     end
     tc("param {var1: 1, var2: 2}") do
-      Naming.ParamLine({"var1" => 1, "var2" => 2}.to_params)
+      Naming.ParamLine(
+        Parameters.new(
+          { Variable.new("var1") => PioneIntegerSequence.new([PioneInteger.new(1)]),
+            Variable.new("var2") => PioneIntegerSequence.new([PioneInteger.new(2)]) }
+        )
+      )
     end
   end
 
@@ -90,16 +99,20 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
               DataExpr.new("*.txt"),
               DataExpr.new("summary.txt"))],
           [DataExpr.new("summary.txt")],
-          params: Parameters.new({Variable.new("ConvertCharSet") => PioneBoolean.true}),
+          params: Parameters.new(
+            Variable.new("ConvertCharSet") =>
+            PioneBooleanSequence.new([PioneBoolean.true])
+          )
         ),
         FlowBlock.new(
           ConditionalBlock.new(
             Variable.new("ConvertCharset"),
-            { PioneBoolean.true => FlowBlock.new(
+            { PioneBooleanSequence.new([PioneBoolean.true]) =>
+              FlowBlock.new(
                 CallRule.new(Message.new(
                     "params",
                     RuleExpr.new(Package.new("main"), "NKF"),
-                    PioneString.new("-w")
+                    PioneStringSequence.new([PioneString.new("-w")])
                 ))
             )}
           ),

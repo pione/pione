@@ -60,14 +60,14 @@ describe 'Model::FlowBlock' do
       Assignment.new(Variable.new("Y"), Variable.new("Z")),
       ConditionalBlock.new(
         Variable.new("A"),
-        { PioneBoolean.true =>
-          FlowBlock.new(Assignment.new(Variable.new("Z"), 1.to_pione)),
+        { PioneBooleanSequence.new([PioneBoolean.true]) =>
+          FlowBlock.new(Assignment.new(Variable.new("Z"), PioneIntegerSequence.new([1.to_pione]))),
         }
       ),
-      Assignment.new(Variable.new("A"), PioneBoolean.true),
+      Assignment.new(Variable.new("A"), PioneBooleanSequence.new([PioneBoolean.true])),
       ConditionalBlock.new(
-        Message.new("==", Variable.new("Z"), 1.to_pione),
-        { PioneBoolean.true => FlowBlock.new(z) }
+        Message.new("==", Variable.new("Z"), PioneIntegerSequence.new([1.to_pione])),
+        { PioneBooleanSequence.new([PioneBoolean.true]) => FlowBlock.new(z) }
       ),
       x,
       y

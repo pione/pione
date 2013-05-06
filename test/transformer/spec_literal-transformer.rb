@@ -2,37 +2,37 @@ require_relative '../test-util'
 
 describe 'Pione::Transformer::LiteralTransformer' do
   transformer_spec('boolean', :boolean) do
-    tc('true' => PioneBoolean.true)
-    tc('false' => PioneBoolean.false)
+    tc('true' => PioneBooleanSequence.new([PioneBoolean.true]))
+    tc('false' => PioneBooleanSequence.new([PioneBoolean.false]))
   end
 
   transformer_spec('string', :string) do
-    tc('"abc"' => PioneString.new('abc'))
-    tc('"a\bc"' => PioneString.new('abc'))
-    tc('"a\'"' => PioneString.new('a\''))
-    tc('"a\""' => PioneString.new('a"'))
+    tc('"abc"' => PioneStringSequence.new([PioneString.new('abc')]))
+    tc('"a\bc"' => PioneStringSequence.new([PioneString.new('abc')]))
+    tc('"a\'"' => PioneStringSequence.new([PioneString.new('a\'')]))
+    tc('"a\""' => PioneStringSequence.new([PioneString.new('a"')]))
   end
 
   transformer_spec('integer', :integer) do
-    tc('1' => PioneInteger.new(1))
-    tc('123' => PioneInteger.new(123))
-    tc('01' => PioneInteger.new(1))
-    tc('000123' => PioneInteger.new(123))
-    tc('-1' => PioneInteger.new(-1))
-    tc('-01' => PioneInteger.new(-1))
-    tc('+1' => PioneInteger.new(1))
-    tc('+01' => PioneInteger.new(1))
+    tc('1' => PioneIntegerSequence.new([PioneInteger.new(1)]))
+    tc('123' => PioneIntegerSequence.new([PioneInteger.new(123)]))
+    tc('01' => PioneIntegerSequence.new([PioneInteger.new(1)]))
+    tc('000123' => PioneIntegerSequence.new([PioneInteger.new(123)]))
+    tc('-1' => PioneIntegerSequence.new([PioneInteger.new(-1)]))
+    tc('-01' => PioneIntegerSequence.new([PioneInteger.new(-1)]))
+    tc('+1' => PioneIntegerSequence.new([PioneInteger.new(1)]))
+    tc('+01' => PioneIntegerSequence.new([PioneInteger.new(1)]))
   end
 
   transformer_spec('float', :float) do
-    tc('0.1' => PioneFloat.new(0.1))
-    tc('123.1' => PioneFloat.new(123.1))
-    tc('01.23' => PioneFloat.new(1.23))
-    tc('000123.456' => PioneFloat.new(123.456))
-    tc('-1.2' => PioneFloat.new(-1.2))
-    tc('-01.1' => PioneFloat.new(-1.1))
-    tc('+1.9' => PioneFloat.new(1.9))
-    tc('+01.8' => PioneFloat.new(1.8))
+    tc('0.1' => PioneFloatSequence.new([PioneFloat.new(0.1)]))
+    tc('123.1' => PioneFloatSequence.new([PioneFloat.new(123.1)]))
+    tc('01.23' => PioneFloatSequence.new([PioneFloat.new(1.23)]))
+    tc('000123.456' => PioneFloatSequence.new([PioneFloat.new(123.456)]))
+    tc('-1.2' => PioneFloatSequence.new([PioneFloat.new(-1.2)]))
+    tc('-01.1' => PioneFloatSequence.new([PioneFloat.new(-1.1)]))
+    tc('+1.9' => PioneFloatSequence.new([PioneFloat.new(1.9)]))
+    tc('+01.8' => PioneFloatSequence.new([PioneFloat.new(1.8)]))
   end
 
   transformer_spec('variable', :variable) do
@@ -57,8 +57,8 @@ describe 'Pione::Transformer::LiteralTransformer' do
   end
 
   transformer_spec('ticket', :ticket) do
-    tc("<T>" => Ticket.new("T"))
-    tc("< T>" => Ticket.new("T"))
-    tc("<T >" => Ticket.new("T"))
+    tc("<T>" => TicketExpr.new(["T"]))
+    tc("< T>" => TicketExpr.new(["T"]))
+    tc("<T >" => TicketExpr.new(["T"]))
   end
 end

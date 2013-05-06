@@ -109,40 +109,45 @@ module Pione
         @value.hash
       end
 
-      #
-      # pione methods
-      #
-
-      define_pione_method("==", [TypeBoolean], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.value == other.value)
+      def inspect
+        "#<PioneBoolean %s>" % @value
       end
+    end
 
-      define_pione_method("!=", [TypeBoolean], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other))
+    class PioneBooleanSequence < BasicSequence
+      set_pione_model_type TypeBoolean
+      set_element_class PioneBoolean
+
+      def value
+        @value ||= @elements.inject(true){|b, elt| b and elt.value}
       end
+    end
 
-      define_pione_method("&&", [TypeBoolean], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.value && other.value)
-      end
+    #
+    # pione methods
+    #
 
-      define_pione_method("||", [TypeBoolean], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.value || other.value)
-      end
-
+    TypeBoolean.instance_eval do
       define_pione_method("and", [TypeBoolean], TypeBoolean) do |rec, other|
-        rec.call_pione_method("&&", other)
+        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
+          rec_elt.value && other_elt.value
+        end
       end
 
       define_pione_method("or", [TypeBoolean], TypeBoolean) do |rec, other|
-        rec.call_pione_method("||", other)
+        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
+          rec_elt.value || other_elt.value
+        end
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|
-        PioneString.new(rec.value.to_s)
+        sequential_map1(TypeString, rec) {|rec| rec.value.to_s}
       end
 
       define_pione_method("not", [], TypeBoolean) do |rec|
-        PioneBoolean.not(rec)
+        sequential_map1(TypeBoolean, rec) do |elt|
+          not(elt.value)
+        end
       end
     end
   end

@@ -1,20 +1,3 @@
-expr_operator:
-  valid:
-    - "=="
-    - "!="
-    - ">="
-    - "<="
-    - ">"
-    - "<"
-    - "&&"
-    - "||"
-    - "+"
-    - "-"
-    - "*"
-    - "%"
-    - "/"
-    - ">>>"
-    - "==>"
 expr_operator_application:
   valid:
     - "true == true"

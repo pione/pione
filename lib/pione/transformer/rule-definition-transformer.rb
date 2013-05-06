@@ -18,7 +18,8 @@ module Pione
         inputs = Naming::InputLine.values(conditions)
         outputs = Naming::OutputLine.values(conditions)
         params = Parameters.merge(*Naming::ParamLine.values(conditions))
-        features = Feature::AndExpr.new(*Naming::FeatureLine.values(conditions))
+        features = Feature.empty if Naming::FeatureLine.values(conditions).empty?
+        features = Feature::AndExpr.new(*Naming::FeatureLine.values(conditions)) unless features
         constraints = Constraints.new(Naming::ConstraintLine.values(conditions))
         condition = RuleCondition.new(inputs, outputs, params: params, features: features, constraints: constraints)
         case block

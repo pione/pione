@@ -2,14 +2,10 @@ input_line:
   valid:
     - input '*.txt'
     - input "*.txt".as_data_expr
-  invalid:
-    - input @@@
 output_line:
   valid:
     - output '*.txt'
     - output "*.txt".as_data_expr
-  invalid:
-    - output @@@
 param_line:
   valid:
     - "param $abc"

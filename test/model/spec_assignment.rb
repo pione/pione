@@ -28,9 +28,9 @@ describe 'Model::Assignment' do
     vtable = VariableTable.new
     Assignment.new(
       Variable.new("X"),
-      Message.new("as_string", 1.to_pione)
+      Message.new("as_string", PioneIntegerSequence.new([1.to_pione]))
     ).eval(vtable)
-    Variable.new("X").eval(vtable).should == "1".to_pione
+    Variable.new("X").eval(vtable).should == PioneStringSequence.new(["1".to_pione])
   end
 
   it 'should update variable table' do

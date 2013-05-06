@@ -94,9 +94,9 @@ module Pione
       def define_pione_method(name, inputs, output, &b)
         raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
         raise ArgumentError.new(inputs) unless inputs.all?{|input|
-          input.kind_of?(Type)
+          input.kind_of?(Type) or input.kind_of?(Symbol)
         }
-        raise ArgumentError.new(output) unless output.kind_of?(Type)
+        raise ArgumentError.new(output) unless output.kind_of?(Type) or output.kind_of?(Symbol)
         @method_interface[name] = PioneMethodInterface.new(inputs, output)
         @method_body[name] = b
       end
@@ -109,19 +109,55 @@ module Pione
         end
       end
 
+      def type_to_class(type)
+        case type
+        when TypeString
+          PioneStringSequence
+        when TypeInteger
+          PioneIntegerSequence
+        when TypeFloat
+          PioneFloatSequence
+        when TypeBoolean
+          PioneBooleanSequence
+        end
+      end
+
+      def sequential_map1(type, seq1, &b)
+        seq_class = type_to_class(type)
+        seq1.elements.map do |elt1|
+          seq_class.element_class.new(b.call(elt1))
+        end.tap {|x| break seq_class.new(x, seq1.attribute)}
+      end
+
+      def sequential_map2(type, seq1, seq2, &b)
+        seq_class = type_to_class(type)
+        seq1.elements.map do |elt1|
+          seq2.elements.map do |elt2|
+            seq_class.element_class.new(b.call(elt1, elt2))
+          end
+        end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
+      end
+
+      def sequential_pred1(seq1, &b)
+        method1 = seq1.every? ? :all? : :any?
+        seq1.elements.send(method1) do |elt1|
+          PioneBoolean.new(b.call(elt1))
+        end.tap {|x| break PioneBooleanSequence.new(x)}
+      end
+
+      def sequential_pred2(seq1, seq2, &b)
+        method1 = seq1.every? ? :all? : :any?
+        method2 = seq2.every? ? :all? : :any?
+        seq1.elements.send(method1) do |elt1|
+          seq2.elements.send(method2) do |elt2|
+            b.call(elt1, elt2)
+          end
+        end.tap {|x| break PioneBooleanSequence.new([PioneBoolean.new(x)])}
+      end
+
       # @api private
       def to_s
         "#<Type %s>" % @type_string
-      end
-
-      # @api private
-      def ==(other)
-        @type_string == other.type_string
-      end
-
-      # @api private
-      def hash
-        @type_string.hash
       end
     end
 
@@ -192,20 +228,32 @@ module Pione
         @output = output
       end
 
-      # Validates inputs data types for the method.
+      # Validate inputs data types for the method.
+      #
+      # @param receiver_type [Type]
+      #   receiver type
+      # @param args [Array<Object>]
+      #   arguments
       # @return [void]
-      def validate_inputs(*args)
+      def validate_inputs(receiver_type, *args)
         @inputs.each_with_index do |input, i|
+          input = receiver_type if input == :receiver_type
           unless input.match(args[i].pione_model_type)
             raise PioneModelTypeError.new(args[i], input)
           end
         end
       end
 
-      # Validates output data type for the method.
+      # Validate output data type for the method.
+      #
+      # @param receiver_type [Type]
+      #   recevier type
+      # @param value [Object]
+      #   output value
       # @return [void]
-      def validate_output(value)
-        @output.match(value.pione_model_type)
+      def validate_output(receiver_type, value)
+        output = @output == :receiver_type ? receiver_type : @output
+        output.match(value.pione_model_type)
       end
     end
 
@@ -262,16 +310,96 @@ module Pione
     end
 
     TypeAny.instance_eval do
-      define_pione_method("==", [TypeAny], TypeBoolean) do |res, other|
-        if other.pione_model_type == TypeAny && res.name == other.name
-          PioneBoolean.true
+      define_pione_method("==", [:receiver_type], TypeBoolean) do |rec, other|
+        if rec.elements.size == other.elements.size
+          rec.elements.size.times.all? do |i|
+            rec.elements[i].value == other.elements[i].value
+          end.tap {|x| break PioneBooleanSequence.new([PioneBoolean.new(x)], rec.attribute)}
         else
-          raise UnboundVariableError.new(res)
+          PioneBooleanSequence.new([PioneBoolean.new(false)], rec.attribute)
         end
       end
 
-      define_pione_method("!=", [TypeAny], TypeBoolean) do |res, other|
-        PioneBoolean.not(res.call_pione_method("==", other))
+      define_pione_method("!=", [:receiver_type], TypeBoolean) do |rec, other|
+        rec.call_pione_method("==", other).call_pione_method("not")
+      end
+
+      define_pione_method("===", [:receiver_type], TypeBoolean) do |rec, other|
+        sequential_pred2(rec, other) do |rec_elt, other_elt|
+          rec_elt.value == other_elt.value
+        end
+      end
+
+      define_pione_method("!==", [:receiver_type], TypeBoolean) do |rec, other|
+        rec.call_pione_method("===", other).call_pione_method("not")
+      end
+
+      define_pione_method("|", [:receiver_type], :receiver_type) do |rec, other|
+        rec.concat(other)
+      end
+
+      define_pione_method("each", [], :receiver_type) do |rec|
+        rec.each
+      end
+
+      define_pione_method("each?", [], TypeBoolean) do |rec|
+        PioneBooleanSequence.new([PioneBoolean.new(rec.each?)])
+      end
+
+      define_pione_method("all", [], :receiver_type) do |rec|
+        rec.all
+      end
+
+      define_pione_method("all?", [], TypeBoolean) do |rec|
+        PioneBooleanSequence.new([PioneBoolean.new(rec.all?)])
+      end
+
+      define_pione_method("every", [], :receiver_type) do |rec|
+        rec.every
+      end
+
+      define_pione_method("every?", [], TypeBoolean) do |rec|
+        PioneBooleanSequence.new([PioneBoolean.new(rec.every?)])
+      end
+
+      define_pione_method("any", [], :receiver_type) do |rec|
+        rec.any
+      end
+
+      define_pione_method("any?", [], TypeBoolean) do |rec|
+        PioneBooleanSequence.new([PioneBoolean.new(rec.any?)])
+      end
+
+      define_pione_method("i", [], TypeInteger) do |rec|
+        rec.call_pione_method("as_integer")
+      end
+
+      define_pione_method("f", [], TypeFloat) do |rec|
+        rec.call_pione_method("as_float")
+      end
+
+      define_pione_method("str", [], TypeString) do |rec|
+        rec.call_pione_method("as_string")
+      end
+
+      define_pione_method("d", [], TypeDataExpr) do |rec|
+        rec.call_pione_method("as_data_expr")
+      end
+
+      define_pione_method("length", [], TypeInteger) do |rec|
+        PioneIntegerSequence.new([PioneInteger.new(rec.elements.size)])
+      end
+
+      define_pione_method("[]", [TypeInteger], :receiver_type) do |rec, index|
+        receiver_class = rec.class
+        receiver_element_class = rec.class.element_class
+        index.elements.map do |i|
+          if i.value == 0
+            receiver_element_class.new(rec.value)
+          else
+            rec.elements[i.value-1]
+          end
+        end.tap {|x| break receiver_class.new(x, rec.attribute)}
       end
     end
 
@@ -308,16 +436,11 @@ module Pione
         end
       end
 
+      forward :class, :pione_model_type
+
       # Creates a model object.
       def initialize(&b)
         instance_eval(&b) if block_given?
-      end
-
-      # Returns PIONE model type.
-      # @return [Symbol]
-      #   PIONE model type
-      def pione_model_type
-        self.class.pione_model_type
       end
 
       # Evaluates the model object in the variable table.
@@ -369,6 +492,17 @@ module Pione
         @__column__
       end
 
+      def method_interface(name)
+        if interface = pione_model_type.method_interface[name]
+          body = pione_model_type.method_body[name]
+          return interface, body
+        else
+          interface = TypeAny.method_interface[name]
+          body = TypeAny.method_body[name]
+          return interface, body
+        end
+      end
+
       # Calls pione model object method.
       # @param [String] name
       #   method name
@@ -378,10 +512,11 @@ module Pione
       #   method's result
       def call_pione_method(name, *args)
         name = name.to_s
-        if method = pione_model_type.method_interface[name]
-          method.validate_inputs(*args)
-          output = pione_model_type.method_body[name].call(self, *args)
-          pione_model_type.method_interface[name].validate_output(output)
+        interface, body = method_interface(name)
+        if interface and body
+          interface.validate_inputs(pione_model_type, *args)
+          output = body.call(self, *args)
+          interface.validate_output(pione_model_type, output)
           return output
         else
           raise MethodNotFound.new(name, self)
@@ -392,6 +527,84 @@ module Pione
       # @return [BasicModel]
       def to_pione
         self
+      end
+    end
+
+    class SequenceAttributeError < StandardError
+      def initialize(attribute)
+        @attribute = attribute
+      end
+
+      def message
+        "attribute mismatched: %s" % @attribute
+      end
+    end
+
+    class BasicSequence < BasicModel
+      class << self
+        def define_attribute(name, value)
+          define_method(value) do
+            self.class.new(@elements, @attribute.merge({name => value}))
+          end
+
+          define_method("%s?" % value) do
+            @attribute[name] == value
+          end
+        end
+
+        attr_reader :element_class
+
+        def set_element_class(klass)
+          @element_class = klass
+        end
+      end
+
+      attr_reader :elements
+      attr_reader :attribute
+
+      define_attribute(:modifier, :all)
+      define_attribute(:modifier, :each)
+      define_attribute(:enumeration, :any)
+      define_attribute(:enumeration, :every)
+
+      def initialize(elements, attribute={})
+        @elements = elements
+        @attribute = Hash.new.merge(attribute)
+        @attribute[:modifier] ||= :each
+        @attribute[:enumeration] ||= :any
+      end
+
+      def concat(other)
+        raise SequenceAttributeError.new(other) unless @attribute == other.attribute
+        self.class.new(@elements + other.elements, @attribute)
+      end
+
+      def eval(vtable)
+        self.class.new(@elements.map{|elt| elt.eval(vtable)}, @attribute)
+      end
+
+      def include_variable?
+        @elements.any?{|elt| elt.include_variable?}
+      end
+
+      def ==(other)
+        return false unless other.kind_of?(self.class)
+        return false unless @elements == other.elements
+        return @attribute == other.attribute
+      end
+      alias :eql? :"=="
+
+      def hash
+        @elements.hash + @attribute.hash
+      end
+
+      def task_id_string
+        "<#{@elements}, #{@attribute}>"
+      end
+
+      # @api private
+      def textize
+        "\"%s\"" % [@value]
       end
     end
   end

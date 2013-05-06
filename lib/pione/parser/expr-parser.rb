@@ -140,7 +140,43 @@ module Pione
       #   @return [Parslet::Atoms::Entity] +expr_operator+ atom
       #   @example
       #     :=, ==, !=, >=, >, <=, <, &&, ||, +, -, *, /, %, or, and
-      rule(:expr_operator) {
+      # rule(:expr_operator) {
+      #   equals >> equals >> greater_than |
+      #   equals >> equals |
+      #   exclamation >> equals |
+      #   less_than >> equals |
+      #   less_than |
+      #   greater_than >> greater_than >> greater_than |
+      #   greater_than >> equals |
+      #   greater_than |
+      #   ampersand >> ampersand |
+      #   vbar >> vbar |
+      #   plus |
+      #   minus |
+      #   asterisk |
+      #   slash |
+      #   percent |
+      #   keyword_or |
+      #   keyword_and |
+      #   atmark |
+      #   vbar
+      # }
+
+      rule(:expr_operator_1) {
+        plus |
+        minus |
+        asterisk |
+        slash |
+        percent |
+        atmark |
+        (vbar >> vbar).absent? >> vbar |
+        keyword_or |
+        keyword_and
+      }
+
+      rule(:expr_operator_2) {
+        equals >> equals >> equals |
+        exclamation >> equals >> equals |
         equals >> equals >> greater_than |
         equals >> equals |
         exclamation >> equals |
@@ -150,14 +186,7 @@ module Pione
         greater_than >> equals |
         greater_than |
         ampersand >> ampersand |
-        vbar >> vbar |
-        plus |
-        minus |
-        asterisk |
-        slash |
-        percent |
-        keyword_or |
-        keyword_and
+        vbar >> vbar
       }
 
       # @!attribute [r] expr_operator_application
@@ -166,11 +195,27 @@ module Pione
       #   @example
       #     X + X
       rule(:expr_operator_application) {
+        expr_operator_application_2 |
+        expr_operator_application_1
+      }
+
+      rule(:expr_operator_application_1) {
         ( expr_element.as(:left) >>
           pad? >>
-          expr_operator.as(:operator) >>
+          expr_operator_1.as(:operator) >>
           pad? >>
-          expr.as(:right)
+          ((expr_operator_application_1 | expr_element).as(:right) |
+            syntax_error("the right hand of operator application should be expr", [:expr]))
+        ).as(:expr_operator_application)
+      }
+
+      rule(:expr_operator_application_2) {
+        ((expr_operator_application_1 | expr_element).as(:left) >>
+          pad? >>
+          expr_operator_2.as(:operator) >>
+          pad? >>
+          ( expr.as(:right) |
+            syntax_error("the right hand of operator application should be expr", [:expr]))
         ).as(:expr_operator_application)
       }
 

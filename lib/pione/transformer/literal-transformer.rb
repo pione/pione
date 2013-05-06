@@ -9,6 +9,7 @@ module Pione
         val = (s == "true")
         Model::PioneBoolean.new(val).tap do |x|
           x.set_line_and_column(s.line_and_column)
+          break Model::PioneBooleanSequence.new([x])
         end
       end
 
@@ -18,13 +19,21 @@ module Pione
         val = s.str.gsub(/\\(.)/){$1}
         Model::PioneString.new(val).tap do |x|
           x.set_line_and_column(s.line_and_column)
+          break Model::PioneStringSequence.new([x])
         end
+      end
+
+      # NOTE: how do we get the position of empty string?
+      rule(:string => sequence(:empty)) do
+        # convert backslash notations
+        Model::PioneStringSequence.new([Model::PioneString.new("")])
       end
 
       # Transform +:integer+ as Model::PioneInteger.
       rule(:integer => simple(:i)) do
         Model::PioneInteger.new(i.to_i).tap do |x|
           x.set_line_and_column(i.line_and_column)
+          break Model::PioneIntegerSequence.new([x])
         end
       end
 
@@ -32,6 +41,7 @@ module Pione
       rule(:float => simple(:f)) do
         Model::PioneFloat.new(f.to_f).tap do |x|
           x.set_line_and_column(f.line_and_column)
+          break Model::PioneFloatSequence.new([x])
         end
       end
 
