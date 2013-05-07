@@ -48,7 +48,7 @@ module Pione
 
       # @api private
       def inspect
-        "#<Pione::Model::PioneInteger @value=%s>" % @value.inspect
+        "#<PioneInteger %s>" % @value
       end
 
       # @api private

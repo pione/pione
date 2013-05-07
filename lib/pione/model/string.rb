@@ -92,11 +92,15 @@ module Pione
       end
 
       define_pione_method("as_integer", [], TypeInteger) do |rec|
-        PioneIntegerSequence.new([PioneInteger.new(rec.value.to_i)])
+        sequential_map1(TypeInteger, rec) do |elt|
+          elt.value.to_i
+        end
       end
 
       define_pione_method("as_float", [], TypeFloat) do |rec|
-        PioneFloatSequence.new([PioneFloat.new(rec.value.to_f)])
+        sequential_map1(TypeFloat, rec) do |elt|
+          elt.value.to_f
+        end
       end
 
       define_pione_method("as_data_expr", [], TypeDataExpr) do |rec|

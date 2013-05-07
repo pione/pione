@@ -52,34 +52,12 @@ module Pione
     end
 
     TypeFloat.instance_eval do
-      # Return true if the other equals self.
-      #
-      # @return [PioneBoolean]
-      #   true if the other equals self
-      define_pione_method("==", [TypeFloat], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.value == other.value)
-      end
-
-      define_pione_method("!=", [TypeFloat], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other))
-      end
-
       define_pione_method(">", [TypeFloat], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.value > other.value)
-      end
-
-      define_pione_method(">=", [TypeFloat], TypeBoolean) do |rec, other|
-        PioneBoolean.or(rec.call_pione_method(">", other),
-          rec.call_pione_method("==", other))
+        PioneBooleanSequence.new([PioneBoolean.new(rec.value > other.value)])
       end
 
       define_pione_method("<", [TypeFloat], TypeBoolean) do |rec, other|
         PioneBoolean.new(rec.value < other.value)
-      end
-
-      define_pione_method("<=", [TypeFloat], TypeBoolean) do |rec, other|
-        PioneBoolean.or(rec.call_pione_method("<", other),
-          rec.call_pione_method("==", other))
       end
 
       define_pione_method("+", [TypeFloat], TypeFloat) do |rec, other|
@@ -105,27 +83,19 @@ module Pione
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|
-        PioneString.new(rec.value.to_s)
-      end
-
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("str")
+        sequential_map1(TypeInteger, rec) do |elt|
+          elt.value.to_s
+        end
       end
 
       define_pione_method("as_int", [], TypeInteger) do |rec|
-        PioneInteger.new(rec.value.to_i)
-      end
-
-      define_pione_method("i", [], TypeInteger) do |rec|
-        rec.call_pione_method("as_int")
+        sequential_map1(TypeInteger, rec) do |elt|
+          elt.value.to_i
+        end
       end
 
       define_pione_method("as_float", [], TypeFloat) do |rec|
         rec
-      end
-
-      define_pione_method("f", [], TypeFloat) do |rec|
-        rec.call_pione_method("as_float")
       end
     end
   end
