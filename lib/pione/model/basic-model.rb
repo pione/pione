@@ -602,9 +602,23 @@ module Pione
         "<#{@elements}, #{@attribute}>"
       end
 
-      # @api private
       def textize
-        "\"%s\"" % [@value]
+        "<%s [%s]>" % [shortname, @elements.map{|x| x.textize}.join(",")]
+      end
+
+      def inspect
+        "#<%s %s %s>" % [shortname, @elements, @attribute]
+      end
+
+      private
+
+      def shortname
+        case self.class
+        when PioneStringSequence; "StrSeq"
+        when PioneIntegerSequence; "ISeq"
+        when PioneFloatSequence; "FSeq"
+        when PioneBooleanSequence; "BSeq"
+        end
       end
     end
   end
