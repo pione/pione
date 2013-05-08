@@ -401,6 +401,21 @@ module Pione
           end
         end.tap {|x| break receiver_class.new(x, rec.attribute)}
       end
+
+      define_pione_method("type", [], TypeString) do |rec|
+        case rec
+        when PioneStringSequence
+          "string"
+        when PioneIntegerSequence
+          "integer"
+        when PioneFloatSequence
+          "float"
+        when PioneBooleanSequence
+          "boolean"
+        else
+          "undefined"
+        end.tap {|x| break PioneString.new(x).to_seq}
+      end
     end
 
     # BasicModel is a class for pione model object.
