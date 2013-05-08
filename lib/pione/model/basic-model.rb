@@ -355,7 +355,7 @@ module Pione
       end
 
       define_pione_method("each", [], :receiver_type) do |rec|
-        rec.each
+        rec.set_each
       end
 
       define_pione_method("each?", [], TypeBoolean) do |rec|
@@ -363,27 +363,11 @@ module Pione
       end
 
       define_pione_method("all", [], :receiver_type) do |rec|
-        rec.all
+        rec.set_all
       end
 
       define_pione_method("all?", [], TypeBoolean) do |rec|
         PioneBooleanSequence.new([PioneBoolean.new(rec.all?)])
-      end
-
-      define_pione_method("every", [], :receiver_type) do |rec|
-        rec.every
-      end
-
-      define_pione_method("every?", [], TypeBoolean) do |rec|
-        PioneBooleanSequence.new([PioneBoolean.new(rec.every?)])
-      end
-
-      define_pione_method("any", [], :receiver_type) do |rec|
-        rec.any
-      end
-
-      define_pione_method("any?", [], TypeBoolean) do |rec|
-        PioneBooleanSequence.new([PioneBoolean.new(rec.any?)])
       end
 
       define_pione_method("i", [], TypeInteger) do |rec|
@@ -407,15 +391,41 @@ module Pione
       end
 
       define_pione_method("[]", [TypeInteger], :receiver_type) do |rec, index|
-        receiver_class = rec.class
-        receiver_element_class = rec.class.element_class
-        index.elements.map do |i|
-          if i.value == 0
-            receiver_element_class.new(rec.value)
+        sequential_map1(rec.class.pione_model_type, index) do |elt|
+          if elt.value == 0
+            rec.value
           else
-            rec.elements[i.value-1]
+            rec.elements[elt.value-1].value
           end
-        end.tap {|x| break receiver_class.new(x, rec.attribute)}
+        end
+      end
+
+      define_pione_method("reverse", [], :receiver_type) do |rec|
+        rec.class.new(rec.elements.reverse, rec.attribute)
+      end
+
+      define_pione_method("head", [], :receiver_type) do |rec|
+        rec.class.new([rec.elements[0]], rec.attribute)
+      end
+
+      define_pione_method("tail", [], :receiver_type) do |rec|
+        # NOTE: #tail should fail when the sequence length is less than 1
+        rec.class.new(rec.elements[1..-1], rec.attribute)
+      end
+
+      define_pione_method("last", [], :receiver_type) do |rec|
+        rec.class.new([rec.elements[-1]], rec.attribute)
+      end
+
+      define_pione_method("init", [], :receiver_type) do |rec|
+        # NOTE: #init should fail when the sequence length is less than 1
+        rec.class.new(rec.elements[0..-2], rec.attribute)
+      end
+
+      define_pione_method("member?", [:receiver_type], TypeBoolean) do |rec, target|
+        sequential_map1(TypeBoolean, target) do |target_elt|
+          rec.elements.map{|elt| elt.value}.include?(target_elt.value)
+        end
       end
 
       define_pione_method("type", [], TypeString) do |rec|
@@ -576,7 +586,7 @@ module Pione
 
       class << self
         def define_attribute(name, value)
-          define_method(value) do
+          define_method("set_%s" % value) do
             self.class.new(@elements, @attribute.merge({name => value}))
           end
 
@@ -597,14 +607,11 @@ module Pione
 
       define_attribute(:modifier, :all)
       define_attribute(:modifier, :each)
-      define_attribute(:enumeration, :any)
-      define_attribute(:enumeration, :every)
 
       def initialize(elements, attribute={})
         @elements = elements
         @attribute = Hash.new.merge(attribute)
         @attribute[:modifier] ||= :each
-        @attribute[:enumeration] ||= :any
       end
 
       def concat(other)

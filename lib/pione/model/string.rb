@@ -122,19 +122,17 @@ module Pione
       end
 
       define_pione_method("include?", [TypeString], TypeBoolean) do |rec, target|
-        rec_method = rec.every? ? :all? : :any?
-        rec.elements.send(rec_method) do |elt|
-          target_method = target.every? ? :all? : :any?
-          target.elements.send(target_method) do |target_elt|
-            elt.value.include?(target_elt.value)
-          end
-        end.tap {|x| break PioneBooleanSequence.new([PioneBoolean.new(x)])}
+        sequential_map2(TypeBoolean, rec, target) do |rec_elt, target_elt|
+          rec_elt.value.include?(target_elt.value)
+        end
       end
 
       define_pione_method("substring",
         [TypeInteger, TypeInteger],
         TypeString) do |rec, nth, len|
-        PioneStringSequence.new([PioneString.new(rec.value[nth.value-1, len.value])], rec.attribute)
+        sequential_map2(TypeString, nth, len) do |nth_elt, len_elt|
+          rec.value[nth_elt.value-1, len_elt.value]
+        end
       end
 
       define_pione_method("author", [], TypeString) do |rec|
