@@ -773,7 +773,7 @@ module Pione
       end
 
       define_pione_method("join", [TypeString], TypeString) do |rec, connective|
-        PioneString.new(rec.elements.map{|elt| elt.name}.join(connective.to_ruby))
+        PioneString.new(rec.elements.map{|elt| elt.name}.join(connective.to_ruby)).to_seq
       end
 
       define_pione_method("match?", [TypeString], TypeBoolean) do |rec, name|
@@ -787,16 +787,12 @@ module Pione
       define_pione_method("as_string", [], TypeString) do |rec|
         case rec
         when DataExprNull
-          PioneString.new("")
+          PioneString.new("").to_seq
         when DataExprOr
-          PioneString.new(rec.elements.map{|elt| elt.name}.join(DataExpr::SEPARATOR))
+          PioneString.new(rec.elements.map{|elt| elt.name}.join(DataExpr::SEPARATOR)).to_seq
         when DataExpr
-          PioneString.new(rec.name)
+          PioneString.new(rec.name).to_seq
         end
-      end
-
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("as_string")
       end
     end
   end

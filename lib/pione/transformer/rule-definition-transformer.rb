@@ -38,13 +38,13 @@ module Pione
         Naming.InputLine(data_expr)
       }
 
-      # Transform +:output_line+ as Naming::OutputLine.
+      # Transform +output_line+ as Naming::OutputLine.
       rule(:output_line => simple(:data_expr)) {
         TypeDataExpr.check(data_expr)
         Naming.OutputLine(data_expr)
       }
 
-      # Transform +:param_line+ as Naming::ParamLine.
+      # Transform +param_line+ as Naming::ParamLine.
       rule(:param_line => simple(:param)) {
         unless TypeAssignment.match(param) or TypeParameters.match(param)
           raise PioneModelTypeError.new(param, TypeAssignment)
@@ -60,6 +60,10 @@ module Pione
 
       rule(:constraint_line => simple(:constraint)) {
         Naming.ConstraintLine(constraint)
+      }
+
+      rule(:annotation_line => simple(:expr)) {
+        Naming.AnnotationLine(expr)
       }
     end
   end

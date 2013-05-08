@@ -65,7 +65,8 @@ module Pione
         output_line |
         param_line |
         feature_line |
-        constraint_line
+        constraint_line |
+        annotation_line
       }
 
       #
@@ -141,6 +142,15 @@ module Pione
           ) >>
           line_end
         ).as(:constraint_line)
+      }
+
+      rule(:annotation_line) {
+        ( space? >>
+          atmark >>
+          space? >>
+          ( expr.as(:expr) | syntax_error("it should be expr", :expr)) >>
+          line_end
+        ).as(:annotation_line)
       }
     end
   end

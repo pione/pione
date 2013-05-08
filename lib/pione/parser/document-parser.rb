@@ -56,7 +56,8 @@ module Pione
         param_block |
         param_line |
         assignment_line |
-        expr
+        expr_line |
+        annotation_line
       }
 
       #
@@ -129,6 +130,10 @@ module Pione
           package_name >>
           line_end
         ).as(:require)
+      }
+
+      rule(:expr_line) {
+        space? >> expr >> line_end
       }
     end
   end

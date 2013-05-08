@@ -32,6 +32,14 @@ module Pione
         VariableTable.check_include_variable(@value)
       end
 
+      # Return a sequence that contains self.
+      #
+      # @return [PioneStringSequence]
+      #   a sequence
+      def to_seq
+        PioneStringSequence.new([self])
+      end
+
       # @api private
       def task_id_string
         "String<#{@value}>"

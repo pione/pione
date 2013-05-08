@@ -1,11 +1,10 @@
 @ author :: "Keita Yamaguchi"
 @ "Fib.pione calculates the value of Fibonacci number."
 
-param ($NUM := 3) @ "index of Fibonacci number"
+param ($NUM := 3)
 
 Rule Main
   output 'result.txt'
-    @ "the value of fibonacci number is written in the content"
 Flow
   rule Fib {N: $NUM}
   rule Result
