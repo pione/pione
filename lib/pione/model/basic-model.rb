@@ -138,6 +138,22 @@ module Pione
         end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
       end
 
+      def sequential_fold1(type, seq1, &b)
+        seq_class = type_to_class(type)
+        seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj, elt1|
+          b.call(elt1, obj)
+        end
+      end
+
+      def sequential_fold2(type, seq1, seq2, &b)
+        seq_class = type_to_class(type)
+        seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj1, elt1|
+          seq2.elements.inject(obj1) do |obj2, elt2|
+            b.call(obj2, elt1, elt2)
+          end
+        end
+      end
+
       def sequential_pred1(seq1, &b)
         method1 = seq1.every? ? :all? : :any?
         seq1.elements.send(method1) do |elt1|
@@ -602,6 +618,10 @@ module Pione
         else
           Enumerator.new(self, :each)
         end
+      end
+
+      def push(element)
+        self.class.new(@elements + [element], @attribute)
       end
 
       def eval(vtable)

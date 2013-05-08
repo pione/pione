@@ -160,13 +160,29 @@ module Pione
         sequential_pred1(rec) {|elt| elt.value.odd?}
       end
 
+      # upto : *integer -> *integer
       define_pione_method("upto", [TypeInteger], TypeInteger) do |rec, max|
-        if rec.value < max.value
-          rec.value.upto(max.value).map do |i|
-            PioneInteger.new(i)
-          end.tap {|x| break PioneIntegerSequence.new(x, rec.attribute)}
-        else
-          rec
+        sequential_fold2(TypeInteger, rec, max) do |seq, rec_elt, max_elt|
+          if rec_elt.value < max_elt.value
+            rec_elt.value.upto(max_elt.value).inject(seq) do |_seq, i|
+              _seq.push(PioneInteger.new(i))
+            end
+          else
+            seq.push(rec_elt)
+          end
+        end
+      end
+
+      # downto : *integer -> *integer
+      define_pione_method("downto", [TypeInteger], TypeInteger) do |rec, min|
+        sequential_fold2(TypeInteger, rec, min) do |seq, rec_elt, min_elt|
+          if rec_elt.value > min_elt.value
+            rec_elt.value.downto(min_elt.value).inject(seq) do |_seq, i|
+              _seq.push(PioneInteger.new(i))
+            end
+          else
+            seq.push(rec_elt)
+          end
         end
       end
     end
