@@ -33,6 +33,10 @@ module Pione
         return @value
       end
 
+      def to_seq
+        PioneIntegerSequence.new([self])
+      end
+
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)
@@ -154,6 +158,16 @@ module Pione
 
       define_pione_method("odd?", [], TypeBoolean) do |rec|
         sequential_pred1(rec) {|elt| elt.value.odd?}
+      end
+
+      define_pione_method("upto", [TypeInteger], TypeInteger) do |rec, max|
+        if rec.value < max.value
+          rec.value.upto(max.value).map do |i|
+            PioneInteger.new(i)
+          end.tap {|x| break PioneIntegerSequence.new(x, rec.attribute)}
+        else
+          rec
+        end
       end
     end
   end

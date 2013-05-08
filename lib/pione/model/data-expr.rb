@@ -685,11 +685,11 @@ module Pione
 
     TypeDataExpr.instance_eval do
       define_pione_method("==", [TypeDataExpr], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec == other)
+        PioneBoolean.new(rec == other).to_seq
       end
 
       define_pione_method("!=", [TypeDataExpr], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other))
+        PioneBoolean.not(rec.call_pione_method("==", other)).to_seq
       end
 
       define_pione_method("all", [], TypeDataExpr) do |rec|
@@ -778,9 +778,9 @@ module Pione
 
       define_pione_method("match?", [TypeString], TypeBoolean) do |rec, name|
         if rec.match(name.value)
-          PioneBoolean.true
+          PioneBoolean.true.to_seq
         else
-          PioneBoolean.false
+          PioneBoolean.false.to_seq
         end
       end
 

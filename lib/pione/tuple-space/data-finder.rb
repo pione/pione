@@ -148,16 +148,16 @@ module Pione
         asterisk << expr.match(tuple.name).to_a[1]
 
         elt = RuleIOElement.new(PioneString.new(tuple.name))
-        elt.uri = PioneString.new(tuple.location.uri)
+        elt.uri = PioneString.new(tuple.location.uri).to_seq
         elt.match = PioneList.new(
-          *expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
+          *expr.match(tuple.name).to_a.map{|m| PioneString.new(m).to_seq}
         )
         io_list.add!(elt)
       end
 
       # set special variable if index equals 1
       if prefix == 'I' && index == 1
-        new_vtable.set(Variable.new("*"), PioneString.new(asterisk.join(":")))
+        new_vtable.set(Variable.new("*"), PioneString.new(asterisk.join(":")).to_seq)
       end
 
       return new_vtable
@@ -176,14 +176,14 @@ module Pione
       # setup rule-io list
       list = new_vtable.get(var)
       list = RuleIOList.new unless list
-      elt = RuleIOElement.new(PioneString.new(tuple.name))
-      elt.uri = PioneString.new(tuple.location.uri.to_s)
-      elt.match = PioneList.new(*md.map{|d| PioneString.new(d)})
+      elt = RuleIOElement.new(PioneString.new(tuple.name).to_seq)
+      elt.uri = PioneString.new(tuple.location.uri.to_s).to_seq
+      elt.match = PioneList.new(*md.map{|d| PioneString.new(d).to_seq})
       new_vtable.set!(var, list.add(elt))
 
       # set special variable if index equals 1
       if prefix == 'I' && index == 1
-        new_vtable.set(Variable.new("*"), PioneString.new(md[1]))
+        new_vtable.set(Variable.new("*"), PioneString.new(md[1]).to_seq)
       end
 
       return new_vtable

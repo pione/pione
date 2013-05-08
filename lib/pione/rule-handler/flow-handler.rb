@@ -109,19 +109,27 @@ module Pione
             end
           end
 
-          # eval callee rule by the context
-          vtable = callee.expr.params.eval(@variable_table).as_variable_table
-          rule = rule.eval(vtable)
+          # build callee parameter from rule definition
+          callee_params = rule.params.merge(callee.expr.params)
 
-          # check rule status and find combinations
-          @data_finder.find(:input, rule.inputs, vtable).each do |res|
-            combinations << [
-              callee,
-              rule,
-              res.combination,
-              res.variable_table,
-              ID.domain_id3(rule, res.combination, callee)
-            ] if rule.constraints.satisfy?(res.variable_table)
+          # expand parameters
+          callee_params.eval(@variable_table).each do |atomic_params|
+
+            # eval callee rule by the context
+            vtable = atomic_params.eval(@variable_table).as_variable_table
+            rule = rule.eval(vtable)
+
+            # check rule status and find combinations
+            @data_finder.find(:input, rule.inputs, vtable).each do |res|
+              combinations << [
+                callee,
+                atomic_params,
+                rule,
+                res.combination,
+                res.variable_table,
+                ID.domain_id3(rule, res.combination, atomic_params)
+              ] if rule.constraints.satisfy?(res.variable_table)
+            end
           end
 
           # find next
@@ -146,7 +154,7 @@ module Pione
 
       # Find inputs and variables for flow element rules.
       def select_updatables(combinations)
-        combinations.map do |callee, rule, inputs, vtable, task_domain|
+        combinations.map do |callee, params, rule, inputs, vtable, task_domain|
           # find outputs combination
           outputs_combination = @data_finder.find(
             :output,
@@ -164,8 +172,8 @@ module Pione
           order = nil
           order = :weak if orders.include?(:weak)
           order = :force if orders.include?(:force)
-          [callee, rule, inputs, vtable, task_domain, order]
-        end.select {|_, _, _, _, _, order| not(order.nil?)}
+          [callee, params, rule, inputs, vtable, task_domain, order]
+        end.select {|_, _, _, _, _, _, order| not(order.nil?)}
       end
 
       # Distribute tasks.
@@ -180,12 +188,12 @@ module Pione
         process_log(@task_process_record.merge(transition: "suspend"))
         process_log(@rule_process_record.merge(transition: "suspend"))
 
-        applications.uniq.each do |callee, rule, inputs, vtable, task_domain, order|
+        applications.uniq.each do |callee, params, rule, inputs, vtable, task_domain, order|
           # make a task tuple
           task = Tuple[:task].new(
             rule.rule_path,
             inputs,
-            callee.expr.params,
+            params,
             rule.features,
             task_domain,
             @call_stack + [@domain] # current call stack + caller
@@ -208,7 +216,7 @@ module Pione
               record.rule_name = rule.rule_path
               record.rule_type = rule.rule_type
               record.inputs = inputs.flatten.map{|input| input.name}.join(",")
-              record.parameters = callee.expr.params.textize
+              record.parameters = params.textize
               record.transition = "schedule"
             end
             process_log(task_process_record)
@@ -224,7 +232,7 @@ module Pione
         end
 
         # wait to finish threads
-        applications.uniq.each do |callee, rule, inputs, vtable, task_domain, order|
+        applications.uniq.each do |callee, params, rule, inputs, vtable, task_domain, order|
           # wait to finish the work
           template = Tuple[:finished].new(
             domain: task_domain,

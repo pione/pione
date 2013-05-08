@@ -2,6 +2,8 @@ module Pione
   module Model
     # Parameters is a PIONE mode class for parameters.
     class Parameters < BasicModel
+      include Enumerable
+
       # InvalidParameter is raised when you specify invalid parameter.
       class InvalidParameter < TypeError
         # Create a error.
@@ -248,6 +250,47 @@ module Pione
       #   parameter key list
       def keys
         @data.keys.sort
+      end
+
+      # Expand parameter value sequences.
+      #
+      # @yield [Parameters]
+      #   sequences expanded parameters
+      # @return [void]
+      def each
+        array = @data.map do |k, v|
+          [k, v.respond_to?(:each) ? v.each : v]
+        end
+        find_atomic_parameters_rec(array, Hamster.hash) do |table|
+          yield Parameters.new(table.reduce(Hash.new){|h, k, v| h[k] = v; h})
+        end
+      end
+
+      # Find atomic parameters recursively.
+      #
+      # @param array [Array]
+      #   key and value associated list
+      # @param table [Hamster::Hash]
+      #   immutable hash table
+      # @param b [Proc]
+      #   the process executes when atomic parameters found
+      # @return [void]
+      def find_atomic_parameters_rec(array, table, &b)
+        if array.empty?
+          b.call(table)
+        else
+          key, enum = array.first
+          tail = array.drop(1)
+          loop do
+            if enum.kind_of?(Enumerator)
+              find_atomic_parameters_rec(tail, table.put(key, enum.next), &b)
+            else
+              find_atomic_parameters_rec(tail, table.put(key, enum), &b)
+              raise StopIteration
+            end
+          end
+          enum.rewind if enum.kind_of?(Enumerator)
+        end
       end
 
       # @api private

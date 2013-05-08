@@ -37,19 +37,19 @@ module Pione
       end
       module_function :domain_id
 
-      # Makes target domain name by module name, inputs, and outputs.
-      # @param [String] rule
+      # Make a domain name by rule path, inputs, and parameters.
+      #
+      # @param rule [String]
       #   package name
-      # @param [Array<Pione::Tuple::Data>] inputs
+      # @param inputs [Array<Pione::Tuple::Data>]
       #   input data tuples
-      # @param [Pione::Model::] callee
-      #   parameters object
+      # @param params [Model::Parameters]
+      #   parameters
       # @return [String]
       #   domain string
-      def domain_id3(rule, inputs, callee)
+      def domain_id3(rule, inputs, params)
         package_name = rule.rule_expr.package.name
         rule_name = rule.rule_expr.name
-        params = callee.expr.params
         return domain_id(package_name, rule_name, inputs, params)
       end
       module_function :domain_id3

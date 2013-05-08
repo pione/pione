@@ -96,6 +96,10 @@ module Pione
         return @value
       end
 
+      def to_seq
+        PioneBooleanSequence.new([self])
+      end
+
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)

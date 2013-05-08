@@ -68,7 +68,7 @@ module Pione
 
       # @api private
       def textize
-        args = [@name, @receiver.textize, @arguments.textize]
+        args = [@name, @receiver.textize, @arguments.map{|arg| arg.textize}.join(",")]
         "message(\"%s\",%s,[%s])" % args
       end
 

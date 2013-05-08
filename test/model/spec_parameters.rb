@@ -77,6 +77,45 @@ describe 'Model::Parameters' do
     @params_a.should.not.be.empty
   end
 
+  it 'should expand sequence' do
+    seq_a = PioneStringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")])
+    seq_b = PioneIntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)])
+    seq_c = PioneBooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)])
+    params = Parameters.new(Variable.new("A") => seq_a, Variable.new("B") => seq_b, Variable.new("C") => seq_c)
+    params.to_a.tap do |list|
+      list.size.should == 18
+      comb = [
+        [PioneString.new("X"), PioneInteger.new(1), PioneBoolean.new(true)],
+        [PioneString.new("X"), PioneInteger.new(2), PioneBoolean.new(true)],
+        [PioneString.new("X"), PioneInteger.new(3), PioneBoolean.new(true)],
+        [PioneString.new("X"), PioneInteger.new(1), PioneBoolean.new(false)],
+        [PioneString.new("X"), PioneInteger.new(2), PioneBoolean.new(false)],
+        [PioneString.new("X"), PioneInteger.new(3), PioneBoolean.new(false)],
+        [PioneString.new("Y"), PioneInteger.new(1), PioneBoolean.new(true)],
+        [PioneString.new("Y"), PioneInteger.new(2), PioneBoolean.new(true)],
+        [PioneString.new("Y"), PioneInteger.new(3), PioneBoolean.new(true)],
+        [PioneString.new("Y"), PioneInteger.new(1), PioneBoolean.new(false)],
+        [PioneString.new("Y"), PioneInteger.new(2), PioneBoolean.new(false)],
+        [PioneString.new("Y"), PioneInteger.new(3), PioneBoolean.new(false)],
+        [PioneString.new("Z"), PioneInteger.new(1), PioneBoolean.new(true)],
+        [PioneString.new("Z"), PioneInteger.new(2), PioneBoolean.new(true)],
+        [PioneString.new("Z"), PioneInteger.new(3), PioneBoolean.new(true)],
+        [PioneString.new("Z"), PioneInteger.new(1), PioneBoolean.new(false)],
+        [PioneString.new("Z"), PioneInteger.new(2), PioneBoolean.new(false)],
+        [PioneString.new("Z"), PioneInteger.new(3), PioneBoolean.new(false)]
+      ]
+      comb.each do |elts|
+        list.should.include(
+          Parameters.new(
+            Variable.new("A") => elts[0].to_seq,
+            Variable.new("B") => elts[1].to_seq,
+            Variable.new("C") => elts[2].to_seq
+          )
+        )
+      end
+    end
+  end
+
   describe 'pione method ==' do
     it 'should get true' do
       params_a = @params_a

@@ -107,7 +107,7 @@ module Pione
       # @return [void]
       def setenv(env)
         env.each do |key, value|
-          @variable_table.set(Variable.new("ENV_" + key), PioneString.new(value))
+          # @variable_table.set(Variable.new("ENV_" + key), PioneString.new(value))
         end
       end
 

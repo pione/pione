@@ -556,6 +556,8 @@ module Pione
     end
 
     class BasicSequence < BasicModel
+      include Enumerable
+
       class << self
         def define_attribute(name, value)
           define_method(value) do
@@ -592,6 +594,14 @@ module Pione
       def concat(other)
         raise SequenceAttributeError.new(other) unless @attribute == other.attribute
         self.class.new(@elements + other.elements, @attribute)
+      end
+
+      def each
+        if block_given?
+          @elements.each {|e| yield self.class.new([e], @attribute)}
+        else
+          Enumerator.new(self, :each)
+        end
       end
 
       def eval(vtable)

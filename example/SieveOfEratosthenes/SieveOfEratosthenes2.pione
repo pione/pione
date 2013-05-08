@@ -8,14 +8,9 @@ End
 
 Rule CreateUndeterminedNumbers
   output '*.ud'.all
-  param $N := 2
+  param $N := 2.upto($MAX)
 Flow
-  if $N != $MAX
-    rule CreateUndeterminedNumbers {N: $N+1}
-  end
-  if $N <= $MAX
-    rule CreateData {NAME: "{$N}.ud"}
-  end
+  rule CreateData {NAME: "{$N}.ud"}
 End
 
 Rule Sieve
