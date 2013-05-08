@@ -240,17 +240,23 @@ module Pione
 
       # @api private
       def make_handler(ts_server)
+        # build parameter
+        params = @main.params.merge(@params)
+
+        # find inputs
         finder = DataFinder.new(ts_server, INPUT_DOMAIN)
-        results = finder.find(:input, inputs, @params.as_variable_table)
+        results = finder.find(:input, inputs, params.as_variable_table)
         if results.empty? and not(@main.inputs.empty?)
           return nil
         end
         inputs = @main.inputs.empty? ? [] : results.first.combination
+
+        # make handler
         handler_class.new(
           ts_server,
           self,
           inputs,
-          @params,
+          params,
           [],
           {:domain => @domain}
         )
