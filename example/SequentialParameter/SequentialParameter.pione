@@ -1,0 +1,4 @@
+Rule Main
+  output '{$N}.i'.touch
+  param $N := 1.upto(10)
+End
