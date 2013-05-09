@@ -9,14 +9,6 @@
 - true  : '("a" | "b" | "c") != ("c" | "b" | "a")'
 - false : '("" | "") == ""'
 
-# each, each?, all, all?
-- true  : '"a".each?'
-- false : '"a".all?'
-- true  : '"a".each.each?'
-- false : '"a".each.all?'
-- true  : '"a".all.all?'
-- false : '"a".all.each?'
-
 # +
 - true  : '("a" + "b") == "ab"'
 - true  : '("a" + "b" + "c") == "abc"'
@@ -37,13 +29,19 @@
 - 'false | false | false' : '("a" | "b" | "c").include?("ab")'
 - 'false | false | false' : '("a" | "b" | "c").include?("abc")'
 - 'false | false | false' : '("a" | "b" | "c").include?("abcd")'
-- false : '"".include?("a" | "b" | "c")'
-- true : '"a".include?("a" | "b" | "c")'
-- true : '"ab".include?("a" | "b" | "c")'
-- true  : '"abc".include?("a" | "b" | "c")'
-- true  : '"abc".include?("c" | "b" | "a")'
-- true  : '("a" | "b" | "c").include?("a" | "b" | "c")'
-- false : '("a" | "b" | "c").include?("a" | "b" | "c")'
+- 'false | false | false' : '"".include?("a" | "b" | "c")'
+- 'true | false | false' : '"a".include?("a" | "b" | "c")'
+- 'true | true | false' : '"ab".include?("a" | "b" | "c")'
+- 'true | true | true' : '"abc".include?("a" | "b" | "c")'
+- 'true | true | true'  : '"abc".include?("c" | "b" | "a")'
+- 'true | false | false | false | true | false | false | false | true'  : '("a" | "b" | "c").include?("a" | "b" | "c")'
+
+# insert
+- '"Xabc"' : '"abc".insert(1, "X")'
+- '"aXbc"' : '"abc".insert(2, "X")'
+- '"abXc"' : '"abc".insert(3, "X")'
+- '"abcX"' : '"abc".insert(4, "X")'
+- '"Xabc" | "aXbc" | "abXc" | "abcX"' : '"abc".insert(1 | 2 | 3 | 4, "X")'
 
 # count
 - true: '"".count == 0'

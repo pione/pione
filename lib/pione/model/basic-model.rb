@@ -138,6 +138,17 @@ module Pione
         end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
       end
 
+      def sequential_map3(type, seq1, seq2, seq3, &b)
+        seq_class = type_to_class(type)
+        seq1.elements.map do |elt1|
+          seq2.elements.map do |elt2|
+            seq3.elements.map do |elt3|
+              seq_class.element_class.new(b.call(elt1, elt2, elt3))
+            end
+          end
+        end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
+      end
+
       def sequential_fold1(type, seq1, &b)
         seq_class = type_to_class(type)
         seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj, elt1|

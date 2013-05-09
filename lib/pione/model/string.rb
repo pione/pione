@@ -70,6 +70,10 @@ module Pione
       def hash
         @value.hash
       end
+
+      def inspect
+        '#<PioneString "%s">' % @value
+      end
     end
 
     class PioneStringSequence < BasicSequence
@@ -132,6 +136,12 @@ module Pione
         TypeString) do |rec, nth, len|
         sequential_map2(TypeString, nth, len) do |nth_elt, len_elt|
           rec.value[nth_elt.value-1, len_elt.value]
+        end
+      end
+
+      define_pione_method("insert", [TypeInteger, TypeString], TypeString) do |rec, pos, other|
+        sequential_map3(TypeString, rec, pos, other) do |rec_elt, pos_elt, other_elt|
+          rec_elt.value.clone.insert(pos_elt.value-1, other_elt.value)
         end
       end
 
