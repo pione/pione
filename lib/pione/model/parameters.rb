@@ -259,7 +259,7 @@ module Pione
       # @return [void]
       def each
         array = @data.map do |k, v|
-          [k, v.respond_to?(:each) ? v.each : v]
+          [k, (v.respond_to?(:each) and v.each?) ? v.each : v]
         end
         find_atomic_parameters_rec(array, Hamster.hash) do |table|
           yield Parameters.new(table.reduce(Hash.new){|h, k, v| h[k] = v; h})

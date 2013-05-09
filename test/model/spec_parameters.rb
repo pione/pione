@@ -77,10 +77,10 @@ describe 'Model::Parameters' do
     @params_a.should.not.be.empty
   end
 
-  it 'should expand sequence' do
-    seq_a = PioneStringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")])
-    seq_b = PioneIntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)])
-    seq_c = PioneBooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)])
+  it 'should expand sequence with each modifier' do
+    seq_a = PioneStringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")]).set_each
+    seq_b = PioneIntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)]).set_each
+    seq_c = PioneBooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)]).set_each
     params = Parameters.new(Variable.new("A") => seq_a, Variable.new("B") => seq_b, Variable.new("C") => seq_c)
     params.to_a.tap do |list|
       list.size.should == 18
@@ -113,6 +113,23 @@ describe 'Model::Parameters' do
           )
         )
       end
+    end
+  end
+
+  it 'should expand sequences with all modifier' do
+    seq_a = PioneStringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")]).set_all
+    seq_b = PioneIntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)]).set_all
+    seq_c = PioneBooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)]).set_all
+    params = Parameters.new(Variable.new("A") => seq_a, Variable.new("B") => seq_b, Variable.new("C") => seq_c)
+    params.to_a.tap do |list|
+      list.size.should == 1
+      list.should.include(
+        Parameters.new(
+          Variable.new("A") => seq_a,
+          Variable.new("B") => seq_b,
+          Variable.new("C") => seq_c
+        )
+      )
     end
   end
 
