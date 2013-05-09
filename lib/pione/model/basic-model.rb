@@ -351,16 +351,6 @@ module Pione
         rec.call_pione_method("==", other).call_pione_method("not")
       end
 
-      define_pione_method("===", [:receiver_type], TypeBoolean) do |rec, other|
-        sequential_pred2(rec, other) do |rec_elt, other_elt|
-          rec_elt.value == other_elt.value
-        end
-      end
-
-      define_pione_method("!==", [:receiver_type], TypeBoolean) do |rec, other|
-        rec.call_pione_method("===", other).call_pione_method("not")
-      end
-
       define_pione_method("|", [:receiver_type], :receiver_type) do |rec, other|
         rec.concat(other)
       end

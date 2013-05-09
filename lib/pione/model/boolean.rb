@@ -144,14 +144,38 @@ module Pione
         end
       end
 
+      define_pione_method("as_integer", [], TypeInteger) do |rec|
+        sequential_map1(TypeInteger, rec) {|rec| rec.value ? 1 : 0}
+      end
+
+      define_pione_method("as_float", [], TypeFloat) do |rec|
+        sequential_map1(TypeFloat, rec) {|rec| rec.value ? 1.0 : 0.0}
+      end
+
       define_pione_method("as_string", [], TypeString) do |rec|
         sequential_map1(TypeString, rec) {|rec| rec.value.to_s}
+      end
+
+      define_pione_method("as_data_expr", [], TypeDataExpr) do |rec|
+        sequential_map1(TypeDataExpr, rec) {|rec| rec.value.to_s}
       end
 
       define_pione_method("not", [], TypeBoolean) do |rec|
         sequential_map1(TypeBoolean, rec) do |elt|
           not(elt.value)
         end
+      end
+
+      define_pione_method("every?", [], TypeBoolean) do |rec|
+        PioneBoolean.new(not(rec.elements.include?(PioneBoolean.false))).to_seq
+      end
+
+      define_pione_method("any?", [], TypeBoolean) do |rec|
+        PioneBoolean.new(rec.elements.include?(PioneBoolean.true)).to_seq
+      end
+
+      define_pione_method("one?", [], TypeBoolean) do |rec|
+        PioneBoolean.new(rec.elements.select{|elt| elt == PioneBoolean.true}.size == 1).to_seq
       end
     end
   end
