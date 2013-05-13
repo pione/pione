@@ -1,7 +1,7 @@
 module Pione
   module Model
     # Rule representation in the flow element context.
-    class RuleExpr < BasicModel
+    class RuleExpr < Callable
       set_pione_model_type TypeRuleExpr
 
       # @return [String]
@@ -37,8 +37,8 @@ module Pione
         @name = name
         @attributes = {}
         @attributes[:params] = attributes[:params] || Model::Parameters.empty
-        @attributes[:input_ticket_expr] = attributes[:input_ticket_expr] || Model::TicketExpr.empty
-        @attributes[:output_ticket_expr] = attributes[:output_ticket_expr] || Model::TicketExpr.empty
+        @attributes[:input_ticket_expr] = attributes[:input_ticket_expr] || Model::TicketExprSequence.empty
+        @attributes[:output_ticket_expr] = attributes[:output_ticket_expr] || Model::TicketExprSequence.empty
         super()
       end
 
@@ -74,7 +74,7 @@ module Pione
       # @return [RuleExpr]
       #   new rule expression
       def add_input_ticket_expr(ticket_expr)
-        new_attributes = @attributes.merge(input_ticket_expr: @attributes[:input_ticket_expr] + ticket_expr)
+        new_attributes = @attributes.merge(input_ticket_expr: @attributes[:input_ticket_expr].concat(ticket_expr))
         return self.class.new(@package, @name, new_attributes)
       end
 
@@ -86,7 +86,7 @@ module Pione
       # @return [RuleExpr]
       #   new rule expression
       def add_output_ticket_expr(ticket_expr)
-        new_attributes = @attributes.merge(output_ticket_expr: @attributes[:output_ticket_expr] + ticket_expr)
+        new_attributes = @attributes.merge(output_ticket_expr: @attributes[:output_ticket_expr].concat(ticket_expr))
         return self.class.new(@package, @name, new_attributes)
       end
 
@@ -220,16 +220,17 @@ module Pione
       end
     end
 
+    class RuleExprSequence < Sequence
+      set_pione_model_type TypeRuleExpr
+    end
+
     TypeRuleExpr.instance_eval do
       define_pione_method("==", [TypeRuleExpr], TypeBoolean) do |rec, other|
         PioneBoolean.new(
           rec.package == other.package &&
           rec.name == other.name &&
-          rec.params == other.params)
-      end
-
-      define_pione_method("!=", [TypeRuleExpr], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other))
+          rec.params == other.params
+        ).to_seq
       end
 
       define_pione_method("params", [TypeParameters], TypeRuleExpr) do |rec, params|
@@ -237,11 +238,7 @@ module Pione
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|
-        PioneString.new(rec.name)
-      end
-
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("as_string")
+        PioneString.new(rec.name).to_seq
       end
 
       define_pione_method("==>", [TypeTicketExpr], TypeRuleExpr) do |rec, ticket_expr|
@@ -249,7 +246,7 @@ module Pione
       end
 
       define_pione_method(">>>", [TypeRuleExpr], TypeRuleExpr) do |rec, other|
-        ticket_expr = TicketExpr.new([rec.path])
+        ticket_expr = TicketExpr.new(rec.path).to_seq
         left = rec.add_output_ticket_expr(ticket_expr)
         right = other.add_input_ticket_expr(ticket_expr)
         CompositionalRuleExpr.new(left, right)

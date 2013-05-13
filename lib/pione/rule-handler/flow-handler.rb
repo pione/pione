@@ -99,10 +99,10 @@ module Pione
           # find callee rule
           rule = find_callee_rule_tuple(callee).content
 
-          # update callee parameters
+          # callee parameters inherit caller parameters
           @variable_table.variables.each do |var|
             val = @variable_table.get(var)
-            unless val == UndefinedValue.new
+            if val.kind_of?(Variable) or val.void?
               if rule.params.keys.include?(var)
                 callee.expr.params.set_safety!(var, val)
               end

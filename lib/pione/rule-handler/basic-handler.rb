@@ -251,7 +251,8 @@ module Pione
       #   data name
       # @return [Tuple::DataTuple]
       #   data tuple
-      def make_output_tuple(name)
+      def make_output_tuple(expr)
+        name = expr.first.name
         location = make_output_location(name)
         Tuple[:data].new(name: name, domain: @domain, location: location, time: nil)
       end
@@ -263,7 +264,7 @@ module Pione
       def setup_variable_table
         @variable_table.make_input_auto_variables(@rule.inputs, @inputs)
         outputs = @rule.outputs.map {|expr| expr.eval(@variable_table) }
-        output_tuples = outputs.map {|expr| make_output_tuple(expr.name) }
+        output_tuples = outputs.map {|expr| make_output_tuple(expr) }
         @variable_table.make_output_auto_variables(outputs, output_tuples)
       end
 
@@ -292,7 +293,7 @@ module Pione
         tuples = read_all(Tuple[:data].new(domain: @domain))
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
-          case output.modifier
+          case output.distribution
           when :all
             @outputs[i] = tuples.find_all {|data| output.match(data.name)}
           when :each

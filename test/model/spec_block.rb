@@ -14,9 +14,9 @@ describe 'Model::ActionBlock' do
   it 'should expand variables' do
     block = ActionBlock.new("{$var1} {$var2} {$var3}")
     vtable = VariableTable.new
-    vtable.set(Variable.new("var1"), "a".to_pione)
-    vtable.set(Variable.new("var2"), "b".to_pione)
-    vtable.set(Variable.new("var3"), "c".to_pione)
+    vtable.set(Variable.new("var1"), PioneString.new("a").to_seq)
+    vtable.set(Variable.new("var2"), PioneString.new("b").to_seq)
+    vtable.set(Variable.new("var3"), PioneString.new("c").to_seq)
     block.eval(vtable).should == ActionBlock.new("a b c")
   end
 end
@@ -60,14 +60,14 @@ describe 'Model::FlowBlock' do
       Assignment.new(Variable.new("Y"), Variable.new("Z")),
       ConditionalBlock.new(
         Variable.new("A"),
-        { PioneBooleanSequence.new([PioneBoolean.true]) =>
-          FlowBlock.new(Assignment.new(Variable.new("Z"), PioneIntegerSequence.new([1.to_pione]))),
+        { BooleanSequence.new([PioneBoolean.true]) =>
+          FlowBlock.new(Assignment.new(Variable.new("Z"), IntegerSequence.new([1.to_pione]))),
         }
       ),
-      Assignment.new(Variable.new("A"), PioneBooleanSequence.new([PioneBoolean.true])),
+      Assignment.new(Variable.new("A"), BooleanSequence.new([PioneBoolean.true])),
       ConditionalBlock.new(
-        Message.new("==", Variable.new("Z"), PioneIntegerSequence.new([1.to_pione])),
-        { PioneBooleanSequence.new([PioneBoolean.true]) => FlowBlock.new(z) }
+        Message.new("==", Variable.new("Z"), IntegerSequence.new([1.to_pione])),
+        { BooleanSequence.new([PioneBoolean.true]) => FlowBlock.new(z) }
       ),
       x,
       y

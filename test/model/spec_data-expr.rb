@@ -2,7 +2,7 @@ require_relative '../test-util'
 
 describe 'Model::DataExpr' do
   it 'should get expression informations' do
-    exp = DataExpr.new('test.a')
+    exp = DataExpr.new('test.a').to_seq
     exp.should.be.each
     exp.should.be.not.all
     exp.should.be.not.stdout
@@ -10,47 +10,45 @@ describe 'Model::DataExpr' do
   end
 
   it 'should be each modifier' do
-    exp = DataExpr.each('test.a')
-    exp.should == DataExpr.new('test.a').each
+    exp = DataExpr.new('test.a').to_seq.set_each
     exp.should.be.each
     exp.should.be.not.all
-    exp.mode.should.be.nil
+    exp.should.be.file
   end
 
   it 'should be all modifier' do
-    exp = DataExpr.all('test.a')
-    exp.should == DataExpr.new('test.a').all
+    exp = DataExpr.new('test.a').to_seq.set_all
     exp.should.be.not.each
     exp.should.be.all
-    exp.mode.should.be.nil
+    exp.should.be.file
   end
 
   it 'should be stdout mode' do
-    exp = DataExpr.new('test.a').stdout
+    exp = DataExpr.new('test.a').to_seq.set_stdout
     exp.should.be.stdout
     exp.should.be.not.stderr
   end
 
   it 'should be stderr mode' do
-    exp = DataExpr.new('test.a').stderr
+    exp = DataExpr.new('test.a').to_seq.set_stderr
     exp.should.be.not.stdout
     exp.should.be.stderr
   end
 
   it 'should neglect update criteria' do
-    exp = DataExpr.new('test.a').neglect
+    exp = DataExpr.new('test.a').to_seq.set_neglect
     exp.should.neglect
     exp.should.not.care
   end
 
   it 'should care update criteria' do
-    exp = DataExpr.new('test.a').care
+    exp = DataExpr.new('test.a').to_seq.set_care
     exp.should.not.neglect
     exp.should.care
   end
 
   it 'should have write operation' do
-    expr = DataExpr.new('A').write
+    expr = DataExpr.new('A').to_seq.set_write
     expr.should.write
     expr.should.not.remove
     expr.should.not.touch
@@ -58,7 +56,7 @@ describe 'Model::DataExpr' do
   end
 
   it 'should have remove operation' do
-    expr = DataExpr.new('A').remove
+    expr = DataExpr.new('A').to_seq.set_remove
     expr.should.not.write
     expr.should.remove
     expr.should.not.touch
@@ -66,7 +64,7 @@ describe 'Model::DataExpr' do
   end
 
   it 'should have touch operation' do
-    expr = DataExpr.new('A').touch
+    expr = DataExpr.new('A').to_seq.set_touch
     expr.should.not.write
     expr.should.not.remove
     expr.should.touch
@@ -231,11 +229,11 @@ describe 'Model::DataExpr' do
   end
 
   it 'should expand variables' do
-    vtable1 = VariableTable.new(Variable.new('VAR') => PioneString.new('1'))
+    vtable1 = VariableTable.new(Variable.new('VAR') => PioneString.new('1').to_seq)
     exp1 = DataExpr.new('{$VAR}.a').eval(vtable1)
     exp1.match('1.a')
     exp1.should.not.match '1.b'
-    vtable2 = VariableTable.new(Variable.new('VAR') => PioneString.new('*'))
+    vtable2 = VariableTable.new(Variable.new('VAR') => PioneString.new('*').to_seq)
     exp2 = DataExpr.new('{$VAR}.a').eval(vtable2)
     exp2.should.match '1.a'
     exp2.should.match '2.a'
@@ -245,7 +243,7 @@ describe 'Model::DataExpr' do
 
   it 'should expand an expression' do
     vtable = VariableTable.new
-    vtable.set(Variable.new("X"), 1.to_pione)
+    vtable.set(Variable.new("X"), PioneInteger.new(1).to_seq)
     DataExpr.new('<? $X + 1 ?>.a').eval(vtable).name.should == "2.a"
   end
 
@@ -276,96 +274,10 @@ describe 'Model::DataExpr' do
     exp.select.should.empty
   end
 
-  describe 'pione method ==' do
-    it 'should get true' do
-      DataExpr.new('test.a').call_pione_method("==", DataExpr.new('test.a')).should.be.true
-    end
-
-    it 'should get false' do
-      DataExpr.new('test.a').call_pione_method("==", DataExpr.new('test.b')).should.be.false
-    end
-  end
-
-  describe 'pione method !=' do
-    it 'should get true' do
-      DataExpr.new('test.a').call_pione_method("!=", DataExpr.new('test.b')).should.be.true
-    end
-
-    it 'should get false' do
-      DataExpr.new('test.a').call_pione_method("!=", DataExpr.new('test.a')).should.be.false
-    end
-  end
-
-  describe 'pione method all' do
-    it 'should set modifier all' do
-      DataExpr.new('test.a').call_pione_method("all").should ==
-        DataExpr.new('test.a').all
-      DataExpr.new('test.a').all.call_pione_method("all").should ==
-        DataExpr.new('test.a').all
-    end
-  end
-
-  describe 'pione method each' do
-    it 'should set modifier each' do
-      DataExpr.new('test.a').call_pione_method("each").should ==
-        DataExpr.new('test.a').each
-      DataExpr.new('test.a').all.call_pione_method("each").should ==
-        DataExpr.new('test.a').each
-    end
-  end
-
   describe 'pione method except' do
     it 'should set a exception' do
-      DataExpr.new('test.a').call_pione_method("except", DataExpr.new('test.b')).should ==
-        DataExpr.new('test.a').except(DataExpr.new('test.b'))
-    end
-  end
-
-  describe 'pione method stdout' do
-    it 'should set stdout mode' do
-      DataExpr.new('test.a').call_pione_method("stdout").should ==
-        DataExpr.new('test.a').stdout
-      DataExpr.new('test.a').stdout.call_pione_method("stdout").should ==
-        DataExpr.new('test.a').stdout
-      DataExpr.new('test.a').stderr.call_pione_method("stdout").should ==
-        DataExpr.new('test.a').stdout
-    end
-  end
-
-  describe 'pione method stderr' do
-    it 'should set stderr mode' do
-      DataExpr.new('test.a').call_pione_method("stderr").should ==
-        DataExpr.new('test.a').stderr
-      DataExpr.new('test.a').stdout.call_pione_method("stderr").should ==
-        DataExpr.new('test.a').stderr
-      DataExpr.new('test.a').stderr.call_pione_method("stderr").should ==
-        DataExpr.new('test.a').stderr
-    end
-  end
-
-  describe 'pione method: or' do
-    it 'should get OR-relation data expression' do
-      a = DataExpr.new('test.a')
-      b = DataExpr.new('test.b')
-      a.call_pione_method('or', b).should == DataExprOr.new([a, b])
-    end
-  end
-
-  describe 'pione method: join' do
-    it 'should join with the connective' do
-      DataExpr.new('A:B').call_pione_method('join', PioneString.new(",")).should ==
-        PioneString.new("A,B")
-    end
-  end
-
-  describe "pione method: as_string" do
-    it "should convert to string" do
-      DataExpr.new('A').call_pione_method('as_string').should ==
-        PioneString.new("A")
-      DataExpr.new('A:B').call_pione_method('as_string').should ==
-        PioneString.new("A:B")
-      DataExprNull.instance.call_pione_method('as_string').should ==
-        PioneString.new("")
+      DataExpr.new('test.a').to_seq.call_pione_method("except", DataExpr.new('test.b').to_seq).should ==
+        DataExpr.new('test.a').except(DataExpr.new('test.b')).to_seq
     end
   end
 end
@@ -396,10 +308,6 @@ describe "Model::DataExprNull" do
     @null.remove.should == @null
     @null.touch.should == @null
   end
-
-  it "should accept nonexistance" do
-    @null.should.accept_nonexistence
-  end
 end
 
 describe "Model::DataExprOr" do
@@ -412,134 +320,14 @@ describe "Model::DataExprOr" do
   end
 
   it "should match" do
-    expr = Model::DataExprOr.new([@a.each, @b.each])
+    expr = Model::DataExprOr.new([@a, @b])
     expr.should.match('A')
     expr.should.match('B')
     expr.should.not.match('C')
-    expr.modifier.should == :each
-  end
-
-  it 'should get/set modifier' do
-    [ [@a.each, @b.each, @null],
-      [@a.all, @b.all, @null] ].each do |vars|
-      vars.combination(2) do |left, right|
-        Model::DataExprOr.new([left, right]).all.modifier.should == :all
-        Model::DataExprOr.new([left, right]).each.modifier.should == :each
-      end
-    end
-  end
-
-  it 'should get/set the mode' do
-    [ [@a.each, @b.each, @null],
-      [@a.stdout, @b.stdout, @null],
-      [@a.stderr, @b.stderr, @null] ].each do |vars|
-      vars.combination(2) do |left, right|
-        Model::DataExprOr.new([left, right]).stdout.mode.should == :stdout
-        Model::DataExprOr.new([left, right]).stderr.mode.should == :stderr
-      end
-    end
-  end
-
-  it 'should get/set the update criteria' do
-    [ [@a.each, @b.each, @null],
-      [@a.neglect, @b.neglect, @null],
-      [@a.care, @b.care, @null] ].each do |vars|
-      vars.combination(2) do |left, right|
-        Model::DataExprOr.new([left, right]).neglect.update_criteria.should == :neglect
-        Model::DataExprOr.new([left, right]).care.update_criteria.should == :care
-      end
-    end
-  end
-
-  it "should have each modifier" do
-    Model::DataExprOr.new([@a.each, @b.each]).should.each
-    Model::DataExprOr.new([@a.each, @null]).should.each
-    Model::DataExprOr.new([@null, @a.each]).should.each
-  end
-
-  it "should not have all modifier" do
-    Model::DataExprOr.new([@a.all, @b.all]).should.not.each
-    Model::DataExprOr.new([@a.all, @null]).should.not.each
-    Model::DataExprOr.new([@null, @a.all]).should.not.each
-  end
-
-  it "should have all modifier" do
-    Model::DataExprOr.new([@a.all, @b.all]).should.all
-    Model::DataExprOr.new([@a.all, @null]).should.all
-    Model::DataExprOr.new([@null, @a.all]).should.all
-  end
-
-  it "should not have all modifier" do
-    Model::DataExprOr.new([@a.each, @b.each]).should.not.all
-    Model::DataExprOr.new([@a.each, @null]).should.not.all
-    Model::DataExprOr.new([@null, @a.each]).should.not.all
-  end
-
-  it "should be stdout mode" do
-    Model::DataExprOr.new([@a.stdout, @b.stdout]).should.stdout
-    Model::DataExprOr.new([@a.stdout, @null]).should.stdout
-    Model::DataExprOr.new([@null, @a.stdout]).should.stdout
-  end
-
-  it "should be not stdout mode" do
-    Model::DataExprOr.new([@a.stderr, @b.stderr]).should.not.stdout
-    Model::DataExprOr.new([@a.stderr, @null]).should.not.stdout
-    Model::DataExprOr.new([@null, @a.stderr]).should.not.stdout
-  end
-
-  it "should be stderr mode" do
-    Model::DataExprOr.new([@a.stderr, @b.stderr]).should.stderr
-    Model::DataExprOr.new([@a.stderr, @null]).should.stderr
-    Model::DataExprOr.new([@null, @a.stderr]).should.stderr
-  end
-
-  it "should be not stderr mode" do
-    Model::DataExprOr.new([@a.stdout, @b.stdout]).should.not.stderr
-    Model::DataExprOr.new([@a.stdout, @null]).should.not.stderr
-    Model::DataExprOr.new([@null, @a.stdout]).should.not.stderr
-  end
-
-  it "should neglect update criteria" do
-    Model::DataExprOr.new([@a.neglect, @b.neglect]).should.neglect
-    Model::DataExprOr.new([@a.neglect, @null]).should.neglect
-    Model::DataExprOr.new([@null, @a.neglect]).should.neglect
-  end
-
-  it "should not neglect update criteria" do
-    Model::DataExprOr.new([@a.care, @b.care]).should.not.neglect
-    Model::DataExprOr.new([@a.care, @null]).should.not.neglect
-    Model::DataExprOr.new([@null, @a.care]).should.not.neglect
-  end
-
-  it "should care update criteria" do
-    Model::DataExprOr.new([@a.care, @b.care]).should.care
-    Model::DataExprOr.new([@a.care, @null]).should.care
-    Model::DataExprOr.new([@null, @a.care]).should.care
-  end
-
-  it "should not care update criteria" do
-    Model::DataExprOr.new([@a.neglect, @b.neglect]).should.not.care
-    Model::DataExprOr.new([@a.neglect, @null]).should.not.care
-    Model::DataExprOr.new([@null, @a.neglect]).should.not.care
-  end
-
-  it "should have write operation" do
-    Model::DataExprOr.new([@a.write, @b.write]).should.write
-    Model::DataExprOr.new([@a.write, @null]).should.write
-    Model::DataExprOr.new([@null, @a.write]).should.write
-  end
-
-  it "should accept nonexistance" do
-    Model::DataExprOr.new([@a.each, @null]).should.accept_nonexistence
-    Model::DataExprOr.new([@null, @a.each]).should.accept_nonexistence
-  end
-
-  it "should not accept nonexistance" do
-    Model::DataExprOr.new([@a.each, @b.each]).should.not.accept_nonexistence
   end
 
   it "should get/set exceptions" do
-    Model::DataExprOr.new([@a_aster, @b.each]).except(@aa_each).tap do |expr|
+    Model::DataExprOr.new([@a_aster, @b]).except(@aa_each).tap do |expr|
       expr.exceptions.should == [@aa_each]
       expr.should.match("AAA")
       expr.should.match("B")
@@ -553,7 +341,7 @@ end
 #
 # test cases
 #
-yamlname = 'spec_data-expr.yml'
+yamlname = 'spec_data-expr_match.yml'
 ymlpath = File.join(File.dirname(__FILE__), yamlname)
 testcases = YAML.load_file(ymlpath)
 
@@ -565,14 +353,16 @@ describe "Model::DataExpr variation tests" do
 
     testcase['match'].map do |name|
       it "#{expr} should match #{name}" do
-        data_expr.eval(VariableTable.new).should.match(name)
+        data_expr.eval(VariableTable.new).first.should.match(name)
       end
     end
 
     testcase['unmatch'].map do |name|
       it "#{expr} should unmatch #{name}" do
-        data_expr.eval(VariableTable.new).should.not.match(name)
+        data_expr.eval(VariableTable.new).first.should.not.match(name)
       end
     end
   end
+
+  test_pione_method("data-expr")
 end

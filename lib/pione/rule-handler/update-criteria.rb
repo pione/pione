@@ -38,7 +38,7 @@ module Pione
           rule.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
             if data_expr.write? or data_expr.touch?
-              case data_expr.modifier
+              case data_expr.distribution
               when :all
                 if outputs[i].nil? or outputs[i].select{|data| data_expr.match(data.name)}.empty?
                   result = true
@@ -74,7 +74,7 @@ module Pione
           rule.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
             if data_expr.remove?
-              case data_expr.modifier
+              case data_expr.distribution
               when :all
                 if not(outputs[i].nil? or outputs[i].select{|data| data_expr.match(data.name)}.empty?)
                   result = true

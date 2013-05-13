@@ -61,10 +61,13 @@ module Pione
     # @return [DataFinderResult]
     #   query result
     def find_by_expr(expr)
-      expr = DataExpr.new(expr) if expr.kind_of?(String)
-      query = Tuple[:data].new(name: expr, domain: @domain)
+      name = expr
+      name = expr.first if expr.kind_of?(DataExprSequence)
+      name = DataExpr.new(expr) if expr.kind_of?(String)
+      query = Tuple[:data].new(name: name, domain: @domain)
       return tuple_space_server.read_all(query).map do |tuple|
-        tuple.update_criteria = expr.update_criteria; tuple
+        tuple.update_criteria = expr.update_criteria if expr.kind_of?(DataExprSequence)
+        tuple
       end
     end
 
@@ -99,14 +102,14 @@ module Pione
       # make combination results
       prefix = (type == :input ? "I" : "O")
       if head.all?
-        # case all modifier
+        # case all distribution
         new_vtable =
-          make_auto_variables_by_all(prefix, head, tuples, vtable, index)
+          make_auto_variables_by_all(type, prefix, head, tuples, vtable, index)
         unless tuples.empty?
           return find_rec_sub(type, tail, index, tuples, new_vtable)
         end
       else
-        # case each modifier
+        # case each distribution
         return tuples.map {|tuple|
           args = [prefix, head, tuple, vtable, index]
           new_vtable = make_auto_variables_by_each(*args)
@@ -129,62 +132,22 @@ module Pione
 
     # Make auto-variables by the name modified 'all'.
     # @api private
-    def make_auto_variables_by_all(prefix, expr, tuples, vtable, index)
+    def make_auto_variables_by_all(type, prefix, expr, tuples, vtable, index)
       # create new table
       new_vtable = VariableTable.new(vtable)
-      # variable
-      var = Variable.new(prefix)
-
-      # setup rule-io list
-      list = new_vtable.get(var)
-      list = RuleIOList.new unless list
-      io_list = RuleIOList.new
-      new_vtable.set!(var, list.add(io_list))
-
-      asterisk = []
-
-      # convert each tuples
-      tuples.each do |tuple, i|
-        asterisk << expr.match(tuple.name).to_a[1]
-
-        elt = RuleIOElement.new(PioneString.new(tuple.name))
-        elt.uri = PioneString.new(tuple.location.uri).to_seq
-        elt.match = PioneList.new(
-          *expr.match(tuple.name).to_a.map{|m| PioneString.new(m).to_seq}
-        )
-        io_list.add!(elt)
-      end
-
-      # set special variable if index equals 1
-      if prefix == 'I' && index == 1
-        new_vtable.set(Variable.new("*"), PioneString.new(asterisk.join(":")).to_seq)
-      end
+      # set auto variables
+      new_vtable.make_io_auto_variables_by_all(type, prefix, expr, tuples, index)
 
       return new_vtable
     end
 
-    # Make auto-variables by the name modified 'each'.
+    # Make auto-variables by the name with 'each' distribution.
     # @api private
     def make_auto_variables_by_each(prefix, expr, tuple, vtable, index)
       # create new table
       new_vtable = VariableTable.new(vtable)
-      # variable
-      var = Variable.new(prefix)
-      # matched data
-      md = expr.match(tuple.name).to_a
-
-      # setup rule-io list
-      list = new_vtable.get(var)
-      list = RuleIOList.new unless list
-      elt = RuleIOElement.new(PioneString.new(tuple.name).to_seq)
-      elt.uri = PioneString.new(tuple.location.uri.to_s).to_seq
-      elt.match = PioneList.new(*md.map{|d| PioneString.new(d).to_seq})
-      new_vtable.set!(var, list.add(elt))
-
-      # set special variable if index equals 1
-      if prefix == 'I' && index == 1
-        new_vtable.set(Variable.new("*"), PioneString.new(md[1]).to_seq)
-      end
+      # set auto variables
+      new_vtable.make_io_auto_variables_by_each(prefix, expr, tuple, index)
 
       return new_vtable
     end

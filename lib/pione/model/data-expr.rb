@@ -1,5 +1,37 @@
 module Pione
   module Model
+    # DataExpr::Compiler is a regexp compiler for data expression.
+    module DataExprCompiler
+      TABLE = {}
+
+      # Define a string matcher.
+      def self.define_matcher(matcher, replace)
+        TABLE[Regexp.escape(matcher)] = replace
+      end
+
+      # Asterisk symbol is multi-characters matcher(empty string is not matched).
+      define_matcher('*', '(.+)')
+
+      # Question symbol is single character matcher(empty string is not matched).
+      define_matcher('?', '(.)')
+
+      # Compiles data name into regular expression.
+      #
+      # @param name [String]
+      #   data name
+      def compile(name)
+        return name unless name.kind_of?(String)
+
+        s = "^#{Regexp.escape(name)}$"
+        TABLE.keys.each {|key| s.gsub!(key, TABLE)}
+        s.gsub!(/\\\[(!|\\\^)?(.*)\\\]/){"[#{'^' if $1}#{$2.gsub('\-','-')}]"}
+        s.gsub!(/\\{(.*)\\}/){"(#{$1.split(',').join('|')})"}
+        Regexp.new(s)
+      end
+      module_function :compile
+    end
+
+
     # DataExpr is a class for data name expressions of rule input and output.
     #
     # @example
@@ -8,41 +40,9 @@ module Pione
     # @example
     #   # incomplete name
     #   DataExpr.new("*.txt")
-    class DataExpr < BasicModel
-
-      # separator symbol for all modifier
+    class DataExpr < Element
+      # separator symbol for all distribution
       SEPARATOR = ':'
-
-      # DataExpr::Compiler is a regexp compiler for data expression.
-      module Compiler
-        TABLE = {}
-
-        # Define a string matcher.
-        def self.define_matcher(matcher, replace)
-          TABLE[Regexp.escape(matcher)] = replace
-        end
-
-        # Asterisk symbol is multi-characters matcher(empty string is not matched).
-        define_matcher('*', '(.+)')
-
-        # Question symbol is single character matcher(empty string is not matched).
-        define_matcher('?', '(.)')
-
-        # Compiles data name into regular expression.
-        #
-        # @param name [String]
-        #   data name
-        def compile(name)
-          return name unless name.kind_of?(String)
-
-          s = "^#{Regexp.escape(name)}$"
-          TABLE.keys.each {|key| s.gsub!(key, TABLE)}
-          s.gsub!(/\\\[(!|\\\^)?(.*)\\\]/){"[#{'^' if $1}#{$2.gsub('\-','-')}]"}
-          s.gsub!(/\\{(.*)\\}/){"(#{$1.split(',').join('|')})"}
-          Regexp.new(s)
-        end
-        module_function :compile
-      end
 
       class << self
         alias :orig_new :new
@@ -51,7 +51,7 @@ module Pione
         def new(*args)
           # check OR expression
           name = args.first
-          if self == DataExpr and name.include?(SEPARATOR)
+          if self == DataExpr and name and name.include?(SEPARATOR)
             name.split(SEPARATOR).map do |single_name|
               orig_new(single_name, *args.drop(1))
             end.tap {|exprs| return DataExprOr.new(exprs)}
@@ -69,42 +69,6 @@ module Pione
           new(name)
         end
 
-        # Create a name expression with 'each' modifier.
-        #
-        # @param name [String]
-        #   data name
-        def each(name)
-          new(name, modifier: :each)
-        end
-
-        # Create a name expression with 'all' modifier.
-        #
-        # @param name [String]
-        #   data name
-        def all(name)
-          new(name, modifier: :all)
-        end
-
-        # Create a new data name for stdout ouput.
-        #
-        # @param name [String]
-        #   data name
-        # @return [DataExpr]
-        #   data expression for stdout
-        def stdout(name)
-          new(name, modifier: :each, mode: :stdout)
-        end
-
-        # Create a new data name for stderr output.
-        #
-        # @param name [String]
-        #   data name
-        # @return [DataExpr]
-        #   data expression for stderr
-        def stderr(name)
-          new(name, modifier: :each, mode: :stderr)
-        end
-
         # Return convertion prcedure for enumerable.
         #
         # @return [Proc]
@@ -114,11 +78,9 @@ module Pione
         end
       end
 
-      set_pione_model_type TypeDataExpr
-
       attr_reader :name
       alias :core :name
-      forward_as_key! :@data, :modifier, :mode, :exceptions, :update_criteria, :operation
+      forward_as_key! :@data, :exceptions, :matched_data, :location
 
       # Create a data expression.
       #
@@ -126,100 +88,19 @@ module Pione
       #   data expression name
       # @param opts [Hash]
       #   options of the expression
-      # @option opts [Symbol] :modifier
-      #   :all or :each
-      # @option opts [Symbol] :mode
-      #   nil, :stdout, or :stderr
       # @option opts [Array<DataExpr>] :exceptions
       #   exceptional expressions
-      # @option opts [Boolean] :update_criteria
-      #   the flag whether the data disregards update criterias
+      # @option opts [String] :match
       def initialize(name, data={})
-        unless name.kind_of? String or name.kind_of? Regexp
-          raise ArgumentError.new(name)
-        end
-
         @name = name
         @data = Hash.new
-        @data[:modifier] = data[:modifier] || :each
-        @data[:mode] = data[:mode]
         @data[:exceptions] = data[:exceptions] || []
-        @data[:update_criteria] = data[:update_criteria] || :care
-        @data[:operation] = data[:operation] || :write
-
-        super()
+        @data[:matched_data] = data[:matched_data] || []
+        @data[:location] = data[:location] || nil
       end
 
-      # Return new data expression with each modifier.
-      #
-      # @return [DataExpr]
-      #   new data expression with each modifier
-      def each
-        return self.class.new(@name, @data.merge(modifier: :each))
-      end
-
-      # Return new data expression with all modifier.
-      #
-      # @return [DataExpr]
-      #   new data expression with all modifier
-      def all
-        return self.class.new(@name, @data.merge(modifier: :all))
-      end
-
-      # Return new data expression with stdout mode.
-      #
-      # @return [DataExpr]
-      #   new data expression with stdout mode
-      def stdout
-        return self.class.new(@name, @data.merge(mode: :stdout))
-      end
-
-      # Return new data expression with stderr mode.
-      #
-      # @return [DataExpr]
-      #   new data expression with stderr mode
-      def stderr
-        return self.class.new(@name, @data.merge(mode: :stderr))
-      end
-
-      # Return new data expression with disregarding update-criteria.
-      #
-      # @return [DataExpr]
-      #    new data expression with disregarding update-criteria
-      def neglect
-        return self.class.new(@name, @data.merge(update_criteria: :neglect))
-      end
-
-      # Return new data expression with regarding update-criteria.
-      #
-      # @return [DataExpr]
-      #    new data expression with regarding update-criteria
-      def care
-        return self.class.new(@name, @data.merge(update_criteria: :care))
-      end
-
-      # Return new data expression with write operation.
-      #
-      # @return [DataExpr]
-      #   new data expression with write operation.
-      def write
-        return self.class.new(@name, @data.merge(operation: :write))
-      end
-
-      # Return new data expression with remove operation.
-      #
-      # @return [DataExpr]
-      #   new data expression with remove operation
-      def remove
-        return self.class.new(@name, @data.merge(operation: :remove))
-      end
-
-      # Return new data expression with touch operation.
-      #
-      # @return [DataExpr]
-      #   new data expression with touch operation
-      def touch
-        return self.class.new(@name, @data.merge(operation: :touch))
+      def set_data(data)
+        self.class.new(@name, @data.merge(data))
       end
 
       # Evaluate the data expression.
@@ -243,88 +124,14 @@ module Pione
 
       # @api private
       def task_id_string
-        "DataExpr<#{name},#{modifier},[%s]>" % [
-          exceptions.map{|exc| exc.task_id_string}.join(",")
-        ]
+        "DataExpr<#{name}, [%s]>" % exceptions.map{|exc| exc.task_id_string}.join(",")
       end
 
       # @api private
       def textize
-        "data_expr(\"#{name}\",:#{modifier},[%s])" % [
+        "data_expr(\"#{name}\", [%s])" % [
           exceptions.map{|exc| exc.textize}.join(",")
         ]
-      end
-
-      # Return true if the name has 'all' modifier.
-      #
-      # @return [Boolean]
-      #   true if the name has 'all' modifier
-      def all?
-        modifier == :all
-      end
-
-      # Return true if the name has 'each' modifier.
-      #
-      # @return [Boolean]
-      #   true if the name has 'each' modifier
-      def each?
-        modifier == :each
-      end
-
-      # Return true if the data content is in stdout.
-      #
-      # @return [Boolean]
-      #   true if the data content is in stdout
-      def stdout?
-        mode == :stdout
-      end
-
-      # Return true if the data content is in stderr.
-      #
-      # @return [Boolean]
-      #   true if the data content is in stderr
-      def stderr?
-        mode == :stderr
-      end
-
-      # Return true if the data disregards update criteria.
-      #
-      # @return [Boolean]
-      #   true if the data disregards update criteria
-      def neglect?
-        update_criteria == :neglect
-      end
-
-      # Return true if the data regards update criteria.
-      #
-      # @return [Boolean]
-      #   true if the data regards update criteria
-      def care?
-        update_criteria == :care
-      end
-
-      # Return true if the data expression has the attribute of write operation.
-      #
-      # @return [Boolean]
-      #   true  if the data expression has the attribute of write operation
-      def write?
-        operation == :write
-      end
-
-      # Return true if the data expression has the attribute of remove operation.
-      #
-      # @return [Boolean]
-      #   true  if the data expression has the attribute of remove operation
-      def remove?
-        operation == :remove
-      end
-
-      # Return true if the data expression has the attribute of touch operation.
-      #
-      # @return [Boolean]
-      #   true  if the data expression has the attribute of touch operation
-      def touch?
-        operation == :touch
       end
 
       # Create new data expression with appending the exception.
@@ -399,17 +206,15 @@ module Pione
 
       # @api private
       def to_s
-        "#<#<#{self.class.name}> name='#{name}' data=#{@data.inspect}>"
+        "#<DataExpr '%s' %s>" % [name, @data.inspect]
       end
 
-      # Return true if name, modifier, mode, and exceptions are the same.
+      # Return true if name, distribution, mode, and exceptions are the same.
       #
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)
         return false unless name == other.name
-        return false unless modifier == other.modifier
-        return false unless mode == other.mode
         return false unless exceptions.sort == other.exceptions.sort
         return true
       end
@@ -417,7 +222,7 @@ module Pione
 
       # @api private
       def hash
-        [name, modifier, mode, exceptions].join("\000").hash
+        [name, exceptions].join("\000").hash
       end
 
       # Same as Regexp#=~ but return 0 if it matched.
@@ -436,7 +241,7 @@ module Pione
 
       # @api private
       def compile_to_regexp(name)
-        Compiler.compile(name)
+        DataExprCompiler.compile(name)
       end
 
       # Return true if the name matchs exceptions.
@@ -455,6 +260,7 @@ module Pione
       def return_self
         self
       end
+
       alias :all :return_self
       alias :each :return_self
       alias :stdout :return_self
@@ -469,12 +275,12 @@ module Pione
         @data = {}
       end
 
-      def accept_nonexistence?
-        true
-      end
-
       def match(name)
         nil
+      end
+
+      def accept_nonexistence?
+        true
       end
 
       # Evaluate the data expression. The result is myself.
@@ -493,7 +299,7 @@ module Pione
 
       # @api private
       def to_s
-        "#<#<#{self.class.name}>>"
+        "#<DataExprNull>"
       end
 
       # @api private
@@ -504,12 +310,10 @@ module Pione
     end
 
     # DataExprOr represents or-relation of data expressions. Expressions have
-    # same properties about modifier and mode.
+    # same properties about distribution and mode.
     class DataExprOr < DataExpr
       attr_reader :elements
       alias :core :elements
-
-      forward! Proc.new{find_not_null_element}, :modifier, :mode, :update_criteria, :operation
 
       # @param elements [Array<DataExpr>]
       #   elements that have OR relation
@@ -521,12 +325,6 @@ module Pione
         @elements = elements
         @data = {}
         @data[:exceptions] = data[:exceptions] || []
-
-        # check attribute consistency
-        check_attribute_consistency(:modifier)
-        check_attribute_consistency(:mode)
-        check_attribute_consistency(:update_criteria)
-        check_attribute_consistency(:operation)
       end
 
       # Match if the name is matched one of elements.
@@ -546,84 +344,8 @@ module Pione
         end.tap {return nil}
       end
 
-      # Return true if at least one element accepts nonexistence.
-      #
-      # @return [Boolean]
-      #   true if at least one element accepts nonexistence
       def accept_nonexistence?
-        @elements.any?{|element| element.accept_nonexistence?}
-      end
-
-      # Return a new instance that has elements with "all" modifier.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with "all" modifier
-      def all
-        self.class.new(@elements.map{|elt| elt.all}, @data)
-      end
-
-      # Return a new instance that has elements with "each" modifier.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with "each" modifier
-      def each
-        self.class.new(@elements.map{|elt| elt.each}, @data)
-      end
-
-      # Return a new instance that has elements with stdout mode.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with stdout mode
-      def stdout
-        self.class.new(@elements.map{|elt| elt.stdout}, @data)
-      end
-
-      # Return a new instance that has elements with stderr mode.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with stderr mode
-      def stderr
-        self.class.new(@elements.map{|elt| elt.stderr}, @data)
-      end
-
-      # Return a new instance that has elements with neglecting update criteria.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with neglecting update criteria
-      def neglect
-        self.class.new(@elements.map{|elt| elt.neglect}, @data)
-      end
-
-      # Return a new instance that has elements with caring update criteria.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with caring update criteria
-      def care
-        self.class.new(@elements.map{|elt| elt.care}, @data)
-      end
-
-      # Return a new instance that has elements with write operation.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with write operation
-      def write
-        self.class.new(@elements.map{|elt| elt.write}, @data)
-      end
-
-      # Return a new instance that has elements with remove operation.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with remove operation
-      def remove
-        self.class.new(@elements.map{|elt| elt.remove}, @data)
-      end
-
-      # Return a new instance that has elements with touch operation.
-      #
-      # @return [DataExprOr]
-      #   a new instance that has elements with touch operation
-      def touch
-        self.class.new(@elements.map{|elt| elt.touch}, @data)
+        @elements.any?{|elt| elt.accept_nonexistence?}
       end
 
       # Evaluate the data expression. This evaluates all elements of the expression.
@@ -644,21 +366,13 @@ module Pione
 
       # @api private
       def to_s
-        "#<#<#{self.class.name}> #{@elements} #{@data}>"
+        "#<DataExprOr #{@elements} #{@data}>"
       end
 
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)
-        if (@elements - other.elements).empty?
-          return false unless mode == other.mode
-          return false unless modifier == other.modifier
-          return false unless update_criteria == other.update_criteria
-          return false unless operation == other.operation
-          return true
-        else
-          return false
-        end
+        return @elements == other.elements
       end
       alias :eql? :"=="
 
@@ -683,17 +397,41 @@ module Pione
       end
     end
 
+    class DataExprSequence < OrdinalSequence
+      set_pione_model_type TypeDataExpr
+      set_element_class DataExpr
+      set_shortname "DSeq"
+      DataExpr.set_sequence_class self
+      DataExprNull.set_sequence_class self
+      DataExprOr.set_sequence_class self
+
+      define_sequence_attribute :output_mode, :file, :stdout, :stderr
+      define_sequence_attribute :update_criteria, :care, :neglect
+      define_sequence_attribute :operation, :write, :remove, :touch
+      define_sequence_attribute :location, nil
+
+      forward! Proc.new{@elements.first}, :match, :name
+
+      # Return true if the sequence accepts nonexistence matching. This is
+      # determined that it includes null expression.
+      def accept_nonexistence?
+        @elements.any?{|elt| elt.accept_nonexistence?}
+      end
+    end
+
     TypeDataExpr.instance_eval do
       define_pione_method("==", [TypeDataExpr], TypeBoolean) do |rec, other|
         PioneBoolean.new(rec == other).to_seq
       end
 
-      define_pione_method("!=", [TypeDataExpr], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other)).to_seq
+      define_pione_method("[]", [TypeInteger], TypeString) do |rec, index|
+        sequential_map2(TypeString, rec, index) do |rec_elt, index_elt|
+          rec_elt.matched_data[index_elt.value]
+        end.set_separator(DataExpr::SEPARATOR)
       end
 
       define_pione_method("all", [], TypeDataExpr) do |rec|
-        rec.all
+        rec.set_all
       end
 
       define_pione_method("all?", [], TypeBoolean) do |rec|
@@ -701,19 +439,15 @@ module Pione
       end
 
       define_pione_method("each", [], TypeDataExpr) do |rec|
-        rec.each
+        rec.set_each
       end
 
       define_pione_method("each?", [], TypeBoolean) do |rec|
         rec.each?
       end
 
-      define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |rec, target|
-        rec.except(target)
-      end
-
       define_pione_method("stdout", [], TypeDataExpr) do |rec|
-        rec.stdout
+        rec.set_stdout
       end
 
       define_pione_method("stdout?", [], TypeBoolean) do |rec|
@@ -721,7 +455,7 @@ module Pione
       end
 
       define_pione_method("stderr", [], TypeDataExpr) do |rec|
-        rec.stderr
+        rec.set_stderr
       end
 
       define_pione_method("stderr?", [], TypeBoolean) do |rec|
@@ -729,7 +463,7 @@ module Pione
       end
 
       define_pione_method("neglect", [], TypeDataExpr) do |rec|
-        rec.neglect
+        rec.set_neglect
       end
 
       define_pione_method("neglect?", [], TypeBoolean) do |rec|
@@ -737,7 +471,7 @@ module Pione
       end
 
       define_pione_method("care", [], TypeDataExpr) do |rec|
-        rec.care
+        rec.set_care
       end
 
       define_pione_method("care?", [], TypeBoolean) do |rec|
@@ -745,7 +479,7 @@ module Pione
       end
 
       define_pione_method("write", [], TypeDataExpr) do |rec|
-        rec.write
+        rec.set_write
       end
 
       define_pione_method("write?", [], TypeBoolean) do |rec|
@@ -753,7 +487,7 @@ module Pione
       end
 
       define_pione_method("remove", [], TypeDataExpr) do |rec|
-        rec.remove
+        rec.set_remove
       end
 
       define_pione_method("remove?", [], TypeBoolean) do |rec|
@@ -761,38 +495,58 @@ module Pione
       end
 
       define_pione_method("touch", [], TypeDataExpr) do |rec|
-        rec.touch
+        rec.set_touch
       end
 
       define_pione_method("touch?", [], TypeBoolean) do |rec|
         rec.touch?
       end
 
-      define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |rec, other|
-        DataExprOr.new([rec, other])
+      define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |rec, target|
+        map2(rec, target) do |rec_elt, target_elt|
+          rec_elt.except(target_elt)
+        end
       end
 
-      define_pione_method("join", [TypeString], TypeString) do |rec, connective|
-        PioneString.new(rec.elements.map{|elt| elt.name}.join(connective.to_ruby)).to_seq
+      define_pione_method("exceptions", [], TypeDataExpr) do |rec|
+        rec.elements.map do |elt|
+          elt.exceptions
+        end.flatten.tap{|x| break DataExprSequence.new(x)}
+      end
+
+      define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |rec, other|
+        map2(rec, other) do |rec_elt, other_elt|
+          DataExprOr.new([rec_elt, other_elt])
+        end
+      end
+
+      define_pione_method("match", [TypeString], TypeString) do |rec, name|
+        rec.match(name.value).to_a.inject(StringSequence.empty) do |seq, matched|
+          seq.push(PioneString.new(matched))
+        end
       end
 
       define_pione_method("match?", [TypeString], TypeBoolean) do |rec, name|
-        if rec.match(name.value)
-          PioneBoolean.true.to_seq
-        else
-          PioneBoolean.false.to_seq
+        sequential_map2(TypeBoolean, rec, name) do |rec_elt, name_elt|
+          not(rec_elt.match(name_elt.value).nil?)
         end
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|
-        case rec
-        when DataExprNull
-          PioneString.new("").to_seq
-        when DataExprOr
-          PioneString.new(rec.elements.map{|elt| elt.name}.join(DataExpr::SEPARATOR)).to_seq
-        when DataExpr
-          PioneString.new(rec.name).to_seq
-        end
+        sequential_map1(TypeString, rec) do |rec_elt|
+          case rec_elt
+          when DataExprNull
+            ""
+          when DataExprOr
+            rec_elt.elements.map{|elt| elt.name}.join(DataExpr::SEPARATOR)
+          when DataExpr
+            rec_elt.name
+          end
+        end.set_separator(DataExpr::SEPARATOR)
+      end
+
+      define_pione_method("accept_nonexistence?", [], TypeBoolean) do |rec|
+        PioneBoolean.new(rec.accept_nonexistence?).to_seq
       end
     end
   end

@@ -58,8 +58,6 @@ module Pione
 
     # VariableTable represents variable tables for rule context.
     class VariableTable < BasicModel
-      set_pione_model_type TypeVariableTable
-
       # Return empty variable table.
       #
       # @return [VariableTable]
@@ -134,7 +132,7 @@ module Pione
         check_argument_type(variable, Variable)
         check_argument_type(new_value, BasicModel)
         if old_value = @table[variable]
-          unless old_value.kind_of?(UndefinedValue) or new_value == old_value
+          unless old_value.void? or new_value == old_value
             raise VariableBindingError.new(variable, new_value, old_value)
           end
         end
@@ -164,11 +162,11 @@ module Pione
         variables = to_hash
         new_str = str.to_s.gsub(/\{(\$.+?)\}/) do
           expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
-          expr.eval(self).call_pione_method("as_string").value
+          expr.eval(self).call_pione_method("textize").first.value
         end
         new_str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
           expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
-          expr.eval(self).call_pione_method("as_string").value
+          expr.eval(self).call_pione_method("textize").first.value
         end
       end
 
@@ -246,15 +244,13 @@ module Pione
         @table.hash
       end
 
-      private
-
       # Make input or output auto variables.
       #
       # @api private
       def make_io_auto_variables(type, expr, data, index)
         expr = expr.eval(self)
         prefix = (type == :input ? "I" : "O")
-        case expr.modifier
+        case expr.distribution
         when :all
           make_io_auto_variables_by_all(type, prefix, expr, data, index)
         when :each
@@ -262,37 +258,52 @@ module Pione
         end
       end
 
-      # Make input or output auto variables for 'exist' modified data name
-      # expression.
+      # Make input/output auto variables by data expression with each
+      # distribution.
       #
-      # @api private
+      # @param prefix [String]
+      #   "I" or "O"
+      # @param expr [DataExpr]
+      #   data expression
+      # @param tuple [DataTuple]
+      #   data tuple
+      # @param index [Integer]
+      #   index number of the input/output
+      # @return [void]
       def make_io_auto_variables_by_each(prefix, expr, tuple, index)
         return if tuple.nil?
+
         # variable
         var = Variable.new(prefix)
+
         # matched data
-        md = expr.match(tuple.name).to_a
+        md = expr.first.match(tuple.name).to_a
 
-        # setup rule-io list
-        list = get(var)
-        list = RuleIOList.new unless list
-        elt = RuleIOElement.new(PioneString.new(tuple.name))
-        elt.uri = PioneString.new(tuple.location.uri.to_s)
-        elt.match = PioneList.new(*md.map{|d| PioneString.new(d)})
+        # setup data expression sequence
+        seq = get(var) || KeyedSequence.empty
+        data_expr = DataExpr.new(tuple.name, location: tuple.location, matched_data: md)
 
-        # update the list
-        set!(var, list.add(elt))
+        # update variable table
+        set!(var, seq.put(PioneInteger.new(index), data_expr))
 
-        # set special variable if index equals 1
+        # set the special variable if index is 1
         if prefix == 'I' && index == 1
-          set(Variable.new("*"), PioneString.new(md[1]))
+          set(Variable.new("*"), StringSequence.new([PioneString.new(md[1])], separator: DataExpr::SEPARATOR))
         end
       end
 
-      # Make input or output auto variables for 'all' modified data name
-      # expression.
+      # Make input/output auto variables by data expression with all
+      # distribution.
       #
-      # @api private
+      # @param prefix [String]
+      #   "I" or "O"
+      # @param expr [DataExpr]
+      #   data expression
+      # @param tuple [DataTuple]
+      #   data tuple
+      # @param index [Integer]
+      #   index number of the input/output
+      # @return [void]
       def make_io_auto_variables_by_all(type, prefix, expr, tuples, index)
         # FIXME: output
         return if type == :output
@@ -300,44 +311,32 @@ module Pione
         # variable
         var = Variable.new(prefix)
 
-        # setup rule-io list
-        list = get(var)
-        list = RuleIOList.new unless list
-        io_list = RuleIOList.new()
+        # setup data expression sequence(this is $I/$O)
+        seq = get(var) || KeyedSequence.empty(separator: DataExpr::SEPARATOR)
 
         asterisk = []
 
         # convert each tuples
-        tuples.each do |tuple, i|
-          asterisk << expr.match(tuple.name).to_a[1]
+        matched_seq = tuples.inject(seq) do |_seq, tuple|
+          # matched data
+          md = expr.first.match(tuple.name).to_a
+          asterisk << md[1]
 
-          elt = RuleIOElement.new(PioneString.new(tuple.name))
-          elt.uri = PioneString.new(tuple.location.uri.to_s)
-          elt.match = PioneList.new(
-            *expr.match(tuple.name).to_a.map{|m| PioneString.new(m)}
-          )
-          io_list.add!(elt)
+          # make a date expression
+          data_expr = DataExpr.new(tuple.name, location: tuple.location, matched_data: md)
+
+          # put it with index
+          _seq.put(PioneInteger.new(index), data_expr)
         end
 
         # set special variable if index equals 1
         if prefix == 'I' && index == 1
-          set(Variable.new("*"), PioneString.new(asterisk.join(":")))
+          strs = asterisk.map{|str| PioneString.new(str)}
+          set(Variable.new("*"), StringSequence.new(strs, separator: DataExpr::SEPARATOR))
         end
 
-        # update
-        set!(var, list.add(io_list))
-      end
-
-      #
-      # pione methods
-      #
-
-      define_pione_method("get", [TypeString], TypeAny) do |name|
-        get(Variable.new(name.value))
-      end
-
-      define_pione_method("keys", [], TypeList.new(TypeString)) do
-        PioneList.new(@table.keys.map{|var| PioneString.new(var.name)})
+        # update sequence
+        set!(var, matched_seq)
       end
     end
   end

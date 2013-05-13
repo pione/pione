@@ -67,7 +67,7 @@ module Pione
 
       # data null
       rule(:data_null => simple(:obj)) {
-        Model::DataExprNull.instance
+        Model::DataExprNull.instance.to_seq
       }
 
       # Extract the content of +:rule_expr+.

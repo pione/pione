@@ -1,9 +1,7 @@
 module Pione
   module Model
     # PioneBoolean representes truth value in PIONE system.
-    class PioneBoolean < BasicModel
-      set_pione_model_type TypeBoolean
-
+    class PioneBoolean < Value
       # Returns the value in ruby.
       attr_reader :value
 
@@ -58,8 +56,8 @@ module Pione
       # @param value [Boolean]
       #   true or false
       def initialize(value)
+        raise ArgumentError.new(value) unless value == true or value == false
         @value = value
-        super()
       end
 
       # @api private
@@ -97,7 +95,7 @@ module Pione
       end
 
       def to_seq
-        PioneBooleanSequence.new([self])
+        BooleanSequence.new([self])
       end
 
       # @api private
@@ -118,9 +116,10 @@ module Pione
       end
     end
 
-    class PioneBooleanSequence < BasicSequence
+    class BooleanSequence < OrdinalSequence
       set_pione_model_type TypeBoolean
       set_element_class PioneBoolean
+      set_shortname "BSeq"
 
       def value
         @value ||= @elements.inject(true){|b, elt| b and elt.value}

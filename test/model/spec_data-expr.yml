@@ -1,45 +1,16 @@
-"'*.a'":
-  match:
-    - "1.a"
-    - "2.a"
-    - "3.a"
-    - "123.a"
-  unmatch:
-    - "1.b"
-    - ".a"
-    - "a"
-    - "1.1a"
-    - "1.aa"
-    - "123.aa"
-"'A:B'":
-  match:
-    - "A"
-    - "B"
-  unmatch:
-    - "AB"
-    - "BA"
-"'*.a:*.b'":
-  match:
-    - "1.a"
-    - "1.b"
-  unmatch:
-    - "1.ab"
-    - "1.ba"
-    - ".a"
-    - ".b"
-"'A' or 'B'":
-  match:
-    - "A"
-    - "B"
-  unmatch:
-    - "AB"
-    - "BA"
-"'*.a' or '*.b'":
-  match:
-    - "1.a"
-    - "1.b"
-  unmatch:
-    - "1.ab"
-    - "1.ba"
-    - ".a"
-    - ".b"
+# |
+- "'a' | 'b' | 'c'" : "'a' | 'b' | 'c'"
+
+# except
+- "'a'.except('b')" : "'a'.except('b')"
+- "'a'.except('b'.except('c'))" : "'a'.except('b'.except('c'))"
+
+# exceptions
+- "'b'" : "'a'.except('b').exceptions"
+
+# accept_nonexistence?
+- "true" : "('a' or null).accept_nonexistence?"
+
+# as_string
+- '"a b c"' : "('a' | 'b' | 'c').as_string.join(\" \")"
+

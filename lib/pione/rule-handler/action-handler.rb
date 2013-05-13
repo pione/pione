@@ -137,13 +137,13 @@ module Pione
         list = Dir.entries(@working_directory)
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
-          case output.modifier
+          case output.distribution
           when :all
-            @outputs[i] = list.select{|name| output.match(name)}.map do |name|
+            @outputs[i] = list.select{|name| output.first.match(name)}.map do |name|
               make_output_tuple_with_time(name)
             end
           when :each
-            if name = list.find {|name| output.match(name)}
+            if name = list.find {|name| output.first.match(name)}
               @outputs[i] = make_output_tuple_with_time(name)
             end
           end

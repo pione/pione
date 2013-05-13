@@ -1,19 +1,7 @@
 module Pione
   module Model
     # PioneString is a string value in PIONE system.
-    class PioneString < BasicModel
-      set_pione_model_type TypeString
-      attr_reader :value
-
-      # Create a string with the value.
-      #
-      # @param value [String]
-      #   string value
-      def initialize(value)
-        @value = value
-        super()
-      end
-
+    class PioneString < Value
       # Evaluate the object with the variable table.
       #
       # @param vtable [VariableTable]
@@ -34,10 +22,10 @@ module Pione
 
       # Return a sequence that contains self.
       #
-      # @return [PioneStringSequence]
+      # @return [StringSequence]
       #   a sequence
       def to_seq
-        PioneStringSequence.new([self])
+        StringSequence.new([self])
       end
 
       # @api private
@@ -76,9 +64,10 @@ module Pione
       end
     end
 
-    class PioneStringSequence < BasicSequence
+    class StringSequence < OrdinalSequence
       set_pione_model_type TypeString
       set_element_class PioneString
+      set_shortname "StrSeq"
 
       def value
         @value ||= @elements.map{|elt| elt.value}.join
@@ -96,7 +85,7 @@ module Pione
           other.elements.map do |other_elt|
             PioneString.new(rec_elt.value + other_elt.value)
           end
-        end.flatten.tap {|x| break PioneStringSequence.new(x, rec.attribute)}
+        end.flatten.tap {|x| break StringSequence.new(x, rec.attribute)}
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|
@@ -116,13 +105,14 @@ module Pione
       end
 
       define_pione_method("as_data_expr", [], TypeDataExpr) do |rec|
-        DataExpr.new(rec.value)
+        # FIXME
+        DataExpr.new(rec.elements.map{|elt| elt.value}.join(":")).to_seq
       end
 
       define_pione_method("count", [], TypeInteger) do |rec|
-        rec.elements.map do |elt|
-          PioneIntegerSequence.new([PioneInteger.new(elt.value.size)])
-        end.tap {|x| break PioneIntegerSequence.new(x)}
+        sequential_map1(TypeInteger, rec) do |elt|
+          elt.value.size
+        end
       end
 
       define_pione_method("include?", [TypeString], TypeBoolean) do |rec, target|
@@ -139,12 +129,26 @@ module Pione
         end
       end
 
+      # insert : (pos : integer) -> (other : string) -> string
       define_pione_method("insert", [TypeInteger, TypeString], TypeString) do |rec, pos, other|
         sequential_map3(TypeString, rec, pos, other) do |rec_elt, pos_elt, other_elt|
           rec_elt.value.clone.insert(pos_elt.value-1, other_elt.value)
         end
       end
 
+      # join : string
+      define_pione_method("join", [], TypeString) do |rec|
+        rec.call_pione_method("join", PioneString.new(rec.separator).to_seq)
+      end
+
+      # join : (sep : string) -> string
+      define_pione_method("join", [TypeString], TypeString) do |rec, sep|
+        sequential_map1(TypeString, sep) do |sep_elt|
+          rec.elements.map{|elt| elt.value}.join(sep_elt.value)
+        end
+      end
+
+      # author : string
       define_pione_method("author", [], TypeString) do |rec|
         rec.set_annotation_type(:author)
       end

@@ -5,24 +5,24 @@ describe 'Pione::Transformer::ExprTransformer' do
     tc "1 + 2" do
       BinaryOperator.new(
         "+",
-        PioneIntegerSequence.new([1.to_pione]),
-        PioneIntegerSequence.new([2.to_pione])
+        IntegerSequence.new([1.to_pione]),
+        IntegerSequence.new([2.to_pione])
       )
     end
 
     tc '"a" + "b"' do
       BinaryOperator.new(
         "+",
-        PioneStringSequence.new(["a".to_pione]),
-        PioneStringSequence.new(["b".to_pione])
+        StringSequence.new(["a".to_pione]),
+        StringSequence.new(["b".to_pione])
       )
     end
 
     tc "false || true" do
       BinaryOperator.new(
         "||",
-        PioneBooleanSequence.new([PioneBoolean.false]),
-        PioneBooleanSequence.new([PioneBoolean.true])
+        BooleanSequence.new([PioneBoolean.false]),
+        BooleanSequence.new([PioneBoolean.true])
       )
     end
 
@@ -30,7 +30,7 @@ describe 'Pione::Transformer::ExprTransformer' do
       BinaryOperator.new(
         "*",
         Variable.new("Var"),
-        PioneIntegerSequence.new([3.to_pione])
+        IntegerSequence.new([3.to_pione])
       )
     end
 
@@ -38,12 +38,12 @@ describe 'Pione::Transformer::ExprTransformer' do
       left = BinaryOperator.new(
         "==",
         Variable.new("Var1"),
-        PioneStringSequence.new(["a".to_pione])
+        StringSequence.new(["a".to_pione])
       )
       right = BinaryOperator.new(
         "==",
         Variable.new("Var2"),
-        PioneStringSequence.new([PioneString.new("b")])
+        StringSequence.new([PioneString.new("b")])
       )
       BinaryOperator.new("&&", left, right)
     end
@@ -51,29 +51,29 @@ describe 'Pione::Transformer::ExprTransformer' do
 
   transformer_spec("data_expr", :expr) do
     tc "'test.a'" do
-      DataExpr.new("test.a")
+      DataExpr.new("test.a").to_seq
     end
 
     tc "null" do
-      DataExprNull.instance
+      DataExprNull.instance.to_seq
     end
   end
 
   transformer_spec("message", :expr) do
     tc "1.next" do
-      Message.new("next", PioneIntegerSequence.new([1.to_pione]))
+      Message.new("next", IntegerSequence.new([1.to_pione]))
     end
 
     tc "1.next.next" do
-      Message.new("next", Message.new("next", PioneIntegerSequence.new([1.to_pione])))
+      Message.new("next", Message.new("next", IntegerSequence.new([1.to_pione])))
     end
 
     tc "\"abc\".index(1,1)" do
       Message.new(
         "index",
-        PioneStringSequence.new(["abc".to_pione]),
-        PioneIntegerSequence.new([1.to_pione]),
-        PioneIntegerSequence.new([1.to_pione])
+        StringSequence.new(["abc".to_pione]),
+        IntegerSequence.new([1.to_pione]),
+        IntegerSequence.new([1.to_pione])
       )
     end
 
@@ -82,8 +82,8 @@ describe 'Pione::Transformer::ExprTransformer' do
         "prev",
         BinaryOperator.new(
           "+",
-          PioneIntegerSequence.new([1.to_pione]),
-          PioneIntegerSequence.new([2.to_pione])
+          IntegerSequence.new([1.to_pione]),
+          IntegerSequence.new([2.to_pione])
         )
       )
     end
@@ -94,15 +94,15 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
 
     tc "'*.txt'.all" do
-      Message.new("all", DataExpr.new("*.txt"))
+      Message.new("all", DataExpr.new("*.txt").to_seq)
     end
 
     tc "'*.txt'.all()" do
-      Message.new("all", DataExpr.new("*.txt"))
+      Message.new("all", DataExpr.new("*.txt").to_seq)
     end
 
     tc "'*.txt'.all(true)" do
-      Message.new("all", DataExpr.new("*.txt"), PioneBooleanSequence.new([PioneBoolean.true]))
+      Message.new("all", DataExpr.new("*.txt").to_seq, BooleanSequence.new([PioneBoolean.true]))
     end
   end
 
@@ -113,22 +113,22 @@ describe 'Pione::Transformer::ExprTransformer' do
 
     tc "{var1: 1}" do
       Parameters.new(
-        {Variable.new("var1") => PioneIntegerSequence.new([PioneInteger.new(1)])}
+        {Variable.new("var1") => IntegerSequence.new([PioneInteger.new(1)])}
       )
     end
 
     tc "{var1: 1, var2: 2}" do
       Parameters.new(
-        { Variable.new("var1") => PioneIntegerSequence.new([PioneInteger.new(1)]),
-          Variable.new("var2") => PioneIntegerSequence.new([PioneInteger.new(2)]) }
+        { Variable.new("var1") => IntegerSequence.new([PioneInteger.new(1)]),
+          Variable.new("var2") => IntegerSequence.new([PioneInteger.new(2)]) }
       )
     end
 
     tc "{var1: \"a\", var2: \"b\", var3: \"c\"}" do
       Parameters.new(
-        { Variable.new("var1") => PioneStringSequence.new([PioneString.new("a")]),
-          Variable.new("var2") => PioneStringSequence.new([PioneString.new("b")]),
-          Variable.new("var3") => PioneStringSequence.new([PioneString.new("c")]) }
+        { Variable.new("var1") => StringSequence.new([PioneString.new("a")]),
+          Variable.new("var2") => StringSequence.new([PioneString.new("b")]),
+          Variable.new("var3") => StringSequence.new([PioneString.new("c")]) }
       )
     end
   end

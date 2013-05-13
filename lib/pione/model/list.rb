@@ -3,7 +3,7 @@ module Pione::Model
   class PioneList < BasicModel
     extend Forwardable
 
-    set_pione_model_type TypeList[TypeAny]
+    set_pione_model_type TypeList[TypeSequence]
 
     attr_reader :values
     def_delegators :@values, :[], :size, :empty?
@@ -27,7 +27,7 @@ module Pione::Model
     # @return [TypeList]
     #   the type
     def pione_model_type
-      type = @values.empty? ? TypeAny : @values.first.pione_model_type
+      type = @values.empty? ? TypeSequence : @values.first.pione_model_type
       TypeList.new(type)
     end
 
@@ -69,23 +69,23 @@ module Pione::Model
     # pione method
     #
 
-    define_pione_method("==", [TypeList[TypeAny]], TypeBoolean) do |rec, other|
+    define_pione_method("==", [TypeList[TypeSequence]], TypeBoolean) do |rec, other|
       PioneBoolean.new(rec.values == other.values)
     end
 
-    define_pione_method("!=", [TypeList[TypeAny]], TypeBoolean) do |rec, other|
+    define_pione_method("!=", [TypeList[TypeSequence]], TypeBoolean) do |rec, other|
       PioneBoolean.not(rec.call_pione_method("==", other))
     end
 
-    define_pione_method("+", [TypeList[TypeAny]], TypeList[TypeAny]) do |rec, other|
+    define_pione_method("+", [TypeList[TypeSequence]], TypeList[TypeSequence]) do |rec, other|
       PioneList.new(rec.values + other.values)
     end
 
-    define_pione_method("-", [TypeList[TypeAny]], TypeList[TypeAny]) do |rec, other|
+    define_pione_method("-", [TypeList[TypeSequence]], TypeList[TypeSequence]) do |rec, other|
       PioneList.new(rec.values - other.values)
     end
 
-    define_pione_method("*", [TypeList[TypeAny]], TypeList[TypeAny]) do |rec, other|
+    define_pione_method("*", [TypeList[TypeSequence]], TypeList[TypeSequence]) do |rec, other|
       PioneList.new(rec.values * other.values)
     end
 
@@ -93,7 +93,7 @@ module Pione::Model
       PioneBoolean.new(rec.empty?)
     end
 
-    define_pione_method("[]", [TypeInteger], TypeAny) do |rec, i|
+    define_pione_method("[]", [TypeInteger], TypeSequence) do |rec, i|
       rec.values[i.value]
     end
 

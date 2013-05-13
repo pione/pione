@@ -3,13 +3,13 @@ require_relative '../test-util'
 describe 'Pione::Transformer::RuleDefinitionTransformer' do
   transformer_spec("input_line", :input_line) do
     tc("input '*.txt'") do
-      Naming.InputLine(DataExpr.new("*.txt"))
+      Naming.InputLine(DataExpr.new("*.txt").to_seq)
     end
   end
 
   transformer_spec("output_line", :output_line) do
     tc("output '*.txt'") do
-      Naming.OutputLine(DataExpr.new("*.txt"))
+      Naming.OutputLine(DataExpr.new("*.txt").to_seq)
     end
   end
 
@@ -17,15 +17,15 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
     tc("param {var: 1}") do
       Naming.ParamLine(
         Parameters.new(
-          {Variable.new("var") => PioneIntegerSequence.new([PioneInteger.new(1)])}
+          {Variable.new("var") => IntegerSequence.new([PioneInteger.new(1)])}
         )
       )
     end
     tc("param {var1: 1, var2: 2}") do
       Naming.ParamLine(
         Parameters.new(
-          { Variable.new("var1") => PioneIntegerSequence.new([PioneInteger.new(1)]),
-            Variable.new("var2") => PioneIntegerSequence.new([PioneInteger.new(2)]) }
+          { Variable.new("var1") => IntegerSequence.new([PioneInteger.new(1)]),
+            Variable.new("var2") => IntegerSequence.new([PioneInteger.new(2)]) }
         )
       )
     end
@@ -49,8 +49,8 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       ActionRule.new(
         RuleExpr.new(Package.new("main"), "Test"),
         RuleCondition.new(
-          [ DataExpr.new('*.a') ],
-          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
+          [ DataExpr.new('*.a').to_seq ],
+          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq ]
         ),
         ActionBlock.new("        echo \"test\" > {$OUTPUT[1].NAME}\n")
       )
@@ -101,18 +101,18 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
           [DataExpr.new("summary.txt")],
           params: Parameters.new(
             Variable.new("ConvertCharSet") =>
-            PioneBooleanSequence.new([PioneBoolean.true])
+            BooleanSequence.new([PioneBoolean.true])
           )
         ),
         FlowBlock.new(
           ConditionalBlock.new(
             Variable.new("ConvertCharset"),
-            { PioneBooleanSequence.new([PioneBoolean.true]) =>
+            { BooleanSequence.new([PioneBoolean.true]) =>
               FlowBlock.new(
                 CallRule.new(Message.new(
                     "params",
                     RuleExpr.new(Package.new("main"), "NKF"),
-                    PioneStringSequence.new([PioneString.new("-w")])
+                    StringSequence.new([PioneString.new("-w")])
                 ))
             )}
           ),

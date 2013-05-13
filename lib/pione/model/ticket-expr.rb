@@ -14,9 +14,7 @@ module Pione
     #   End
     # @example TicketExpr represents a set
     #   TicketExpr.new("T1") + TicketExpr.new("T2") #=> TicketExpr.new(["T1", "T2"])
-    class TicketExpr < BasicModel
-      set_pione_model_type TypeTicketExpr
-
+    class TicketExpr < Element
       class << self
         # Return an emtpy ticket expression. Empty ticket expression has no
         # ticket conditions.
@@ -26,25 +24,15 @@ module Pione
       end
 
       # ticket names
-      attr_reader :names
+      attr_reader :name
+      alias :value :name
 
       # Create a ticket expression with names.
       #
       # @param names [Set, Array]
       #   ticket names
-      #
-      # @example
-      #   TicketExpr.new(["T1", "T2"])
-      # @example
-      #   TicketExpr.new(Set.new(["T1", "T2"]))
-      def initialize(names)
-        @names = Set.new(names)
-        super()
-      end
-
-      # Return true if the ticket expression is empty.
-      def empty?
-        @names.empty?
+      def initialize(name)
+        @name = name
       end
 
       # Evaluate the object with the variable table.
@@ -89,39 +77,35 @@ module Pione
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)
-        @names == other.names
+        @name == other.name
       end
       alias :eql? :"=="
 
       # @api private
       def hash
-        @names.hash
+        @name.hash
+      end
+    end
+
+    class TicketExprSequence < OrdinalSequence
+      set_pione_model_type TypeTicketExpr
+      set_element_class TicketExpr
+      set_shortname "TSeq"
+
+      def names
+        @elements.map do |elt|
+          elt.name
+        end
       end
     end
 
     TypeTicketExpr.instance_eval do
-      define_pione_method("==", [TypeTicketExpr], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.names == other.names)
-      end
-
-      define_pione_method("!=", [TypeTicketExpr], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other))
-      end
-
       define_pione_method("==>", [TypeRuleExpr], TypeRuleExpr) do |rec, other|
         other.add_input_ticket_expr(rec)
       end
 
-      define_pione_method("+", [TypeTicketExpr], TypeTicketExpr) do |rec, other|
-        rec + other
-      end
-
       define_pione_method("as_string", [], TypeString) do |rec|
         rec.textize
-      end
-
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("as_string")
       end
     end
   end

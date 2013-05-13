@@ -26,7 +26,7 @@ module Pione
       def satisfy?(vtable)
         @exprs.all? do |expr|
           res = expr.eval(vtable)
-          res.kind_of?(PioneBooleanSequence) and res.value
+          res.kind_of?(BooleanSequence) and res.value
         end
       end
     end

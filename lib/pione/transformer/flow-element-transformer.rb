@@ -21,7 +21,7 @@ module Pione
              :if_else_block => simple(:if_false)
            }) {
         block = {
-          Model::PioneBooleanSequence.new([Model::PioneBoolean.true]) =>
+          Model::BooleanSequence.new([Model::PioneBoolean.true]) =>
           Model::FlowBlock.new(*if_true)
         }
         block[:else] = if_false if if_false

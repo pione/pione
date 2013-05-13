@@ -15,12 +15,12 @@ describe 'Model::RuleExpr' do
   end
 
   it 'should set/get input ticket expression' do
-    ticket = TicketExpr.new(["A"])
+    ticket = TicketExpr.new("A").to_seq
     @a.add_input_ticket_expr(ticket).input_ticket_expr.should == ticket
   end
 
   it 'should set/get output ticket expression' do
-    ticket = TicketExpr.new(["A"])
+    ticket = TicketExpr.new("A").to_seq
     @a.add_output_ticket_expr(ticket).output_ticket_expr.should == ticket
   end
 
@@ -28,7 +28,7 @@ describe 'Model::RuleExpr' do
     it 'should true' do
       @a.call_pione_method(
         "==", RuleExpr.new(Package.new("main"), "a")
-      ).should.true
+      ).should == PioneBoolean.new(true).to_seq
     end
 
     it 'should false' do
@@ -36,15 +36,15 @@ describe 'Model::RuleExpr' do
     end
 
     it 'should raise type error' do
-      should.raise(PioneModelTypeError) do
-        @a.call_pione_method("==", PioneInteger.new(1))
+      should.raise(MethodNotFound) do
+        @a.call_pione_method("==", PioneInteger.new(1).to_seq)
       end
     end
   end
 
   describe 'pione method !=' do
     it 'should true' do
-      @a.call_pione_method("!=", @b).should.true
+      @a.call_pione_method("!=", @b).should == PioneBoolean.new(true).to_seq
     end
 
     it 'should false' do
@@ -54,15 +54,15 @@ describe 'Model::RuleExpr' do
     end
 
     it 'should raise type error' do
-      should.raise(PioneModelTypeError) do
-        @a.call_pione_method("!=", PioneInteger.new(1))
+      should.raise(MethodNotFound) do
+        @a.call_pione_method("!=", PioneInteger.new(1).to_seq)
       end
     end
   end
 
   describe 'pione method as_string' do
     it 'should get string' do
-      @a.call_pione_method("as_string").should == PioneString.new("a")
+      @a.call_pione_method("as_string").should == PioneString.new("a").to_seq
     end
   end
 

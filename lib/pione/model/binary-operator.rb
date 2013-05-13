@@ -46,7 +46,11 @@ module Pione
 
       # @api private
       def pione_model_type
-        @left.pione_model_type.method_interface[@symbol].output
+        if pione_method = @left.pione_model_type.find_method(@symbol, @left, @right)
+          return pione_method.get_output_type(@left)
+        else
+          raise MethodNotFound.new(@name.to_s, self)
+        end
       end
 
       # Evaluate the application expression and returns application result.

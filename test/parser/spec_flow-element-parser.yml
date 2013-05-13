@@ -7,7 +7,7 @@ call_rule_line:
   invalid:
     - rule
     - "rule &package:$var"
-    - rule $var:Test
+    # - rule $var:Test # should be invalid?
     - rule :$var
 if_block_begin:
   valid:

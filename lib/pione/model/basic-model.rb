@@ -13,8 +13,8 @@ module Pione
       # @api private
       def message
         args = [
-          @type.type_string,
-          @obj.pione_model_type.type_string,
+          @type.name,
+          @obj.pione_model_type.name,
           @obj.line,
           @obj.column
         ]
@@ -39,446 +39,27 @@ module Pione
 
       # @api private
       def message
-        str = nil
-        begin
-          str = @obj.call_pione_method("as_string")
-        rescue => e
-          str = @obj.to_s
-        end
-        "method \"%s\" is not found in %s" % [@name, str]
-      end
-    end
-
-    # Type is a class for type expression of PIONE model objects.
-    class Type < System::PioneObject
-      attr_reader :type_string
-      attr_reader :method_interface
-      attr_reader :method_body
-
-      # Creates a type for PIONE model object.
-      # @param [Symbol] type_string
-      #   PIONE model type
-      def initialize(type_string)
-        @type_string = type_string
-        @method_interface = {}
-        @method_body = {}
-      end
-
-      # Return true if the type or the pione model object matches.
-      # @param [Type, BasicModel] other
-      #   type or object for match test target
-      # @return [Boolean]
-      #   true if it matches, or false
-      def match(other)
-        case other
-        when Type
-          other == TypeAny || @type_string == other.type_string
-        when BasicModel
-          match(other.pione_model_type)
-        when nil
-          # do nothing
-        else
-          raise ArgumentError.new(other)
-        end
-      end
-
-      # Defines PIONE model object methods.
-      # @param [String] name
-      #   method name
-      # @param [Array<Type>] inputs
-      #   input types of the method
-      # @param [Type] output
-      #   output type of the method
-      # @param [Proc] b
-      # @return [void]
-      def define_pione_method(name, inputs, output, &b)
-        raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
-        raise ArgumentError.new(inputs) unless inputs.all?{|input|
-          input.kind_of?(Type) or input.kind_of?(Symbol)
-        }
-        raise ArgumentError.new(output) unless output.kind_of?(Type) or output.kind_of?(Symbol)
-        @method_interface[name] = PioneMethodInterface.new(inputs, output)
-        @method_body[name] = b
-      end
-
-      # Returns true if the data has the type.
-      # @return [void]
-      def check(data)
-        unless match(data.pione_model_type)
-          raise PioneModelTypeError.new(data, self)
-        end
-      end
-
-      def type_to_class(type)
-        case type
-        when TypeString
-          PioneStringSequence
-        when TypeInteger
-          PioneIntegerSequence
-        when TypeFloat
-          PioneFloatSequence
-        when TypeBoolean
-          PioneBooleanSequence
-        end
-      end
-
-      def sequential_map1(type, seq1, &b)
-        seq_class = type_to_class(type)
-        seq1.elements.map do |elt1|
-          seq_class.element_class.new(b.call(elt1))
-        end.tap {|x| break seq_class.new(x, seq1.attribute)}
-      end
-
-      def sequential_map2(type, seq1, seq2, &b)
-        seq_class = type_to_class(type)
-        seq1.elements.map do |elt1|
-          seq2.elements.map do |elt2|
-            seq_class.element_class.new(b.call(elt1, elt2))
-          end
-        end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
-      end
-
-      def sequential_map3(type, seq1, seq2, seq3, &b)
-        seq_class = type_to_class(type)
-        seq1.elements.map do |elt1|
-          seq2.elements.map do |elt2|
-            seq3.elements.map do |elt3|
-              seq_class.element_class.new(b.call(elt1, elt2, elt3))
-            end
-          end
-        end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
-      end
-
-      def sequential_fold1(type, seq1, &b)
-        seq_class = type_to_class(type)
-        seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj, elt1|
-          b.call(elt1, obj)
-        end
-      end
-
-      def sequential_fold2(type, seq1, seq2, &b)
-        seq_class = type_to_class(type)
-        seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj1, elt1|
-          seq2.elements.inject(obj1) do |obj2, elt2|
-            b.call(obj2, elt1, elt2)
-          end
-        end
-      end
-
-      def sequential_pred1(seq1, &b)
-        method1 = seq1.every? ? :all? : :any?
-        seq1.elements.send(method1) do |elt1|
-          PioneBoolean.new(b.call(elt1))
-        end.tap {|x| break PioneBooleanSequence.new(x)}
-      end
-
-      def sequential_pred2(seq1, seq2, &b)
-        method1 = seq1.every? ? :all? : :any?
-        method2 = seq2.every? ? :all? : :any?
-        seq1.elements.send(method1) do |elt1|
-          seq2.elements.send(method2) do |elt2|
-            b.call(elt1, elt2)
-          end
-        end.tap {|x| break PioneBooleanSequence.new([PioneBoolean.new(x)])}
-      end
-
-      # @api private
-      def to_s
-        "#<Type %s>" % @type_string
-      end
-    end
-
-    class VariableType
-      def initialize(name)
-        @name = name
-      end
-    end
-
-    # TypeList represetnts list type of element type.
-    class TypeList < Type
-      attr_reader :element_type
-
-      # @api private
-      @table = {}
-
-      class << self
-        def [](type)
-          if @table.has_key?(type)
-            return @table[type]
-          else
-            t = new(type)
-            @table[type] = t
-            return t
-          end
-        end
-      end
-
-      def initialize(element_type)
-        @element_type = element_type
-        super("[%s]" % [element_type.type_string])
-      end
-
-      def match(other)
-        return false unless other.kind_of?(TypeList)
-        @element_type.match(other.element_type)
-      end
-
-      def method_body
-        if self == self.class[TypeAny]
-          @method_body
-        else
-          self.class[TypeAny].method_body
-        end
-      end
-
-      def method_interface
-        if self == self.class[TypeAny]
-          @method_interface
-        else
-          self.class[TypeAny].method_interface
-        end
-      end
-    end
-
-    # PioneMethodInterface represents type of PIONE object's methods.
-    class PioneMethodInterface < Pione::PioneObject
-      attr_reader :inputs
-      attr_reader :output
-
-      # Creates an interface for a pione method.
-      # @param [Array<Type>] inputs
-      #   inputs type definition
-      # @param [Type] output
-      #   ouutput type definition
-      def initialize(inputs, output)
-        @inputs = inputs
-        @output = output
-      end
-
-      # Validate inputs data types for the method.
-      #
-      # @param receiver_type [Type]
-      #   receiver type
-      # @param args [Array<Object>]
-      #   arguments
-      # @return [void]
-      def validate_inputs(receiver_type, *args)
-        @inputs.each_with_index do |input, i|
-          input = receiver_type if input == :receiver_type
-          unless input.match(args[i].pione_model_type)
-            raise PioneModelTypeError.new(args[i], input)
-          end
-        end
-      end
-
-      # Validate output data type for the method.
-      #
-      # @param receiver_type [Type]
-      #   recevier type
-      # @param value [Object]
-      #   output value
-      # @return [void]
-      def validate_output(receiver_type, value)
-        output = @output == :receiver_type ? receiver_type : @output
-        output.match(value.pione_model_type)
-      end
-    end
-
-    # boolean type for PIONE system
-    TypeBoolean = Type.new("boolean")
-
-    # integer type for PIONE system
-    TypeInteger = Type.new("integer")
-
-    # float type for PIONE system
-    TypeFloat = Type.new("float")
-
-    # string type for PIONE system
-    TypeString = Type.new("string")
-
-    # data expression type for PIONE system
-    TypeDataExpr = Type.new("data-expr")
-
-    # feature type for PIONE system
-    TypeFeature = Type.new("feature")
-
-    # rule expression type for PIONE system
-    TypeRuleExpr = Type.new("rule-expr")
-
-    # parameters type for PIONE system
-    TypeParameters = Type.new("parameters")
-
-    # assignment type for PIONE system
-    TypeAssignment = Type.new("assignment")
-
-    # variable table type for PIONE system
-    TypeVariableTable = Type.new("variable-table")
-
-    # package type for PIONE system
-    TypePackage = Type.new("package")
-
-    # undefined value type for PIONE system
-    TypeUndefinedValue = Type.new("undefined-value")
-
-    # rule io list type for PIONE system
-    TypeRuleIOList = Type.new("rule-io-list")
-
-    # rule io element type for PIONE system
-    TypeRuleIOElement = Type.new("rule-io-element")
-
-    # ticket expression type
-    TypeTicketExpr = Type.new("ticket-expr")
-
-    # any type for PIONE system
-    TypeAny = Type.new("any")
-
-    def TypeAny.match(other)
-      true
-    end
-
-    TypeAny.instance_eval do
-      define_pione_method("==", [:receiver_type], TypeBoolean) do |rec, other|
-        if rec.elements.size == other.elements.size
-          rec.elements.size.times.all? do |i|
-            rec.elements[i].value == other.elements[i].value
-          end.tap {|x| break PioneBooleanSequence.new([PioneBoolean.new(x)], rec.attribute)}
-        else
-          PioneBooleanSequence.new([PioneBoolean.new(false)], rec.attribute)
-        end
-      end
-
-      define_pione_method("!=", [:receiver_type], TypeBoolean) do |rec, other|
-        rec.call_pione_method("==", other).call_pione_method("not")
-      end
-
-      define_pione_method("|", [:receiver_type], :receiver_type) do |rec, other|
-        rec.concat(other)
-      end
-
-      define_pione_method("each", [], :receiver_type) do |rec|
-        rec.set_each
-      end
-
-      define_pione_method("each?", [], TypeBoolean) do |rec|
-        PioneBooleanSequence.new([PioneBoolean.new(rec.each?)])
-      end
-
-      define_pione_method("all", [], :receiver_type) do |rec|
-        rec.set_all
-      end
-
-      define_pione_method("all?", [], TypeBoolean) do |rec|
-        PioneBooleanSequence.new([PioneBoolean.new(rec.all?)])
-      end
-
-      define_pione_method("i", [], TypeInteger) do |rec|
-        rec.call_pione_method("as_integer")
-      end
-
-      define_pione_method("f", [], TypeFloat) do |rec|
-        rec.call_pione_method("as_float")
-      end
-
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("as_string")
-      end
-
-      define_pione_method("d", [], TypeDataExpr) do |rec|
-        rec.call_pione_method("as_data_expr")
-      end
-
-      define_pione_method("length", [], TypeInteger) do |rec|
-        PioneIntegerSequence.new([PioneInteger.new(rec.elements.size)])
-      end
-
-      define_pione_method("[]", [TypeInteger], :receiver_type) do |rec, index|
-        sequential_map1(rec.class.pione_model_type, index) do |elt|
-          if elt.value == 0
-            rec.value
-          else
-            rec.elements[elt.value-1].value
-          end
-        end
-      end
-
-      define_pione_method("reverse", [], :receiver_type) do |rec|
-        rec.class.new(rec.elements.reverse, rec.attribute)
-      end
-
-      define_pione_method("head", [], :receiver_type) do |rec|
-        rec.class.new([rec.elements[0]], rec.attribute)
-      end
-
-      define_pione_method("tail", [], :receiver_type) do |rec|
-        # NOTE: #tail should fail when the sequence length is less than 1
-        rec.class.new(rec.elements[1..-1], rec.attribute)
-      end
-
-      define_pione_method("last", [], :receiver_type) do |rec|
-        rec.class.new([rec.elements[-1]], rec.attribute)
-      end
-
-      define_pione_method("init", [], :receiver_type) do |rec|
-        # NOTE: #init should fail when the sequence length is less than 1
-        rec.class.new(rec.elements[0..-2], rec.attribute)
-      end
-
-      define_pione_method("member?", [:receiver_type], TypeBoolean) do |rec, target|
-        sequential_map1(TypeBoolean, target) do |target_elt|
-          rec.elements.map{|elt| elt.value}.include?(target_elt.value)
-        end
-      end
-
-      define_pione_method("type", [], TypeString) do |rec|
-        case rec
-        when PioneStringSequence
-          "string"
-        when PioneIntegerSequence
-          "integer"
-        when PioneFloatSequence
-          "float"
-        when PioneBooleanSequence
-          "boolean"
-        else
-          "undefined"
-        end.tap {|x| break PioneString.new(x).to_seq}
+        "PIONE method \"%s\" is not found in %s" % [@name, @obj.inspect]
       end
     end
 
     # BasicModel is a class for pione model object.
     class BasicModel < Pione::PioneObject
       class << self
-        # Sets pione model type of the model.
-        # @param [Symbol] type
-        #   pione model type
-        # @return [void]
-        def set_pione_model_type(type)
-          raise ArgumentError unless type.kind_of?(Type)
-          @pione_model_type = type
+        # Return true if the object is atomic.
+        #
+        # @return [Boolean]
+        #   true if the object is atom, or false.
+        def atomic?
+          @atomic ||= true
         end
 
-        # Returns the pione model type of the model.
-        # @return [Symbol]
-        #   pione model type
-        def pione_model_type
-          @pione_model_type
-        end
-
-        # Defines a pione method.
-        # @return [void]
-        def define_pione_method(*args, &b)
-          @pione_model_type.define_pione_method(*args, &b)
-        end
-
-        # @api private
-        def inherited(subclass)
-          if @pione_model_type
-            subclass.set_pione_model_type @pione_model_type
-          end
+        def set_atomic(b)
+          @atomic = b
         end
       end
 
-      forward :class, :pione_model_type
+      forward :class, :atomic?
 
       # Creates a model object.
       def initialize(&b)
@@ -492,13 +73,6 @@ module Pione
       #   evaluated object
       def eval(vtable=VariableTable.new)
         return self
-      end
-
-      # Returns true if the object is atomic.
-      # @return [Boolean]
-      #   true if the object is atom, or false.
-      def atomic?
-        true
       end
 
       # Returns true if the object has pione variables.
@@ -534,18 +108,60 @@ module Pione
         @__column__
       end
 
-      def method_interface(name)
-        if interface = pione_model_type.method_interface[name]
-          body = pione_model_type.method_body[name]
-          return interface, body
-        else
-          interface = TypeAny.method_interface[name]
-          body = TypeAny.method_body[name]
-          return interface, body
+      # Returns itself.
+      # @return [BasicModel]
+      def to_pione
+        self
+      end
+    end
+
+    class Callable < BasicModel
+      class << self
+        attr_reader :pione_model_type
+
+        # Set pione model type of the model.
+        #
+        # @param [Type] type
+        #   pione model type
+        # @return [void]
+        def set_pione_model_type(type)
+          @pione_model_type = type
+        end
+
+        # @api private
+        def inherited(subclass)
+          if @pione_model_type
+            subclass.set_pione_model_type @pione_model_type
+          end
         end
       end
 
-      # Calls pione model object method.
+      forward :class, :pione_model_type
+
+      # Creates a model object.
+      def initialize(&b)
+        instance_eval(&b) if block_given?
+      end
+
+      # Evaluate the model object in the variable table.
+      #
+      # @param [VariableTable] vtable
+      #   variable table for evaluation
+      # @return [BasicModel]
+      #   evaluated result
+      def eval(vtable=VariableTable.new)
+        return self
+      end
+
+      # Returns true if the object has pione variables.
+      # @return [Boolean]
+      #   true if the object has pione variables, or false
+      def include_variable?
+        false
+      end
+
+      # Call pione model object method.
+      #
       # @param [String] name
       #   method name
       # @param [Array] args
@@ -553,13 +169,8 @@ module Pione
       # @return [Object]
       #   method's result
       def call_pione_method(name, *args)
-        name = name.to_s
-        interface, body = method_interface(name)
-        if interface and body
-          interface.validate_inputs(pione_model_type, *args)
-          output = body.call(self, *args)
-          interface.validate_output(pione_model_type, output)
-          return output
+        if pione_method = pione_model_type.find_method(name, self, *args)
+          pione_method.call(self, *args)
         else
           raise MethodNotFound.new(name, self)
         end
@@ -572,106 +183,29 @@ module Pione
       end
     end
 
-    class SequenceAttributeError < StandardError
-      def initialize(attribute)
-        @attribute = attribute
+    class Element < BasicModel
+      class << self
+        attr_reader :sequence_class
+
+        def set_sequence_class(sequence_class)
+          @sequence_class = sequence_class
+        end
       end
 
-      def message
-        "attribute mismatched: %s" % @attribute
+      forward :class, :sequence_class
+
+      def to_seq
+        sequence_class.new([self])
       end
     end
 
-    class BasicSequence < BasicModel
-      include Enumerable
+    class Value < Element
+      attr_reader :value
 
-      class << self
-        def define_attribute(name, value)
-          define_method("set_%s" % value) do
-            self.class.new(@elements, @attribute.merge({name => value}))
-          end
-
-          define_method("%s?" % value) do
-            @attribute[name] == value
-          end
-        end
-
-        attr_reader :element_class
-
-        def set_element_class(klass)
-          @element_class = klass
-        end
-      end
-
-      attr_reader :elements
-      attr_reader :attribute
-
-      define_attribute(:modifier, :all)
-      define_attribute(:modifier, :each)
-
-      def initialize(elements, attribute={})
-        @elements = elements
-        @attribute = Hash.new.merge(attribute)
-        @attribute[:modifier] ||= :each
-      end
-
-      def concat(other)
-        raise SequenceAttributeError.new(other) unless @attribute == other.attribute
-        self.class.new(@elements + other.elements, @attribute)
-      end
-
-      def each
-        if block_given?
-          @elements.each {|e| yield self.class.new([e], @attribute)}
-        else
-          Enumerator.new(self, :each)
-        end
-      end
-
-      def push(element)
-        self.class.new(@elements + [element], @attribute)
-      end
-
-      def eval(vtable)
-        self.class.new(@elements.map{|elt| elt.eval(vtable)}, @attribute)
-      end
-
-      def include_variable?
-        @elements.any?{|elt| elt.include_variable?}
-      end
-
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        return false unless @elements == other.elements
-        return @attribute == other.attribute
-      end
-      alias :eql? :"=="
-
-      def hash
-        @elements.hash + @attribute.hash
-      end
-
-      def task_id_string
-        "<#{@elements}, #{@attribute}>"
-      end
-
-      def textize
-        "<%s [%s]>" % [shortname, @elements.map{|x| x.textize}.join(",")]
-      end
-
-      def inspect
-        "#<%s %s %s>" % [shortname, @elements, @attribute]
-      end
-
-      private
-
-      def shortname
-        case self.class
-        when PioneStringSequence; "StrSeq"
-        when PioneIntegerSequence; "ISeq"
-        when PioneFloatSequence; "FSeq"
-        when PioneBooleanSequence; "BSeq"
-        end
+      # @param value [Integer]
+      #   value in ruby
+      def initialize(value)
+        @value = value
       end
     end
   end

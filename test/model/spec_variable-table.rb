@@ -3,9 +3,9 @@ require_relative '../test-util'
 describe 'Model::VariableTable' do
   before do
     @table = VariableTable.new
-    @table.set(Variable.new('A'), PioneInteger.new(1))
-    @table.set(Variable.new('B'), PioneInteger.new(2))
-    @table.set(Variable.new('C'), PioneInteger.new(3))
+    @table.set(Variable.new('A'), PioneInteger.new(1).to_seq)
+    @table.set(Variable.new('B'), PioneInteger.new(2).to_seq)
+    @table.set(Variable.new('C'), PioneInteger.new(3).to_seq)
   end
 
   it 'should get an empty table' do
@@ -13,9 +13,9 @@ describe 'Model::VariableTable' do
   end
 
   it 'should get a variable value' do
-    @table.get(Variable.new('A')).should == PioneInteger.new(1)
-    @table.get(Variable.new('B')).should == PioneInteger.new(2)
-    @table.get(Variable.new('C')).should == PioneInteger.new(3)
+    @table.get(Variable.new('A')).should == PioneInteger.new(1).to_seq
+    @table.get(Variable.new('B')).should == PioneInteger.new(2).to_seq
+    @table.get(Variable.new('C')).should == PioneInteger.new(3).to_seq
   end
 
   it 'should get nil if the variable is unknown in the table' do
@@ -29,9 +29,9 @@ describe 'Model::VariableTable' do
 
   it 'should not raise errors by binding same value as same name variable' do
     should.not.raise(VariableBindingError) do
-      @table.set(Variable.new('A'), PioneInteger.new(1))
-      @table.set(Variable.new('B'), PioneInteger.new(2))
-      @table.set(Variable.new('C'), PioneInteger.new(3))
+      @table.set(Variable.new('A'), PioneInteger.new(1).to_seq)
+      @table.set(Variable.new('B'), PioneInteger.new(2).to_seq)
+      @table.set(Variable.new('C'), PioneInteger.new(3).to_seq)
     end
   end
 
@@ -69,49 +69,48 @@ describe 'Model::VariableTable' do
 
   it 'should have input auto variables' do
     input_exprs = [
-      DataExpr.new('*.a'),
-      DataExpr.new('*.b').all
+      DataExpr.new('*.a').to_seq,
+      DataExpr.new('*.b').to_seq.set_all
     ]
     input_tuples = [
-      Tuple[:data].new(name: '1.a', uri: 'test'),
-      [ Tuple[:data].new(name: '1.b', uri: 'test1'),
-        Tuple[:data].new(name: '2.b', uri: 'test2'),
-        Tuple[:data].new(name: '3.b', uri: 'test3')]
+      Tuple[:data].new(name: '1.a', location: Location['test']),
+      [ Tuple[:data].new(name: '1.b', location: Location['test1']),
+        Tuple[:data].new(name: '2.b', location: Location['test2']),
+        Tuple[:data].new(name: '3.b', location: Location['test3'])]
     ]
 
     @table.make_input_auto_variables(input_exprs, input_tuples)
 
     input = @table.get(Variable.new('I'))
-    input.should.kind_of(RuleIOList)
+    input.should.kind_of(KeyedSequence)
     input.should == @table.get(Variable.new('INPUT'))
 
-    input1 = input[0]
-    input1.should.kind_of(RuleIOElement)
-    input1.name.should == "1.a".to_pione
-    input1.match.size.should == 2
-    input1.match[0] == "1.a".to_pione
-    input1.match[1] == "1".to_pione
-    input1.uri = "test"
+    input1 = input.get(PioneInteger.new(1)).first
+    input1.should.kind_of(DataExpr)
+    input1.should == DataExpr.new("1.a")
+    input1.matched_data.size.should == 2
+    input1.matched_data[0].should == "1.a"
+    input1.matched_data[1].should == "1"
+    input1.location.should == Location["test"]
 
-    input2 = input[1]
-    input2.should.kind_of(RuleIOList)
+    input2 = input.get(PioneInteger.new(2))
     input2.size.should == 3
-    input2[0].should.kind_of(RuleIOElement)
-    input2[0].name.should == "1.b".to_pione
-    input2[0].match.size.should == 2
-    input2[0].match[0].should == "1.b".to_pione
-    input2[0].match[1].should == "1".to_pione
-    input2[1].should.kind_of(RuleIOElement)
-    input2[1].name.should == "2.b".to_pione
-    input2[1].match.size.should == 2
-    input2[1].match[0].should == "2.b".to_pione
-    input2[1].match[1].should == "2".to_pione
-    input2[2].should.kind_of(RuleIOElement)
-    input2[2].name.should == "3.b".to_pione
-    input2[2].match.size.should == 2
-    input2[2].match[0].should == "3.b".to_pione
-    input2[2].match[1].should == "3".to_pione
+    input2[0].should.kind_of(DataExpr)
+    input2[0].name.should == "1.b"
+    input2[0].matched_data.size.should == 2
+    input2[0].matched_data[0].should == "1.b"
+    input2[0].matched_data[1].should == "1"
+    input2[1].should.kind_of(DataExpr)
+    input2[1].name.should == "2.b"
+    input2[1].matched_data.size.should == 2
+    input2[1].matched_data[0].should == "2.b"
+    input2[1].matched_data[1].should == "2"
+    input2[2].should.kind_of(DataExpr)
+    input2[2].name.should == "3.b"
+    input2[2].matched_data.size.should == 2
+    input2[2].matched_data[0].should == "3.b"
+    input2[2].matched_data[1].should == "3"
 
-    @table.get(Variable.new('*')).should == PioneString.new('1')
+    @table.get(Variable.new('*')).should == StringSequence.new([PioneString.new('1')], separator: ":")
   end
 end

@@ -1,9 +1,8 @@
 module Pione
   module Model
     # Package is a PIONE model class for rule package.
-    class Package < BasicModel
+    class Package < Element
       attr_reader :name
-      set_pione_model_type TypePackage
 
       # Create a package with name.
       #
@@ -47,6 +46,11 @@ module Pione
       def hash
         @value.hash
       end
+    end
+
+    class PackageSequence < Sequence
+      set_pione_model_type TypePackage
+      set_element_class Package
     end
   end
 end

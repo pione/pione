@@ -171,7 +171,8 @@ module Pione
         atmark |
         (vbar >> vbar).absent? >> vbar |
         keyword_or |
-        keyword_and
+        keyword_and |
+        (colon >> colon | colon >> equals).absent? >> colon
       }
 
       rule(:expr_operator_2) {

@@ -52,7 +52,7 @@ module Pione::Model
     end
 
     # Expr is a super class for all feature expressions.
-    class Expr < BasicModel
+    class Expr < Callable
       set_pione_model_type TypeFeature
 
       # Return simplified expression.
@@ -865,19 +865,24 @@ module Pione::Model
         end
       end
     end
+
+  #   class FeatureSequence < Sequence
+  #     set_pione_model_type TypeFeature
+  #     set_element_class Feature::Expr
+  #   end
   end
 
   TypeFeature.instance_eval do
     define_pione_method("==", [TypeFeature], TypeBoolean) do |rec, other|
-      PioneBoolean.new(rec == other)
+      PioneBoolean.new(rec == other).to_seq
     end
 
     define_pione_method("!=", [TypeFeature], TypeBoolean) do |rec, other|
-      PioneBoolean.not(rec.call_pione_method("==", other))
+      PioneBoolean.not(rec.call_pione_method("==", other)).to_seq
     end
 
     define_pione_method("as_string", [], TypeString) do |rec|
-      PioneString.new(rec.as_string)
+      PioneString.new(rec.as_string).to_seq
     end
 
     define_pione_method("str", [], TypeString) do |rec|

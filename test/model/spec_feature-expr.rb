@@ -225,7 +225,7 @@ describe 'Feature::Expr' do
   #
   # test cases
   #
-  yamlname = 'spec_feature-expr.yml'
+  yamlname = 'spec_feature-expr_decide.yml'
   ymlpath = File.join(File.dirname(__FILE__), yamlname)
   testcases = YAML.load_file(ymlpath)
 
@@ -329,46 +329,5 @@ describe 'Feature::Expr' do
     end
   end
 
-  describe "pione method ==" do
-    it 'should get true' do
-      requisite_a = Feature::RequisiteExpr.new("X")
-      requisite_b = Feature::RequisiteExpr.new("X")
-      requisite_a.call_pione_method("==", requisite_b).should ==
-        PioneBoolean.true
-    end
-
-    it 'should get false' do
-      requisite_a = Feature::RequisiteExpr.new("X")
-      requisite_b = Feature::RequisiteExpr.new("Y")
-      requisite_a.call_pione_method("==", requisite_b).should ==
-        PioneBoolean.false
-    end
-  end
-
-  describe "pione method !=" do
-    it 'should get true' do
-      requisite_a = Feature::RequisiteExpr.new("X")
-      requisite_b = Feature::RequisiteExpr.new("Y")
-      requisite_a.call_pione_method("!=", requisite_b).should ==
-        PioneBoolean.true
-    end
-
-    it 'should get false' do
-      requisite_a = Feature::RequisiteExpr.new("X")
-      requisite_b = Feature::RequisiteExpr.new("X")
-      requisite_a.call_pione_method("!=", requisite_b).should ==
-        PioneBoolean.false
-    end
-  end
-
-  describe "pione method as_string" do
-    it 'should get string' do
-      requisite = Feature::RequisiteExpr.new("X")
-      requisite.call_pione_method("as_string").should ==
-        PioneString.new("+X")
-      blocking = Feature::BlockingExpr.new("X")
-      blocking.call_pione_method("as_string").should ==
-        PioneString.new("-X")
-    end
-  end
+  # test_pione_method("feature-expr")
 end

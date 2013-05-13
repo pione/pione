@@ -34,8 +34,8 @@ module Pione
         @condition[:params] = condition[:params] || Parameters.empty
         @condition[:features] = condition[:features] || Feature.empty
         @condition[:constraints] = condition[:constraints] || Constraints.empty
-        @condition[:input_ticket_expr] = condition[:input_ticket_expr] || TicketExpr.empty
-        @condition[:output_ticket_expr] = condition[:output_ticket_expr] || TicketExpr.empty
+        @condition[:input_ticket_expr] = condition[:input_ticket_expr] || TicketExprSequence.empty
+        @condition[:output_ticket_expr] = condition[:output_ticket_expr] || TicketExprSequence.empty
         super()
       end
 
@@ -277,7 +277,7 @@ module Pione
       #   rule process
       def initialize(name, &b)
         expr = RuleExpr.new(Package.new('system'), name)
-        condition = RuleCondition.new([DataExpr.new('*').all], [])
+        condition = RuleCondition.new([DataExpr.new('*').to_seq.set_all], [])
         super(expr, condition, b)
       end
     end

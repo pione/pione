@@ -9,7 +9,7 @@ module Pione
         val = (s == "true")
         Model::PioneBoolean.new(val).tap do |x|
           x.set_line_and_column(s.line_and_column)
-          break Model::PioneBooleanSequence.new([x])
+          break Model::BooleanSequence.new([x])
         end
       end
 
@@ -19,21 +19,21 @@ module Pione
         val = s.str.gsub(/\\(.)/){$1}
         Model::PioneString.new(val).tap do |x|
           x.set_line_and_column(s.line_and_column)
-          break Model::PioneStringSequence.new([x])
+          break Model::StringSequence.new([x])
         end
       end
 
       # NOTE: how do we get the position of empty string?
       rule(:string => sequence(:empty)) do
         # convert backslash notations
-        Model::PioneStringSequence.new([Model::PioneString.new("")])
+        Model::StringSequence.new([Model::PioneString.new("")])
       end
 
       # Transform +:integer+ as Model::PioneInteger.
       rule(:integer => simple(:i)) do
         Model::PioneInteger.new(i.to_i).tap do |x|
           x.set_line_and_column(i.line_and_column)
-          break Model::PioneIntegerSequence.new([x])
+          break Model::IntegerSequence.new([x])
         end
       end
 
@@ -41,7 +41,7 @@ module Pione
       rule(:float => simple(:f)) do
         Model::PioneFloat.new(f.to_f).tap do |x|
           x.set_line_and_column(f.line_and_column)
-          break Model::PioneFloatSequence.new([x])
+          break Model::FloatSequence.new([x])
         end
       end
 
@@ -58,6 +58,7 @@ module Pione
         val = name.str.gsub(/\\(.)/){$1}
         Model::DataExpr.new(val).tap do |x|
           x.set_line_and_column(name.line_and_column)
+          break Model::DataExprSequence.new([x])
         end
       end
 
@@ -81,9 +82,9 @@ module Pione
       # ticket
       rule(:ticket => simple(:name)) do
         line_and_column = name.line_and_column
-        TicketExpr.new([name.to_s]) do
+        TicketExpr.new(name.to_s) do
           set_line_and_column(line_and_column)
-        end
+        end.to_seq
       end
     end
   end

@@ -102,7 +102,7 @@ Rule Create3dlst
   input '*.3dinfo'.all
   output '{$TARGET}.3dlst'
 Action
-  cat {$I[1].join(" ")} | sort > {$TARGET}.3dlst
+  cat {$I[1].as_string.join(" ")} | sort > {$TARGET}.3dlst
 End
 
 # .3dlst.3d

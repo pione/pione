@@ -20,8 +20,8 @@ describe 'Model::PioneString' do
 
   it 'should expand variables' do
     vtable = VariableTable.new({
-        Variable.new("var1") => PioneString.new("a"),
-        Variable.new("var2") => PioneString.new("b")
+        Variable.new("var1") => PioneString.new("a").to_seq,
+        Variable.new("var2") => PioneString.new("b").to_seq
       })
     PioneString.new("{$var1}:{$var2}").eval(vtable).should ==
       PioneString.new("a:b")

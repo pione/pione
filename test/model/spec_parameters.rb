@@ -78,9 +78,9 @@ describe 'Model::Parameters' do
   end
 
   it 'should expand sequence with each modifier' do
-    seq_a = PioneStringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")]).set_each
-    seq_b = PioneIntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)]).set_each
-    seq_c = PioneBooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)]).set_each
+    seq_a = StringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")]).set_each
+    seq_b = IntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)]).set_each
+    seq_c = BooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)]).set_each
     params = Parameters.new(Variable.new("A") => seq_a, Variable.new("B") => seq_b, Variable.new("C") => seq_c)
     params.to_a.tap do |list|
       list.size.should == 18
@@ -117,9 +117,9 @@ describe 'Model::Parameters' do
   end
 
   it 'should expand sequences with all modifier' do
-    seq_a = PioneStringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")]).set_all
-    seq_b = PioneIntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)]).set_all
-    seq_c = PioneBooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)]).set_all
+    seq_a = StringSequence.new([PioneString.new("X"), PioneString.new("Y"), PioneString.new("Z")]).set_all
+    seq_b = IntegerSequence.new([PioneInteger.new(1), PioneInteger.new(2), PioneInteger.new(3)]).set_all
+    seq_c = BooleanSequence.new([PioneBoolean.new(true), PioneBoolean.new(false)]).set_all
     params = Parameters.new(Variable.new("A") => seq_a, Variable.new("B") => seq_b, Variable.new("C") => seq_c)
     params.to_a.tap do |list|
       list.size.should == 1
@@ -130,75 +130,6 @@ describe 'Model::Parameters' do
           Variable.new("C") => seq_c
         )
       )
-    end
-  end
-
-  describe 'pione method ==' do
-    it 'should get true' do
-      params_a = @params_a
-      params_b = Parameters.new({
-          Variable.new("a") => "A".to_pione,
-          Variable.new("b") => "B".to_pione,
-          Variable.new("c") => "C".to_pione
-        })
-      params_a.call_pione_method("==", params_b).should ==
-        PioneBoolean.true
-    end
-
-    it 'should get false' do
-      params_a = {"a" => "A", "b" => "B", "c" => "C"}.to_params
-      params_b = {"a" => "X", "b" => "Y", "c" => "Z"}.to_params
-      params_a.call_pione_method("==", params_b).should ==
-        PioneBoolean.false
-    end
-  end
-
-  describe 'pione method !=' do
-    it 'should get true' do
-      params_a = {"a" => "A", "b" => "B", "c" => "C"}.to_params
-      params_b = {"a" => "X", "b" => "Y", "c" => "Z"}.to_params
-      params_a.call_pione_method("!=", params_b).should ==
-        PioneBoolean.true
-    end
-
-    it 'should get false' do
-      params_a = {"a" => "A", "b" => "B", "c" => "C"}.to_params
-      params_b = {"a" => "A", "b" => "B", "c" => "C"}.to_params
-      params_a.call_pione_method("!=", params_b).should ==
-        PioneBoolean.false
-    end
-  end
-
-  describe 'pione method []' do
-    it 'should get a value' do
-      @params_a.call_pione_method("[]", "a".to_pione).should ==
-        "A".to_pione
-    end
-  end
-
-  describe 'pione method get' do
-    it 'should get a value' do
-      @params_a.call_pione_method("get", "a".to_pione).should ==
-        "A".to_pione
-    end
-  end
-
-  describe 'pione method set' do
-    it 'should add a parameter' do
-      new_params = @params_a.call_pione_method("set", "d".to_pione, "D".to_pione)
-      new_params.get(Variable.new("d")).should == "D".to_pione
-    end
-
-    it 'should overwrite a parameter' do
-      new_params = @params_a.call_pione_method("set", "a".to_pione, "X".to_pione)
-      new_params.get(Variable.new("a")).should == "X".to_pione
-    end
-  end
-
-  describe 'pione method empty?' do
-    it 'should get true' do
-      Parameters.new({}).call_pione_method("empty?").should ==
-        PioneBoolean.true
     end
   end
 end

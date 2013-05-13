@@ -1,20 +1,7 @@
 module Pione
   module Model
     # PioneFloat represents float values in PIONE system.
-    class PioneFloat < BasicModel
-      set_pione_model_type TypeFloat
-
-      attr_reader :value
-
-      # Create a float value in PIONE system.
-      #
-      # @param value [Float]
-      #    value in ruby
-      def initialize(value)
-        @value = value
-        super()
-      end
-
+    class PioneFloat < Value
       # @api private
       def textize
         "#PioneFloat{%s}" % @value
@@ -42,9 +29,10 @@ module Pione
       end
     end
 
-    class PioneFloatSequence < BasicSequence
+    class FloatSequence < OrdinalSequence
       set_pione_model_type TypeFloat
       set_element_class PioneFloat
+      set_shortname "FSeq"
 
       def value
         @value ||= @elements.inject(0.0){|n, elt| n + elt.value}
@@ -53,19 +41,23 @@ module Pione
 
     TypeFloat.instance_eval do
       define_pione_method(">", [TypeFloat], TypeBoolean) do |rec, other|
-        PioneBooleanSequence.new([PioneBoolean.new(rec.value > other.value)])
+        BooleanSequence.new([PioneBoolean.new(rec.value > other.value)])
       end
 
       define_pione_method("<", [TypeFloat], TypeBoolean) do |rec, other|
-        PioneBoolean.new(rec.value < other.value)
+        BooleanSequence.new([PioneBoolean.new(rec.value < other.value)])
       end
 
       define_pione_method("+", [TypeFloat], TypeFloat) do |rec, other|
-        PioneFloat.new(rec.value + other.value)
+        map2(rec, other) do |rec_elt, other_elt|
+          PioneFloat.new(rec_elt.value + other_elt.value)
+        end
       end
 
       define_pione_method("-", [TypeFloat], TypeFloat) do |rec, other|
-        PioneFloat.new(rec.value - other.value)
+        map2(rec, other) do |rec_elt, other_elt|
+          PioneFloat.new(rec_elt.value - other_elt.value)
+        end
       end
 
       define_pione_method("*", [TypeFloat], TypeFloat) do |rec, other|
@@ -83,12 +75,12 @@ module Pione
       end
 
       define_pione_method("as_string", [], TypeString) do |rec|
-        sequential_map1(TypeInteger, rec) do |elt|
+        sequential_map1(TypeString, rec) do |elt|
           elt.value.to_s
         end
       end
 
-      define_pione_method("as_int", [], TypeInteger) do |rec|
+      define_pione_method("as_integer", [], TypeInteger) do |rec|
         sequential_map1(TypeInteger, rec) do |elt|
           elt.value.to_i
         end

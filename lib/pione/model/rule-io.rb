@@ -64,7 +64,7 @@ module Pione
         rec.call_pione_method("match")
       end
 
-      define_pione_method("[]", [TypeInteger], TypeAny) do |rec, i|
+      define_pione_method("[]", [TypeInteger], TypeSequence) do |rec, i|
         rec.match[i.value]
       end
 
@@ -150,7 +150,7 @@ module Pione
         PioneBoolean.not(rec.call_pione_method("==", other))
       end
 
-      define_pione_method("[]", [TypeInteger], TypeAny) do |rec, i|
+      define_pione_method("[]", [TypeInteger], TypeSequence) do |rec, i|
         rec.elements[i.value-1]
       end
 

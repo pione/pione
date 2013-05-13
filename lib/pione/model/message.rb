@@ -36,11 +36,11 @@ module Pione
 
       # Return PIONE model type of the message result according to type interface.
       #
-      # @return [Symbol]
+     # @return [Symbol]
       #   PIONE model type
       def pione_model_type
-        if interface = @receiver.pione_model_type.method_interface[@name.to_s]
-          interface.output
+        if pione_method = @receiver.pione_model_type.find_method(@name, @receiver, *@arguments)
+          pione_method.get_output_type(@receiver)
         else
           raise MethodNotFound.new(@name.to_s, self)
         end
@@ -70,6 +70,10 @@ module Pione
       def textize
         args = [@name, @receiver.textize, @arguments.map{|arg| arg.textize}.join(",")]
         "message(\"%s\",%s,[%s])" % args
+      end
+
+      def inspect
+        '#<Message "%s" %s %s>' % [@name, @receiver.inspect, @arguments.inspect]
       end
 
       # @api private

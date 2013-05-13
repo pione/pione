@@ -2,9 +2,8 @@ module Pione
   module Model
     # Variable represent variable name objects. A variable object can evaluates
     # its value with the variable table.
-    class Variable < BasicModel
-      set_pione_model_type TypeAny
-
+    class Variable < Callable
+      set_pione_model_type TypeSequence
       attr_reader :name
 
       # true if the variable is user parameter
@@ -95,9 +94,14 @@ module Pione
 
       # @api private
       def inspect
-        "#<Pione::Model::Variable @name=%s>" % @name.inspect
+        "#<Variable %s>" % @name.inspect
       end
       alias :to_s :inspect
     end
+
+    # class VariableSequence < Sequence
+    #   set_pione_model_type TypeSequence
+    #   set_element_class Variable
+    # end
   end
 end

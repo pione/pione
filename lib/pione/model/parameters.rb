@@ -1,7 +1,8 @@
 module Pione
   module Model
     # Parameters is a PIONE mode class for parameters.
-    class Parameters < BasicModel
+    class Parameters < Callable
+      set_pione_model_type TypeParameters
       include Enumerable
 
       # InvalidParameter is raised when you specify invalid parameter.
@@ -61,7 +62,6 @@ module Pione
       end
 
       attr_reader :data
-      set_pione_model_type TypeParameters
 
       # Create a parameters object.
       #
@@ -160,7 +160,7 @@ module Pione
       # @return [Parameters]
       #   new parameters with the parameter
       def set_safety(name, value)
-        if not(@data.has_key?(name)) or @data[name].kind_of?(UndefinedValue)
+        if not(@data.has_key?(name)) or @data[name].void?
           set(name, value)
         end
       end
@@ -173,7 +173,7 @@ module Pione
       #   value
       # @return [void]
       def set_safety!(name, value)
-        if not(@data.has_key?(name)) or @data[name].kind_of?(UndefinedValue)
+        if not(@data.has_key?(name)) or @data[name].void?
           set!(name, value)
         end
       end
@@ -210,7 +210,7 @@ module Pione
         when Parameters
           self.class.new(@data.merge(other.data))
         when Variable
-          self.class.new(@data.merge({other => UndefinedValue.new}))
+          self.class.new(@data.merge({other => Sequence.void}))
         when Assignment
           self.class.new(@data.merge({other.variable => other.expr}))
         else
@@ -228,7 +228,7 @@ module Pione
         when Parameters
           @data.merge!(other.data)
         when Variable
-          @data.merge!({other => UndefinedValue.new})
+          @data.merge!({other => Sequence.void})
         when Assignment
           @data.merge!({other.variable => other.expr})
         else
@@ -317,6 +317,11 @@ module Pione
       end
     end
 
+    # class ParametersSequence < Sequence
+    #   set_pione_model_type TypeParameters
+    #   set_element_class Parameters
+    # end
+
     TypeParameters.instance_eval do
       define_pione_method('==', [TypeParameters], TypeBoolean) do |rec, other|
         PioneBoolean.new(rec.data == other.data)
@@ -326,17 +331,17 @@ module Pione
         PioneBoolean.not(rec.call_pione_method("==", other))
       end
 
-      define_pione_method("[]", [TypeString], TypeAny) do |rec, name|
+      define_pione_method("[]", [TypeString], TypeSequence) do |rec, name|
         rec.get(Variable.new(name.value))
       end
 
-      define_pione_method("get", [TypeString], TypeAny) do |rec, name|
+      define_pione_method("get", [TypeString], TypeSequence) do |rec, name|
         rec.get(Variable.new(name.value))
       end
 
       define_pione_method(
         "set",
-        [TypeString, TypeAny],
+        [TypeString, TypeSequence],
         TypeParameters
       ) do |rec, name, val|
         rec.set(Variable.new(name.value), val)

@@ -10,7 +10,7 @@ module Pione
     #   # assigning a variable value
     #   $X := $Y
     #   # => Assignment.new(Variable.new('X'), Variable.new('Y'))
-    class Assignment < BasicModel
+    class Assignment < Callable
       set_pione_model_type TypeAssignment
 
       # Return the variable part of assignment.
@@ -99,5 +99,10 @@ module Pione
         @variable.hash + @expr.hash
       end
     end
+
+    # class AssignmentSequence < Sequence
+    #   set_pione_model_type TypeAssignment
+    #   set_element_class Assignment
+    # end
   end
 end

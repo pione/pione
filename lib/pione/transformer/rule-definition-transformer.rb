@@ -46,7 +46,7 @@ module Pione
 
       # Transform +param_line+ as Naming::ParamLine.
       rule(:param_line => simple(:param)) {
-        unless TypeAssignment.match(param) or TypeParameters.match(param)
+        unless TypeAssignment.match(param) or TypeParameters.match(param) or param.kind_of?(Variable)
           raise PioneModelTypeError.new(param, TypeAssignment)
         end
         Naming.ParamLine(param)

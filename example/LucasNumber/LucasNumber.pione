@@ -3,7 +3,7 @@ Rule Main
   param $NUM := 10
 Flow
   rule LucasNumber.params({NUM: $NUM})
-  rule Result
+  rule Result {NUM: $NUM}
 End
 
 Rule LucasNumber

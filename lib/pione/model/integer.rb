@@ -1,20 +1,7 @@
 module Pione
   module Model
     # PioneInteger represents integer value in PIONE system.
-    class PioneInteger < BasicModel
-      set_pione_model_type TypeInteger
-
-      attr_reader :value
-
-      # Create a integer value in PIONE system.
-      #
-      # @param value [Integer]
-      #   value in ruby
-      def initialize(value)
-        @value = value
-        super()
-      end
-
+    class PioneInteger < Value
       # @api private
       def task_id_string
         "Integer<#{@value}>"
@@ -34,7 +21,7 @@ module Pione
       end
 
       def to_seq
-        PioneIntegerSequence.new([self])
+        IntegerSequence.new([self])
       end
 
       # @api private
@@ -59,40 +46,33 @@ module Pione
       alias :to_s :inspect
     end
 
-    class PioneIntegerSequence < BasicSequence
+    class IntegerSequence < OrdinalSequence
       set_pione_model_type TypeInteger
       set_element_class PioneInteger
-
-      def value
-        @value ||= @elements.inject(0){|n, elt| n + elt.value}
-      end
-
-      def textize
-        "<ISeq [%s]>" % @elements.map{|x| x.textize}.join(",")
-      end
+      set_shortname "ISeq"
     end
 
     TypeInteger.instance_eval do
       define_pione_method(">", [TypeInteger], TypeBoolean) do |rec, other|
-        sequential_pred2(rec, other) do |rec_elt, other_elt|
+        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
           rec_elt.value > other_elt.value
         end
       end
 
       define_pione_method(">=", [TypeInteger], TypeBoolean) do |rec, other|
-        PioneBooleanSequence.new(
+        BooleanSequence.new(
           [PioneBoolean.new(rec.call_pione_method(">", other).value || rec.call_pione_method("==", other).value)]
         )
       end
 
       define_pione_method("<", [TypeInteger], TypeBoolean) do |rec, other|
-        sequential_pred2(rec, other) do |rec_elt, other_elt|
+        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
           rec_elt.value < other_elt.value
         end
       end
 
       define_pione_method("<=", [TypeInteger], TypeBoolean) do |rec, other|
-        PioneBooleanSequence.new(
+        BooleanSequence.new(
           [PioneBoolean.new(
               rec.call_pione_method("<", other).value ||
               rec.call_pione_method("==", other).value
