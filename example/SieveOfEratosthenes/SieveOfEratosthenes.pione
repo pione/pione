@@ -1,62 +1,50 @@
-param $MAX := 20
+param $MAX := 10
 
 Rule Main
   output '*.prime'.all
 Flow
-  rule Sieve
+  rule CreateUndeterminedNumbers >>> Sieve
+End
+
+Rule CreateUndeterminedNumbers
+  output '*.ud'.all
+  param $N := 2.upto($MAX)
+Flow
+  rule CreateData {NAME: "{$N}.ud"}
 End
 
 Rule Sieve
-  input '*-*.not_prime'.all or null
-  output '*.current'.all or '*.prime'.all
-  param $NUM := 2
+  input '*.ud'.all or null
+  input '*.prime'.all or null
+  output '*.prime'.all.neglect
+  output 'finished'
+  param $N := 2
 Flow
-  $NEXT_NUM := $NUM + 1
-  $NEXT_RULE := Sieve {NUM: $NEXT_NUM}
-  rule Current {N: $NUM}
-  if not :: $*.as_data_expr.match?($NUM.as_string)
-    rule CreatePrime {N: $NUM}
-    if ($NUM * $NUM) <= $MAX
-      rule CreateNotPrimeAll {P: $NUM} >>> $NEXT_RULE
+  if $*.as_data_expr.match?($N.str)
+    if ($N * $N) <= $MAX
+      rule CreateData {NAME: "{$N}.prime"} >>> RemoveUndeterminedNumber >>> Sieve {N: $N+1}
     else
-      rule $NEXT_RULE
+      rule UndeterminedNumber2Prime
+      rule CreateData {NAME: "finished"}
     end
   else
-    if $NEXT_NUM <= $MAX
-      rule $NEXT_RULE
-    end
+    rule Sieve {N: $N+1}
   end
 End
 
-Rule CreateNotPrimeAll
-  output '*-{$P}.not_prime'.all
-  param $P
-  param $INDEX := 2
-Flow
-  if ($P * ($INDEX + 1)) <= $MAX
-    rule CreateNotPrimeAll {P: $P, INDEX: $INDEX + 1}
-  end
-  rule CreateNotPrime {P: $P, N: $P * $INDEX}
+Rule RemoveUndeterminedNumber
+  input '*.prime'
+  input '*.ud'
+  output '{$I[2][1]}.ud'.remove
+  constraint ($I[2][1].i % $I[1][1].i) == 0
 End
 
-Rule CreateNotPrime
-  output '{$N}-{$P}.not_prime'
-  param $P
-  param $N
-Action
-  touch {$N}-{$P}.not_prime
+Rule UndeterminedNumber2Prime
+  input '*.ud'
+  output '{$*}.prime'.touch
 End
 
-Rule CreatePrime
-  output '{$N}.prime'
-  param $N
-Action
-  touch {$N}.prime
-End
-
-Rule Current
-  output '{$N}.current'
-  param $N
-Action
-  touch {$N}.current
+Rule CreateData
+  param $NAME
+  output '{$NAME}'.touch
 End
