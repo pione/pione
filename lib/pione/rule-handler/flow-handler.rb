@@ -102,7 +102,7 @@ module Pione
           # callee parameters inherit caller parameters
           @variable_table.variables.each do |var|
             val = @variable_table.get(var)
-            if val.kind_of?(Variable) or val.void?
+            if val.kind_of?(Callable) or val.kind_of?(Variable) or val.void?
               if rule.params.keys.include?(var)
                 callee.expr.params.set_safety!(var, val)
               end

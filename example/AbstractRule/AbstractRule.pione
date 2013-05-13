@@ -1,0 +1,40 @@
+Rule Main
+  output 'message.txt'
+  param $NAME := "A"
+Flow
+  case $NAME
+  when "A"
+    $RULE := A
+  when "B"
+    $RULE := B
+  when "C"
+    $RULE := C
+  end
+  rule Abstract {R: $RULE}
+End
+
+Rule Abstract
+  output 'message.txt'
+  param $R
+Flow
+  rule $R
+End
+
+Rule A
+  output 'message.txt'
+Action
+  echo "This is rule A." > {$O[1]}
+End
+
+Rule B
+  output 'message.txt'
+Action
+  echo "This is rule B." > {$O[1]}
+End
+
+Rule C
+  output 'message.txt'
+Action
+  echo "This is rule C." > {$O[1]}
+End
+
