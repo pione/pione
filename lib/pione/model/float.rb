@@ -89,6 +89,25 @@ module Pione
       define_pione_method("as_float", [], TypeFloat) do |rec|
         rec
       end
+
+      # sin : float
+      define_pione_method("sin", [], TypeFloat) do |rec|
+        sequential_map1(TypeFloat, rec) do |elt|
+          Math.sin(elt.value)
+        end
+      end
+
+      # cos : float
+      define_pione_method("cos", [], TypeFloat) do |rec|
+        sequential_map1(TypeFloat, rec) do |elt|
+          Math.cos(elt.value)
+        end
+      end
+
+      # abs : float
+      define_pione_method("abs", [], TypeFloat) do |rec|
+        sequential_map1(TypeFloat, rec) {|elt| elt.value.abs}
+      end
     end
   end
 end
