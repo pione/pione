@@ -21,8 +21,8 @@ module Pione
       #   message arguments
       def initialize(name, receiver, *arguments)
         @name = name
-        @receiver = receiver.to_pione
-        @arguments = arguments.map{|arg| arg.to_pione}
+        @receiver = receiver
+        @arguments = arguments
         super()
       end
 

@@ -1,51 +1,52 @@
 require_relative '../test-util'
 
-describe 'Model::Assignment' do
+describe 'Pione::Model::Assignment' do
+  before do
+    @var_x = Variable.new("X")
+    @var_y = Variable.new("Y")
+    @var_z = Variable.new("Z")
+    @a = PioneString.new("a")
+    @b = PioneString.new("b")
+  end
+
   it 'should be equal' do
-    x1 = Assignment.new(Variable.new("X"), PioneString.new("a"))
-    x2 = Assignment.new(Variable.new("X"), PioneString.new("a"))
+    x1 = Assignment.new(@var_x, @a)
+    x2 = Assignment.new(@var_x, @a)
     x1.should.be.equal x2
   end
 
   it 'should not be equal' do
-    x1 = Assignment.new(Variable.new("X"), PioneString.new("a"))
-    x2 = Assignment.new(Variable.new("X"), PioneString.new("b"))
-    y1 = Assignment.new(Variable.new("Y"), PioneString.new("a"))
-    y2 = Assignment.new(Variable.new("Y"), PioneString.new("b"))
+    x1 = Assignment.new(@var_x, @a)
+    x2 = Assignment.new(@var_x, @b)
+    y1 = Assignment.new(@var_y, @a)
+    y2 = Assignment.new(@var_y, @b)
     x1.should.not.be.equal x2
     x1.should.not.be.equal y1
     x1.should.not.be.equal y2
   end
 
   it 'should push variable and value into variable table' do
-    Assignment.new(
-      Variable.new("X"),
-      PioneString.new("a")
-    ).eval(VariableTable.new).should == PioneString.new("a")
+    vtable = VariableTable.new
+    Assignment.new(@var_x, @a).eval(vtable).should == @a
+    vtable.get(@var_x).should == @a
   end
 
   it 'should evaluate the value' do
     vtable = VariableTable.new
     Assignment.new(
-      Variable.new("X"),
+      @var_x,
       Message.new("as_string", IntegerSequence.new([1.to_pione]))
     ).eval(vtable)
-    Variable.new("X").eval(vtable).should == StringSequence.new(["1".to_pione])
+    @var_x.eval(vtable).should == StringSequence.new([PioneString.new("1")])
   end
 
   it 'should update variable table' do
     vtable = VariableTable.new
-    Assignment.new(
-      Variable.new("X"),
-      "a".to_pione
-    ).eval(vtable).should == "a".to_pione
-    vtable.get(Variable.new("X")).should == "a".to_pione
-    Assignment.new(
-      Variable.new("Y"),
-      Variable.new("Z")
-    ).eval(vtable).should == Variable.new("Z")
-    vtable.get(Variable.new("Y")).should == Variable.new("Z")
-    vtable.set(Variable.new("Z"), "b".to_pione)
-    vtable.get(Variable.new("Y")).should == "b".to_pione
+    Assignment.new(@var_x, @a).eval(vtable).should == @a
+    vtable.get(@var_x).should == @a
+    Assignment.new(@var_y, @var_z).eval(vtable).should == @var_z
+    vtable.get(@var_y).should == @var_z
+    vtable.set(@var_z, @b)
+    vtable.get(@var_y).should == @b
   end
 end

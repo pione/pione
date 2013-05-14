@@ -11,6 +11,8 @@ module Pione
         end
       end
 
+      attr_reader :exprs
+
       # @param exprs [Array<BasicModel>]
       #   constraint expressions
       def initialize(exprs)
@@ -28,6 +30,16 @@ module Pione
           res = expr.eval(vtable)
           res.kind_of?(BooleanSequence) and res.value
         end
+      end
+
+      def ==(other)
+        return false unless other.kind_of?(self.class)
+        @exprs == other.exprs
+      end
+      alias :eql? :"=="
+
+      def hash
+        @exprs.hash
       end
     end
   end

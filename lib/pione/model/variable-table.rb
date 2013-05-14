@@ -137,6 +137,7 @@ module Pione
           end
         end
         @table[variable] = new_value
+        return self
       end
 
       # Set a variable. This method overrides old variable value.
@@ -189,7 +190,7 @@ module Pione
         str = str.to_s
         return true if /\{\$(.+?)\}/.match(str)
         str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
-          expr = Transformer.new.apply(Parser.new.expr.parse($1))
+          expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
           return true if expr.include_variable?
         end
         return false

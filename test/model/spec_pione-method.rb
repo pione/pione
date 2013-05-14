@@ -6,10 +6,10 @@ describe "Pione::Model::PioneMethod" do
     @int_2 = PioneInteger.new(2).to_seq
     @int_3 = PioneInteger.new(3).to_seq
     @str_1 = PioneString.new(1).to_seq
-    @method_1 = Model::PioneMethod.new([TypeInteger], TypeInteger, lambda{|rec, arg1| arg1})
-    @method_2 = Model::PioneMethod.new([TypeInteger, TypeString], TypeInteger, lambda{|rec, arg1, arg2| arg1})
-    @method_3 = Model::PioneMethod.new([], :receiver_type, lambda{|rec| rec})
-    @method_bad = Model::PioneMethod.new([TypeString], TypeInteger, lambda{|rec, arg1| arg1})
+    @method_1 = Model::PioneMethod.new("m1", [TypeInteger], TypeInteger, lambda{|rec, arg1| arg1})
+    @method_2 = Model::PioneMethod.new("m2", [TypeInteger, TypeString], TypeInteger, lambda{|rec, arg1, arg2| arg1})
+    @method_3 = Model::PioneMethod.new("m3", [], :receiver_type, lambda{|rec| rec})
+    @method_bad = Model::PioneMethod.new("mbad", [TypeString], TypeInteger, lambda{|rec, arg1| arg1})
   end
 
   it "should get inputs" do

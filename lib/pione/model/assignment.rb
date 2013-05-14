@@ -43,6 +43,7 @@ module Pione
       #   self
       def eval(vtable)
         vtable.set(@variable, @expr)
+        return @expr
       end
 
       # Set truth of toplevel assignment.

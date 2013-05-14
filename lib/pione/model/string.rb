@@ -130,14 +130,3 @@ module Pione
     end
   end
 end
-
-# String extention for PIONE system.
-class String
-  # Return PIONE's value.
-  #
-  # @return [PioneString]
-  #   PIONE's value
-  def to_pione
-    PioneString.new(self)
-  end
-end

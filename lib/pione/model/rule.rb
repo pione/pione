@@ -54,13 +54,12 @@ module Pione
         @condition.merge(inputs: @inputs, outputs: @outputs)
       end
 
-      # @api private
       def ==(other)
+        return false unless other.kind_of?(self.class)
         to_hash == other.to_hash
       end
       alias :eql? :"=="
 
-      # @api private
       def hash
         @inputs.hash + @outputs.hash + @condition.hash
       end

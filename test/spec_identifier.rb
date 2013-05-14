@@ -1,6 +1,11 @@
 require_relative 'test-util'
 
 describe 'ID' do
+  before do
+    @params_1 = Parameters.new(Variable.new("var") => PioneString.new("1.a"))
+    @params_2 = Parameters.new(Variable.new("var") => PioneString.new("2.a"))
+  end
+
   it 'should get task id' do
     ID.task_id([], Parameters.empty).size.should == 32
   end
@@ -15,10 +20,10 @@ describe 'ID' do
       ID.task_id([], Parameters.empty),
       ID.task_id([DataExpr["1.a"]], Parameters.empty),
       ID.task_id([DataExpr["2.a"]], Parameters.empty),
-      ID.task_id([], {"var" => "1.a"}.to_params),
-      ID.task_id([], {"var" => "2.a"}.to_params),
-      ID.task_id([DataExpr["1.a"]], {"var" => "1.a"}.to_params),
-      ID.task_id([DataExpr["2.a"]], {"var" => "2.a"}.to_params)
+      ID.task_id([], @params_1),
+      ID.task_id([], @params_2),
+      ID.task_id([DataExpr["1.a"]], @params_1),
+      ID.task_id([DataExpr["2.a"]], @params_2)
     ]
     7.times do |i|
       7.times do |ii|

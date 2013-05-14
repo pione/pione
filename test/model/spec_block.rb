@@ -1,14 +1,12 @@
 require_relative '../test-util'
 
-describe 'Model::ActionBlock' do
+describe 'Pione::Model::ActionBlock' do
   it 'should be equal' do
-    ActionBlock.new("eccho 'a'").should ==
-      ActionBlock.new("eccho 'a'")
+    ActionBlock.new("echo 'a'").should == ActionBlock.new("echo 'a'")
   end
 
   it 'should not be equal' do
-    ActionBlock.new("eccho 'a'").should.not ==
-      ActionBlock.new("eccho 'b'")
+    ActionBlock.new("echo 'a'").should.not == ActionBlock.new("echo 'b'")
   end
 
   it 'should expand variables' do
@@ -21,134 +19,90 @@ describe 'Model::ActionBlock' do
   end
 end
 
-describe 'Model::FlowBlock' do
+describe 'Pione::Model::FlowBlock' do
+  before do
+    @rule_a = CallRule.new(RuleExpr.new(Package.new("test"), "a"))
+    @rule_b = CallRule.new(RuleExpr.new(Package.new("test"), "b"))
+    @rule_c = CallRule.new(RuleExpr.new(Package.new("test"), "c"))
+    @var_a = Variable.new("A")
+    @var_x = Variable.new("X")
+    @var_y = Variable.new("Y")
+    @var_z = Variable.new("Z")
+  end
+
   it 'should be equal' do
-    FlowBlock.new(
-      CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-    ).should == FlowBlock.new(
-      Model::CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-    )
+    FlowBlock.new(@rule_a).should == FlowBlock.new(@rule_a)
   end
 
   it 'should not equal' do
-    FlowBlock.new(
-      CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-    ).should.not == FlowBlock.new(
-      CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-    )
+    FlowBlock.new(@rule_a).should != FlowBlock.new(@rule_b)
   end
 
   it 'should get flow elements' do
-    FlowBlock.new(
-      CallRule.new(RuleExpr.new(Package.new("test"), "a")),
-      CallRule.new(RuleExpr.new(Package.new("test"), "b")),
-      CallRule.new(RuleExpr.new(Package.new("test"), "c"))
-    ).elements.should == [
-      CallRule.new(RuleExpr.new(Package.new("test"), "a")),
-      CallRule.new(RuleExpr.new(Package.new("test"), "b")),
-      CallRule.new(RuleExpr.new(Package.new("test"), "c"))
-    ]
+    FlowBlock.new(@rule_a, @rule_b, @rule_c).elements.should == [@rule_a, @rule_b, @rule_c]
   end
 
   it 'should evaluate and get call-rule elements' do
-    x = CallRule.new(RuleExpr.new(Package.new("test"), "x"))
-    y = CallRule.new(RuleExpr.new(Package.new("test"), "y"))
-    z = CallRule.new(RuleExpr.new(Package.new("test"), "z"))
-    vtable = VariableTable.new
     block = FlowBlock.new(
-      Assignment.new(Variable.new("X"), Variable.new("Y")),
-      Assignment.new(Variable.new("Y"), Variable.new("Z")),
+      Assignment.new(@var_x, @var_y),
+      Assignment.new(@var_y, @var_z),
       ConditionalBlock.new(
-        Variable.new("A"),
+        @var_a,
         { BooleanSequence.new([PioneBoolean.true]) =>
-          FlowBlock.new(Assignment.new(Variable.new("Z"), IntegerSequence.new([1.to_pione]))),
+          FlowBlock.new(Assignment.new(@var_z, IntegerSequence.new([1.to_pione]))),
         }
       ),
-      Assignment.new(Variable.new("A"), BooleanSequence.new([PioneBoolean.true])),
+      Assignment.new(@var_a, BooleanSequence.new([PioneBoolean.true])),
       ConditionalBlock.new(
-        Message.new("==", Variable.new("Z"), IntegerSequence.new([1.to_pione])),
-        { BooleanSequence.new([PioneBoolean.true]) => FlowBlock.new(z) }
+        Message.new("==", @var_z, IntegerSequence.new([1.to_pione])),
+        { BooleanSequence.new([PioneBoolean.true]) => FlowBlock.new(@rule_c) }
       ),
-      x,
-      y
+      @rule_a,
+      @rule_b
     )
-    new_block = block.eval(vtable)
-    new_block.elements.should.include x
-    new_block.elements.should.include y
-    new_block.elements.should.include z
+    new_block = block.eval(VariableTable.new)
+    new_block.elements.should.include @rule_a
+    new_block.elements.should.include @rule_b
+    new_block.elements.should.include @rule_c
     new_block.elements.each{|rule| rule.should.kind_of(CallRule)}
   end
 end
 
-describe 'Model::ConditionalBlock' do
+describe 'Pione::Model::ConditionalBlock' do
+  before do
+    @a = PioneString.new("a")
+    @b = PioneString.new("b")
+    @c = PioneString.new("c")
+    @rule_a = CallRule.new(RuleExpr.new(Package.new("test"), "a"))
+    @rule_b = CallRule.new(RuleExpr.new(Package.new("test"), "b"))
+    @rule_c = CallRule.new(RuleExpr.new(Package.new("test"), "c"))
+    @var_a = Variable.new("A")
+    @var_x = Variable.new("X")
+    @var_y = Variable.new("Y")
+    @var_z = Variable.new("Z")
+  end
+
   it 'should be equal' do
     ConditionalBlock.new(
-      Variable.new("X"),
-      { "a".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-        ),
-        "b".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-        )
-      }
+      @var_x, {@a => FlowBlock.new(@rule_a), @b => FlowBlock.new(@rule_b)}
     ).should == ConditionalBlock.new(
-      Variable.new("X"),
-      { "a".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-        ),
-        "b".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-        )
-      }
+      @var_x, {@a => FlowBlock.new(@rule_a), @b => FlowBlock.new(@rule_b)}
     )
   end
 
   it 'should not be equal' do
     ConditionalBlock.new(
-      Variable.new("X"),
-      { "a".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-        ),
-        "b".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-        )
-      }
+      @var_x, {@a => FlowBlock.new(@rule_a), @b => FlowBlock.new(@rule_b)}
     ).should != ConditionalBlock.new(
-      Variable.new("Y"),
-      { "a".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-        ),
-        "b".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-        )
-      }
+      @var_y, {@a => FlowBlock.new(@rule_a), @b => FlowBlock.new(@rule_b)}
     )
   end
 
   it 'should evaluate' do
-    vtable = VariableTable.new
     block = ConditionalBlock.new(
-      Variable.new("X"),
-      { "a".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-        ),
-        "b".to_pione =>
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-        )
-      }
+      @var_x, {@a => FlowBlock.new(@rule_a), @b => FlowBlock.new(@rule_b)}
     )
-    vtable.set(Variable.new("X"), "a".to_pione)
-    block.eval(vtable).should ==
-      FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("test"), "a")))
+    vtable = VariableTable.new.set(@var_x, @a)
+    block.eval(vtable).should == FlowBlock.new(@rule_a)
   end
 end

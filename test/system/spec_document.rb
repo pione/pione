@@ -68,21 +68,21 @@ describe 'Document' do
 
   it 'should have document parameters' do
     doc = Document.parse(src)
-    doc.params["P1"].should == "a".to_pione
-    doc.params["P2"].should == "b".to_pione
-    doc.params["P3"].should == "c".to_pione
-    doc.params["P4"].should == "d".to_pione
-    doc.params["P5"].should == "e".to_pione
+    doc.params["P1"].should == PioneString.new("a").to_seq
+    doc.params["P2"].should == PioneString.new("b").to_seq
+    doc.params["P3"].should == PioneString.new("c").to_seq
+    doc.params["P4"].should == PioneString.new("d").to_seq
+    doc.params["P5"].should == PioneString.new("e").to_seq
     user_params = doc.params.data.select{|var, val| var.user_param}.map{|var, val| var.name}
     user_params.sort.should == ["P1", "P2", "P3", "P4", "P5"]
   end
 
   it 'should have document variable bindings' do
     doc = Document.parse(src)
-    doc["&main:Main"].params["X"].should == 1.to_pione
-    doc["&main:RuleA"].params["X"].should == 1.to_pione
-    doc["&main:RuleB"].params["X"].should == 1.to_pione
-    doc["&main:RuleC"].params["X"].should == 1.to_pione
+    doc["&main:Main"].params["X"].should == 1.to_pione.to_seq
+    doc["&main:RuleA"].params["X"].should == 1.to_pione.to_seq
+    doc["&main:RuleB"].params["X"].should == 1.to_pione.to_seq
+    doc["&main:RuleC"].params["X"].should == 1.to_pione.to_seq
   end
 
   it 'should raise variable binding error' do

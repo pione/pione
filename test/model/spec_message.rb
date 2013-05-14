@@ -32,11 +32,9 @@ describe 'Model::Message' do
   end
 
   it 'should include variables' do
+    Message.new("next", Variable.new("N")).should.include_variable
     Message.new(
-      "next", Variable.new("N")
-    ).should.include_variable
-    Message.new(
-      "substring", "abcdef", Variable.new("FROM"), Variable.new("TO")
+      "substring", PioneString.new("abcdef"), Variable.new("FROM"), Variable.new("TO")
     ).should.include_variable
   end
 end

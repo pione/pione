@@ -1,6 +1,15 @@
 require_relative '../test-util'
 
+$a = PioneString.new("a")
+$b = PioneString.new("b")
+$c = PioneString.new("c")
+$abc = PioneString.new("abc")
+$var_x = Variable.new("X")
+$var_y = Variable.new("Y")
+$var_z = Variable.new("Z")
+
 describe 'Pione::Transformer::ExprTransformer' do
+
   transformer_spec("binary operator", :expr) do
     tc "1 + 2" do
       BinaryOperator.new(
@@ -11,11 +20,7 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
 
     tc '"a" + "b"' do
-      BinaryOperator.new(
-        "+",
-        StringSequence.new(["a".to_pione]),
-        StringSequence.new(["b".to_pione])
-      )
+      BinaryOperator.new("+", StringSequence.new([$a]), StringSequence.new([$b]))
     end
 
     tc "false || true" do
@@ -26,25 +31,13 @@ describe 'Pione::Transformer::ExprTransformer' do
       )
     end
 
-    tc "$Var * 3" do
-      BinaryOperator.new(
-        "*",
-        Variable.new("Var"),
-        IntegerSequence.new([3.to_pione])
-      )
+    tc "$X * 3" do
+      BinaryOperator.new("*", $var_x, IntegerSequence.new([3.to_pione]))
     end
 
-    tc "($Var1 == \"a\") && ($Var2 == \"b\")" do
-      left = BinaryOperator.new(
-        "==",
-        Variable.new("Var1"),
-        StringSequence.new(["a".to_pione])
-      )
-      right = BinaryOperator.new(
-        "==",
-        Variable.new("Var2"),
-        StringSequence.new([PioneString.new("b")])
-      )
+    tc "($X == \"a\") && ($Y == \"b\")" do
+      left = BinaryOperator.new("==", $var_x, StringSequence.new([$a]))
+      right = BinaryOperator.new("==", $var_y, StringSequence.new([$b]))
       BinaryOperator.new("&&", left, right)
     end
   end
@@ -71,7 +64,7 @@ describe 'Pione::Transformer::ExprTransformer' do
     tc "\"abc\".index(1,1)" do
       Message.new(
         "index",
-        StringSequence.new(["abc".to_pione]),
+        StringSequence.new([$abc]),
         IntegerSequence.new([1.to_pione]),
         IntegerSequence.new([1.to_pione])
       )
@@ -111,24 +104,22 @@ describe 'Pione::Transformer::ExprTransformer' do
       Parameters.new({})
     end
 
-    tc "{var1: 1}" do
+    tc "{X: 1}" do
+      Parameters.new({$var_x => IntegerSequence.new([PioneInteger.new(1)])})
+    end
+
+    tc "{X: 1, Y: 2}" do
       Parameters.new(
-        {Variable.new("var1") => IntegerSequence.new([PioneInteger.new(1)])}
+        { $var_x => IntegerSequence.new([PioneInteger.new(1)]),
+          $var_y => IntegerSequence.new([PioneInteger.new(2)]) }
       )
     end
 
-    tc "{var1: 1, var2: 2}" do
+    tc "{X: \"a\", Y: \"b\", Z: \"c\"}" do
       Parameters.new(
-        { Variable.new("var1") => IntegerSequence.new([PioneInteger.new(1)]),
-          Variable.new("var2") => IntegerSequence.new([PioneInteger.new(2)]) }
-      )
-    end
-
-    tc "{var1: \"a\", var2: \"b\", var3: \"c\"}" do
-      Parameters.new(
-        { Variable.new("var1") => StringSequence.new([PioneString.new("a")]),
-          Variable.new("var2") => StringSequence.new([PioneString.new("b")]),
-          Variable.new("var3") => StringSequence.new([PioneString.new("c")]) }
+        { $var_x => StringSequence.new([$a]),
+          $var_y => StringSequence.new([$b]),
+          $var_z => StringSequence.new([$c]) }
       )
     end
   end
