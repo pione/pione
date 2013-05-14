@@ -1,4 +1,4 @@
-require_relative 'test-util'
+require_relative '../test-util'
 
 #
 # test cases
