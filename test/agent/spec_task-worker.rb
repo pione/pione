@@ -105,13 +105,7 @@ describe 'Pione::Agent::TaskWorker' do
       write(Tuple[:working].new(task1.domain, "test"))
       rule = ActionRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
-        RuleCondition.new(
-          [],
-          [DataExpr.new('out.txt')],
-          Parameters.empty,
-          Feature.empty,
-          TicketExpr.empty,
-          TicketExpr.empty
+        RuleCondition.new([], [DataExpr.new('out.txt')]
         ),
         ActionBlock.new("expr 1 + 2 > out.txt")
       )
@@ -135,7 +129,7 @@ describe 'Pione::Agent::TaskWorker' do
       write(Tuple[:working].new(task1.domain, "test"))
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
-        RuleCondition.new([], [], Parameters.empty, Feature.empty, TicketExpr.empty, TicketExpr.empty),
+        RuleCondition.new([], []),
         :dummy
       )
       handler1 = RuleHandler::FlowHandler.new(
@@ -161,7 +155,7 @@ describe 'Pione::Agent::TaskWorker' do
       write(Tuple[:working].new(task.domain, "test"))
       rule = FlowRule.new(
         RuleExpr.new(Package.new('main'), 'Test'),
-        RuleCondition.new([], [], Parameters.empty, Feature.empty, TicketExpr.empty, TicketExpr.empty),
+        RuleCondition.new([], []),
         :dummy
       )
       handler = RuleHandler::FlowHandler.new(

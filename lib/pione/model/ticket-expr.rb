@@ -15,14 +15,6 @@ module Pione
     # @example TicketExpr represents a set
     #   TicketExpr.new("T1") + TicketExpr.new("T2") #=> TicketExpr.new(["T1", "T2"])
     class TicketExpr < Element
-      class << self
-        # Return an emtpy ticket expression. Empty ticket expression has no
-        # ticket conditions.
-        def empty
-          self.new(Set.new)
-        end
-      end
-
       # ticket names
       attr_reader :name
       alias :value :name
