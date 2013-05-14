@@ -10,11 +10,16 @@ module Pione
 
       define_option do
         default :readline_mode, true
+        default :syntax, false
         default :transform, false
 
         option('-e', '--expr=EXPR', 'check the expression string and exit') do |data, e|
           data[:expr] = e
           data[:readline_mode] = false
+        end
+
+        option('-s', '--syntax', 'show syntax tree') do |data|
+          data[:syntax] = true
         end
 
         option('-t', '--transformer', 'show transformer result') do |data|
@@ -92,8 +97,7 @@ module Pione
               next
             else
               # print parsing result
-              puts buf
-              print_result(buf)
+              print_result(DocumentParser.new.expr, buf)
               buf = ""
               mark = ">"
             end
@@ -111,19 +115,26 @@ module Pione
       # @return [void]
       def print_result(parser, str)
         begin
-          puts Terminal.green("syntax:")
           stree = parser.parse(str)
-          pp stree
+          model = DocumentTransformer.new.apply(stree)
+          if option[:syntax]
+            puts Terminal.green("syntax:")
+            pp stree
+          end
           if option[:transform]
             puts Terminal.green("model:")
-            pp DocumentTransformer.new.apply(stree)
+            pp model
           end
+          p model.eval(VariableTable.new)
         rescue Pione::Parser::ParserError, Parslet::ParseFailed => e
           msg = "Pione syntax error: %s (%s)" % [e.message, e.class.name]
           readline_mode? ? puts(msg) : abort(msg)
         rescue Pione::Model::PioneModelTypeError,
           Pione::Model::VariableBindingError => e
           msg = "Pione model error: %s (%s)" % [e.message, e.class.name]
+          readline_mode? ? puts(msg) : abort(msg)
+        rescue Pione::Model::MethodNotFound => e
+          msg = "%s (%s)" % [e.message, e.class.name]
           readline_mode? ? puts(msg) : abort(msg)
         end
       end
