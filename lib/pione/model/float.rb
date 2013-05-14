@@ -7,14 +7,6 @@ module Pione
         "#PioneFloat{%s}" % @value
       end
 
-      # Return ruby's value.
-      #
-      # @return [Float]
-      #   ruby's value
-      def to_ruby
-        return @value
-      end
-
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)

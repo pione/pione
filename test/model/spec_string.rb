@@ -7,7 +7,7 @@ describe 'Model::PioneString' do
   end
 
   it 'should get a ruby object that has same value' do
-    @a.to_ruby.should == "a"
+    @a.value.should == "a"
   end
 
   it 'should equal' do

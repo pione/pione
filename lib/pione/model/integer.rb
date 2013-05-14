@@ -12,14 +12,6 @@ module Pione
         @value.to_s
       end
 
-      # Return the ruby's value.
-      #
-      # @return [Integer]
-      #   ruby's value
-      def to_ruby
-        return @value
-      end
-
       def to_seq
         IntegerSequence.new([self])
       end
@@ -153,7 +145,7 @@ module Pione
         end
       end
 
-      # downto : *integer -> *integer
+      # downto : integer -> integer
       define_pione_method("downto", [TypeInteger], TypeInteger) do |rec, min|
         sequential_fold2(TypeInteger, rec, min) do |seq, rec_elt, min_elt|
           if rec_elt.value > min_elt.value

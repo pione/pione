@@ -11,11 +11,6 @@ describe 'Model::PioneBoolean' do
     PioneBoolean.false.should.false
   end
 
-  it 'should get a ruby object that has same value' do
-    @true.to_ruby.should == true
-    @false.to_ruby.should == false
-  end
-
   it 'should equal' do
     @true.should == PioneBoolean.true
     @false.should == PioneBoolean.false

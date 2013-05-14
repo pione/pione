@@ -86,14 +86,6 @@ module Pione
         @value == false
       end
 
-      # Return ruby's boolean value.
-      #
-      # @return [Boolean]
-      #   ruby's boolean value
-      def to_ruby
-        return @value
-      end
-
       def to_seq
         BooleanSequence.new([self])
       end

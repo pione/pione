@@ -7,7 +7,7 @@ describe 'Model::PioneFloat' do
   end
 
   it 'should get a ruby object that has same value' do
-    @one.to_ruby.should == 1.0
+    @one.value.should == 1.0
   end
 
   it 'should equal' do

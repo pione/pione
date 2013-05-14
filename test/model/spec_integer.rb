@@ -7,7 +7,7 @@ describe 'Model::PioneInteger' do
   end
 
   it 'should get a ruby object that has same value' do
-    @one.to_ruby.should == 1
+    @one.value.should == 1
   end
 
   it 'should equal' do

@@ -38,14 +38,6 @@ module Pione
         "\"%s\"" % [@value]
       end
 
-      # Return ruby's value.
-      #
-      # @return [String]
-      #   the value in ruby
-      def to_ruby
-        return @value
-      end
-
       # @api private
       def ==(other)
         return false unless other.kind_of?(self.class)
