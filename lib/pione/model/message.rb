@@ -42,7 +42,7 @@ module Pione
         if pione_method = @receiver.pione_model_type.find_method(@name, @receiver, *@arguments)
           pione_method.get_output_type(@receiver)
         else
-          raise MethodNotFound.new(@name.to_s, self)
+          raise MethodNotFound.new(@name.to_s, @receiver, *@arguments)
         end
       end
 

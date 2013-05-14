@@ -25,21 +25,26 @@ module Pione
     # MethodNotFound is an exception class for the case of method missing.
     class MethodNotFound < StandardError
       attr_reader :name
-      attr_reader :obj
+      attr_reader :receiver
+      attr_reader :arguments
 
       # Creates an exception.
-      # @param [String, Symbol] name
+      # @param name [String]
       #   method name
-      # @param [BasicModel] obj
+      # @param receiver [Callable]
       #   method reciever
-      def initialize(name, obj)
+      # @param arguments [Array<Callable>]
+      #   method arguments
+      def initialize(name, receiver, *arguments)
         @name = name
-        @obj = obj
+        @receiver = receiver
+        @arguments = arguments
       end
 
-      # @api private
       def message
-        "PIONE method \"%s\" is not found in %s" % [@name, @obj.inspect]
+        rec_type = @receiver.pione_model_type
+        arg_types = @arguments.map{|arg| arg.pione_model_type}.join(" -> ")
+        "PIONE method \"%s\" is not found: %s. %s" % [@name, rec_type, arg_types]
       end
     end
 
@@ -172,7 +177,7 @@ module Pione
         if pione_method = pione_model_type.find_method(name, self, *args)
           pione_method.call(self, *args)
         else
-          raise MethodNotFound.new(name, self)
+          raise MethodNotFound.new(name, self, *args)
         end
       end
 
