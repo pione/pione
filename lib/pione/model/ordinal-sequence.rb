@@ -17,7 +17,7 @@ module Pione
       define_pione_method("==", [:receiver_type], TypeBoolean) do |rec, other|
         if rec.elements.size == other.elements.size
           rec.elements.size.times.all? do |i|
-            rec.elements[i].value == other.elements[i].value
+            rec.elements[i] == other.elements[i]
           end.tap {|x| break BooleanSequence.new([PioneBoolean.new(x)])}
         else
           BooleanSequence.new([PioneBoolean.new(false)])
@@ -25,9 +25,7 @@ module Pione
       end
 
       define_pione_method("nth", [TypeInteger], :receiver_type) do |rec, index|
-        map1(index) do |elt|
-          elt.value == 0 ? rec : rec.elements[elt.value-1]
-        end
+        map1(index) {|elt| elt.value == 0 ? rec : rec.elements[elt.value-1]}
       end
 
       define_pione_method("[]", [:index_type], :receiver_type) do |rec, index|

@@ -15,27 +15,6 @@ module Pione
       def to_seq
         IntegerSequence.new([self])
       end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        @value == other.value
-      end
-
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @value.hash
-      end
-
-      # @api private
-      def inspect
-        "#<PioneInteger %s>" % @value
-      end
-
-      # @api private
-      alias :to_s :inspect
     end
 
     class IntegerSequence < OrdinalSequence

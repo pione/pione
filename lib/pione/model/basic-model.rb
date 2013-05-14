@@ -202,11 +202,26 @@ module Pione
     class Value < Element
       attr_reader :value
 
-      # @param value [Integer]
+      # @param value [Object]
       #   value in ruby
       def initialize(value)
         @value = value
       end
+
+      def ==(other)
+        return false unless other.kind_of?(self.class)
+        @value == other.value
+      end
+      alias :eql? :"=="
+
+      def hash
+        @value.hash
+      end
+
+      def inspect
+        '#<%s "%s">' % [self.class.name, @value]
+      end
+      alias :to_s :inspect
     end
   end
 end

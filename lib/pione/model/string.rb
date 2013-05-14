@@ -37,23 +37,6 @@ module Pione
       def textize
         "\"%s\"" % [@value]
       end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        @value == other.value
-      end
-
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @value.hash
-      end
-
-      def inspect
-        '#<PioneString "%s">' % @value
-      end
     end
 
     class StringSequence < OrdinalSequence
