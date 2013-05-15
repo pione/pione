@@ -157,7 +157,7 @@ module Pione
     #     rule Test2
     #   end
     #   #=> ConditionalBlock.new(
-    #         BinaryOperator::Equals.new(Variable.new('X'), 'a'),
+    #         Message.new("==", Variable.new('X'), StringSequence.new([PioneString.new("a")])),
     #         { true => [CallRule.new('Test1')],
     #           :else => [CallRule.new('Test2')] })
     # @example

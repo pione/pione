@@ -19,21 +19,21 @@ describe 'Model::Variable' do
       vtable = VariableTable.new
       vtable.set(@a, PioneInteger.new(1).to_seq)
       vtable.set(@b, PioneInteger.new(1).to_seq)
-      BinaryOperator.new("==", @a, @b).eval(vtable).should == PioneBoolean.new(true).to_seq
+      Message.new("==", @a, @b).eval(vtable).should == PioneBoolean.new(true).to_seq
     end
 
     it 'should false' do
       vtable = VariableTable.new
       vtable.set(@a, PioneInteger.new(1).to_seq)
       vtable.set(@b, PioneInteger.new(2).to_seq)
-      BinaryOperator.new("==", @a, @b).eval(vtable).should == PioneBoolean.new(false).to_seq
+      Message.new("==", @a, @b).eval(vtable).should == PioneBoolean.new(false).to_seq
     end
 
     it 'should raise unbound variable error' do
       vtable = VariableTable.new
       vtable.set(@a, PioneInteger.new(1).to_seq)
       should.raise(UnboundVariableError) do
-        BinaryOperator.new("==", @a, @b).eval(vtable)
+        Message.new("==", @a, @b).eval(vtable)
       end
     end
 
@@ -42,7 +42,7 @@ describe 'Model::Variable' do
       vtable.set(@a, PioneInteger.new(1).to_seq)
       vtable.set(@b, PioneFloat.new(1.0).to_seq)
       should.raise(MethodNotFound) do
-        BinaryOperator.new("==", @a, @b).eval(vtable)
+        Message.new("==", @a, @b).eval(vtable)
       end
     end
   end
@@ -52,21 +52,21 @@ describe 'Model::Variable' do
       vtable = VariableTable.new
       vtable.set(@a, PioneInteger.new(1).to_seq)
       vtable.set(@b, PioneInteger.new(2).to_seq)
-      BinaryOperator.new("!=", @a, @b).eval(vtable).should == PioneBoolean.new(true).to_seq
+      Message.new("!=", @a, @b).eval(vtable).should == PioneBoolean.new(true).to_seq
     end
 
     it 'should false' do
       vtable = VariableTable.new
       vtable.set(@a, PioneInteger.new(1).to_seq)
       vtable.set(@b, PioneInteger.new(1).to_seq)
-      BinaryOperator.new("!=", @a, @b).eval(vtable).should == PioneBoolean.new(false).to_seq
+      Message.new("!=", @a, @b).eval(vtable).should == PioneBoolean.new(false).to_seq
     end
 
     it 'should raise unbound variable error' do
       vtable = VariableTable.new
       vtable.set(@a, PioneInteger.new(1).to_seq)
       should.raise(UnboundVariableError) do
-        BinaryOperator.new("!=", @a, @b).eval(vtable)
+        Message.new("!=", @a, @b).eval(vtable)
       end
     end
 
@@ -75,7 +75,7 @@ describe 'Model::Variable' do
       vtable.set(@a, PioneInteger.new(1).to_seq)
       vtable.set(@b, PioneFloat.new(1.0).to_seq)
       should.raise(MethodNotFound) do
-        BinaryOperator.new("!=", @a, @b).eval(vtable)
+        Message.new("!=", @a, @b).eval(vtable)
       end
     end
   end

@@ -12,7 +12,7 @@ describe 'Pione::Transformer::ExprTransformer' do
 
   transformer_spec("binary operator", :expr) do
     tc "1 + 2" do
-      BinaryOperator.new(
+      Message.new(
         "+",
         IntegerSequence.new([1.to_pione]),
         IntegerSequence.new([2.to_pione])
@@ -20,11 +20,11 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
 
     tc '"a" + "b"' do
-      BinaryOperator.new("+", StringSequence.new([$a]), StringSequence.new([$b]))
+      Message.new("+", StringSequence.new([$a]), StringSequence.new([$b]))
     end
 
     tc "false || true" do
-      BinaryOperator.new(
+      Message.new(
         "||",
         BooleanSequence.new([PioneBoolean.false]),
         BooleanSequence.new([PioneBoolean.true])
@@ -32,13 +32,13 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
 
     tc "$X * 3" do
-      BinaryOperator.new("*", $var_x, IntegerSequence.new([3.to_pione]))
+      Message.new("*", $var_x, IntegerSequence.new([3.to_pione]))
     end
 
     tc "($X == \"a\") && ($Y == \"b\")" do
-      left = BinaryOperator.new("==", $var_x, StringSequence.new([$a]))
-      right = BinaryOperator.new("==", $var_y, StringSequence.new([$b]))
-      BinaryOperator.new("&&", left, right)
+      left = Message.new("==", $var_x, StringSequence.new([$a]))
+      right = Message.new("==", $var_y, StringSequence.new([$b]))
+      Message.new("&&", left, right)
     end
   end
 
@@ -73,7 +73,7 @@ describe 'Pione::Transformer::ExprTransformer' do
     tc "(1 + 2).prev" do
       Message.new(
         "prev",
-        BinaryOperator.new(
+        Message.new(
           "+",
           IntegerSequence.new([1.to_pione]),
           IntegerSequence.new([2.to_pione])

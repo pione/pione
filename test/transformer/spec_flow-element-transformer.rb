@@ -42,7 +42,7 @@ describe 'Pione::Transformer::FlowElementTransformer' do
       end
     STRING
       ConditionalBlock.new(
-        BinaryOperator.new(
+        Message.new(
           "==",
           Variable.new("Var"),
           IntegerSequence.new([PioneInteger.new(1)])
@@ -62,7 +62,7 @@ describe 'Pione::Transformer::FlowElementTransformer' do
       end
     STRING
       ConditionalBlock.new(
-        BinaryOperator.new(
+        Message.new(
           "==",
           Variable.new("Var"),
           StringSequence.new([PioneString.new("a")])

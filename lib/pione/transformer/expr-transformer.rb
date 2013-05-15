@@ -4,12 +4,12 @@ module Pione
     module ExprTransformer
       include TransformerModule
 
-      # Transform +:expr_operator_application+ as Model::BinaryOperator.
+      # Transform +:expr_operator_application+ as Model::Message
       rule(:expr_operator_application =>
            { :left => simple(:left),
              :operator => simple(:operator),
              :right => simple(:right) }) {
-        Model::BinaryOperator.new(operator.to_s, left, right)
+        Model::Message.new(operator.to_s, left, right)
       }
 
       # Extract the content of +:expr+.
