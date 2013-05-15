@@ -34,6 +34,9 @@ module Pione
           :task_id => handler.task_id.to_s,
           :dry_run => handler.dry_run.to_s
         }
+        if handler.respond_to?(:working_directory)
+          @record[:working_directory] = handler.working_directory
+        end
       end
 
       # Save domain information file.
