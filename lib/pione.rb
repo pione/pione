@@ -34,6 +34,7 @@ require 'hamster'
 require 'naming'
 require 'temppath'
 require 'xes'
+require 'sys/uname'
 
 #
 # load pione

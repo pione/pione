@@ -2,6 +2,12 @@ module Pione
   module Log
     # DomainInfo is a domain log that records domain inputs and parameters.
     class DomainInfo
+      include Sys # for Uname
+
+      FILENAME = ".domain_info"
+
+      forward_as_key! :@record, :system_name, :system_nodename, :system_machine, :system_version, :system_release
+
       # @return [Location::BasicLocation]
       #   domain's location
       attr_reader :domain_location
@@ -15,14 +21,18 @@ module Pione
       def initialize(handler)
         @domain_location = handler.domain_location
         @record = {
-          "uname" => `uname -a`.chomp,
-          "params" => handler.params.textize,
-          "original_params" => handler.original_params.textize,
-          "inputs" => inputs_string(handler.inputs),
-          "domain" => handler.domain,
-          "domain_location" => @domain_location.uri.to_s,
-          "task_id" => handler.task_id.to_s,
-          "dry_run" => handler.dry_run.to_s
+          :system_name => Uname.sysname,
+          :system_nodename => Uname.nodename,
+          :system_machine => Uname.machine,
+          :system_version => Uname.version,
+          :system_release => Uname.release,
+          :params => handler.params.textize,
+          :original_params => handler.original_params.textize,
+          :inputs => inputs_string(handler.inputs),
+          :domain => handler.domain,
+          :domain_location => @domain_location.uri.to_s,
+          :task_id => handler.task_id.to_s,
+          :dry_run => handler.dry_run.to_s
         }
       end
 
@@ -33,7 +43,7 @@ module Pione
         text = "== %s\n\n" % Time.now
         text << @record.map{|key, val| "- %s: %s" % [key,val]}.join("\n")
         text << "\n\n"
-        (@domain_location + ".domain_info").append(text)
+        (@domain_location + FILENAME).append(text)
       end
 
       private

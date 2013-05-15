@@ -34,6 +34,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "forwardablex", "~> 0.1.3"
   gem.add_dependency "temppath"
   gem.add_dependency "ruby-xes", "~> 0.1"
+  gem.add_dependency "sys-uname"
 
   # for locations
   gem.add_dependency "dropbox-sdk"
