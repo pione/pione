@@ -6,7 +6,7 @@ html
 log.txt
 doc
 .yardoc
-vendor/bundle
+vendor
 .bundle
 pkg
 \#*
