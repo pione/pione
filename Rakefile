@@ -80,34 +80,44 @@ task 'example:Fib:debug' do
   ]
 end
 
+desc 'execute basic tests'
+task 'test' do
+  sh "bundle exec bacon -I lib test/parser/spec_*.rb test/transformer/spec_*.rb test/model/spec_*.rb test/log/spec_*.rb"
+end
+
 desc 'parser test'
 task 'test:parser' do
-  sh "bacon -I lib -I test test/parser/spec_*.rb"
+  sh "bundle exec bacon -I lib test/parser/spec_*.rb"
 end
 
 desc 'transformer test'
 task 'test:transformer' do
-  sh "bacon -I lib -I test test/transformer/spec_*.rb"
+  sh "bundle exec bacon -I lib test/transformer/spec_*.rb"
 end
 
 desc 'model test'
 task 'test:model' do
-  sh "bacon -I lib -I test test/model/spec_*.rb"
+  sh "bundle exec bacon -I lib test/model/spec_*.rb"
 end
 
 desc 'agent test'
 task 'test:agent' do
-  sh "bacon -I lib -I test test/agent/spec_*.rb"
+  sh "bundle exec bacon -I lib test/agent/spec_*.rb"
 end
 
 desc 'rule-handler test'
 task 'test:rule-handler' do
-  sh "bacon -I lib -I test test/rule-handler/spec_*.rb"
+  sh "bundle exec bacon -I lib test/rule-handler/spec_*.rb"
+end
+
+desc 'log test'
+task 'test:log' do
+  sh "bundle exec bacon -I lib test/log/spec_*.rb"
 end
 
 desc 'other test'
 task 'test:other' do
-  sh "bacon -I lib -I test test/spec_*.rb"
+  sh "bundle exec bacon -I lib test/spec_*.rb"
 end
 
 desc 'clean'
