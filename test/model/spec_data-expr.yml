@@ -9,7 +9,15 @@
 - "'b'" : "'a'.except('b').exceptions"
 
 # accept_nonexistence?
+- "false" : "'a'.accept_nonexistence?"
+- "false" : "('a' or 'a').accept_nonexistence?"
 - "true" : "('a' or null).accept_nonexistence?"
+- "true" : "(null or 'a').accept_nonexistence?"
+- "true" : "(null or null).accept_nonexistence?"
+- "false | false | false" : "('a' | 'b' | 'c').accept_nonexistence?"
+- "true | false | false" : "('a' or null | 'b' | 'c').accept_nonexistence?"
+- "true | true | false" : "('a' or null | 'b' or null | 'c').accept_nonexistence?"
+- "true | true | true" : "('a' or null | 'b' or null | 'c' or null).accept_nonexistence?"
 
 # as_string
 - '"a b c"' : "('a' | 'b' | 'c').as_string.join(\" \")"

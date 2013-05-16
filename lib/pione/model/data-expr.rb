@@ -411,12 +411,6 @@ module Pione
       define_sequence_attribute :location, nil
 
       forward! Proc.new{@elements.first}, :match, :name
-
-      # Return true if the sequence accepts nonexistence matching. This is
-      # determined that it includes null expression.
-      def accept_nonexistence?
-        @elements.any?{|elt| elt.accept_nonexistence?}
-      end
     end
 
     TypeDataExpr.instance_eval do
@@ -546,7 +540,9 @@ module Pione
       end
 
       define_pione_method("accept_nonexistence?", [], TypeBoolean) do |rec|
-        PioneBoolean.new(rec.accept_nonexistence?).to_seq
+        TypeBoolean.map1(rec) do |elt|
+          PioneBoolean.new(elt.accept_nonexistence?)
+        end
       end
     end
   end
