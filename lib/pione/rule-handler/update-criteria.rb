@@ -38,13 +38,14 @@ module Pione
           rule.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
             if data_expr.write? or data_expr.touch?
+              # FIXME : each tuples are empty or single data tuple, this is confusing
               case data_expr.distribution
               when :all
                 if outputs[i].nil? or outputs[i].select{|data| data_expr.match(data.name)}.empty?
                   result = true
                 end
               when :each
-                if outputs[i].nil? or not(data_expr.match(outputs[i].name))
+                if outputs[i].nil? or (outputs[i].kind_of?(Array) and outputs[i].empty?) or not(data_expr.match(outputs[i].name))
                   result = true
                 end
               end
