@@ -1,0 +1,44 @@
+param $COND := true
+
+Rule Main
+  output 'o1' or 'o2'
+Flow
+  rule Init
+  rule A
+  rule B
+  rule C
+End
+
+Rule Init
+  output 'i1'.touch
+End
+
+Rule A
+  input 'i1'
+  output 'p1' or 'p2'
+Flow
+  if $COND
+    rule A1
+  else
+    rule A2
+  end
+End
+
+Rule A1
+  output 'p1'.touch
+End
+
+Rule A2
+  output 'p2'.touch
+End
+
+Rule B
+  input 'p1'
+  output 'o1'.touch
+End
+
+Rule C
+  input 'p2'
+  output 'o2'.touch
+End
+
