@@ -1,0 +1,28 @@
+Rule Main
+  output 'p1'
+Flow
+  rule Init
+  rule A
+  rule B
+  rule C
+End
+
+Rule Init
+  output '1'.touch
+End
+
+Rule A
+  input '1'
+  output '2'.touch
+End
+
+Rule B
+  input '2'
+  output '3'.touch
+End
+
+Rule C
+  input '3'
+  output '1'.touch
+End
+
