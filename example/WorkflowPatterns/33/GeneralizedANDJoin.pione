@@ -1,0 +1,21 @@
+Rule Main
+  output '*.o1'.all
+Flow
+  rule Init
+  rule A
+End
+
+Rule Init
+  output '{$N}.i1'.touch
+  output '{$N}.i2'.touch
+  output '{$N}.i3'.touch
+  param $N := (1 | 2 | 3 | 4 | 5)
+End
+
+Rule A
+  input '*.i1'
+  input '{$*}.i2'
+  input '{$*}.i3'
+  output '{$*}.o1'.touch
+End
+
