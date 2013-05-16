@@ -1,0 +1,44 @@
+param $CASE := 1
+
+Rule Main
+  output 'o1'
+Flow
+  rule Init
+  rule A
+  rule B
+  rule C
+End
+
+Rule Init
+  output 'i1' or null
+  output 'i2' or null
+Flow
+  rule Init1
+  rule Init2
+End
+
+Rule Init1
+  output 'i1'.touch
+  constraint ($CASE == 1) or ($CASE == 3)
+End
+
+Rule Init2
+  output 'i2'.touch
+  constraint ($CASE == 2) or ($CASE == 3)
+End
+
+Rule A
+  input 'i1'
+  output 'p1-a'.touch
+End
+
+Rule B
+  input 'i2'
+  output 'p1-b'.touch
+End
+
+Rule C
+  input 'p1-a' or 'p1-b'
+  output 'o1'.touch
+End
+
