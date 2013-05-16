@@ -125,6 +125,7 @@ require 'pione/tuple/log-tuple'
 require 'pione/tuple/rule-tuple'
 require 'pione/tuple/task-worker-resource-tuple'
 require 'pione/tuple/ticket-tuple'
+require 'pione/tuple/data-null-tuple'
 
 # parser
 require 'pione/parser/parslet-extension'

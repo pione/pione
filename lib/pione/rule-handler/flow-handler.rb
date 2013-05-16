@@ -165,9 +165,12 @@ module Pione
           # no outputs combination means empty list
           outputs_combination = [[]] if outputs_combination.empty?
 
+          # read all data null
+          data_null_tuples = read_all(Tuple::DataNullTuple.new(domain: task_domain))
+
           # check update criterias
           orders = outputs_combination.map {|outputs|
-            UpdateCriteria.order(rule, inputs, outputs, vtable)
+            UpdateCriteria.order(rule, inputs, outputs, vtable, data_null_tuples)
           }
           order = nil
           order = :weak if orders.include?(:weak)
@@ -307,16 +310,13 @@ module Pione
           raise RuleExecutionError.new(self)
         end
 
-        # nil check
-        if @outputs.any?{|tuple| tuple.nil?}
-          raise RuleExecutionError.new(self)
-        end
-
-        # empty list check
+        # empty list or nil check
         @outputs.each_with_index do |tuple, i|
           output = @rule.outputs[i].eval(@variable_table)
-          if tuple.kind_of?(Array) && tuple.empty? && not(output.accept_nonexistence?)
-            raise RuleExecutionError.new(@outputs.inspect)
+          unless output.accept_nonexistence?
+            if tuple.nil? or (tuple.kind_of?(Array) && tuple.empty?)
+              raise RuleExecutionError.new(self)
+            end
           end
         end
       end
@@ -368,8 +368,9 @@ module Pione
       # @param domain [String]
       #   new domain of the copied data tuple
       # @return [DataTuple]
-      #   new data tuple with the domain
+      #   new data tuple with the domain or nil
       def copy_data_into_domain(data, domain)
+        return nil unless data
         new_data = data.clone.tap {|x| x.domain = domain}
         write(new_data)
         return new_data

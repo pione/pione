@@ -300,12 +300,30 @@ module Pione
             # FIXME
             @outputs[i] = tuples.find {|data| output.match(data.name)}
           end
-          # touch operation
-          if output.touch? and @outputs[i].nil?
-            location = @domain_location + output.name
-            location.create("") unless location.exist?
-            @outputs[i] = Tuple[:data].new(name: output.name, domain: @domain, location: location)
+
+          # apply touch operation and push the result
+          if tuple = apply_touch_operation(output, @outputs[i])
+            @outputs[i] = tuple
           end
+
+          # write data null if needed
+          write_data_null(output, @outputs[i], i)
+        end
+      end
+
+      # Apply touch operation.
+      def apply_touch_operation(output, tuples)
+        if output.touch? and tuples.nil?
+          location = @domain_location + output.name
+          location.create("") unless location.exist?
+          Tuple[:data].new(name: output.name, domain: @domain, location: location)
+        end
+      end
+
+      # Write a data null tuple if the output condition accepts nonexistence.
+      def write_data_null(output, tuples, i)
+        if output.accept_nonexistence? and tuples.nil?
+          write(Tuple::DataNullTuple.new(domain: @domain, position: i))
         end
       end
     end

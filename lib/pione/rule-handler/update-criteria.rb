@@ -13,9 +13,11 @@ module Pione
         #   output data tuples
         # @param vtable [VariableTable]
         #   variable table
+        # @param data_null_tuples [Array<Tuple::DataNullTuple>]
+        #   DataNull tuples in the domain
         # @return [Boolean]
         #   true if the rule has no output conditions
-        def no_output_conditions?(rule, inputs, outputs, vtable)
+        def no_output_conditions?(rule, inputs, outputs, vtable, data_null_tuples)
           rule.outputs.empty?
         end
 
@@ -30,10 +32,12 @@ module Pione
         #   output data tuples
         # @param vtable [VariableTable]
         #   variable table
+        # @param data_null_tuples [Array<Tuple::DataNullTuple>]
+        #   DataNull tuples in the domain
         # @return [Boolean]
         #   true if data tuples don't exist against output conditions with write
         #   operation
-        def not_exist_output_data?(rule, inputs, outputs, vtable)
+        def not_exist_output_data?(rule, inputs, outputs, vtable, data_null_tuples)
           result = false
           rule.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
@@ -42,11 +46,15 @@ module Pione
               case data_expr.distribution
               when :all
                 if outputs[i].nil? or outputs[i].select{|data| data_expr.match(data.name)}.empty?
-                  result = true
+                  unless data_expr.first.accept_nonexistence? and data_null_tuples.any?{|tuple| tuple.position == i}
+                    result = true
+                  end
                 end
               when :each
                 if outputs[i].nil? or (outputs[i].kind_of?(Array) and outputs[i].empty?) or not(data_expr.match(outputs[i].name))
-                  result = true
+                  unless data_expr.first.accept_nonexistence? and data_null_tuples.any?{|tuple| tuple.position == i}
+                    result = true
+                  end
                 end
               end
             end
@@ -67,10 +75,12 @@ module Pione
         #   output data tuples
         # @param vtable [VariableTable]
         #   variable table
+        # @param data_null_tuples [Array<Tuple::DataNullTuple>]
+        #   DataNull tuples in the domain
         # @return [Boolean]
         #   if data tuples exist against output conditions with remove or touch
         #   operation
-        def exist_output_data?(rule, inputs, outputs, vtable)
+        def exist_output_data?(rule, inputs, outputs, vtable, data_null_tuples)
           result = false
           rule.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
@@ -101,9 +111,11 @@ module Pione
         #   output data tuples
         # @param vtable [VariableTable]
         #   variable table
+        # @param data_null_tuples [Array<Tuple::DataNullTuple>]
+        #   DataNull tuples in the domain
         # @return [Boolean]
         #   true if newer input data exist
-        def exist_newer_input_data?(rule, inputs, outputs, vtable)
+        def exist_newer_input_data?(rule, inputs, outputs, vtable, data_null_tuples)
           # get output oldest time
           outputs = outputs.select.with_index{|output, i| rule.outputs[i].eval(vtable).care?}
           output_oldest_time = outputs.flatten.map{|output| output.time}.sort.first
@@ -125,19 +137,21 @@ module Pione
         #
         # @param [Rule] rule
         #   rule
-        # @param [Tuple::DataTuple] inputs
+        # @param inputs [Tuple::DataTuple]
         #   input tuples
-        # @param [Tuple::DataTuple] outputs
+        # @param outputs [Tuple::DataTuple]
         #   output tuples
-        # @param [VariableTable] vtable
+        # @param vtable [VariableTable]
         #   variable table
+        # @param data_null_tuples [Array<Tuple::DataNullTuple>]
+        #   DataNull tuples in the domain
         # @return [Symbol,nil]
         #   update order or nil
-        def order(rule, inputs, outputs, vtable)
-          if FORCE_UPDATE.any? {|name| self.send(name, rule, inputs, outputs, vtable)}
+        def order(rule, inputs, outputs, vtable, data_null_tuples)
+          if FORCE_UPDATE.any? {|name| self.send(name, rule, inputs, outputs, vtable, data_null_tuples)}
             return :force
           end
-          if WEAK_UPDATE.any? {|name| self.send(name, rule, inputs, outputs, vtable)}
+          if WEAK_UPDATE.any? {|name| self.send(name, rule, inputs, outputs, vtable, data_null_tuples)}
             return :weak
           end
         end

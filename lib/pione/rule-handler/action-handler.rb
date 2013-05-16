@@ -147,6 +147,14 @@ module Pione
               @outputs[i] = make_output_tuple_with_time(name)
             end
           end
+
+          # apply touch operation
+          if tuple = apply_touch_operation(output, @outputs[i])
+            @outputs[i] = tuple
+          end
+
+          # write data null if needed
+          write_data_null(output, @outputs[i], i)
         end
       end
 

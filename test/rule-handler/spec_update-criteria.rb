@@ -33,18 +33,21 @@ describe 'RuleHandler::UpdateCriteria' do
           outputs = (testcase["outputs"] || []).map do |output|
             output.kind_of?(Array) ? output.map {|i| tuple[i]} : tuple[output]
           end
+          data_null_tuples = (testcase["data_null_tuples"] || []).map do |pos|
+            Tuple::DataNullTuple.new(position: pos-1)
+          end
           vtable = VariableTable.new
 
           testcase["criteria"].each do |criterion, truth|
             it "should be %s on criterion of %s" % [truth, criterion] do
-              UC.send("%s?" % criterion, rule, inputs, outputs, vtable).should == truth
+              UC.send("%s?" % criterion, rule, inputs, outputs, vtable, data_null_tuples).should == truth
             end
           end
 
           it "should get update order" do
             order = testcase["order"]
             order = order.to_sym if order
-            UC.order(rule, inputs, outputs, vtable).should == order
+            UC.order(rule, inputs, outputs, vtable, data_null_tuples).should == order
           end
         end
       end

@@ -411,6 +411,10 @@ module Pione
       define_sequence_attribute :location, nil
 
       forward! Proc.new{@elements.first}, :match, :name
+
+      def accept_nonexistence?
+        @elements.first.accept_nonexistence?
+      end
     end
 
     TypeDataExpr.instance_eval do
