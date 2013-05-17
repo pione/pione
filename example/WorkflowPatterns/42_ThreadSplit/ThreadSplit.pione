@@ -1,0 +1,16 @@
+Rule Main
+  output 'o1-*'.all
+Flow
+  rule Init
+  rule A
+End
+
+Rule Init
+  output 'p1'.touch
+End
+
+Rule A
+  input 'p1'
+  output 'o1-{$N}'.touch
+  param $N := 1.upto(5)
+End
