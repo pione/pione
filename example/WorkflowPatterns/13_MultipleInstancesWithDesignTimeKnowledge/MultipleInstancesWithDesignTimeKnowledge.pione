@@ -1,5 +1,3 @@
-param $NUM := 5
-
 Rule Main
   output 'o1'
 Flow
@@ -21,7 +19,7 @@ End
 Rule B
   input 'p1'
   output 'p2-{$N}'.touch
-  param $N := 1.upto($NUM)
+  param $N := 1.upto(5)
 End
 
 Rule C
