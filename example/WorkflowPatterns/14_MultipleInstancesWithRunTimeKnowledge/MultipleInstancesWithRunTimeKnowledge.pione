@@ -1,0 +1,33 @@
+param $NUM := 5
+
+Rule Main
+  output 'o1'
+Flow
+  rule Init
+  rule A
+  rule B
+  rule C
+End
+
+Rule Init
+  output 'i1'.touch
+End
+
+Rule A
+  input 'i1'
+  output 'p1'.touch
+  output 'p3'.touch
+End
+
+Rule B
+  input 'p2-*'.all
+  input 'p3'
+  output 'o1'.touch
+End
+
+Rule C
+  input 'p1'
+  output 'p2-{$N}'.touch
+  param $N := 1.upto($NUM)
+End
+
