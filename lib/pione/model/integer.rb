@@ -136,6 +136,28 @@ module Pione
           end
         end
       end
+
+      # max : integer
+      define_pione_method("max", [], TypeInteger) do |rec|
+        fold1(IntegerSequence.empty, rec) do |seq, elt|
+          if seq.elements.size == 0 or seq.elements.first.value < elt.value
+            elt.to_seq
+          else
+            seq
+          end
+        end
+      end
+
+      # min : integer
+      define_pione_method("min", [], TypeInteger) do |rec|
+        fold1(IntegerSequence.empty, rec) do |seq, elt|
+          if seq.elements.size == 0 or seq.elements.first.value > elt.value
+            elt.to_seq
+          else
+            seq
+          end
+        end
+      end
     end
   end
 end

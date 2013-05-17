@@ -152,6 +152,12 @@ module Pione
         end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
       end
 
+      def fold1(val, seq1, &b)
+        seq1.elements.inject(val) do |obj, elt1|
+          b.call(obj, elt1)
+        end
+      end
+
       def sequential_fold1(type, seq1, &b)
         seq_class = type_to_class(type)
         seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj, elt1|
