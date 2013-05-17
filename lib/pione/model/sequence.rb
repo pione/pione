@@ -257,6 +257,10 @@ module Pione
         end
       end
 
+      define_pione_method("empty?", [], TypeBoolean) do |rec|
+        PioneBoolean.new(rec.elements.size == 0).to_seq
+      end
+
       define_pione_method(":", [TypeSequence], TypeKeyedSequence) do |keys, vals|
         keys.elements.map do |key_elt|
           vals.elements.map do |val_elt|
