@@ -37,3 +37,14 @@ Rule NeglectOutput
 Action
   echo {$I[1]} > {$O[1]}
 End
+
+Rule InputAorBorNull
+  input ('*.a' or '*.b' or null).all
+  output '*.c'
+End
+
+Rule OutputAorBorNull
+  input '*.c'
+  output ('*.a' or '*.b' or null).all
+End
+

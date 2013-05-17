@@ -27,7 +27,7 @@ describe 'RuleHandler::UpdateCriteria' do
     describe rule_name do
       cases.each do |case_name, testcase|
         describe case_name do
-          inputs = testcase["inputs"].map do |input|
+          inputs = (testcase["inputs"] || []).map do |input|
             input.kind_of?(Array) ? input.map {|i| tuple[i]} : tuple[input]
           end
           outputs = (testcase["outputs"] || []).map do |output|
