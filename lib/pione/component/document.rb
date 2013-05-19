@@ -1,5 +1,5 @@
 module Pione
-  module System
+  module Component
     class Document < PioneObject
       # Add ruby shebang line.
       def ruby(str, charset=nil)

@@ -4,3 +4,4 @@ module Pione
 end
 
 require 'pione/component/rule'
+require 'pione/component/document'

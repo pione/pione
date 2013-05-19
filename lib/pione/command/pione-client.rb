@@ -239,7 +239,7 @@ module Pione
 
         # read process document
         begin
-          @document = Document.parse(ARGF.read)
+          @document = Component::Document.parse(ARGF.read)
         rescue Pione::Parser::ParserError => e
           abort("Pione syntax error: " + e.message)
         rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e

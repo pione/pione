@@ -197,7 +197,7 @@ describe 'Pione::Agent::TaskWorker' do
       )
 
       # make a rule
-      doc = Pione::Document.parse <<-DOCUMENT
+      doc = Component::Document.parse <<-DOCUMENT
         Rule test
           input  '*.a'
           output '{$*}.b'.stdout

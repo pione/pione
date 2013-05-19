@@ -5,7 +5,7 @@ describe "Agent::RuleProvider" do
   before do
     create_remote_tuple_space_server
     @provider = Agent[:rule_provider].start(tuple_space_server)
-    doc = Document.parse(<<-DOCUMENT)
+    doc = Component::Document.parse(<<-DOCUMENT)
       Rule abc
         input  '*.a'
         output '{$INPUT[1].MATCH[1]}.b'

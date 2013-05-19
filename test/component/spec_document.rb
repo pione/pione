@@ -43,9 +43,9 @@ command_c {$I[1]} > {$O[1]}
 End
 DOCUMENT
 
-describe 'Document' do
+describe 'Pione::Component::Document' do
   it 'should read a document from a string' do
-    doc = Document.parse(src)
+    doc = Component::Document.parse(src)
     doc.rules.size.should == 4
   end
 
@@ -54,12 +54,12 @@ describe 'Document' do
     temp.write(src)
     path = temp.path
     temp.close(false)
-    doc = Document.load(path)
+    doc = Component::Document.load(path)
     doc.rules.size.should == 4
   end
 
   it 'should get rules by rule path' do
-    doc = Document.parse(src)
+    doc = Component::Document.parse(src)
     doc["&main:Main"].should.kind_of(Model::Rule)
     doc["&main:RuleA"].should.kind_of(Model::Rule)
     doc["&main:RuleB"].should.kind_of(Model::Rule)
@@ -67,7 +67,7 @@ describe 'Document' do
   end
 
   it 'should have document parameters' do
-    doc = Document.parse(src)
+    doc = Component::Document.parse(src)
     doc.params["P1"].should == PioneString.new("a").to_seq
     doc.params["P2"].should == PioneString.new("b").to_seq
     doc.params["P3"].should == PioneString.new("c").to_seq
@@ -78,7 +78,7 @@ describe 'Document' do
   end
 
   it 'should have document variable bindings' do
-    doc = Document.parse(src)
+    doc = Component::Document.parse(src)
     doc["&main:Main"].params["X"].should == 1.to_pione.to_seq
     doc["&main:RuleA"].params["X"].should == 1.to_pione.to_seq
     doc["&main:RuleB"].params["X"].should == 1.to_pione.to_seq
@@ -87,7 +87,7 @@ describe 'Document' do
 
   it 'should raise variable binding error' do
     should.raise(VariableBindingError) do
-      Document.parse <<-PIONE
+      Component::Document.parse <<-PIONE
         $X := 1
         $X := 2
       PIONE

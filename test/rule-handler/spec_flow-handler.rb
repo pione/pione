@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-$document = Document.parse(<<DOCUMENT)
+$document = Component::Document.parse(<<DOCUMENT)
 Rule Test
   input '*.a'
   input '{$INPUT[1].MATCH[1]}.b'
@@ -46,7 +46,7 @@ describe 'FlowRule' do
   end
 end
 
-doc = Document.parse(<<-DOCUMENT)
+doc = Component::Document.parse(<<-DOCUMENT)
 Rule Test
   input '*.a'
   input '{$*}.b'

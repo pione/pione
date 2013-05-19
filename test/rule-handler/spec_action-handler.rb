@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-$doc = Document.parse(<<-DOCUMENT)
+$doc = Component::Document.parse(<<-DOCUMENT)
 Rule Test
   input '*.a'
   output '{$*}.b'
