@@ -6,7 +6,7 @@ distributing many machines easily.
 
 Currently PIONE is beta version under heavy development.
 
-[![Gem Version](https://badge.fury.io/rb/pione.png)](http://badge.fury.io/rb/pione) [![Build Status](https://travis-ci.org/keita/pione.png?branch=master)](https://travis-ci.org/keita/pione) [![Coverage Status](https://coveralls.io/repos/keita/pione/badge.png?branch=master)](https://coveralls.io/r/keita/pione) [![Code Climate](https://codeclimate.com/github/keita/pione.png)](https://codeclimate.com/github/keita/pione)
+[![Gem Version](https://badge.fury.io/rb/pione.png)](http://badge.fury.io/rb/pione) [![Build Status](https://travis-ci.org/pione/pione.png?branch=master)](https://travis-ci.org/pione/pione) [![Coverage Status](https://coveralls.io/repos/pione/pione/badge.png?branch=master)](https://coveralls.io/r/pione/pione) [![Code Climate](https://codeclimate.com/github/pione/pione.png)](https://codeclimate.com/github/pione/pione)
 
 ## Features
 
