@@ -35,6 +35,7 @@ require 'naming'
 require 'temppath'
 require 'xes'
 require 'sys/uname'
+require 'simple-identity'
 
 #
 # load pione

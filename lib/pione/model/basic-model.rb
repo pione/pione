@@ -205,22 +205,14 @@ module Pione
     end
 
     class Value < Element
+      include SimpleIdentity
+
       attr_reader :value
 
       # @param value [Object]
       #   value in ruby
       def initialize(value)
         @value = value
-      end
-
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        @value == other.value
-      end
-      alias :eql? :"=="
-
-      def hash
-        @value.hash
       end
 
       def inspect
