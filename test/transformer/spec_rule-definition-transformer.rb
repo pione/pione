@@ -38,7 +38,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
   end
 
   transformer_spec("rule_definition", :rule_definition) do
-    tc(<<-STRING) do
+    transform(<<-STRING) do |rule|
       Rule Test
         input  '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
@@ -46,17 +46,14 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         echo "test" > {$OUTPUT[1].NAME}
       End
     STRING
-      Component::ActionRule.new(
-        RuleExpr.new(PackageExpr.new("main"), "Test"),
-        Component::RuleCondition.new(
-          [ DataExpr.new('*.a').to_seq ],
-          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq ]
-        ),
+      rule.should.kind_of(Component::ActionRule)
+      rule.inputs[0].should == DataExpr.new('*.a').to_seq
+      rule.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
+      rule.body.should ==
         ActionBlock.new("        echo \"test\" > {$OUTPUT[1].NAME}\n")
-      )
     end
 
-    tc(<<-STRING) do
+    transform(<<-STRING) do |rule|
       Rule Test
         input '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
@@ -65,20 +62,16 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         rule TestB
       End
     STRING
-      Component::FlowRule.new(
-        RuleExpr.new(PackageExpr.new("main"), "Test"),
-        Component::RuleCondition.new(
-          [ DataExpr.new('*.a') ],
-          [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
-        ),
-        FlowBlock.new(
-          CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestA")),
-          CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestB"))
-        )
+      rule.should.kind_of(Component::FlowRule)
+      rule.inputs[0].should == DataExpr.new('*.a').to_seq
+      rule.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
+      rule.body.should == FlowBlock.new(
+        CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestA")),
+        CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestB"))
       )
     end
 
-    tc(<<-STRING) do
+    transform(<<-STRING) do |rule|
       Rule Main
         input '*.txt'.except('summary.txt')
         output 'summary.txt'
@@ -91,58 +84,52 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       rule Summarize
       End
     STRING
-      Component::FlowRule.new(
-        RuleExpr.new(PackageExpr.new("main"), "Main"),
-        Component::RuleCondition.new(
-          [Message.new(
-              "except",
-              DataExpr.new("*.txt"),
-              DataExpr.new("summary.txt"))],
-          [DataExpr.new("summary.txt")],
-          params: Parameters.new(
-            Variable.new("ConvertCharSet") =>
-            BooleanSequence.new([PioneBoolean.true])
-          )
-        ),
-        FlowBlock.new(
-          ConditionalBlock.new(
-            Variable.new("ConvertCharset"),
-            { BooleanSequence.new([PioneBoolean.true]) =>
-              FlowBlock.new(
-                CallRule.new(Message.new(
-                    "params",
-                    RuleExpr.new(PackageExpr.new("main"), "NKF"),
-                    StringSequence.new([PioneString.new("-w")])
-                ))
+      rule.should.kind_of(Component::FlowRule)
+      rule.inputs[0].should == Message.new(
+        "except",
+        DataExpr.new("*.txt").to_seq,
+        DataExpr.new("summary.txt").to_seq
+      )
+      rule.outputs[0].should == DataExpr.new("summary.txt").to_seq
+      rule.params.should == Parameters.new(
+        Variable.new("ConvertCharSet") =>
+        BooleanSequence.new([PioneBoolean.true])
+      )
+      rule.body.should == FlowBlock.new(
+        ConditionalBlock.new(
+          Variable.new("ConvertCharset"),
+          { BooleanSequence.new([PioneBoolean.true]) =>
+            FlowBlock.new(
+              CallRule.new(Message.new(
+                  "params",
+                  RuleExpr.new(PackageExpr.new("main"), "NKF"),
+                  StringSequence.new([PioneString.new("-w")])
+              ))
             )}
-          ),
-          CallRule.new(
-            RuleExpr.new(PackageExpr.new("main"), "CountChar")
-          ),
-          CallRule.new(
-            RuleExpr.new(PackageExpr.new("main"), "Summarize")
-          )
+        ),
+        CallRule.new(
+          RuleExpr.new(PackageExpr.new("main"), "CountChar")
+        ),
+        CallRule.new(
+          RuleExpr.new(PackageExpr.new("main"), "Summarize")
         )
       )
     end
 
-    tc(<<-STRING) do
+    transform(<<-STRING) do |rule|
       Rule EmptyRule
         input '*.a'
         output '*.a'.touch
       End
     STRING
-      rule_expr = RuleExpr.new(PackageExpr.new("main"), "EmptyRule")
-      condition = Component::RuleCondition.new(
-        [DataExpr.new("*.a")], [Message.new("touch", DataExpr.new("*.a"))]
-      )
-      Component::EmptyRule.new(rule_expr, condition, EmptyBlock.instance)
+      rule.should.kind_of(Component::EmptyRule)
+      rule.inputs[0].should == DataExpr.new("*.a").to_seq
+      rule.outputs[0].should == Message.new("touch", DataExpr.new("*.a").to_seq)
     end
-
   end
 
   transformer_spec("rule_definitions", :toplevel_elements) do
-    tc(<<-STRING) do
+    transform(<<-STRING) do |rules|
       Rule TestA
         input  '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
@@ -157,24 +144,16 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
       End
     STRING
-      [
-        Component::ActionRule.new(
-          RuleExpr.new(PackageExpr.new("main"), "TestA"),
-          Component::RuleCondition.new(
-            [ DataExpr.new("*.a") ],
-            [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
-          ),
-          ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
-        ),
-        Component::ActionRule.new(
-          RuleExpr.new(PackageExpr.new("main"), "TestB"),
-          Component::RuleCondition.new(
-            [ DataExpr.new("*.b") ],
-            [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ]
-          ),
-          ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
-        )
-      ]
+      rules[0].should.kind_of(Component::ActionRule)
+      rules[0].inputs[0].should == DataExpr.new("*.a").to_seq
+      rules[0].outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
+      rules[0].body.should ==
+        ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
+      rules[1].should.kind_of(Component::ActionRule)
+      rules[1].inputs[0].should == DataExpr.new("*.b").to_seq
+      rules[1].outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.c').to_seq
+      rules[1].body.should ==
+        ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
     end
   end
 end

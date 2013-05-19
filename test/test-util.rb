@@ -115,19 +115,26 @@ end
 
 module TestUtil::Transformer
   TestCase = Struct.new(:string, :expected)
+  TestCaseEq = Struct.new(:string, :expected)
 
   def spec(name, parser, context, &b)
     testcases = Array.new
+
     def testcases.tc(obj)
       case obj
       when Hash
         obj.each do |key, val|
-          push(TestCase.new(key, val))
+          push(TestCaseEq.new(key, val))
         end
       else
-        push(TestCase.new(obj, yield))
+        push(TestCaseEq.new(obj, yield))
       end
     end
+
+    def testcases.transform(obj, &b)
+      push(TestCase.new(obj, b))
+    end
+
     testcases.instance_eval(&b)
     context.describe name do
       testcases.each do |tc|
@@ -135,7 +142,12 @@ module TestUtil::Transformer
           res = DocumentTransformer.new.apply(
             DocumentParser.new.send(parser).parse(tc.string)
           )
-          res.should == tc.expected
+          case tc
+          when TestCaseEq
+            res.should == tc.expected
+          when TestCase
+            tc.expected.call(res)
+          end
         end
       end
     end
