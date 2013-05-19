@@ -13,3 +13,4 @@ pkg
 nohup.out
 Gemfile.lock
 gems
+coverage
