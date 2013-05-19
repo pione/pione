@@ -1,7 +1,7 @@
 module Pione
-  module Model
+  module Component
     # RuleCondition represents rule condition.
-    class RuleCondition < BasicModel
+    class RuleCondition < PioneObject
       # @return [Array<DataExpr, Array<DataExpr>>]
       #   input data condition
       attr_reader :inputs
@@ -31,11 +31,11 @@ module Pione
         @inputs = inputs
         @outputs = outputs
         @condition = {}
-        @condition[:params] = condition[:params] || Parameters.empty
-        @condition[:features] = condition[:features] || Feature.empty
-        @condition[:constraints] = condition[:constraints] || Constraints.empty
-        @condition[:input_ticket_expr] = condition[:input_ticket_expr] || TicketExprSequence.empty
-        @condition[:output_ticket_expr] = condition[:output_ticket_expr] || TicketExprSequence.empty
+        @condition[:params] = condition[:params] || Model::Parameters.empty
+        @condition[:features] = condition[:features] || Model::Feature.empty
+        @condition[:constraints] = condition[:constraints] || Model::Constraints.empty
+        @condition[:input_ticket_expr] = condition[:input_ticket_expr] || Model::TicketExprSequence.empty
+        @condition[:output_ticket_expr] = condition[:output_ticket_expr] || Model::TicketExprSequence.empty
         super()
       end
 
@@ -66,7 +66,7 @@ module Pione
     end
 
     # Rule is a class for PIONE rule model.
-    class Rule < BasicModel
+    class Rule < PioneObject
       class << self
         attr_reader :rule_type
         attr_reader :handler_class
@@ -90,7 +90,7 @@ module Pione
         end
       end
 
-      # @return [RuleExpr]
+      # @return [Model::RuleExpr]
       #   rule expression
       attr_reader :rule_expr
 
@@ -109,7 +109,7 @@ module Pione
 
       # Create a rule.
       #
-      # @param rule_expr [RuleExpr]
+      # @param rule_expr [Model::RuleExpr]
       #   rule expression
       # @param condition [RuleCondition]
       #   rule condition
@@ -230,7 +230,7 @@ module Pione
         @main = main
         @params = params
         super(
-          RuleExpr.new(PackageExpr.new("root"), "Root"),
+          Model::RuleExpr.new(PackageExpr.new("root"), "Root"),
           RuleCondition.new(@main.inputs, @main.outputs),
           FlowBlock.new(CallRule.new(@main.rule_expr.set_params(@params)))
         )
@@ -275,8 +275,8 @@ module Pione
       # @param [Proc] b
       #   rule process
       def initialize(name, &b)
-        expr = RuleExpr.new(PackageExpr.new('system'), name)
-        condition = RuleCondition.new([DataExpr.new('*').to_seq.set_all], [])
+        expr = Model::RuleExpr.new(Model::PackageExpr.new('system'), name)
+        condition = RuleCondition.new([Model::DataExpr.new('*').to_seq.set_all], [])
         super(expr, condition, b)
       end
     end

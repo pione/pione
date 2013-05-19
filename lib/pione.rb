@@ -104,6 +104,9 @@ require 'pione/rule-handler.rb'
 # model
 require 'pione/model'
 
+# component
+require 'pione/component'
+
 # tuple
 require 'pione/tuple/basic-tuple'
 require 'pione/tuple/agent-tuple'

@@ -22,7 +22,6 @@ require 'pione/model/call-rule'
 require 'pione/model/assignment'
 require 'pione/model/block'
 require 'pione/model/constraints'
-require 'pione/model/rule'
 
 module Pione
   # Model is a name space for all PIONE models.

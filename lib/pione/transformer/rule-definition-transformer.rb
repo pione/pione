@@ -21,14 +21,14 @@ module Pione
         features = Feature.empty if Naming::FeatureLine.values(conditions).empty?
         features = Feature::AndExpr.new(*Naming::FeatureLine.values(conditions)) unless features
         constraints = Constraints.new(Naming::ConstraintLine.values(conditions))
-        condition = RuleCondition.new(inputs, outputs, params: params, features: features, constraints: constraints)
+        condition = Component::RuleCondition.new(inputs, outputs, params: params, features: features, constraints: constraints)
         case block
         when ActionBlock
-          ActionRule
+          Component::ActionRule
         when FlowBlock
-          FlowRule
+          Component::FlowRule
         when EmptyBlock
-          EmptyRule
+          Component::EmptyRule
         end.new(rule_expr, condition, block)
       }
 

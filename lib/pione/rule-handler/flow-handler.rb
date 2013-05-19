@@ -117,7 +117,6 @@ module Pione
 
             # eval callee rule by the context
             vtable = atomic_params.eval(@variable_table).as_variable_table
-            rule = rule.eval(vtable)
 
             # check rule status and find combinations
             @data_finder.find(:input, rule.inputs, vtable).each do |res|

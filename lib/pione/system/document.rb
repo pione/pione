@@ -21,7 +21,7 @@ module Pione
         toplevels = transformer.apply(parser.parse(src))
 
         # rules and assignments
-        rules = toplevels.select{|elt| elt.kind_of?(Rule)}
+        rules = toplevels.select{|elt| elt.kind_of?(Component::Rule)}
         assignments = toplevels.select{|elt| elt.kind_of?(Assignment)}
         assignments.each {|assignment| assignment.set_toplevel(true)}
         user_params = Naming::ParamLine.values(toplevels)
@@ -83,7 +83,7 @@ module Pione
       # @return [RootRule]
       #   root rule
       def root_rule(params)
-        Rule::RootRule.new(main, @params.merge(params))
+        Component::RootRule.new(main, @params.merge(params))
       end
     end
   end

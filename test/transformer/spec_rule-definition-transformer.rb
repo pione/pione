@@ -46,9 +46,9 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         echo "test" > {$OUTPUT[1].NAME}
       End
     STRING
-      ActionRule.new(
+      Component::ActionRule.new(
         RuleExpr.new(PackageExpr.new("main"), "Test"),
-        RuleCondition.new(
+        Component::RuleCondition.new(
           [ DataExpr.new('*.a').to_seq ],
           [ DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq ]
         ),
@@ -65,9 +65,9 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         rule TestB
       End
     STRING
-      FlowRule.new(
+      Component::FlowRule.new(
         RuleExpr.new(PackageExpr.new("main"), "Test"),
-        RuleCondition.new(
+        Component::RuleCondition.new(
           [ DataExpr.new('*.a') ],
           [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
         ),
@@ -91,9 +91,9 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       rule Summarize
       End
     STRING
-      FlowRule.new(
+      Component::FlowRule.new(
         RuleExpr.new(PackageExpr.new("main"), "Main"),
-        RuleCondition.new(
+        Component::RuleCondition.new(
           [Message.new(
               "except",
               DataExpr.new("*.txt"),
@@ -133,10 +133,10 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       rule_expr = RuleExpr.new(PackageExpr.new("main"), "EmptyRule")
-      condition = RuleCondition.new(
+      condition = Component::RuleCondition.new(
         [DataExpr.new("*.a")], [Message.new("touch", DataExpr.new("*.a"))]
       )
-      EmptyRule.new(rule_expr, condition, EmptyBlock.instance)
+      Component::EmptyRule.new(rule_expr, condition, EmptyBlock.instance)
     end
 
   end
@@ -158,17 +158,17 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       [
-        ActionRule.new(
+        Component::ActionRule.new(
           RuleExpr.new(PackageExpr.new("main"), "TestA"),
-          RuleCondition.new(
+          Component::RuleCondition.new(
             [ DataExpr.new("*.a") ],
             [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
           ),
           ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         ),
-        ActionRule.new(
+        Component::ActionRule.new(
           RuleExpr.new(PackageExpr.new("main"), "TestB"),
-          RuleCondition.new(
+          Component::RuleCondition.new(
             [ DataExpr.new("*.b") ],
             [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ]
           ),

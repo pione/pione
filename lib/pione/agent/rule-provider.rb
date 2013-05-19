@@ -9,7 +9,7 @@ module Pione
         @table = {}
 
         # import system rules
-        Model::SYSTEM_RULES.each do |command_rule|
+        Component::SYSTEM_RULES.each do |command_rule|
           @table[command_rule.rule_path] = command_rule
         end
       end
@@ -21,7 +21,7 @@ module Pione
       end
 
       def add_rule(rule_path, content)
-        raise ArgumentError unless content.kind_of?(Rule)
+        raise ArgumentError unless content.kind_of?(Component::Rule)
         @table[rule_path] = content
       end
 
