@@ -47,7 +47,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       ActionRule.new(
-        RuleExpr.new(Package.new("main"), "Test"),
+        RuleExpr.new(PackageExpr.new("main"), "Test"),
         RuleCondition.new(
           [ DataExpr.new('*.a').to_seq ],
           [ DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq ]
@@ -66,14 +66,14 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       FlowRule.new(
-        RuleExpr.new(Package.new("main"), "Test"),
+        RuleExpr.new(PackageExpr.new("main"), "Test"),
         RuleCondition.new(
           [ DataExpr.new('*.a') ],
           [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
         ),
         FlowBlock.new(
-          CallRule.new(RuleExpr.new(Package.new("main"), "TestA")),
-          CallRule.new(RuleExpr.new(Package.new("main"), "TestB"))
+          CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestA")),
+          CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestB"))
         )
       )
     end
@@ -92,7 +92,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       FlowRule.new(
-        RuleExpr.new(Package.new("main"), "Main"),
+        RuleExpr.new(PackageExpr.new("main"), "Main"),
         RuleCondition.new(
           [Message.new(
               "except",
@@ -111,16 +111,16 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
               FlowBlock.new(
                 CallRule.new(Message.new(
                     "params",
-                    RuleExpr.new(Package.new("main"), "NKF"),
+                    RuleExpr.new(PackageExpr.new("main"), "NKF"),
                     StringSequence.new([PioneString.new("-w")])
                 ))
             )}
           ),
           CallRule.new(
-            RuleExpr.new(Package.new("main"), "CountChar")
+            RuleExpr.new(PackageExpr.new("main"), "CountChar")
           ),
           CallRule.new(
-            RuleExpr.new(Package.new("main"), "Summarize")
+            RuleExpr.new(PackageExpr.new("main"), "Summarize")
           )
         )
       )
@@ -132,7 +132,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         output '*.a'.touch
       End
     STRING
-      rule_expr = RuleExpr.new(Package.new("main"), "EmptyRule")
+      rule_expr = RuleExpr.new(PackageExpr.new("main"), "EmptyRule")
       condition = RuleCondition.new(
         [DataExpr.new("*.a")], [Message.new("touch", DataExpr.new("*.a"))]
       )
@@ -159,7 +159,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
     STRING
       [
         ActionRule.new(
-          RuleExpr.new(Package.new("main"), "TestA"),
+          RuleExpr.new(PackageExpr.new("main"), "TestA"),
           RuleCondition.new(
             [ DataExpr.new("*.a") ],
             [ DataExpr.new('{$INPUT[1].MATCH[1]}.b') ]
@@ -167,7 +167,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
           ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
         ),
         ActionRule.new(
-          RuleExpr.new(Package.new("main"), "TestB"),
+          RuleExpr.new(PackageExpr.new("main"), "TestB"),
           RuleCondition.new(
             [ DataExpr.new("*.b") ],
             [ DataExpr.new('{$INPUT[1].MATCH[1]}.c') ]

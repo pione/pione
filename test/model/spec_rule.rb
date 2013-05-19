@@ -41,7 +41,7 @@ describe 'Pione::Model::ActionRule' do
     @var_x = Variable.new("X")
     @params_a = Parameters.new(@var_x => @a)
     @params_b = Parameters.new(@var_x => @b)
-    @rule_a = RuleExpr.new(Package.new("test"), 'a')
+    @rule_a = RuleExpr.new(PackageExpr.new("test"), 'a')
     @cond_a = RuleCondition.new([@data_a], [@data_a], params: @params_a, features: Feature.and(@f_a))
     @cond_b = RuleCondition.new([@data_b], [@data_b], params: @params_b, features: Feature.and(@f_b))
   end
@@ -92,7 +92,7 @@ describe 'Pione::Model::FlowRule' do
     @var_x = Variable.new("X")
     @params_a = Parameters.new(@var_x => @a)
     @params_b = Parameters.new(@var_x => @b)
-    @rule_a = RuleExpr.new(Package.new("test"), 'a')
+    @rule_a = RuleExpr.new(PackageExpr.new("test"), 'a')
     @cond_a = RuleCondition.new([@data_a], [@data_a], params: @params_a, features: Feature.and(@f_a))
     @cond_b = RuleCondition.new([@data_b], [@data_b], params: @params_b, features: Feature.and(@f_b))
   end

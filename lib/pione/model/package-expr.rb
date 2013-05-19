@@ -1,7 +1,7 @@
 module Pione
   module Model
-    # Package is a PIONE model class for rule package.
-    class Package < Element
+    # PackageExpr is a PIONE model class for rule package.
+    class PackageExpr < Element
       attr_reader :name
 
       # Create a package with name.
@@ -15,12 +15,12 @@ module Pione
 
       # @api private
       def task_id_string
-        "Package<#{@name}>"
+        "PackageExpr<#{@name}>"
       end
 
       # @api private
       def textize
-        "package(\"%s\")" % [@name]
+        "package-expr(\"%s\")" % [@name]
       end
 
       # Return a rule path.
@@ -48,9 +48,9 @@ module Pione
       end
     end
 
-    class PackageSequence < Sequence
-      set_pione_model_type TypePackage
-      set_element_class Package
+    class PackageExprSequence < Sequence
+      set_pione_model_type TypePackageExpr
+      set_element_class PackageExpr
     end
   end
 end

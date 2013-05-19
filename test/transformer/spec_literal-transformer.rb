@@ -48,12 +48,12 @@ describe 'Pione::Transformer::LiteralTransformer' do
   end
 
   transformer_spec('package_name', :package_name) do
-    tc("&abc" => Package.new('abc'))
-    tc("&ABC" => Package.new('ABC'))
+    tc("&abc" => PackageExpr.new('abc'))
+    tc("&ABC" => PackageExpr.new('ABC'))
   end
 
   transformer_spec('rule_name', :rule_name) do
-    tc("abc" => RuleExpr.new(Package.new("main"), "abc"))
+    tc("abc" => RuleExpr.new(PackageExpr.new("main"), "abc"))
   end
 
   transformer_spec('ticket', :ticket) do

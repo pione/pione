@@ -2,12 +2,12 @@ require_relative '../test-util'
 
 describe 'Model::RuleExpr' do
   before do
-    @a = RuleExpr.new(Package.new("main"), "a")
-    @b = RuleExpr.new(Package.new("main"), "b")
+    @a = RuleExpr.new(PackageExpr.new("main"), "a")
+    @b = RuleExpr.new(PackageExpr.new("main"), "b")
   end
 
   it 'should be equal' do
-    @a.should == RuleExpr.new(Package.new("main"), "a")
+    @a.should == RuleExpr.new(PackageExpr.new("main"), "a")
   end
 
   it 'should be not equal' do
@@ -27,7 +27,7 @@ describe 'Model::RuleExpr' do
   describe 'pione method ==' do
     it 'should true' do
       @a.call_pione_method(
-        "==", RuleExpr.new(Package.new("main"), "a")
+        "==", RuleExpr.new(PackageExpr.new("main"), "a")
       ).should == PioneBoolean.new(true).to_seq
     end
 
@@ -49,7 +49,7 @@ describe 'Model::RuleExpr' do
 
     it 'should false' do
       @a.call_pione_method(
-        "!=", RuleExpr.new(Package.new("main"), "a")
+        "!=", RuleExpr.new(PackageExpr.new("main"), "a")
       ).should.not.true
     end
 
@@ -70,7 +70,7 @@ describe 'Model::RuleExpr' do
     it 'should set parameters' do
       params = Parameters.new({Variable.new("a") => PioneBoolean.true})
       @a.call_pione_method("params", params).should ==
-        RuleExpr.new(Package.new("main"), "a", params: params)
+        RuleExpr.new(PackageExpr.new("main"), "a", params: params)
     end
   end
 end

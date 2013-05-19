@@ -4,15 +4,15 @@ describe 'Pione::Transformer::FlowElementTransformer' do
   transformer_spec("call_rule_line", :call_rule_line) do
     tc(
       "rule Test" =>
-      CallRule.new(RuleExpr.new(Package.new("main"), "Test"))
+      CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test"))
     )
     tc(
       "rule :Test" =>
-      CallRule.new(RuleExpr.new(Package.new("main"), "Test"))
+      CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test"))
     )
     tc(
       "rule &test:Test" =>
-      CallRule.new(RuleExpr.new(Package.new("test"), "Test"))
+      CallRule.new(RuleExpr.new(PackageExpr.new("test"), "Test"))
     )
     tc("rule $var" => CallRule.new(Variable.new("var")))
   end
@@ -30,7 +30,7 @@ describe 'Pione::Transformer::FlowElementTransformer' do
       "$var := &package:test" =>
       Assignment.new(
         Variable.new("var"),
-        RuleExpr.new(Package.new("package"), "test")
+        RuleExpr.new(PackageExpr.new("package"), "test")
       )
     )
   end
@@ -49,7 +49,7 @@ describe 'Pione::Transformer::FlowElementTransformer' do
         ),
         { BooleanSequence.new([PioneBoolean.true]) =>
           FlowBlock.new(
-            CallRule.new(RuleExpr.new(Package.new("main"), "A"))
+            CallRule.new(RuleExpr.new(PackageExpr.new("main"), "A"))
           )
         }
       )
@@ -68,9 +68,9 @@ describe 'Pione::Transformer::FlowElementTransformer' do
           StringSequence.new([PioneString.new("a")])
         ),
         { BooleanSequence.new([PioneBoolean.true]) =>
-          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "A"))),
+          FlowBlock.new(CallRule.new(RuleExpr.new(PackageExpr.new("main"), "A"))),
           :else =>
-          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "B")))
+          FlowBlock.new(CallRule.new(RuleExpr.new(PackageExpr.new("main"), "B")))
         }
       )
     end
@@ -90,11 +90,11 @@ describe 'Pione::Transformer::FlowElementTransformer' do
           Variable.new("b"),
           { BooleanSequence.new([PioneBoolean.true]) =>
             FlowBlock.new(
-              CallRule.new(RuleExpr.new(Package.new("main"), "Test1"))
+              CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test1"))
             ),
             :else =>
             FlowBlock.new(
-              CallRule.new(RuleExpr.new(Package.new("main"), "Test2"))
+              CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test2"))
             )
           }
         )
@@ -104,7 +104,7 @@ describe 'Pione::Transformer::FlowElementTransformer' do
         { BooleanSequence.new([PioneBoolean.true]) => inner_block,
           :else =>
           FlowBlock.new(
-            CallRule.new(RuleExpr.new(Package.new("main"), "Test3"))
+            CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test3"))
           )
         }
       )
@@ -125,11 +125,11 @@ describe 'Pione::Transformer::FlowElementTransformer' do
       ConditionalBlock.new(
         Variable.new("Var"),
         { StringSequence.new([PioneString.new("a")]) =>
-          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "A"))),
+          FlowBlock.new(CallRule.new(RuleExpr.new(PackageExpr.new("main"), "A"))),
           StringSequence.new([PioneString.new("b")]) =>
-          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "B"))),
+          FlowBlock.new(CallRule.new(RuleExpr.new(PackageExpr.new("main"), "B"))),
           StringSequence.new([PioneString.new("c")]) =>
-          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "C")))
+          FlowBlock.new(CallRule.new(RuleExpr.new(PackageExpr.new("main"), "C")))
         }
       )
     end
@@ -144,9 +144,9 @@ describe 'Pione::Transformer::FlowElementTransformer' do
       ConditionalBlock.new(
         Variable.new("Var"),
         { StringSequence.new([PioneString.new("a")]) =>
-          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "Test1"))),
+          FlowBlock.new(CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test1"))),
           :else =>
-          FlowBlock.new(CallRule.new(RuleExpr.new(Package.new("main"), "Test2")))
+          FlowBlock.new(CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test2")))
         }
       )
     end

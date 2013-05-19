@@ -230,7 +230,7 @@ module Pione
         @main = main
         @params = params
         super(
-          RuleExpr.new(Package.new("root"), "Root"),
+          RuleExpr.new(PackageExpr.new("root"), "Root"),
           RuleCondition.new(@main.inputs, @main.outputs),
           FlowBlock.new(CallRule.new(@main.rule_expr.set_params(@params)))
         )
@@ -275,7 +275,7 @@ module Pione
       # @param [Proc] b
       #   rule process
       def initialize(name, &b)
-        expr = RuleExpr.new(Package.new('system'), name)
+        expr = RuleExpr.new(PackageExpr.new('system'), name)
         condition = RuleCondition.new([DataExpr.new('*').to_seq.set_all], [])
         super(expr, condition, b)
       end

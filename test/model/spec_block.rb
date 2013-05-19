@@ -21,9 +21,9 @@ end
 
 describe 'Pione::Model::FlowBlock' do
   before do
-    @rule_a = CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-    @rule_b = CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-    @rule_c = CallRule.new(RuleExpr.new(Package.new("test"), "c"))
+    @rule_a = CallRule.new(RuleExpr.new(PackageExpr.new("test"), "a"))
+    @rule_b = CallRule.new(RuleExpr.new(PackageExpr.new("test"), "b"))
+    @rule_c = CallRule.new(RuleExpr.new(PackageExpr.new("test"), "c"))
     @var_a = Variable.new("A")
     @var_x = Variable.new("X")
     @var_y = Variable.new("Y")
@@ -73,9 +73,9 @@ describe 'Pione::Model::ConditionalBlock' do
     @a = PioneString.new("a")
     @b = PioneString.new("b")
     @c = PioneString.new("c")
-    @rule_a = CallRule.new(RuleExpr.new(Package.new("test"), "a"))
-    @rule_b = CallRule.new(RuleExpr.new(Package.new("test"), "b"))
-    @rule_c = CallRule.new(RuleExpr.new(Package.new("test"), "c"))
+    @rule_a = CallRule.new(RuleExpr.new(PackageExpr.new("test"), "a"))
+    @rule_b = CallRule.new(RuleExpr.new(PackageExpr.new("test"), "b"))
+    @rule_c = CallRule.new(RuleExpr.new(PackageExpr.new("test"), "c"))
     @var_a = Variable.new("A")
     @var_x = Variable.new("X")
     @var_y = Variable.new("Y")

@@ -104,7 +104,7 @@ describe 'Pione::Agent::TaskWorker' do
       )
       write(Tuple[:working].new(task1.domain, "test"))
       rule = ActionRule.new(
-        RuleExpr.new(Package.new('main'), 'Test'),
+        RuleExpr.new(PackageExpr.new('main'), 'Test'),
         RuleCondition.new([], [DataExpr.new('out.txt')]
         ),
         ActionBlock.new("expr 1 + 2 > out.txt")
@@ -128,7 +128,7 @@ describe 'Pione::Agent::TaskWorker' do
       )
       write(Tuple[:working].new(task1.domain, "test"))
       rule = FlowRule.new(
-        RuleExpr.new(Package.new('main'), 'Test'),
+        RuleExpr.new(PackageExpr.new('main'), 'Test'),
         RuleCondition.new([], []),
         :dummy
       )
@@ -154,7 +154,7 @@ describe 'Pione::Agent::TaskWorker' do
       )
       write(Tuple[:working].new(task.domain, "test"))
       rule = FlowRule.new(
-        RuleExpr.new(Package.new('main'), 'Test'),
+        RuleExpr.new(PackageExpr.new('main'), 'Test'),
         RuleCondition.new([], []),
         :dummy
       )

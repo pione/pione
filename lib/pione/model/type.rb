@@ -236,7 +236,7 @@ module Pione
     TypeVariableTable = Type.new("variable-table", TypeOrdinalSequence)
 
     # package type for PIONE system
-    TypePackage = Type.new("package", TypeOrdinalSequence)
+    TypePackageExpr = Type.new("package-expr", TypeOrdinalSequence)
 
     # ticket expression type
     TypeTicketExpr = Type.new("ticket-expr", TypeOrdinalSequence)

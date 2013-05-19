@@ -62,17 +62,17 @@ module Pione
         end
       end
 
-      # Transform +:package_name+ as Model::Package.
+      # Transform +:package_name+ as Model::PackageExpr.
       rule(:package_name => simple(:name)) do
         val = name.str
-        Model::Package.new(val).tap do |x|
+        Model::PackageExpr.new(val).tap do |x|
           x.set_line_and_column(name.line_and_column)
         end
       end
 
       # Transform +:rule_name+ as Model::RuleExpr.
       rule(:rule_name => simple(:name)) do
-        package = Package.new(Thread.current[:current_package_name])
+        package = PackageExpr.new(Thread.current[:current_package_name])
         val = name.str
         RuleExpr.new(package, val).tap do |x|
           x.set_line_and_column(name.line_and_column)
