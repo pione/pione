@@ -41,10 +41,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency "dropbox-sdk"
   gem.add_dependency "em-ftpd"
 
-  # for web client only
-  gem.add_dependency "sinatra"
-  gem.add_dependency "thin"
-
   # test framework
   gem.add_development_dependency "bacon", "~> 1.2.0"
 
