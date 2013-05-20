@@ -134,16 +134,16 @@ module Pione
       #
       # @return [void]
       def collect_outputs
-        list = Dir.entries(@working_directory)
+        filenames = @working_directory.file_entries.map{|entry| entry.path.basename}
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
           case output.distribution
           when :all
-            @outputs[i] = list.select{|name| output.first.match(name)}.map do |name|
+            @outputs[i] = filenames.select{|name| output.first.match(name)}.map do |name|
               make_output_tuple_with_time(name)
             end
           when :each
-            if name = list.find {|name| output.first.match(name)}
+            if name = filenames.find {|name| output.first.match(name)}
               @outputs[i] = make_output_tuple_with_time(name)
             end
           end
@@ -185,7 +185,7 @@ module Pione
       #
       # @return [void]
       def write_other_resources
-        @working_directory.entries.each do |name|
+        @working_directory.file_entries.each do |name|
           path = @working_directory + name
           if File.ftype(path) == "file"
             Location[path].move(make_location(name, @domain))

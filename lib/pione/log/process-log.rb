@@ -74,7 +74,7 @@ module Pione
         # @param location [Location::BasicLocation]
         #   log directory location
         def read_directory(location)
-          location.entries.inject(new([])) do |formatter, entry|
+          location.file_entries.inject(new([])) do |formatter, entry|
             if /pione_\d{14}\.log/.match(entry.path.basename.to_s)
               new(formatter.bundles + read_file(entry).bundles)
             else

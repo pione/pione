@@ -70,7 +70,7 @@ module Pione
         connect do |ftp|
           ftp.nlst(@path.to_s).map do |entry|
             rebuild(@path + entry)
-          end.select {|entry| entry.file?}
+          end
         end
       end
 

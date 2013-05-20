@@ -183,12 +183,30 @@ module Pione
         raise NotImplementedError
       end
 
-      # Return entries of the resource path.
+      # Return entries of the location.
       #
       # @return [Array<Location>]
-      #   entries of the location path
+      #   entries of the location
       def entries
         raise NotImplementedError
+      end
+
+      # Return file entries of the location.
+      #
+      # @return [Array<Location>]
+      #    file entries of the location
+      def file_entries
+        entries.select{|entry| entry.file?}
+      end
+
+      # Return directory entries of the location.
+      #
+      # @return [Array<Location>]
+      #    directory entries of the location
+      def directory_entries
+        entries.select do |entry|
+          entry.directory? and not(entry.path.basename == "." or entry.path.basename == "..")
+        end
       end
 
       # Return true if there is data in the location.
@@ -233,7 +251,9 @@ module Pione
         raise NotImplementedError
       end
 
-      # Link to the destination.
+      # Link to the destination. If the location scheme is same to destination,
+      # create link by a symbolic link or lightweight copy method. If not, copy
+      # it simply.
       #
       # @param dest [BasicLocation]
       #   destination

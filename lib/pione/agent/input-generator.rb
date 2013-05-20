@@ -40,7 +40,7 @@ module Pione
         def initialize(tuple_space_server, dir)
           raise Argument.new(dir) unless dir.kind_of?(Location::BasicLocation) or dir.nil?
           super(tuple_space_server)
-          @gen = dir ? dir.entries.to_enum : [].each
+          @gen = dir ? dir.file_entries.to_enum : [].each
         end
 
         def generate

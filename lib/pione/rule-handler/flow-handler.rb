@@ -39,7 +39,7 @@ module Pione
       def restore_data_tuples_from_domain_location
         dir = root? ? @base_location : @base_location + (".%s/%s" % @domain.split("_"))
         if dir.exist?
-          dir.entries.each do |location|
+          dir.file_entries.each do |location|
             unless location.basename[0] == "."
               write(Tuple[:data].new(@domain, location.basename, location, location.mtime))
             end

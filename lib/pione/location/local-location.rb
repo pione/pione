@@ -44,7 +44,13 @@ module Pione
       end
 
       def delete
-        @path.delete if @path.exist?
+        if @path.exist?
+          if @path.file?
+            @path.delete
+          else
+            FileUtils.remove_entry_secure(@path)
+          end
+        end
       end
 
       def mtime
@@ -56,7 +62,9 @@ module Pione
       end
 
       def entries
-        @path.entries.select{|entry| (@path + entry).file?}.map do |entry|
+        @path.entries.select do |entry|
+          not(entry.to_s == "." or entry.to_s == "..")
+        end.map do |entry|
           Location["local:%s" % (@path + entry).expand_path]
         end
       rescue Errno::ENOENT
