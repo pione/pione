@@ -125,7 +125,11 @@ module Pione
             puts Terminal.green("model:")
             pp model
           end
-          p model.eval(VariableTable.new)
+          if model.kind_of?(Array)
+            model.each {|m| p m}
+          else
+            p model.eval(VariableTable.new)
+          end
         rescue Pione::Parser::ParserError, Parslet::ParseFailed => e
           msg = "Pione syntax error: %s (%s)" % [e.message, e.class.name]
           readline_mode? ? puts(msg) : abort(msg)
