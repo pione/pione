@@ -1,7 +1,9 @@
 Rule Main
   input '*.score'.all
+  input 'stat-template.erb'
   output '*.stat.md'.all
   output '*.png'.all
+  output '*.html'.all
 Flow
   rule PersonalPreStatistics
   rule PersonalStatistics
@@ -9,6 +11,7 @@ Flow
   rule TotalMean
   rule TotalStatistics
   rule Histgram
+  rule BuildHTML
 End
 
 Rule PersonalPreStatistics
@@ -161,3 +164,32 @@ set output "{$O[1]}"
 plot "{$I[1]}" using 0:2:xtic(1) with boxes notitle
 End
 
+Rule BuildHTML
+  input '*.stat.md'
+  input 'stat-template.erb'
+  output '{$*}.html'
+Flow
+  rule MD2HTML
+  rule ApplyTemplate
+End
+
+Rule MD2HTML
+  input '*.stat.md'
+  input 'stat-template.erb'
+  output '{$*}.html.part'
+Action
+  redcarpet --parse-tables {$I[1]} > {$O[1]}
+End
+
+Rule ApplyTemplate
+  input '*.html.part'
+  input 'stat-template.erb'
+  output '{$*}.html'
+Action
+#!/usr/bin/env ruby
+require 'erb'
+title = '{$*}'
+content = File.read("{$I[1]}")
+b = binding
+File.open("{$O[1]}", "w") {|f| f.write(ERB.new(File.read("{$I[2]}")).result(b))}
+End
