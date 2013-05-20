@@ -203,65 +203,65 @@ module Pione
     end
 
     TypeSequence.instance_eval do
-      define_pione_method("!=", [:receiver_type], TypeBoolean) do |rec, other|
-        rec.call_pione_method("==", other).call_pione_method("not")
+      define_pione_method("!=", [:receiver_type], TypeBoolean) do |vtable, rec, other|
+        rec.call_pione_method(vtable, "==", other).call_pione_method(vtable, "not")
       end
 
-      define_pione_method("|", [:receiver_type], :receiver_type) do |rec, other|
+      define_pione_method("|", [:receiver_type], :receiver_type) do |vtable, rec, other|
         rec.concat(other)
       end
 
-      define_pione_method("each", [], :receiver_type) do |rec|
+      define_pione_method("each", [], :receiver_type) do |vtable, rec|
         rec.set_each
       end
 
-      define_pione_method("each?", [], TypeBoolean) do |rec|
+      define_pione_method("each?", [], TypeBoolean) do |vtable, rec|
         BooleanSequence.new([PioneBoolean.new(rec.each?)])
       end
 
-      define_pione_method("all", [], :receiver_type) do |rec|
+      define_pione_method("all", [], :receiver_type) do |vtable, rec|
         rec.set_all
       end
 
-      define_pione_method("all?", [], TypeBoolean) do |rec|
+      define_pione_method("all?", [], TypeBoolean) do |vtable, rec|
         BooleanSequence.new([PioneBoolean.new(rec.all?)])
       end
 
-      define_pione_method("i", [], TypeInteger) do |rec|
-        rec.call_pione_method("as_integer")
+      define_pione_method("i", [], TypeInteger) do |vtable, rec|
+        rec.call_pione_method(vtable, "as_integer")
       end
 
-      define_pione_method("f", [], TypeFloat) do |rec|
-        rec.call_pione_method("as_float")
+      define_pione_method("f", [], TypeFloat) do |vtable, rec|
+        rec.call_pione_method(vtable, "as_float")
       end
 
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("as_string")
+      define_pione_method("str", [], TypeString) do |vtable, rec|
+        rec.call_pione_method(vtable, "as_string")
       end
 
-      define_pione_method("d", [], TypeDataExpr) do |rec|
-        rec.call_pione_method("as_data_expr")
+      define_pione_method("d", [], TypeDataExpr) do |vtable, rec|
+        rec.call_pione_method(vtable, "as_data_expr")
       end
 
-      define_pione_method("length", [], TypeInteger) do |rec|
+      define_pione_method("length", [], TypeInteger) do |vtable, rec|
         IntegerSequence.new([PioneInteger.new(rec.elements.size)])
       end
 
-      define_pione_method("[]", [:index_type], :receiver_type) do |rec, index|
-        rec.call_pione_method("nth", index)
+      define_pione_method("[]", [:index_type], :receiver_type) do |vtable, rec, index|
+        rec.call_pione_method(vtable, "nth", index)
       end
 
-      define_pione_method("member?", [:receiver_type], TypeBoolean) do |rec, target|
+      define_pione_method("member?", [:receiver_type], TypeBoolean) do |vtable, rec, target|
         sequential_map1(TypeBoolean, target) do |target_elt|
           rec.elements.map{|elt| elt.value}.include?(target_elt.value)
         end
       end
 
-      define_pione_method("empty?", [], TypeBoolean) do |rec|
+      define_pione_method("empty?", [], TypeBoolean) do |vtable, rec|
         PioneBoolean.new(rec.elements.size == 0).to_seq
       end
 
-      define_pione_method(":", [TypeSequence], TypeKeyedSequence) do |keys, vals|
+      define_pione_method(":", [TypeSequence], TypeKeyedSequence) do |vtable, keys, vals|
         keys.elements.map do |key_elt|
           vals.elements.map do |val_elt|
             KeyedSequence.new(key_elt => [val_elt])
@@ -269,8 +269,8 @@ module Pione
         end.flatten.inject(KeyedSequence.new({})){|seq, _seq| seq.concat(_seq)}
       end
 
-      define_pione_method("textize", [], TypeString) do |rec|
-        rec.call_pione_method("as_string").call_pione_method("join", PioneString.new(rec.separator).to_seq)
+      define_pione_method("textize", [], TypeString) do |vtable, rec|
+        rec.call_pione_method(vtable, "as_string").call_pione_method(vtable, "join", PioneString.new(rec.separator).to_seq)
       end
     end
   end

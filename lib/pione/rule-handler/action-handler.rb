@@ -10,8 +10,7 @@ module Pione
 
       def initialize(*args)
         super(*args)
-        @working_directory = make_working_directory
-        setup_variable_table
+        @working_directory = Location[make_working_directory]
       end
 
       # Execute the action.
@@ -43,14 +42,13 @@ module Pione
           super
         else
           @variable_table.set(
-            Variable.new("WORKING_DIRECTORY"),
-            PioneString.new(@working_directory)
-          )
-          @variable_table.set(
-            Variable.new("PWD"),
+            Variable.new("__WORKING_DIRECTORY__"),
             PioneString.new(@working_directory)
           )
         end
+
+        @variable_table.set(Variable.new("__BASE__"), PioneString.new(base_location.uri).to_seq)
+        @variable_table.set(Variable.new("_"), PackageExprSequence.new([@rule.package_expr]))
       end
 
       # Make a working directory.
@@ -60,7 +58,7 @@ module Pione
       def make_working_directory
         # build directory path
         dirname = ID.domain_id(
-          @rule.rule_expr.package.name,
+          @rule.rule_expr.package_expr.name,
           @rule.rule_expr.name,
           @inputs,
           @original_params
@@ -77,7 +75,7 @@ module Pione
           wd_location = @working_directory + input.name
           # create a link to cache
           cache_location = FileCache.get(input.location)
-          wd_location.make_symlink(cache_location.path)
+          wd_location.path.make_symlink(cache_location.path)
           unless wd_location.exist?
             raise RuleExecutionError.new(self)
           end
@@ -86,16 +84,13 @@ module Pione
 
       # Write the data to the tempfile as shell script.
       def write_shell_script(&b)
-        file = File.open(
-          File.join(@working_directory,"__pione-action__.sh"),
-          "w+"
-        )
+        file = @working_directory + "__pione-action__.sh"
         if @dry_run
           @rule.outputs.flatten.each do |output|
-            file.puts("touch %s" % output.eval(@variable_table).name)
+            file.create("touch %s" % output.eval(@variable_table).name)
           end
         else
-          file.print(@rule.body.eval(@variable_table).content)
+          file.create(@rule.body.eval(@variable_table).content)
         end
         debug_message("Action #{file.path}")
         user_message("-"*60, 0, "SH")
@@ -103,8 +98,9 @@ module Pione
           user_message(line, 0, "SH")
         end
         user_message("-"*60, 0, "SH")
-        file.close
-        FileUtils.chmod(0700, file.path)
+        if @working_directory.scheme == "local"
+          FileUtils.chmod(0700, file.path)
+        end
         return b.call(file.path)
       end
 
@@ -120,7 +116,15 @@ module Pione
         err = ".stderr"
 
         # execute command
-        `cd #{@working_directory}; ./#{scriptname} > #{out} 2> #{err}`
+        `cd #{@working_directory.path}; ./#{scriptname} > #{out} 2> #{err}`
+
+        # delete unneeded files
+        if stdout.nil? and (@working_directory + out).size == 0
+          (@working_directory + out).delete
+        end
+        if (@working_directory + err).size
+          (@working_directory + err).delete
+        end
       end
 
       # Make output tuple by name.
@@ -134,7 +138,7 @@ module Pione
       #
       # @return [void]
       def collect_outputs
-        filenames = @working_directory.file_entries.map{|entry| entry.path.basename}
+        filenames = @working_directory.file_entries.map{|entry| entry.path.basename.to_s}
         @rule.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
           case output.distribution
@@ -163,7 +167,7 @@ module Pione
       # @return [void]
       def write_output_data
         @outputs.flatten.compact.each do |output|
-          src = Location[@working_directory + output.name]
+          src = @working_directory + output.name
           dest = output.location
           FileCache.put(src, dest)
         end
@@ -173,23 +177,18 @@ module Pione
       #
       # @return [void]
       def write_env_info
-        (@working_directory + ".pione-env").open("w+") do |out|
-          @variable_table.variables.each do |var|
-            val = @variable_table.get(var)
-            out.puts "%s: %s" % [var.name, val.textize]
-          end
-        end
+        @variable_table.variables.map do |var|
+          val = @variable_table.get(var)
+          "%s: %s" % [var.name, val.textize]
+        end.tap {|x| (@working_directory + ".pione-env").create(x.join("\n"))}
       end
 
       # Write resources for other intermediate files.
       #
       # @return [void]
       def write_other_resources
-        @working_directory.file_entries.each do |name|
-          path = @working_directory + name
-          if File.ftype(path) == "file"
-            Location[path].move(make_location(name, @domain))
-          end
+        @working_directory.file_entries.each do |entry|
+          entry.move(make_location(entry.path.basename, @domain))
         end
       end
 

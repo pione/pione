@@ -132,7 +132,7 @@ module Pione
         check_argument_type(variable, Variable)
         check_argument_type(new_value, BasicModel)
         if old_value = @table[variable]
-          unless old_value.void? or new_value == old_value
+          unless old_value.nil? or old_value.void? or new_value == old_value
             raise VariableBindingError.new(variable, new_value, old_value)
           end
         end
@@ -163,11 +163,11 @@ module Pione
         variables = to_hash
         new_str = str.to_s.gsub(/\{(\$.+?)\}/) do
           expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
-          expr.eval(self).call_pione_method("textize").first.value
+          expr.eval(self).call_pione_method(self, "textize").first.value
         end
         new_str.gsub(/\<\?\s*(.+?)\s*\?\>/) do
           expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse($1))
-          expr.eval(self).call_pione_method("textize").first.value
+          expr.eval(self).call_pione_method(self, "textize").first.value
         end
       end
 

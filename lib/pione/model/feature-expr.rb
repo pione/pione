@@ -873,20 +873,20 @@ module Pione::Model
   end
 
   TypeFeature.instance_eval do
-    define_pione_method("==", [TypeFeature], TypeBoolean) do |rec, other|
+    define_pione_method("==", [TypeFeature], TypeBoolean) do |vtable, rec, other|
       PioneBoolean.new(rec == other).to_seq
     end
 
-    define_pione_method("!=", [TypeFeature], TypeBoolean) do |rec, other|
-      PioneBoolean.not(rec.call_pione_method("==", other)).to_seq
+    define_pione_method("!=", [TypeFeature], TypeBoolean) do |vtable, rec, other|
+      PioneBoolean.not(rec.call_pione_method(vtable, "==", other)).to_seq
     end
 
-    define_pione_method("as_string", [], TypeString) do |rec|
+    define_pione_method("as_string", [], TypeString) do |vtable, rec|
       PioneString.new(rec.as_string).to_seq
     end
 
-    define_pione_method("str", [], TypeString) do |rec|
-      rec.call_pione_method("as_string")
+    define_pione_method("str", [], TypeString) do |vtable, rec|
+      rec.call_pione_method(vtable, "as_string")
     end
   end
 end

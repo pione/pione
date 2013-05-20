@@ -32,72 +32,72 @@ module Pione
     end
 
     TypeFloat.instance_eval do
-      define_pione_method(">", [TypeFloat], TypeBoolean) do |rec, other|
+      define_pione_method(">", [TypeFloat], TypeBoolean) do |vtable, rec, other|
         BooleanSequence.new([PioneBoolean.new(rec.value > other.value)])
       end
 
-      define_pione_method("<", [TypeFloat], TypeBoolean) do |rec, other|
+      define_pione_method("<", [TypeFloat], TypeBoolean) do |vtable, rec, other|
         BooleanSequence.new([PioneBoolean.new(rec.value < other.value)])
       end
 
-      define_pione_method("+", [TypeFloat], TypeFloat) do |rec, other|
+      define_pione_method("+", [TypeFloat], TypeFloat) do |vtable, rec, other|
         map2(rec, other) do |rec_elt, other_elt|
           PioneFloat.new(rec_elt.value + other_elt.value)
         end
       end
 
-      define_pione_method("-", [TypeFloat], TypeFloat) do |rec, other|
+      define_pione_method("-", [TypeFloat], TypeFloat) do |vtable, rec, other|
         map2(rec, other) do |rec_elt, other_elt|
           PioneFloat.new(rec_elt.value - other_elt.value)
         end
       end
 
-      define_pione_method("*", [TypeFloat], TypeFloat) do |rec, other|
+      define_pione_method("*", [TypeFloat], TypeFloat) do |vtable, rec, other|
         PioneFloat.new(rec.value * other.value)
       end
 
-      define_pione_method("%", [TypeFloat], TypeFloat) do |rec, other|
+      define_pione_method("%", [TypeFloat], TypeFloat) do |vtable, rec, other|
         # TODO: zero division error
         PioneFloat.new(rec.value % other.value)
       end
 
-      define_pione_method("/", [TypeFloat], TypeFloat) do |rec, other|
+      define_pione_method("/", [TypeFloat], TypeFloat) do |vtable, rec, other|
         # TODO: zero division error
         PioneFloat.new(rec.value / other.value)
       end
 
-      define_pione_method("as_string", [], TypeString) do |rec|
+      define_pione_method("as_string", [], TypeString) do |vtable, rec|
         sequential_map1(TypeString, rec) do |elt|
           elt.value.to_s
         end
       end
 
-      define_pione_method("as_integer", [], TypeInteger) do |rec|
+      define_pione_method("as_integer", [], TypeInteger) do |vtable, rec|
         sequential_map1(TypeInteger, rec) do |elt|
           elt.value.to_i
         end
       end
 
-      define_pione_method("as_float", [], TypeFloat) do |rec|
+      define_pione_method("as_float", [], TypeFloat) do |vtable, rec|
         rec
       end
 
       # sin : float
-      define_pione_method("sin", [], TypeFloat) do |rec|
+      define_pione_method("sin", [], TypeFloat) do |vtable, rec|
         sequential_map1(TypeFloat, rec) do |elt|
           Math.sin(elt.value)
         end
       end
 
       # cos : float
-      define_pione_method("cos", [], TypeFloat) do |rec|
+      define_pione_method("cos", [], TypeFloat) do |vtable, rec|
         sequential_map1(TypeFloat, rec) do |elt|
           Math.cos(elt.value)
         end
       end
 
       # abs : float
-      define_pione_method("abs", [], TypeFloat) do |rec|
+      define_pione_method("abs", [], TypeFloat) do |vtable, rec|
         sequential_map1(TypeFloat, rec) {|elt| elt.value.abs}
       end
     end

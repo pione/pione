@@ -39,8 +39,8 @@ module Pione
 
       # Make a domain name by rule path, inputs, and parameters.
       #
-      # @param rule [String]
-      #   package name
+      # @param rule [Component::Rule]
+      #   rule
       # @param inputs [Array<Pione::Tuple::Data>]
       #   input data tuples
       # @param params [Model::Parameters]
@@ -48,7 +48,7 @@ module Pione
       # @return [String]
       #   domain string
       def domain_id3(rule, inputs, params)
-        package_name = rule.rule_expr.package.name
+        package_name = rule.rule_expr.package_expr.name
         rule_name = rule.rule_expr.name
         return domain_id(package_name, rule_name, inputs, params)
       end

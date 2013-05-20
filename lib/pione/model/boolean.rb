@@ -123,49 +123,49 @@ module Pione
     #
 
     TypeBoolean.instance_eval do
-      define_pione_method("and", [TypeBoolean], TypeBoolean) do |rec, other|
+      define_pione_method("and", [TypeBoolean], TypeBoolean) do |vtable, rec, other|
         sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
           rec_elt.value && other_elt.value
         end
       end
 
-      define_pione_method("or", [TypeBoolean], TypeBoolean) do |rec, other|
+      define_pione_method("or", [TypeBoolean], TypeBoolean) do |vtable, rec, other|
         sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
           rec_elt.value || other_elt.value
         end
       end
 
-      define_pione_method("as_integer", [], TypeInteger) do |rec|
+      define_pione_method("as_integer", [], TypeInteger) do |vtable, rec|
         sequential_map1(TypeInteger, rec) {|rec| rec.value ? 1 : 0}
       end
 
-      define_pione_method("as_float", [], TypeFloat) do |rec|
+      define_pione_method("as_float", [], TypeFloat) do |vtable, rec|
         sequential_map1(TypeFloat, rec) {|rec| rec.value ? 1.0 : 0.0}
       end
 
-      define_pione_method("as_string", [], TypeString) do |rec|
+      define_pione_method("as_string", [], TypeString) do |vtable, rec|
         sequential_map1(TypeString, rec) {|rec| rec.value.to_s}
       end
 
-      define_pione_method("as_data_expr", [], TypeDataExpr) do |rec|
+      define_pione_method("as_data_expr", [], TypeDataExpr) do |vtable, rec|
         sequential_map1(TypeDataExpr, rec) {|rec| rec.value.to_s}
       end
 
-      define_pione_method("not", [], TypeBoolean) do |rec|
+      define_pione_method("not", [], TypeBoolean) do |vtable, rec|
         sequential_map1(TypeBoolean, rec) do |elt|
           not(elt.value)
         end
       end
 
-      define_pione_method("every?", [], TypeBoolean) do |rec|
+      define_pione_method("every?", [], TypeBoolean) do |vtable, rec|
         PioneBoolean.new(not(rec.elements.include?(PioneBoolean.false))).to_seq
       end
 
-      define_pione_method("any?", [], TypeBoolean) do |rec|
+      define_pione_method("any?", [], TypeBoolean) do |vtable, rec|
         PioneBoolean.new(rec.elements.include?(PioneBoolean.true)).to_seq
       end
 
-      define_pione_method("one?", [], TypeBoolean) do |rec|
+      define_pione_method("one?", [], TypeBoolean) do |vtable, rec|
         PioneBoolean.new(rec.elements.select{|elt| elt == PioneBoolean.true}.size == 1).to_seq
       end
     end

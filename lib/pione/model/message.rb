@@ -55,7 +55,7 @@ module Pione
       def eval(vtable)
         receiver = @receiver.eval(vtable)
         arguments = @arguments.map{|arg| arg.eval(vtable)}
-        receiver.call_pione_method(@name, *arguments)
+        receiver.call_pione_method(vtable, @name, *arguments)
       end
 
       # Return true if the receiver or arguments include variables.

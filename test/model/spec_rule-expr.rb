@@ -24,53 +24,5 @@ describe 'Model::RuleExpr' do
     @a.add_output_ticket_expr(ticket).output_ticket_expr.should == ticket
   end
 
-  describe 'pione method ==' do
-    it 'should true' do
-      @a.call_pione_method(
-        "==", RuleExpr.new(PackageExpr.new("main"), "a")
-      ).should == PioneBoolean.new(true).to_seq
-    end
-
-    it 'should false' do
-      @a.call_pione_method("==", @b).should.not.true
-    end
-
-    it 'should raise type error' do
-      should.raise(MethodNotFound) do
-        @a.call_pione_method("==", PioneInteger.new(1).to_seq)
-      end
-    end
-  end
-
-  describe 'pione method !=' do
-    it 'should true' do
-      @a.call_pione_method("!=", @b).should == PioneBoolean.new(true).to_seq
-    end
-
-    it 'should false' do
-      @a.call_pione_method(
-        "!=", RuleExpr.new(PackageExpr.new("main"), "a")
-      ).should.not.true
-    end
-
-    it 'should raise type error' do
-      should.raise(MethodNotFound) do
-        @a.call_pione_method("!=", PioneInteger.new(1).to_seq)
-      end
-    end
-  end
-
-  describe 'pione method as_string' do
-    it 'should get string' do
-      @a.call_pione_method("as_string").should == PioneString.new("a").to_seq
-    end
-  end
-
-  describe 'pione method params' do
-    it 'should set parameters' do
-      params = Parameters.new({Variable.new("a") => PioneBoolean.true})
-      @a.call_pione_method("params", params).should ==
-        RuleExpr.new(PackageExpr.new("main"), "a", params: params)
-    end
-  end
+  test_pione_method("rule-expr")
 end

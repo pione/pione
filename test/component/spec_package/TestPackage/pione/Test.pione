@@ -1,0 +1,14 @@
+Rule Main
+  input '*.txt'.all
+  output '*.count'.all
+Flow
+  rule Count
+End
+
+Rule Count
+  input '*.txt'
+  output '{$*}.count'
+Action
+  {$_.bin}/count {$I[1]} > {$O[1]}
+End
+

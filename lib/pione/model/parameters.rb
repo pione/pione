@@ -323,19 +323,19 @@ module Pione
     # end
 
     TypeParameters.instance_eval do
-      define_pione_method('==', [TypeParameters], TypeBoolean) do |rec, other|
+      define_pione_method('==', [TypeParameters], TypeBoolean) do |vtable, rec, other|
         PioneBoolean.new(rec.data == other.data)
       end
 
-      define_pione_method("!=", [TypeParameters], TypeBoolean) do |rec, other|
-        PioneBoolean.not(rec.call_pione_method("==", other))
+      define_pione_method("!=", [TypeParameters], TypeBoolean) do |vtable, rec, other|
+        PioneBoolean.not(rec.call_pione_method(vtable, "==", other))
       end
 
-      define_pione_method("[]", [TypeString], TypeSequence) do |rec, name|
+      define_pione_method("[]", [TypeString], TypeSequence) do |vtable, rec, name|
         rec.get(Variable.new(name.value))
       end
 
-      define_pione_method("get", [TypeString], TypeSequence) do |rec, name|
+      define_pione_method("get", [TypeString], TypeSequence) do |vtable, rec, name|
         rec.get(Variable.new(name.value))
       end
 
@@ -343,20 +343,20 @@ module Pione
         "set",
         [TypeString, TypeSequence],
         TypeParameters
-      ) do |rec, name, val|
+      ) do |vtable, rec, name, val|
         rec.set(Variable.new(name.value), val)
       end
 
-      define_pione_method("empty?", [], TypeBoolean) do |rec|
+      define_pione_method("empty?", [], TypeBoolean) do |vtable, rec|
         PioneBoolean.new(rec.empty?)
       end
 
-      define_pione_method("as_string", [], TypeString) do |rec|
+      define_pione_method("as_string", [], TypeString) do |vtable, rec|
         PioneString.new(rec.string_form)
       end
 
-      define_pione_method("str", [], TypeString) do |rec|
-        rec.call_pione_method("as_string")
+      define_pione_method("str", [], TypeString) do |vtable, rec|
+        rec.call_pione_method(vtable, "as_string")
       end
     end
   end

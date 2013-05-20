@@ -167,15 +167,17 @@ module Pione
 
       # Call pione model object method.
       #
-      # @param [String] name
-      #   method name
-      # @param [Array] args
+      # @param vtable [VariableTable]
+      #   variable table
+      # @param name [String]
+      #   method's name
+      # @param args [Array]
       #   method's arguments
       # @return [Object]
-      #   method's result
-      def call_pione_method(name, *args)
+      #   the result
+      def call_pione_method(vtable, name, *args)
         if pione_method = pione_model_type.find_method(name, self, *args)
-          pione_method.call(self, *args)
+          pione_method.call(vtable, self, *args)
         else
           raise MethodNotFound.new(name, self, *args)
         end
@@ -189,6 +191,8 @@ module Pione
     end
 
     class Element < BasicModel
+      include SimpleIdentity
+
       class << self
         attr_reader :sequence_class
 

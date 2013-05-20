@@ -76,7 +76,7 @@ module Pione
 
         # build rule process record
         @rule_process_record = Log::RuleProcessRecord.new.tap do |record|
-          record.name = "&%s:%s" % [@rule.rule_expr.package.name, @rule.rule_expr.name]
+          record.name = "&%s:%s" % [@rule.rule_expr.package_expr.name, @rule.rule_expr.name]
           record.rule_type = @rule.rule_type
           record.caller = caller.split("_").first.tap do |dname|
             if dname.include?("-")
@@ -91,7 +91,7 @@ module Pione
         # build task process record
         @task_process_record = Log::TaskProcessRecord.new.tap do |record|
           record.name = handler_digest
-          record.rule_name = "&%s:%s" % [@rule.rule_expr.package.name, @rule.rule_expr.name]
+          record.rule_name = "&%s:%s" % [@rule.rule_expr.package_expr.name, @rule.rule_expr.name]
           record.rule_type = @rule.rule_type
           record.inputs = @inputs.flatten.map{|input| input.name}.join(",")
           record.parameters = @params.textize
@@ -205,7 +205,7 @@ module Pione
       # Return the domain.
       def get_handling_domain(opts)
         opts[:domain] || ID.domain_id(
-          @rule.rule_expr.package.name,
+          @rule.rule_expr.package_expr.name,
           @rule.rule_expr.name,
           @inputs,
           @original_params

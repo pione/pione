@@ -57,8 +57,8 @@ module Pione
       #   arguments
       # @return [BasicModel]
       #   the result
-      def call(receiver, *args)
-        output = receiver.pione_model_type.instance_exec(receiver, *args, &@body)
+      def call(vtable, receiver, *args)
+        output = receiver.pione_model_type.instance_exec(vtable, receiver, *args, &@body)
         validate_output(receiver, output)
         return output
       end

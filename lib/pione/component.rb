@@ -5,3 +5,4 @@ end
 
 require 'pione/component/rule'
 require 'pione/component/document'
+require 'pione/component/package'

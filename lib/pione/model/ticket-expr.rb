@@ -63,11 +63,11 @@ module Pione
     end
 
     TypeTicketExpr.instance_eval do
-      define_pione_method("==>", [TypeRuleExpr], TypeRuleExpr) do |rec, other|
+      define_pione_method("==>", [TypeRuleExpr], TypeRuleExpr) do |vtable, rec, other|
         other.add_input_ticket_expr(rec)
       end
 
-      define_pione_method("as_string", [], TypeString) do |rec|
+      define_pione_method("as_string", [], TypeString) do |vtable, rec|
         rec.textize
       end
     end

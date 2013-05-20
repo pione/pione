@@ -105,7 +105,7 @@ module Pione
       forward! :@condition, :inputs, :outputs, :params, :features, :constraints
       forward! :@condition, :input_ticket_expr, :output_ticket_expr
       forward! :class, :rule_type, :handler_class
-      forward! :@rule_expr, :rule_path
+      forward! :@rule_expr, :rule_path, :package_expr
 
       # Create a rule.
       #

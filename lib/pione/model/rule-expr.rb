@@ -2,11 +2,13 @@ module Pione
   module Model
     # Rule representation in the flow element context.
     class RuleExpr < Callable
+      include SimpleIdentity
+
       set_pione_model_type TypeRuleExpr
 
-      # @return [String]
-      #   package name
-      attr_reader :package
+      # @return [PackageExpr]
+      #   package expression
+      attr_reader :package_expr
 
       # @return [String]
       #   rule name
@@ -20,8 +22,8 @@ module Pione
 
       # Create a rule expression.
       #
-      # @param package [String]
-      #   package name
+      # @param package_expr [PackageExpr]
+      #   package expression
       # @param name [String]
       #   rule name
       # @param attributes [Hash]
@@ -32,8 +34,8 @@ module Pione
       #   input ticket condition
       # @option attributes [Model::TicketExpr] :output_ticket_expr
       #   output ticket condition
-      def initialize(package, name, attributes={})
-        @package = package
+      def initialize(package_expr, name, attributes={})
+        @package_expr = package_expr
         @name = name
         @attributes = {}
         @attributes[:params] = attributes[:params] || Model::Parameters.empty
@@ -47,23 +49,23 @@ module Pione
       # @return [String]
       #   rule path string
       def path
-        "&%s:%s" % [@package.name, @name]
+        "&%s:%s" % [@package_expr.name, @name]
       end
 
       # FIXME
       def rule_path
-        raise UnboundVariableError.new(self) if @package.include_variable?
-        "&%s:%s" % [@package.name, @name]
+        raise UnboundVariableError.new(self) if @package_expr.include_variable?
+        "&%s:%s" % [@package_expr.name, @name]
       end
 
       # @api private
       def task_id_string
-        "RuleExpr<%s,#{@name}>" % [@package.task_id_string]
+        "RuleExpr<%s,#{@name}>" % [@package_expr.task_id_string]
       end
 
       # @api private
       def textize
-        "rule_expr(%s,\"%s\")" % [@package.textize, @name]
+        "rule_expr(%s,\"%s\")" % [@package_expr.textize, @name]
       end
 
       # Create a new rule expression with adding the ticket expression as input
@@ -75,7 +77,7 @@ module Pione
       #   new rule expression
       def add_input_ticket_expr(ticket_expr)
         new_attributes = @attributes.merge(input_ticket_expr: @attributes[:input_ticket_expr].concat(ticket_expr))
-        return self.class.new(@package, @name, new_attributes)
+        return self.class.new(@package_expr, @name, new_attributes)
       end
 
       # Create a new rule expression with adding the ticket expression as output
@@ -87,17 +89,17 @@ module Pione
       #   new rule expression
       def add_output_ticket_expr(ticket_expr)
         new_attributes = @attributes.merge(output_ticket_expr: @attributes[:output_ticket_expr].concat(ticket_expr))
-        return self.class.new(@package, @name, new_attributes)
+        return self.class.new(@package_expr, @name, new_attributes)
       end
 
       # Sets a package name and returns a new expression.
       #
-      # @param [String] package
-      #   package name
+      # @param package_expr [PackageExpr]
+      #   package expression
       # @return [RuleExpr]
       #   new rule expression with the package name
-      def set_package(package)
-        return self.class.new(package, @name, @attributes)
+      def set_package_expr(package_expr)
+        return self.class.new(package_expr, @name, @attributes)
       end
 
       # Set parameters and returns a new expression.
@@ -108,7 +110,7 @@ module Pione
       #   new rule expression with the parameters
       def set_params(params)
         new_attributes = @attributes.merge(params: params)
-        return self.class.new(@package, @name, new_attributes)
+        return self.class.new(@package_expr, @name, new_attributes)
       end
 
       # Evaluate the object with the variable table.
@@ -119,30 +121,15 @@ module Pione
       #   evaluation result
       def eval(vtable)
         new_attributes = Hash[@attributes.map{|key, val| [key, val.eval(vtable)]}]
-        return self.class.new(@package.eval(vtable), @name, new_attributes)
+        return self.class.new(@package_expr.eval(vtable), @name, new_attributes)
       end
 
-      # Return true if the package or parameters include variables.
+      # Return true if the package expression or parameters include variables.
       #
       # @return [Boolean]
-      #   true if the package or parameters include variables
+      #   true if the package expression or parameters include variables
       def include_variable?
-        @package.include_variable? or @attributes.values.any?{|val| val.include_variable?}
-      end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        return false unless @package = other.package
-        return false unless @name == other.name
-        return false unless @attributes == other.attributes
-        return true
-      end
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @package.hash + @name.hash + @attributes.hash
+        @package_expr.include_variable? or @attributes.values.any?{|val| val.include_variable?}
       end
 
       # Return a set that contains self as a single element.
@@ -225,27 +212,23 @@ module Pione
     end
 
     TypeRuleExpr.instance_eval do
-      define_pione_method("==", [TypeRuleExpr], TypeBoolean) do |rec, other|
-        PioneBoolean.new(
-          rec.package == other.package &&
-          rec.name == other.name &&
-          rec.params == other.params
-        ).to_seq
+      define_pione_method("==", [TypeRuleExpr], TypeBoolean) do |vtable, rec, other|
+        PioneBoolean.new(rec == other).to_seq
       end
 
-      define_pione_method("params", [TypeParameters], TypeRuleExpr) do |rec, params|
+      define_pione_method("params", [TypeParameters], TypeRuleExpr) do |vtable, rec, params|
         rec.set_params(params)
       end
 
-      define_pione_method("as_string", [], TypeString) do |rec|
+      define_pione_method("as_string", [], TypeString) do |vtable, rec|
         PioneString.new(rec.name).to_seq
       end
 
-      define_pione_method("==>", [TypeTicketExpr], TypeRuleExpr) do |rec, ticket_expr|
+      define_pione_method("==>", [TypeTicketExpr], TypeRuleExpr) do |vtable, rec, ticket_expr|
         rec.add_output_ticket_expr(ticket_expr)
       end
 
-      define_pione_method(">>>", [TypeRuleExpr], TypeRuleExpr) do |rec, other|
+      define_pione_method(">>>", [TypeRuleExpr], TypeRuleExpr) do |vtable, rec, other|
         ticket_expr = TicketExpr.new(rec.path).to_seq
         left = rec.add_output_ticket_expr(ticket_expr)
         right = other.add_input_ticket_expr(ticket_expr)

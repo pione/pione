@@ -237,9 +237,17 @@ module Pione
         # get script dirname
         @dir = File.dirname(File.expand_path(__FILE__))
 
+        location = Location[ARGF.path]
+
         # read process document
         begin
-          @document = Component::Document.parse(ARGF.read)
+          if location.directory?
+            # package
+            @document = Component::PackageReader.new(location).read
+            @document.upload(option[:output_location] + "package")
+          else
+            @document = Component::Document.parse(location.read)
+          end
         rescue Pione::Parser::ParserError => e
           abort("Pione syntax error: " + e.message)
         rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e

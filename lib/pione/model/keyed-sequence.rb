@@ -124,19 +124,19 @@ module Pione
 
     TypeKeyedSequence.instance_eval do
       # keys : index_type
-      define_pione_method("keys", [], :index_type) do |rec|
+      define_pione_method("keys", [], :index_type) do |vtable, rec|
         keys = rec.elements.keys
         rec.ordinal_sequence_of_element(keys.first).new(keys)
       end
 
       # values : element_type
-      define_pione_method("values", [], :element_type) do |rec|
+      define_pione_method("values", [], :element_type) do |vtable, rec|
         vals = rec.elements.values.flatten
         rec.ordinal_sequence_of_element(vals.first).new(vals)
       end
 
       # [] : index_type -> element_type
-      define_pione_method("[]", [:index_type], :element_type) do |rec, index|
+      define_pione_method("[]", [:index_type], :element_type) do |vtable, rec, index|
         index.elements.map do |index_elt|
           rec.elements[index_elt]
         end.flatten.tap{|x| break rec.ordinal_sequence_of_element(x.first).new(x, rec.attribute)}

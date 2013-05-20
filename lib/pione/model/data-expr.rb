@@ -418,119 +418,119 @@ module Pione
     end
 
     TypeDataExpr.instance_eval do
-      define_pione_method("==", [TypeDataExpr], TypeBoolean) do |rec, other|
+      define_pione_method("==", [TypeDataExpr], TypeBoolean) do |vtable, rec, other|
         PioneBoolean.new(rec == other).to_seq
       end
 
-      define_pione_method("[]", [TypeInteger], TypeString) do |rec, index|
+      define_pione_method("[]", [TypeInteger], TypeString) do |vtable, rec, index|
         sequential_map2(TypeString, rec, index) do |rec_elt, index_elt|
           rec_elt.matched_data[index_elt.value]
         end.set_separator(DataExpr::SEPARATOR)
       end
 
-      define_pione_method("all", [], TypeDataExpr) do |rec|
+      define_pione_method("all", [], TypeDataExpr) do |vtable, rec|
         rec.set_all
       end
 
-      define_pione_method("all?", [], TypeBoolean) do |rec|
+      define_pione_method("all?", [], TypeBoolean) do |vtable, rec|
         rec.all?
       end
 
-      define_pione_method("each", [], TypeDataExpr) do |rec|
+      define_pione_method("each", [], TypeDataExpr) do |vtable, rec|
         rec.set_each
       end
 
-      define_pione_method("each?", [], TypeBoolean) do |rec|
+      define_pione_method("each?", [], TypeBoolean) do |vtable, rec|
         rec.each?
       end
 
-      define_pione_method("stdout", [], TypeDataExpr) do |rec|
+      define_pione_method("stdout", [], TypeDataExpr) do |vtable, rec|
         rec.set_stdout
       end
 
-      define_pione_method("stdout?", [], TypeBoolean) do |rec|
+      define_pione_method("stdout?", [], TypeBoolean) do |vtable, rec|
         rec.stdout?
       end
 
-      define_pione_method("stderr", [], TypeDataExpr) do |rec|
+      define_pione_method("stderr", [], TypeDataExpr) do |vtable, rec|
         rec.set_stderr
       end
 
-      define_pione_method("stderr?", [], TypeBoolean) do |rec|
+      define_pione_method("stderr?", [], TypeBoolean) do |vtable, rec|
         rec.stderr?
       end
 
-      define_pione_method("neglect", [], TypeDataExpr) do |rec|
+      define_pione_method("neglect", [], TypeDataExpr) do |vtable, rec|
         rec.set_neglect
       end
 
-      define_pione_method("neglect?", [], TypeBoolean) do |rec|
+      define_pione_method("neglect?", [], TypeBoolean) do |vtable, rec|
         rec.neglect?
       end
 
-      define_pione_method("care", [], TypeDataExpr) do |rec|
+      define_pione_method("care", [], TypeDataExpr) do |vtable, rec|
         rec.set_care
       end
 
-      define_pione_method("care?", [], TypeBoolean) do |rec|
+      define_pione_method("care?", [], TypeBoolean) do |vtable, rec|
         rec.care?
       end
 
-      define_pione_method("write", [], TypeDataExpr) do |rec|
+      define_pione_method("write", [], TypeDataExpr) do |vtable, rec|
         rec.set_write
       end
 
-      define_pione_method("write?", [], TypeBoolean) do |rec|
+      define_pione_method("write?", [], TypeBoolean) do |vtable, rec|
         rec.write?
       end
 
-      define_pione_method("remove", [], TypeDataExpr) do |rec|
+      define_pione_method("remove", [], TypeDataExpr) do |vtable, rec|
         rec.set_remove
       end
 
-      define_pione_method("remove?", [], TypeBoolean) do |rec|
+      define_pione_method("remove?", [], TypeBoolean) do |vtable, rec|
         rec.remove?
       end
 
-      define_pione_method("touch", [], TypeDataExpr) do |rec|
+      define_pione_method("touch", [], TypeDataExpr) do |vtable, rec|
         rec.set_touch
       end
 
-      define_pione_method("touch?", [], TypeBoolean) do |rec|
+      define_pione_method("touch?", [], TypeBoolean) do |vtable, rec|
         rec.touch?
       end
 
-      define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |rec, target|
+      define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |vtable, rec, target|
         map2(rec, target) do |rec_elt, target_elt|
           rec_elt.except(target_elt)
         end
       end
 
-      define_pione_method("exceptions", [], TypeDataExpr) do |rec|
+      define_pione_method("exceptions", [], TypeDataExpr) do |vtable, rec|
         rec.elements.map do |elt|
           elt.exceptions
         end.flatten.tap{|x| break DataExprSequence.new(x)}
       end
 
-      define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |rec, other|
+      define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |vtable, rec, other|
         map2(rec, other) do |rec_elt, other_elt|
           DataExprOr.new([rec_elt, other_elt])
         end
       end
 
-      define_pione_method("match", [TypeString], TypeString) do |rec, name|
+      define_pione_method("match", [TypeString], TypeString) do |vtable, rec, name|
         rec.match(name.value).to_a.inject(StringSequence.empty) do |seq, matched|
           seq.push(PioneString.new(matched))
         end
       end
 
-      define_pione_method("match?", [TypeString], TypeBoolean) do |rec, name|
+      define_pione_method("match?", [TypeString], TypeBoolean) do |vtable, rec, name|
         sequential_map2(TypeBoolean, rec, name) do |rec_elt, name_elt|
           not(rec_elt.match(name_elt.value).nil?)
         end
       end
 
-      define_pione_method("as_string", [], TypeString) do |rec|
+      define_pione_method("as_string", [], TypeString) do |vtable, rec|
         sequential_map1(TypeString, rec) do |rec_elt|
           case rec_elt
           when DataExprNull
@@ -543,7 +543,7 @@ module Pione
         end.set_separator(DataExpr::SEPARATOR)
       end
 
-      define_pione_method("accept_nonexistence?", [], TypeBoolean) do |rec|
+      define_pione_method("accept_nonexistence?", [], TypeBoolean) do |vtable, rec|
         TypeBoolean.map1(rec) do |elt|
           PioneBoolean.new(elt.accept_nonexistence?)
         end

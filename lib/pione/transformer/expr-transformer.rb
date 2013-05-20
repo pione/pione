@@ -78,7 +78,7 @@ module Pione
           :package => simple(:package),
           :expr => simple(:expr)
         }) {
-        expr.set_package(package)
+        expr.set_package_expr(package)
       }
 
       # Transform +:parameters+ as emtpy parameters.

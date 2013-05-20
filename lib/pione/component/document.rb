@@ -9,15 +9,16 @@ module Pione
       end
 
       # Load a rule document and return it.
-      def self.load(filepath)
-        parse(File.read(filepath))
+      def self.load(filepath, package_name="main")
+        filepath = Location[filepath] unless filepath.kind_of?(Location::BasicLocation)
+        parse(filepath.read, package_name)
       end
 
       # Parse a rule document string.
-      def self.parse(src)
+      def self.parse(src, package_name="main")
         # parse the document and build the model
         parser = Parser::DocumentParser.new
-        transformer = Transformer::DocumentTransformer.new
+        transformer = Transformer::DocumentTransformer.new(package_name)
         toplevels = transformer.apply(parser.parse(src))
 
         # rules and assignments

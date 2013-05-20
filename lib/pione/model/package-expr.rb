@@ -1,6 +1,6 @@
 module Pione
   module Model
-    # PackageExpr is a PIONE model class for rule package.
+    # PackageExpr is an expression of PIONE package.
     class PackageExpr < Element
       attr_reader :name
 
@@ -33,24 +33,26 @@ module Pione
         raise ArgumentError.new(other) unless other.kind_of?(RuleExpr)
         "#{@name}:#{other.name}"
       end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        @name == other.name
-      end
-
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @value.hash
-      end
     end
 
     class PackageExprSequence < Sequence
       set_pione_model_type TypePackageExpr
       set_element_class PackageExpr
+    end
+
+    TypePackageExpr.instance_eval do
+      define_pione_method("bin", [], TypeString) do |vtable, rec|
+        base = Location[vtable.get(Variable.new("__BASE__")).value]
+        bin = base + "package" + rec.elements.first.name + "bin"
+        working_directory = Location[vtable.get(Variable.new("__WORKING_DIRECTORY__"))]
+        bin.entries.each do |entry|
+          path = working_directory + "bin" + entry.basename
+          unless path.exist?
+            entry.copy(working_directory + "bin" + entry.basename)
+          end
+        end
+        PioneString.new((working_directory + "bin").path).to_seq
+      end
     end
   end
 end

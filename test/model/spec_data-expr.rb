@@ -273,13 +273,6 @@ describe 'Model::DataExpr' do
     exp.select('test-.a','test-1.a','test-a.a','test-a.b').should == ['test-1.a', 'test-a.a']
     exp.select.should.empty
   end
-
-  describe 'pione method except' do
-    it 'should set a exception' do
-      DataExpr.new('test.a').to_seq.call_pione_method("except", DataExpr.new('test.b').to_seq).should ==
-        DataExpr.new('test.a').except(DataExpr.new('test.b')).to_seq
-    end
-  end
 end
 
 describe "Model::DataExprNull" do

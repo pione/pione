@@ -1,0 +1,11 @@
+# ==
+- "true" : "&Test:Main == &Test:Main"
+- "false" : "&Test:Main == &Test:Count"
+
+# !=
+- "true" : "&Test:Main != &Test:Count"
+- "false" : "&Test:Main != &Test:Main"
+
+# params
+- "Main {N: 1}" : "Main.params({N: 1})"
+

@@ -1,15 +1,19 @@
 require_relative '../test-util'
 
 describe 'Model::PackageExpr' do
-  it 'should be equal' do
-    Model::PackageExpr.new('abc').should == Model::PackageExpr.new('abc')
+  before do
+    @package_expr = Model::PackageExpr.new('A')
   end
 
-  it 'should not be equal' do
-    Model::PackageExpr.new('abc').should.not == Model::PackageExpr.new('def')
+  it 'should equal' do
+    @package_expr.should == Model::PackageExpr.new('A')
+  end
+
+  it 'should not equal' do
+    @package_expr.should != Model::PackageExpr.new('B')
   end
 
   it 'should get a package name' do
-    Model::PackageExpr.new('abc').name.should == 'abc'
+    @package_expr.name.should == 'A'
   end
 end
