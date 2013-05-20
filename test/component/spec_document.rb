@@ -60,10 +60,10 @@ describe 'Pione::Component::Document' do
 
   it 'should get rules by rule path' do
     doc = Component::Document.parse(src)
-    doc["&main:Main"].should.kind_of(Model::Rule)
-    doc["&main:RuleA"].should.kind_of(Model::Rule)
-    doc["&main:RuleB"].should.kind_of(Model::Rule)
-    doc["&main:RuleC"].should.kind_of(Model::Rule)
+    doc["&main:Main"].should.kind_of(Component::Rule)
+    doc["&main:RuleA"].should.kind_of(Component::Rule)
+    doc["&main:RuleB"].should.kind_of(Component::Rule)
+    doc["&main:RuleC"].should.kind_of(Component::Rule)
   end
 
   it 'should have document parameters' do
