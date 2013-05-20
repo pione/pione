@@ -50,5 +50,5 @@ Gem::Specification.new do |gem|
 
   # for documentation
   gem.add_development_dependency "yard"
-  gem.add_development_dependency "redcarpet"
+  gem.add_development_dependency "redcarpet"  unless RUBY_PLATFORM == 'java'
 end
