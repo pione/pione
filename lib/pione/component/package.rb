@@ -157,7 +157,7 @@ module Pione
       # @return [Array<Document>]
       #   documents
       def find_documents(package_name)
-        (@location + "pione").entries.select do |entry|
+        (@location + "rule").entries.select do |entry|
           entry.path.extname == ".pione"
         end.map {|entry| Document.load(entry, package_name) }
       end
