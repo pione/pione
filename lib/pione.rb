@@ -45,11 +45,7 @@ require 'simple-identity'
 require 'pione/version'
 
 # util
-require 'pione/util/misc'
-require 'pione/util/terminal'
-require 'pione/util/console-message'
-require 'pione/util/waiter-table'
-require 'pione/util/error-report'
+require 'pione/util'
 
 # log
 require 'pione/log'

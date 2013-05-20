@@ -90,7 +90,9 @@ module Pione
             file.create("touch %s" % output.eval(@variable_table).name)
           end
         else
-          file.create(@rule.body.eval(@variable_table).content)
+          # apply offside rule
+          content = @rule.body.eval(@variable_table).content
+          file.create(Util::Indentation.cut(content))
         end
         debug_message("Action #{file.path}")
         user_message("-"*60, 0, "SH")
