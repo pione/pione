@@ -12,6 +12,7 @@ module Pione
     tuple_space_operation :read
     tuple_space_operation :read_all
     tuple_space_operation :take
+    tuple_space_operation :take_all
     tuple_space_operation :write
     tuple_space_operation :count_tuple
     tuple_space_operation :notify

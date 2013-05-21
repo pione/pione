@@ -23,7 +23,8 @@ module Pione
           puts "invalid color option: %s" % bool
           exit!
         end
-        Terminal.color_mode = bool
+        # disable rainbow
+        Sickill::Rainbow.enabled = bool
       end
     end
   end

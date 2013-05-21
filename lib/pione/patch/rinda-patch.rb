@@ -544,6 +544,11 @@ module Rinda
       end
     end
 
+    def take_all(tuple)
+      real_take_all(tuple).map {|res| lift_tuple(res)}
+    end
+    public :take_all
+
     # Returns all tuples in the space.
     # @param [Symbol] target
     #   tuple type(:all, :bag, :read_waiter, or :take_waiter)
@@ -694,6 +699,48 @@ module Rinda
     end
 
     # @note
+    #   mutex version of +read_all+
+    def real_take_all(tuple, sec=nil)
+      template = WaitTemplateEntry.new(self, tuple, sec)
+      yield(template) if block_given?
+
+      entries = @mutex.synchronize {@bag.find_all(template)}
+      unless entries.empty?
+        entries.each do |entry|
+          # port.push(entry.value) if port
+          @mutex.synchronize {@bag.delete(entry)}
+        end
+        template.finished = true
+        return entries.map {|entry| entry.value}
+      end
+      raise RequestExpiredError if template.expired?
+
+      begin
+        @mutex.synchronize {@take_waiter.push(template)}
+        start_keeper if template.expires
+        while true
+          raise RequestCanceledError if template.canceled?
+          raise RequestExpiredError if template.expired?
+          entries = @mutex.synchronize {@bag.find_all(template)}
+          unless entries.empty?
+            entries.each do |entry|
+              # port.push(entry.value) if port
+              @mutex.synchronize {@bag.delete(entry)}
+            end
+            template.finished = true
+            @mutex.synchronize {@take_waiter.delete(template)}
+            return entries.map {|entry| entry.value}
+          end
+          Thread.current[:WaitTemplate] = template
+          template.wait
+          Thread.current[:WaitTemplate] = nil
+        end
+      ensure
+        @mutex.synchronize {@take_waiter.delete(template)}
+      end
+    end
+
+    # @note
     #   mutex version of +keep_clean+
     def keep_clean
       @mutex.synchronize{@read_waiter.delete_unless_alive}.each do |e|
@@ -758,6 +805,12 @@ module Rinda
         return lift_location(new_location, history << location) || new_location
       end
       return nil
+    end
+  end
+
+  class TupleSpaceProxy
+    def take_all(tuple)
+      @ts.take_all(tuple)
     end
   end
 end

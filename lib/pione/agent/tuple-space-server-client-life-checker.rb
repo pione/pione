@@ -20,9 +20,11 @@ module Pione
         return take(Tuple[:bye].any)
       end
 
-      def transit_to_cleaning_agent(bye)
-        take(Tuple[:agent].new(uuid: bye.uuid))
-        return nil
+      def transit_to_cleaning_agent(bye=nil)
+        if bye
+          take(Tuple[:agent].new(uuid: bye.uuid))
+          return nil
+        end
       end
     end
   end

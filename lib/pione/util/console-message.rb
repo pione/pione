@@ -5,7 +5,7 @@ module Pione
       # @api private
       MESSAGE_QUEUE = Queue.new
 
-      # message queue thread
+      # Message queue thread
       Thread.new {
         while msg = MESSAGE_QUEUE.pop
           puts msg
@@ -93,9 +93,9 @@ module Pione
       # @param type [String]
       #   message heading type
       # @return [void]
-      def debug_message(msg, level=0, type="debug")
+      def debug_message(msg, level=0, head="debug")
         if debug_mode? and not(quiet_mode?)
-          message(type, :magenta, "  "*level + msg)
+          message(:debug, head, :magenta, "  "*level + msg)
         end
       end
       module_function :debug_message
@@ -127,9 +127,9 @@ module Pione
       # @param type [String]
       #   message heading type
       # @return [void]
-      def user_message(msg, level=0, type="info")
+      def user_message(msg, level=0, head="info", color=:green)
         if not(quiet_mode?)
-          message(type, :green, "  "*level + msg)
+          message(:info, head, color, msg, level)
         end
       end
 
@@ -138,8 +138,8 @@ module Pione
       # @param msg [String]
       #   user message
       # @return [void]
-      def user_message_begin(msg)
-        user_message(msg, 0, ">>>")
+      def user_message_begin(msg, level=0)
+        user_message(msg, level, "-->")
       end
 
       # Send the debug message to notify that something ends.
@@ -147,8 +147,8 @@ module Pione
       # @param [String] msg
       #   debug message
       # @return [void]
-      def user_message_end(msg)
-        user_message(msg, 0, "<<<")
+      def user_message_end(msg, level=0)
+        user_message(msg, level, "<--")
       end
 
       # Show the message.
@@ -161,7 +161,7 @@ module Pione
       #
       # @api private
       def show(msg)
-        message("show", :red, msg)
+        message(:debug, "show", :red, msg)
       end
 
       # Print the message with the color.
@@ -174,8 +174,10 @@ module Pione
       #   message content
       #
       # @api private
-      def message(type, color, msg)
-        MESSAGE_QUEUE.push "%s %s" % [Terminal.color(color, "%5s" % type), msg]
+      def message(type, head, color, msg, level=0)
+        write(Tuple[:message].new(type: type, head: head, color: color, contents: msg, level: level))
+      rescue NoMethodError
+        MESSAGE_QUEUE.push "%s%s %s" % ["  "*level, ("%5s" % head).color(color), msg]
       end
       module_function :message
     end

@@ -36,6 +36,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "ruby-xes", "~> 0.1"
   gem.add_dependency "sys-uname"
   gem.add_dependency "simple-identity"
+  gem.add_dependency "rainbow"
 
   # for locations
   gem.add_dependency "dropbox-sdk"

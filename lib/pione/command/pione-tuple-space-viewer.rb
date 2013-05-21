@@ -65,7 +65,7 @@ module Pione
       start do
         # print each bags
         @tuple_space_servers.each do |address, tuple_space_server|
-          puts "TupleSpaceServer: %s" % Terminal.red(address)
+          puts "TupleSpaceServer: %s" % address.color(:red)
           puts "-"*78
           if option[:bag_type] == :bag or option[:bag_type].nil?
             puts "*** bag ***"
@@ -157,8 +157,8 @@ module Pione
 
           # show
           res = PP.pp(tuple, "")
-          res.gsub!(/\:[a-z]\w+/) {|s| Terminal.red(s) }
-          res.gsub!(/\#<(\S+)/) {|s| "#<%s" % Terminal.green($1) }
+          res.gsub!(/\:[a-z]\w+/) {|s| s.color(:red) }
+          res.gsub!(/\#<(\S+)/) {|s| "#<%s" % $1.color(:green) }
           puts res
         end
       end

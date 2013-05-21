@@ -268,6 +268,9 @@ module Pione
       #
       # @return [void]
       def start_agents
+        # messenger
+        @messenger = Agent[:messenger].start(@tuple_space_server)
+
         # logger
         @logger = Agent[:logger].start(@tuple_space_server, @log_location)
 

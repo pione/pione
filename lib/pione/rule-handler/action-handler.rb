@@ -95,11 +95,11 @@ module Pione
           file.create(Util::Indentation.cut(content))
         end
         debug_message("Action #{file.path}")
-        user_message("-"*60, 0, "SH")
-        @rule.body.eval(@variable_table).content.split("\n").each do |line|
-          user_message(line, 0, "SH")
-        end
-        user_message("-"*60, 0, "SH")
+        msgs = []
+        msgs << "-"*60
+        @rule.body.eval(@variable_table).content.split("\n").each {|line| msgs << line}
+        msgs << "-"*60
+        user_message(msgs, 0, "SH")
         if @working_directory.scheme == "local"
           FileUtils.chmod(0700, file.path)
         end

@@ -53,7 +53,7 @@ module Pione
       #   elements of call rule lines
       # @return [void]
       def apply_rules(callees)
-        user_message_begin("Start Rule Application: %s" % handler_digest)
+        user_message_begin("Rule Application: %s" % handler_digest, 1)
 
         while true do
           # find updatable rule applications
@@ -66,7 +66,7 @@ module Pione
           distribute_tasks(applications)
         end
 
-        user_message_end("End Rule Application: %s" % handler_digest)
+        user_message_end("Rule Application: %s" % handler_digest, 1)
       end
 
       # Find applicable rules with inputs and variables.
@@ -184,13 +184,13 @@ module Pione
       #   application informations
       # @return [void]
       def distribute_tasks(applications)
-        user_message_begin("Start Task Distribution: %s" % handler_digest)
+        user_message_begin("Distribution: %s" % handler_digest, 2)
         canceled = []
 
         process_log(@task_process_record.merge(transition: "suspend"))
         process_log(@rule_process_record.merge(transition: "suspend"))
 
-        applications.uniq.each do |callee, params, rule, inputs, vtable, task_domain, order|
+        applications = applications.uniq.map do |callee, params, rule, inputs, vtable, task_domain, order|
           # make a task tuple
           task = Tuple[:task].new(
             rule.rule_path,
@@ -200,7 +200,10 @@ module Pione
             task_domain,
             @call_stack + [@domain] # current call stack + caller
           )
+          [callee, params, rule, inputs, vtable, task_domain, order, task]
+        end
 
+        applications.uniq.each do |callee, params, rule, inputs, vtable, task_domain, order, task|
           # check if the same task exists or finished already
           if need_to_process_task?(task, order)
             # clear finished tuple
@@ -224,8 +227,8 @@ module Pione
             process_log(task_process_record)
 
             # message
-            msg = "distributed task %s on %s" % [task.digest, handler_digest]
-            user_message(msg, 1)
+            msg = ">>> %s".color(:yellow) % task.digest
+            user_message(msg, 3, "", :blue)
           else
             # cancel the task
             show "cancel task %s on %s" % [task.digest, handler_digest]
@@ -234,7 +237,7 @@ module Pione
         end
 
         # wait to finish threads
-        applications.uniq.each do |callee, params, rule, inputs, vtable, task_domain, order|
+        applications.uniq.each do |callee, params, rule, inputs, vtable, task_domain, order, task|
           # wait to finish the work
           template = Tuple[:finished].new(
             domain: task_domain,
@@ -244,8 +247,8 @@ module Pione
 
           # show message about canceled tasks
           unless canceled.include?(task_domain)
-            msg = "finished task %s on %s" % [finished.domain, handler_digest]
-            user_message(msg, 1)
+            msg = "<<< %s".color(:green) % task.digest
+            user_message(msg, 3, "")
           end
 
           # copy write operation data tuple from the task domain to this domain
@@ -259,7 +262,7 @@ module Pione
 
         process_log(@rule_process_record.merge(transition: "resume"))
         process_log(@task_process_record.merge(transition: "resume"))
-        user_message_end("End Task Distribution: %s" % handler_digest)
+        user_message_end("Distribution: %s" % handler_digest, 2)
       end
 
       # Return true if we need to write the task into the tuple space.

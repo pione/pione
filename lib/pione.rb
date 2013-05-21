@@ -36,6 +36,7 @@ require 'temppath'
 require 'xes'
 require 'sys/uname'
 require 'simple-identity'
+require 'rainbow'
 
 #
 # load pione
@@ -125,6 +126,7 @@ require 'pione/tuple/rule-tuple'
 require 'pione/tuple/task-worker-resource-tuple'
 require 'pione/tuple/ticket-tuple'
 require 'pione/tuple/data-null-tuple'
+require 'pione/tuple/message-tuple'
 
 # parser
 require 'pione/parser/parslet-extension'
@@ -152,6 +154,7 @@ require 'pione/agent/broker'
 require 'pione/agent/process-manager'
 require 'pione/agent/trivial-routine-worker'
 require 'pione/agent/tuple-space-server-client-life-checker'
+require 'pione/agent/messenger'
 
 # front
 require 'pione/front/basic-front'

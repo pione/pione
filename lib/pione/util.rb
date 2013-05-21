@@ -5,7 +5,6 @@ module Pione
 end
 
 require 'pione/util/misc'
-require 'pione/util/terminal'
 require 'pione/util/console-message'
 require 'pione/util/waiter-table'
 require 'pione/util/error-report'

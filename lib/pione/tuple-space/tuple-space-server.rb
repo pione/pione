@@ -35,6 +35,9 @@ module Pione
       tuple_space_interface :take, :result => lambda{|t|
         Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
       }
+      tuple_space_interface :take_all, :result => lambda{|list|
+        list.map {|t| Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}}
+      }
       tuple_space_interface :write, :validator => Proc.new {|*args|
         args.first.writable? if args.first.kind_of?(Tuple::BasicTuple)
       }, :result => lambda{|t|
@@ -50,10 +53,14 @@ module Pione
 
       attr_reader :tuple_space
 
-      def initialize(data={})
+      def initialize(data={}, use_proxy=true)
         @__ts__ = Rinda::TupleSpace.new
         @tuple_space = @__ts__
-        @ts = Rinda::TupleSpaceProxy.new(@__ts__)
+        if use_proxy
+          @ts = Rinda::TupleSpaceProxy.new(@__ts__)
+        else
+          @ts = @__ts__
+        end
         def @ts.to_s;"#<Rinda::TupleSpace>" end
 
         # check task worker resource

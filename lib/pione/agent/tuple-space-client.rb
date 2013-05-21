@@ -138,7 +138,7 @@ module Pione
 
       # Override call transition method with logging.
       def call_transition_method(*args)
-        unless [:logger, :command_listener].include?(agent_type)
+        unless [:logger, :command_listener, :messenger].include?(agent_type)
           record = Log::AgentActivityProcessRecord.new.tap do |rec|
             rec.agent_type = agent_type
             rec.agent_uuid = uuid

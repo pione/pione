@@ -123,7 +123,7 @@ module Pione
         name = self.class.message_name
 
         # show begin message
-        user_message_begin("Start %s Rule: %s" % [name, handler_digest])
+        user_message(handler_digest, 0, "==>")
 
         # call stack
         debug_message("call stack:")
@@ -151,7 +151,7 @@ module Pione
         end
 
         # show end message
-        user_message_end "End %s Rule: %s" % [name, handler_digest]
+        user_message(handler_digest, 0, "<==")
 
         # put rule and task process log
         process_log(@rule_process_record.merge(transition: "complete"))

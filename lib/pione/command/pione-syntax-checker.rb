@@ -85,7 +85,7 @@ module Pione
         mark = ">"
 
         # start loop
-        while buf += Readline.readline(Terminal.red("#{mark} "), true)
+        while buf += Readline.readline("#{mark} ".color(:red), true)
           if /[^\s]/.match(buf)
             # don't record if previous line is the same
             if Readline::HISTORY.size > 1 && Readline::HISTORY[-2] == buf
@@ -118,11 +118,11 @@ module Pione
           stree = parser.parse(str)
           model = DocumentTransformer.new.apply(stree)
           if option[:syntax]
-            puts Terminal.green("syntax:")
+            puts "syntax:".color(:green)
             pp stree
           end
           if option[:transform]
-            puts Terminal.green("model:")
+            puts "model:".color(:green)
             pp model
           end
           if model.kind_of?(Array)
