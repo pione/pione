@@ -81,7 +81,7 @@ module Pione
       # @return [BasicLocation]
       #   new location
       def +(name)
-        self.class.new(@uri.as_directory + name)
+        self.class.new(@uri.as_directory + name.to_s)
       end
 
       # Create new location that has URI as a directory.

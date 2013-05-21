@@ -19,9 +19,9 @@ module Pione
         else
           connect do |ftp|
             makedirs(ftp, @path.dirname)
-            file = Temppath.create
-            file.open("w") {|f| f.write(data)}
-            ftp.put(file.to_s, @path.to_s)
+            path = Temppath.create
+            Location[path].create(data)
+            ftp.put(path, @path.to_s)
           end
         end
       end

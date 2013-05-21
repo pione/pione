@@ -19,3 +19,10 @@ module EM::FTPD
     end
   end
 end
+
+module EM::FTPD::Files
+  def puts(*args)
+    # ignored
+  end
+end
+

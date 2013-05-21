@@ -37,6 +37,8 @@ require 'xes'
 require 'sys/uname'
 require 'simple-identity'
 require 'rainbow'
+require 'em-ftpd'
+require 'pione/patch/em-ftpd-patch'
 
 #
 # load pione

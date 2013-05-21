@@ -8,4 +8,5 @@ require 'pione/util/misc'
 require 'pione/util/waiter-table'
 require 'pione/util/error-report'
 require 'pione/util/indentation'
+require 'pione/util/ftp-server'
 
