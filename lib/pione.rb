@@ -180,7 +180,7 @@ module Pione
   include System
   include Relay
   include Util
-  include Util::ConsoleMessage
+  include Log::MessageLog
   include Model
   include TupleSpace
   include Parser

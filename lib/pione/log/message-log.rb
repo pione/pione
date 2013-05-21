@@ -1,7 +1,7 @@
 module Pione
-  module Util
+  module Log
     # ConsoleMessage is a set of utility methods for sending messages to user.
-    module ConsoleMessage
+    module MessageLog
       # @api private
       MESSAGE_QUEUE = Queue.new
 
@@ -98,7 +98,6 @@ module Pione
           message(:debug, head, :magenta, "  "*level + msg)
         end
       end
-      module_function :debug_message
 
       # Send the debug message to notify that something begins.
       #

@@ -4,6 +4,7 @@ module Pione
   end
 end
 
+require 'pione/log/message-log'
 require 'pione/log/process-record'
 require 'pione/log/process-log'
 require 'pione/log/xes-log'
