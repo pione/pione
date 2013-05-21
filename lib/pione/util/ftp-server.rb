@@ -9,6 +9,10 @@ module Pione
         @user = user || Pione::Util.generate_uuid[0...12]
         @password = password || Pione::Util.generate_uuid[0...12]
       end
+
+      def to_userinfo
+        "%s:%s" % [@user, @password]
+      end
     end
 
     class FTPFileSystem
@@ -120,6 +124,17 @@ module Pione
       def rmdir(path)
         raise NotImplemented
       end
+
+      # Move file.
+      #
+      # @param from_path [Pathname]
+      #    from path
+      # @param to_path [Pathname]
+      #    to path
+      # @return [void]
+      def mv(from_path, to_path)
+        raise NotImplemented
+      end
     end
 
     # OnMemoryFS is a virtual file system on memory.
@@ -195,6 +210,15 @@ module Pione
           @directory[path.dirname].delete(path.basename)
         end
       end
+
+      def mv(from_path, to_path)
+        @directory[to_path.dirname] << from_path.basename
+        @directory[from_path.dirname].delete(from_path.basename)
+        @file[to_path] = @file[from_path]
+        @file.delete(from_path)
+        @mtime[to_path] = @file[from_path]
+        @mtime.delete(to_path)
+      end
     end
 
     class FTPLocalFS < FTPFileSystem
@@ -244,6 +268,10 @@ module Pione
 
       def rmdir(path)
         merge(path).path.rmdir
+      end
+
+      def mv(from_path, to_path)
+        merge(from_path).path.rename(merge(to_path).path)
       end
 
       private
@@ -410,6 +438,17 @@ module Pione
         path = Pathname.new(path).cleanpath
         if mtime = fs.get_mtime(path)
           yield mtime
+        else
+          yield false
+        end
+      end
+
+      def rename(from_path, to_path, &b)
+        from_path = Pathname.new(from_path).cleanpath
+        to_path = Pathname.new(to_path).cleanpath
+        if fs.file?(from_path) and fs.directory?(to_path.dirname)
+          fs.mv(from_path, to_path)
+          yield true
         else
           yield false
         end

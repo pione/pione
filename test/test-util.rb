@@ -176,10 +176,8 @@ class Bacon::Context
 end
 
 module TestUtil
+  # Test pione method.
   def test_pione_method(name)
-    #
-    # test cases
-    #
     yamlname = 'spec_%s.yml' % name
     ymlpath = File.join(File.dirname(__FILE__), 'model', yamlname)
     testcases = YAML.load_file(ymlpath)
@@ -194,6 +192,26 @@ module TestUtil
           expect = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expect))
           expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expr))
           expect.eval(vtable).should == expr.eval(vtable)
+        end
+      end
+    end
+  end
+
+  # Test uri scheme.
+  def test_uri_scheme(name)
+    yamlname = 'spec_%s.yml' % name
+    ymlpath = File.join(File.dirname(__FILE__), 'uri-scheme', yamlname)
+    testcases = YAML.load_file(ymlpath)
+
+    describe "uri scheme test cases" do
+      testcases.each do |testcase|
+        uri = testcase.keys.first
+        it uri do
+          testcase[uri].keys.each do |name|
+            expect = testcase[uri][name]
+            expect = nil if expect == "nil"
+            URI.parse(uri).__send__(name).should == expect
+          end
         end
       end
     end

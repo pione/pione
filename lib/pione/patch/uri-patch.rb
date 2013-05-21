@@ -57,6 +57,11 @@ module URI
         if rest == "//"
           return [scheme, nil, nil, nil, nil, nil, nil, nil, nil]
         end
+      when "myftp"
+        if uri[6] == "." or uri[6] == "~"
+          path = uri[6..-1]
+          return [scheme, nil, nil, nil, nil, path, nil, nil, nil]
+        end
       end
 
       # other case

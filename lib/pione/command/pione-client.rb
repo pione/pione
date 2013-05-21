@@ -41,6 +41,9 @@ module Pione
         option('-o LOCATION', '--output=LOCATION', 'set output directory') do |data, uri|
           begin
             data[:output_location] = Location[uri]
+            if URI.parse(uri).scheme == "myftp"
+              data[:myftp] = URI.parse(uri).normalize
+            end
           rescue ArgumentError
             abort("opiton error: bad location '%s'" % uri)
           end
@@ -127,6 +130,19 @@ module Pione
 
       prepare do
         @filename = ARGF.filename
+
+        # ftp server
+        if myftp = option[:myftp]
+          location = Location[myftp.path]
+          location.path.mkdir unless location.exist?
+          if myftp.userinfo
+            Util::FTPServer.auth_info = Util::FTPAuthInfo.new(myftp.user, myftp.password)
+          end
+          if myftp.port
+            Util::FTPServer.port = myftp.port
+          end
+          Util::FTPServer.start(Util::FTPLocalFS.new(location))
+        end
 
         # setup log location
         @log_location = option[:output_location] + Time.now.strftime("pione_%Y%m%d%H%M%S.log")

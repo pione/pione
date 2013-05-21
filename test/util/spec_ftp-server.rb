@@ -76,6 +76,13 @@ shared "FTPFileSystem" do
   end
 end
 
+def make_temp_file(name, content)
+  temp = Tempfile.new(name)
+  temp.write content
+  temp.close(false)
+  temp.path
+end
+
 describe "Pione::Util::FTPOnMemoryFS" do
   before do
     @fs = Util::FTPOnMemoryFS.new
@@ -84,9 +91,9 @@ describe "Pione::Util::FTPOnMemoryFS" do
     @file_b = @dir_x + "B"
     @file_c = @dir_x + "C"
     @fs.mkdir(@dir_x)
-    @fs.put_file(@file_a, Tempfile.open("A"){|f| f.write "A"; f.path})
-    @fs.put_file(@file_b, Tempfile.open("B"){|f| f.write "AB"; f.path})
-    @fs.put_file(@file_c, Tempfile.open("C"){|f| f.write "ABC"; f.path})
+    @fs.put_file(@file_a, make_temp_file("A", "A"))
+    @fs.put_file(@file_b, make_temp_file("B", "AB"))
+    @fs.put_file(@file_c, make_temp_file("C", "ABC"))
   end
 
   behaves_like "FTPFileSystem"
@@ -102,9 +109,12 @@ describe "Pione::Util::FTPLocalFS" do
     @file_b = @dir_x + "B"
     @file_c = @dir_x + "C"
     @fs.mkdir(@dir_x)
-    @fs.put_file(@file_a, Tempfile.open("A"){|f| f.write "A"; f.path})
-    @fs.put_file(@file_b, Tempfile.open("B"){|f| f.write "AB"; f.path})
-    @fs.put_file(@file_c, Tempfile.open("C"){|f| f.write "ABC"; f.path})
+    temp_a = Tempfile.new("A")
+    temp_a.write "A"
+    temp_a.close
+    @fs.put_file(@file_a, make_temp_file("A", "A"))
+    @fs.put_file(@file_b, make_temp_file("B", "AB"))
+    @fs.put_file(@file_c, make_temp_file("C", "ABC"))
   end
 
   behaves_like "FTPFileSystem"
@@ -189,6 +199,13 @@ shared "FTPServer" do
       x.should.not.include("Y")
     end
   end
+
+  it "should rename" do
+    @ftp.rename("/X/A", "/A")
+    @ftp.nlst("/").should.include("A")
+    @ftp.nlst("/X").should.not.include("A")
+    @ftp.rename("/A", "/X/A")
+  end
 end
 
 describe "Pione::Util::FTPServer" do
@@ -228,3 +245,4 @@ describe "Pione::Util::FTPServer" do
     behaves_like "FTPServer"
   end
 end
+

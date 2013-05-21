@@ -22,4 +22,17 @@ describe 'Location::FTPLocation' do
   end
 
   behaves_like "location"
+
+  it "should get ftp location from myftp scheme URI" do
+    location = Location[URI.parse("myftp://abc:123@myself/output/")]
+    location.scheme.should == "ftp"
+  end
+
+  it "should move file in the ftp server" do
+    location = Util::FTPServer.make_location(Temppath.create)
+    (@dir + "A").move(location)
+    location.should.exist
+    location.read.should == "A"
+    (@dir + "A").should.not.exist
+  end
 end

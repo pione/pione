@@ -193,7 +193,7 @@ module Pione
 
       # This means the process's IP address.
       define_item(:my_ip_address, true) do
-        Util.my_ip_address_list.first
+        Util::IPAddress.myself
       end
 
       # This means current working directory. The directory is defined by the

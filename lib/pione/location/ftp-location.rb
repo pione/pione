@@ -4,6 +4,14 @@ module Pione
     class FTPLocation < BasicLocation
       set_scheme "ftp"
 
+      # for myftp scheme
+      SCHEMES["myftp"] = self
+
+      def initialize(uri)
+        uri = uri.to_ftp_scheme if uri.scheme == "myftp"
+        super(uri)
+      end
+
       def rebuild(path)
         scheme = @uri.scheme
         auth = "%s:%s@" % [@uri.user, @uri.password] if @uri.user and @uri.password
@@ -107,7 +115,7 @@ module Pione
 
       def move(dest)
         if dest.scheme == scheme and dest.host == host
-          ftp.rename(@path.to_s, dest.path.to_s)
+          connect{|ftp| ftp.rename(@path.to_s, dest.path.to_s)}
         else
           copy(dest)
           delete
