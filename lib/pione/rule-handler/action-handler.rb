@@ -11,6 +11,7 @@ module Pione
       def initialize(*args)
         super(*args)
         @working_directory = Location[make_working_directory]
+        @variable_table.set(Variable.new("__WORKING_DIRECTORY__"), PioneString.new(@working_directory.path.to_s).to_seq)
       end
 
       # Execute the action.
@@ -38,14 +39,7 @@ module Pione
 
       # Setup the variable table with working directory in addition.
       def setup_variable_table
-        unless @working_directory
-          super
-        else
-          @variable_table.set(
-            Variable.new("__WORKING_DIRECTORY__"),
-            PioneString.new(@working_directory)
-          )
-        end
+        super
 
         @variable_table.set(Variable.new("__BASE__"), PioneString.new(base_location.uri).to_seq)
         @variable_table.set(Variable.new("_"), PackageExprSequence.new([@rule.package_expr]))
@@ -124,7 +118,7 @@ module Pione
         if stdout.nil? and (@working_directory + out).size == 0
           (@working_directory + out).delete
         end
-        if (@working_directory + err).size
+        if (@working_directory + err).size == 0
           (@working_directory + err).delete
         end
       end

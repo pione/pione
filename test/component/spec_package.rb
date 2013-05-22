@@ -52,18 +52,18 @@ end
 
 describe "Pione::Component::PackageScenario" do
   before do
-    path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage" + "scenario" + "case1"
-    @scenario = Component::PackageScenarioReader.new(path).read
+    @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage" + "scenario" + "case1"
+    @scenario = Component::PackageScenarioReader.new(@path).read
   end
 
   it 'should equal' do
-    Component::PackageScenario.new({"ScenarioName" => "Test"}, [], []).should ==
-      Component::PackageScenario.new({"ScenarioName" => "Test"}, [], [])
+    Component::PackageScenario.new(@path, {"ScenarioName" => "Test"}, [], []).should ==
+      Component::PackageScenario.new(@path, {"ScenarioName" => "Test"}, [], [])
   end
 
   it 'should not equal' do
-    Component::PackageScenario.new({"ScenarioName" => "Test1"}, [], []).should !=
-      Component::PackageScenario.new({"ScenarioName" => "Test2"}, [], [])
+    Component::PackageScenario.new(@path, {"ScenarioName" => "Test1"}, [], []).should !=
+      Component::PackageScenario.new(@path, {"ScenarioName" => "Test2"}, [], [])
   end
 
   it "should get the scenario name" do

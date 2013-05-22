@@ -83,6 +83,16 @@ module Pione
         end
       end
 
+      # Find scenario that have the name.
+      #
+      # @param name [String]
+      #   scenario name
+      # @return [PackageScenario]
+      #   the scenario
+      def find_scenario(name)
+        @scenarios.find {|scenario| scenario.name == name}
+      end
+
       private
 
       # Build rules from all documents in the package.
@@ -167,6 +177,7 @@ module Pione
     class PackageScenario
       include SimpleIdentity
 
+      attr_reader :location
       attr_reader :info
       attr_reader :inputs
       attr_reader :outputs
@@ -179,10 +190,27 @@ module Pione
       #   input files of the scenario
       # @param outputs [Array<Location>]
       #   output files of the scenario
-      def initialize(info, inputs, outputs)
+      def initialize(location, info, inputs, outputs)
+        @location = location
         @info = info
         @inputs = inputs
         @outputs = outputs
+      end
+
+      # Return the input location.
+      #
+      # @return [BasicLocation]
+      #   the input location
+      def input
+        @location + "input"
+      end
+
+      # Return the output location.
+      #
+      # @return [BasicLocation]
+      #   the output location
+      def output
+        @location + "output"
       end
     end
 
@@ -202,7 +230,7 @@ module Pione
         infos = read_scenario_informations
         inputs = find_inputs
         outputs = find_outputs
-        PackageScenario.new(infos, inputs, outputs)
+        PackageScenario.new(@location, infos, inputs, outputs)
       end
 
       private

@@ -44,7 +44,7 @@ module Pione
       define_pione_method("bin", [], TypeString) do |vtable, rec|
         base = Location[vtable.get(Variable.new("__BASE__")).value]
         bin = base + "package" + rec.elements.first.name + "bin"
-        working_directory = Location[vtable.get(Variable.new("__WORKING_DIRECTORY__"))]
+        working_directory = Location[vtable.get(Variable.new("__WORKING_DIRECTORY__")).first.value]
         bin.entries.each do |entry|
           path = working_directory + "bin" + entry.basename
           unless path.exist?

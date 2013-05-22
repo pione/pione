@@ -99,6 +99,10 @@ module Pione
           data[:list_params] = true
         end
 
+        option('--rehearse=SCENARIO', 'rehearse the scenario') do |data, scenario_name|
+          data[:rehearse] = scenario_name
+        end
+
         validate do |data|
           unless data[:task_worker] > 0 or
               (not(data[:stand_alone]) and data[:task_worker] == 0)
@@ -259,8 +263,16 @@ module Pione
         begin
           if location.directory?
             # package
-            @document = Component::PackageReader.new(location).read
-            @document.upload(option[:output_location] + "package")
+            package = Component::PackageReader.new(location).read
+            package.upload(option[:output_location] + "package")
+            if option[:rehearse]
+              if scenario = package.find_scenario(option[:rehearse])
+                option[:input_location] = scenario.input
+              else
+                abort "the scenario not found: %s" % option[:rehearse]
+              end
+            end
+            @document = package
           else
             @document = Component::Document.parse(location.read)
           end
