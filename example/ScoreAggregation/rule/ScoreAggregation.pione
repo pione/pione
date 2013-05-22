@@ -1,0 +1,122 @@
+#
+# Main Flow
+#
+
+Rule Main
+  input '*.score'.all
+  input 'stat-template.erb'
+  output '*.stat.md'.all
+  output '*.png'.all
+  output '*.html'.all
+Flow
+  rule PersonalPreStatistics
+  rule PersonalStatistics
+  rule PersonalBarGraph
+  rule TotalMean
+  rule TotalStatistics
+  rule Histgram
+  rule BuildHTML
+End
+
+#
+#  Personal Aggregations
+#
+
+Rule PersonalPreStatistics
+  input '*.score'
+  output '{$*}.pre-stat.md'
+  output '{$*}.mean'
+Action
+  ruby {$_.bin}/personal-pre-statistics.rb {$*} {$I[1]} {$O[1]} {$O[2]}
+End
+
+Rule PersonalStatistics
+  input '*.pre-stat.md'
+  input '{$*}.dev'
+  output '{$*}.stat.md'
+Action
+   echo "| Deviaion | `cat {$I[2]}` |" | cat {$I[1]} - > {$O[1]}
+End
+
+Rule PersonalBarGraph
+  input '*.score'
+  output '{$*}_bar-graph.png'
+Action
+  gnuplot -e 'name = "{$*}"; out = "{$O[1]}"; data = "{$I[1]}";' {$_.bin}/personal-bar-graph.plt
+End
+
+#
+# Total Aggregations
+#
+
+Rule TotalMean
+  input '*.mean'.all
+  output 'total.mean'
+Action
+  ruby {$_.bin}/total-mean.rb {$I[1]} > {$O[1]}
+End
+
+Rule TotalStatistics
+  input '*.score'.all
+  input '*.mean'.except('total.mean').all
+  input 'total.mean'
+  output '*.dev'.all
+  output 'total.stat.md'
+Action
+  ruby {$_.bin}/total-statistics.rb {$*} {$I[1]} {$I[2]} {$I[3]} {$O[2]}
+End
+
+#
+# Histgram
+#
+
+Rule Histgram
+  input '*.mean'.except('total.mean').all
+  output 'histgram.png'
+Flow
+  rule MeanSummary
+  rule HistgramGraph
+End
+
+Rule MeanSummary
+  input '*.mean'.all
+  output 'total.histgram'
+Action
+  ruby {$_.bin}/mean-summary.rb {$I[1]} > {$O[1]}
+End
+
+Rule HistgramGraph
+  input 'total.histgram'
+  output 'histgram.png'
+Action
+  gnuplot -e 'data = "{$I[1]}"; out = "{$O[1]}";' {$_.bin}/histgram-graph.plt
+End
+
+#
+# Build HTML View
+#
+
+Rule BuildHTML
+  input '*.stat.md'
+  input 'stat-template.erb'
+  output '{$*}.html'
+Flow
+  rule MD2HTML
+  rule ApplyTemplate
+End
+
+Rule MD2HTML
+  input '*.stat.md'
+  output '{$*}.html.part'
+Action
+  redcarpet --parse-tables {$I[1]} > {$O[1]}
+End
+
+Rule ApplyTemplate
+  input '*.html.part'
+  input 'stat-template.erb'
+  output '{$*}.html'
+Action
+  ruby {$_.bin}/apply-template.rb {$*} {$I[1]} {$I[2]} > {$O[1]}
+End
+
