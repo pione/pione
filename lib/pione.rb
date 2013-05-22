@@ -39,6 +39,7 @@ require 'simple-identity'
 require 'rainbow'
 require 'em-ftpd'
 require 'pione/patch/em-ftpd-patch'
+require 'sys/cpu'
 
 #
 # load pione

@@ -19,6 +19,14 @@ module Pione
 
       @mutex = Mutex.new
 
+      # Return default number of running task workers in this machine.
+      #
+      # @return [Integer]
+      #   default number
+      def self.default_number
+        [Util::CPU.core_number - 1, 1].max
+      end
+
       # Start a task worker agent on a different process.
       # @param [Pione::Front::BasicFront] front
       #   caller front server

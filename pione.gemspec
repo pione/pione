@@ -37,6 +37,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "sys-uname"
   gem.add_dependency "simple-identity"
   gem.add_dependency "rainbow"
+  gem.add_dependency "sys-cpu"
 
   # for locations
   gem.add_dependency "dropbox-sdk"

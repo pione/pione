@@ -8,7 +8,7 @@ module Pione
     module TaskWorkerOwnerOption
       extend OptionInterface
 
-      default :task_worker, [Util.core_number - 1, 1].max
+      default :task_worker, Agent::TaskWorker.default_number
 
       # --task-worker
       option('-t N', '--task-worker=N', 'set task worker number that this process creates') do |data, n|

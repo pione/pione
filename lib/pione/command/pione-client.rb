@@ -19,7 +19,7 @@ module Pione
         default :stream, false
         default :params, Model::Parameters.empty
         default :dry_run, false
-        default :task_worker, [Util.core_number - 1, 1].max
+        default :task_worker, Agent::TaskWorker.default_number
         default :request_task_worker, 1
         default :stand_alone, false
         default :relay, nil
