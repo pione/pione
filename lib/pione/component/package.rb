@@ -77,9 +77,11 @@ module Pione
       #
       # @return [void]
       def upload(dest)
-        # upload bin files
-        @bin.entries.each do |entry|
-          entry.copy(dest + name + "bin" + entry.basename)
+        if @bin.exist?
+          # upload bin files
+          @bin.entries.each do |entry|
+            entry.copy(dest + name + "bin" + entry.basename)
+          end
         end
       end
 
@@ -90,7 +92,11 @@ module Pione
       # @return [PackageScenario]
       #   the scenario
       def find_scenario(name)
-        @scenarios.find {|scenario| scenario.name == name}
+        if name == :anything
+          @scenarios.first
+        else
+          @scenarios.find {|scenario| scenario.name == name}
+        end
       end
 
       private
@@ -157,8 +163,12 @@ module Pione
       # @return [Array<PackageScenario>]
       #   scenarios
       def find_scenarios
-        (@location + "scenario").entries.map do |scenario|
-          PackageScenarioReader.new(scenario).read
+        if (@location + "scenario" + "scenario.yml").exist?
+          [PackageScenarioReader.read(@location + "scenario")]
+        else
+          (@location + "scenario").entries.map do |scenario|
+            PackageScenarioReader.read(scenario)
+          end.compact
         end
       end
 
@@ -167,8 +177,8 @@ module Pione
       # @return [Array<Document>]
       #   documents
       def find_documents(package_name)
-        (@location + "rule").entries.select do |entry|
-          entry.path.extname == ".pione"
+        @location.entries.select do |entry|
+          entry.file? and entry.path.extname == ".pione"
         end.map {|entry| Document.load(entry, package_name) }
       end
     end
@@ -179,30 +189,26 @@ module Pione
 
       attr_reader :location
       attr_reader :info
-      attr_reader :inputs
-      attr_reader :outputs
 
       forward_as_key :@info, "ScenarioName", :name
 
+      # @param location [BasicLocation]
+      #   scenario location
       # @param info [Hash]
       #   scenario information table
-      # @param inputs [Array<Location>]
-      #   input files of the scenario
-      # @param outputs [Array<Location>]
-      #   output files of the scenario
-      def initialize(location, info, inputs, outputs)
+      def initialize(location, info)
         @location = location
         @info = info
-        @inputs = inputs
-        @outputs = outputs
       end
 
-      # Return the input location.
+      # Return the input location. If the scenario doesn't have input location,
+      # return nil.
       #
       # @return [BasicLocation]
       #   the input location
       def input
-        @location + "input"
+        input_location = @location + "input"
+        input_location if input_location.exist?
       end
 
       # Return the output location.
@@ -216,6 +222,10 @@ module Pione
 
     # PackageScenarioReader is a reader for loading scenarios.
     class PackageScenarioReader
+      def self.read(location)
+        new(location).read
+      end
+
       # @param location [Location]
       #   the scenario location
       def initialize(location)
@@ -227,10 +237,12 @@ module Pione
       # @return [PackageScenario]
       #   the scenario
       def read
-        infos = read_scenario_informations
-        inputs = find_inputs
-        outputs = find_outputs
-        PackageScenario.new(@location, infos, inputs, outputs)
+        begin
+          info = read_scenario_informations
+          PackageScenario.new(@location, info)
+        rescue
+          nil
+        end
       end
 
       private
@@ -246,26 +258,6 @@ module Pione
         else
           {"ScenarioName" => @location.basename}
         end
-      end
-
-      # Find input files of the scenario.
-      #
-      # @return [Array<Location>]
-      #   location array of input files
-      def find_inputs
-        (@location + "inputs").entries
-      rescue Location::NotFound
-        []
-      end
-
-      # Find output files of the scenario.
-      #
-      # @return [Array<Location>]
-      #   location array of output files
-      def find_outputs
-        (@location + "outputs").entries
-      rescue Location::NotFound
-        []
       end
     end
   end

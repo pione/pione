@@ -99,8 +99,8 @@ module Pione
           data[:list_params] = true
         end
 
-        option('--rehearse=SCENARIO', 'rehearse the scenario') do |data, scenario_name|
-          data[:rehearse] = scenario_name
+        option('--rehearse[=SCENARIO]', 'rehearse the scenario') do |data, scenario_name|
+          data[:rehearse] = scenario_name || :anything
         end
 
         validate do |data|
