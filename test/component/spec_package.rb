@@ -48,6 +48,11 @@ describe "Pione::Component::Package" do
     location.directory_entries.should.include(location + @package.name)
     (location + @package.name + "bin").file_entries.should.include(location + @package.name + "bin" + "count")
   end
+
+  it "should find sceinarios" do
+    @package.find_scenario(:anything).name.should == "TestCase1"
+    @package.find_scenario("TestCase1").name.should == "TestCase1"
+  end
 end
 
 describe "Pione::Component::PackageScenario" do
@@ -57,13 +62,13 @@ describe "Pione::Component::PackageScenario" do
   end
 
   it 'should equal' do
-    Component::PackageScenario.new(@path, {"ScenarioName" => "Test"}, [], []).should ==
-      Component::PackageScenario.new(@path, {"ScenarioName" => "Test"}, [], [])
+    Component::PackageScenario.new(@path, {"ScenarioName" => "Test"}).should ==
+      Component::PackageScenario.new(@path, {"ScenarioName" => "Test"})
   end
 
   it 'should not equal' do
-    Component::PackageScenario.new(@path, {"ScenarioName" => "Test1"}, [], []).should !=
-      Component::PackageScenario.new(@path, {"ScenarioName" => "Test2"}, [], [])
+    Component::PackageScenario.new(@path, {"ScenarioName" => "Test1"}).should !=
+      Component::PackageScenario.new(@path, {"ScenarioName" => "Test2"})
   end
 
   it "should get the scenario name" do
