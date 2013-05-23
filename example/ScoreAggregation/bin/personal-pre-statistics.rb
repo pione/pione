@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-p ARGV
 name, score_f, pre_stat_f, mean_f = ARGV
 
 scores = File.readlines(score_f).map{|line| line.split(" ")[1].to_i}
