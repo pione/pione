@@ -6,8 +6,8 @@ module Pione
       attr_reader :password
 
       def initialize(user=nil, password=nil)
-        @user = user || Pione::Util.generate_uuid[0...12]
-        @password = password || Pione::Util.generate_uuid[0...12]
+        @user = user || Util::UUID.generate[0...12]
+        @password = password || Util::UUID.generate[0...12]
       end
 
       def to_userinfo

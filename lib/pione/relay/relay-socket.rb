@@ -126,7 +126,7 @@ module Pione
 
           # relay auth like HTTP's digest method
           ssl.puts(Global.relay_realm)
-          uuid = Util.generate_uuid
+          uuid = Util::UUID.generate
           ssl.puts(uuid)
           if msg = ssl.gets
             name, digest = msg.chomp.split(":")
@@ -140,7 +140,7 @@ module Pione
             end
 
             # setup transmitter_id
-            transmitter_id = Util.generate_uuid
+            transmitter_id = Util::UUID.generate
 
             # save ssl socket as receiver side with transmitter_id
             TransmitterSocket.receiver_socket[transmitter_id] = ssl

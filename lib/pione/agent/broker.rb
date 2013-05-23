@@ -126,7 +126,7 @@ module Pione
 
         # Create a task worker for the server.
         def create_task_worker(tuple_space_server)
-          connection_id = Util.generate_uuid
+          connection_id = Util::UUID.generate
           @assignment_table[connection_id] = tuple_space_server
           Thread.new do
             begin

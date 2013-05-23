@@ -330,7 +330,7 @@ module Pione
       def start_workers
         option[:task_worker].times do
           Thread.new {
-            Agent[:task_worker].spawn(Global.front, Util.generate_uuid, option[:features])
+            Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])
           }
         end
       end

@@ -57,7 +57,7 @@ module Pione
       def format_rule_process
         @bundles.map do |bundle|
           XES::Trace.new.tap do |trace|
-            trace.concept_name = "rule_process %s" % Util.generate_uuid
+            trace.concept_name = "rule_process %s" % Util::UUID.generate
             trace.attributes << XES.string("pione:traceType", "rule_process")
             trace.events = bundle.rule_process_log.records.map do |record|
               XES::Event.new.tap do |event|
@@ -81,7 +81,7 @@ module Pione
       def format_task_process
         @bundles.map do |bundle|
           XES::Trace.new.tap do |trace|
-            trace.concept_name = "task process %s" % Util.generate_uuid
+            trace.concept_name = "task process %s" % Util::UUID.generate
             trace.attributes << XES.string("pione:traceType", "task_process")
             trace.events = bundle.task_process_log.records.map do |record|
               XES::Event.new.tap do |event|

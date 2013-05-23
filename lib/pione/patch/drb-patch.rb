@@ -33,7 +33,7 @@ module DRb
     end
 
     def send_request(stream, ref, msg_id, arg, b)
-      req_id = Util.generate_uuid_int
+      req_id = Util::UUID.generate_int
       if Global.show_communication
         puts "send_request[%s] %s#%s(%s) on PID %s" % [req_id, ref.__drburi, msg_id, arg, Process.pid]
       end

@@ -13,19 +13,6 @@ module Pione
         end
       end
 
-      # Generates random UUID.
-      # @return [String]
-      #   generated UUID string
-      # @note
-      #   we use uuidtools gem for generating UUID
-      def generate_uuid
-        UUIDTools::UUID.random_create.to_s
-      end
-
-      def generate_uuid_int
-        UUIDTools::UUID.random_create.to_i
-      end
-
       # Returns the hostname of the machine.
       # @return [String]
       #   hostname
