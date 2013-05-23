@@ -1,6 +1,7 @@
 module Pione
   module Log
-    # UnknownProcessRecordType is raised when we find unknown process types.
+    # UnknownProcessRecordType is raised when we find unknown process record
+    # types.
     class UnknownProcessRecordType < StandardError
       # @param type [Symbol]
       #   type name
@@ -8,14 +9,14 @@ module Pione
         @type = type
       end
 
-      # @api private
       def message
         'Unknown process type "%s"' % @type
       end
     end
 
     # ProcessRecord is a class that represents records of process log. Records
-    # are in tuple spaces and handled by PIONE's logger agent.
+    # are in tuple spaces and handled by PIONE's process logger agent. If you
+    # want to add record type, you need to create the subclass of this.
     class ProcessRecord
       # known process record types and classes
       TYPE_TABLE = {}
@@ -52,15 +53,19 @@ module Pione
         #
         # @param name [Symbol]
         #   field name of the record
+        # @param type [Class]
+        #   field data type
         # @return [void]
         def field(name)
           unless (@fields ||= []).include?(name)
             @fields << name
 
+            # field reader
             define_method(name) do
               instance_variable_get("@%s" % name)
             end
 
+            # field writer
             define_method("%s=" % name) do |val|
               val = Time.parse(val) if name == :timestamp and val.kind_of?(String)
               instance_variable_set("@%s" % name, val)
@@ -68,9 +73,9 @@ module Pione
           end
         end
 
-        # @api private
-        def inherited(klass)
-          klass.instance_variable_set(:@fields, @fields.clone)
+        # Subclass inherites superclass's fields.
+        def inherited(subclass)
+          subclass.instance_variable_set(:@fields, @fields.clone)
         end
       end
 
@@ -106,7 +111,7 @@ module Pione
         end
       end
 
-      # Format as JSON string.
+      # Format as a JSON string.
       #
       # @return [String]
       #   JSON string
@@ -114,7 +119,7 @@ module Pione
         JSON.dump(to_hash)
       end
 
-      # Convert record into a hash table.
+      # Convert the record into a hash table.
       #
       # @return [Hash]
       #   hash table representation of the record
@@ -129,7 +134,6 @@ module Pione
         end
       end
 
-      # @api private
       def to_json(*args)
         to_hash.to_json(*args)
       end
