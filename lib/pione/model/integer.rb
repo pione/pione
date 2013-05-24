@@ -3,11 +3,6 @@ module Pione
     # PioneInteger represents integer value in PIONE system.
     class PioneInteger < Value
       # @api private
-      def task_id_string
-        "Integer<#{@value}>"
-      end
-
-      # @api private
       def textize
         @value.to_s
       end

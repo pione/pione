@@ -35,8 +35,6 @@ module Pione
         return @outputs
       end
 
-      private
-
       # Setup the variable table with working directory in addition.
       def setup_variable_table
         super
@@ -45,21 +43,12 @@ module Pione
         @variable_table.set(Variable.new("_"), PackageExprSequence.new([@rule.package_expr]))
       end
 
-      # Make a working directory.
+      # Make a working directory for the action.
       #
-      # @return [Pathname]
-      #   path of working directory
+      # @return [Location]
+      #   location of working directory
       def make_working_directory
-        # build directory path
-        dirname = ID.domain_id(
-          @rule.rule_expr.package_expr.name,
-          @rule.rule_expr.name,
-          @inputs,
-          @original_params
-        )
-
-        # create a directory
-        return (Global.working_directory + dirname).tap{|path| path.mkpath}
+        return (Global.working_directory + Util::UUID.generate).tap{|path| path.mkpath}
       end
 
       # Synchronize input data into working directory.
@@ -76,9 +65,11 @@ module Pione
         end
       end
 
-      # Write the data to the tempfile as shell script.
+      # Write the action into a shell script.
       def write_shell_script(&b)
         file = @working_directory + "__pione-action__.sh"
+
+        # write the action
         if @dry_run
           @rule.outputs.flatten.each do |output|
             file.create("touch %s" % output.eval(@variable_table).name)
@@ -87,16 +78,16 @@ module Pione
           # apply offside rule
           content = @rule.body.eval(@variable_table).content
           file.create(Util::Indentation.cut(content))
+          # chmod 700
+          if @working_directory.scheme == "local"
+            FileUtils.chmod(0700, file.path)
+          end
         end
-        debug_message("Action #{file.path}")
-        msgs = []
-        msgs << "-"*60
-        @rule.body.eval(@variable_table).content.split("\n").each {|line| msgs << line}
-        msgs << "-"*60
-        user_message(msgs, 0, "SH")
-        if @working_directory.scheme == "local"
-          FileUtils.chmod(0700, file.path)
-        end
+
+        # message
+        lines = @rule.body.eval(@variable_table).content.split("\n")
+        user_message(["-"*60, lines, "-"*60], 0, "SH")
+
         return b.call(file.path)
       end
 

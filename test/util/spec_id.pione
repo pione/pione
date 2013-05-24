@@ -1,0 +1,14 @@
+Rule R1
+  input '*.a'.all
+  output '*.b'.all
+Flow
+  rule R2
+End
+
+Rule R2
+  input '*.a'
+  output '{$*}.b'
+Action
+  echo {$I[1]} > {$O[1]}
+End
+

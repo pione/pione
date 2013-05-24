@@ -123,11 +123,6 @@ module Pione
       end
 
       # @api private
-      def task_id_string
-        "DataExpr<#{name}, [%s]>" % exceptions.map{|exc| exc.task_id_string}.join(",")
-      end
-
-      # @api private
       def textize
         "data_expr(\"#{name}\", [%s])" % [
           exceptions.map{|exc| exc.textize}.join(",")

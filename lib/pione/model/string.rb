@@ -29,11 +29,6 @@ module Pione
       end
 
       # @api private
-      def task_id_string
-        "String<#{@value}>"
-      end
-
-      # @api private
       def textize
         "\"%s\"" % [@value]
       end

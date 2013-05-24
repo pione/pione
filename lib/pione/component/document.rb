@@ -16,6 +16,7 @@ module Pione
 
       # Parse a rule document string.
       def self.parse(src, package_name="main")
+        src = src.read if src.kind_of?(Location::BasicLocation)
         # parse the document and build the model
         parser = Parser::DocumentParser.new
         transformer = Transformer::DocumentTransformer.new(package_name)

@@ -14,11 +14,6 @@ module Pione
       end
 
       # @api private
-      def task_id_string
-        "PackageExpr<#{@name}>"
-      end
-
-      # @api private
       def textize
         "package-expr(\"%s\")" % [@name]
       end

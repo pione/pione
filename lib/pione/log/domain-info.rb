@@ -31,7 +31,6 @@ module Pione
           :inputs => inputs_string(handler.inputs),
           :domain => handler.domain,
           :domain_location => @domain_location.uri.to_s,
-          :task_id => handler.task_id.to_s,
           :dry_run => handler.dry_run.to_s
         }
         if handler.respond_to?(:working_directory)

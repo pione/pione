@@ -60,11 +60,6 @@ module Pione
       end
 
       # @api private
-      def task_id_string
-        "Variable<#{@name}>"
-      end
-
-      # @api private
       def textize
         "$%s" % @name
       end

@@ -59,11 +59,6 @@ module Pione
       end
 
       # @api private
-      def task_id_string
-        "RuleExpr<%s,#{@name}>" % [@package_expr.task_id_string]
-      end
-
-      # @api private
       def textize
         "rule_expr(%s,\"%s\")" % [@package_expr.textize, @name]
       end

@@ -61,11 +61,6 @@ module Pione
       end
 
       # @api private
-      def task_id_string
-        "Boolean<#{@value}>"
-      end
-
-      # @api private
       def textize
         @value.to_s
       end

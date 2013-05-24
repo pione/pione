@@ -29,10 +29,6 @@ module Pione
         false
       end
 
-      def task_id_string
-        "TicketExpr<#{@names}>"
-      end
-
       def textize
         "<%s>" % [@names]
       end

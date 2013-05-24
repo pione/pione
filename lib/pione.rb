@@ -74,7 +74,6 @@ require 'pione/system/common'
 require 'pione/system/config'
 require 'pione/system/global'
 require 'pione/system/init'
-require 'pione/system/identifier'
 require 'pione/system/file-cache'
 
 Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}

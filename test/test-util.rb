@@ -45,7 +45,7 @@ module TestUtil
     # make drb server and it's connection
     tuple_space_server = Pione::TupleSpace::TupleSpaceServer.new({}, false)
     # base uri
-    tuple_space_server.write(Tuple[:base_location].new("local:#{Dir.mktmpdir('pione-test')}/"))
+    tuple_space_server.write(Tuple[:base_location].new(Location[Temppath.create]))
     # set default tuple space server
     set_tuple_space_server tuple_space_server
     # return the connection

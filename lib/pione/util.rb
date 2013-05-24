@@ -4,6 +4,7 @@ module Pione
   end
 end
 
+require 'pione/util/id'
 require 'pione/util/misc'
 require 'pione/util/waiter-table'
 require 'pione/util/error-report'

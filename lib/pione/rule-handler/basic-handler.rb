@@ -30,7 +30,6 @@ module Pione
       attr_reader :original_params
       attr_reader :base_location
       attr_reader :dry_run
-      attr_reader :task_id
       attr_reader :domain
       attr_reader :variable_table
       attr_reader :call_stack
@@ -68,7 +67,6 @@ module Pione
         @variable_table = VariableTable.new(@params.data)
         @base_location = read!(Tuple[:base_location].any).location
         @dry_run = begin read!(Tuple[:dry_run].any).availability rescue false end
-        @task_id = ID.task_id(@inputs, @params)
         @call_stack = call_stack
         @domain_location = make_location("", @domain)
 
@@ -204,12 +202,7 @@ module Pione
 
       # Return the domain.
       def get_handling_domain(opts)
-        opts[:domain] || ID.domain_id(
-          @rule.rule_expr.package_expr.name,
-          @rule.rule_expr.name,
-          @inputs,
-          @original_params
-        )
+        opts[:domain] || Util::DomainID.generate(@rule, @inputs, @original_params)
       end
 
       # Make location by data name and the domain.
@@ -247,12 +240,12 @@ module Pione
 
       # Make output tuple by the name.
       #
-      # @param name [String]
+      # @param expr [DataExpr]
       #   data name
       # @return [Tuple::DataTuple]
       #   data tuple
-      def make_output_tuple(expr)
-        name = expr.first.name
+      def make_output_tuple(data_expr)
+        name = data_expr.first.name
         location = make_output_location(name)
         Tuple[:data].new(name: name, domain: @domain, location: location, time: nil)
       end

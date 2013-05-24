@@ -126,7 +126,7 @@ module Pione
                 rule,
                 res.combination,
                 res.variable_table,
-                ID.domain_id3(rule, res.combination, atomic_params)
+                Util::DomainID.genereate(rule, res.combination.flatten, atomic_params)
               ] if rule.constraints.satisfy?(res.variable_table)
             end
           end

@@ -1,0 +1,37 @@
+Rule Test
+  input '*.a'
+  output '{$*}.b'
+Action
+  cat {$INPUT[1]} > {$OUTPUT[1]}
+End
+
+Rule Shell1
+  input '*.a'
+  input '{$*}.b'
+  output '{$*}.c'
+Action
+  VAL1=`cat {$INPUT[1]}`;
+  VAL2=`cat {$INPUT[2]}`;
+  expr $VAL1 + $VAL2 > {$OUTPUT[1]}
+End
+
+Rule Shell2
+  input '*.a'
+  input '{$*}.b'
+  output '{$*}.c'.stdout
+Action
+  VAL1=`cat {$INPUT[1]}`;
+  VAL2=`cat {$INPUT[2]}`;
+  expr $VAL1 + $VAL2
+End
+
+Rule Ruby
+  input '*.a'
+  input '{$*}.b'
+  output '{$*}.c'.stdout
+Action
+  #!/usr/bin/env ruby
+  val1 = File.read('{$INPUT[1]}').to_i
+  val2 = File.read('{$INPUT[2]}').to_i
+  puts val1 + val2
+End

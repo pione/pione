@@ -189,10 +189,6 @@ module Pione
         @elements.hash + @attribute.hash
       end
 
-      def task_id_string
-        "<#{@elements}, #{@attribute}>"
-      end
-
       def textize
         "<%s [%s]>" % [shortname, @elements.map{|x| x.textize}.join(",")]
       end
