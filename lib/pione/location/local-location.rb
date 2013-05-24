@@ -3,6 +3,7 @@ module Pione
     # LocalLocation represents local disk locations.
     class LocalLocation < BasicLocation
       set_scheme "local"
+      set_real_appendable true
 
       def initialize(uri)
         super(uri.absolute)
@@ -19,13 +20,13 @@ module Pione
           raise ExistAlready.new(self)
         else
           @path.dirname.mkpath unless @path.dirname.exist?
-          @path.open("w+"){|f| f.write(data)}
+          @path.open("w"){|f| f.write(data)}
         end
       end
 
       def append(data)
         if exist?
-          update(read + data)
+          @path.open("a"){|f| f.write(data)}
         else
           create(data)
         end
@@ -37,7 +38,7 @@ module Pione
 
       def update(data)
         if @path.exist?
-          @path.open("w+"){|file| file.write(data)}
+          @path.open("w"){|file| file.write(data)}
         else
           raise NotFound.new(@uri)
         end

@@ -1,9 +1,8 @@
 module Pione
   module Tuple
-    # LogTuple represents log messages.
-    class LogTuple < BasicTuple
-      #   obj : Log's instance
-      define_format [:log, :message]
+    # ProcessLogTuple represents process event messages.
+    class ProcessLogTuple < BasicTuple
+      define_format [:process_log, [:message, Log::ProcessRecord]]
 
       def timestamp=(time)
         @timestamp = time

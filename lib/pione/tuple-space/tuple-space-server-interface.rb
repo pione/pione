@@ -54,6 +54,21 @@ module Pione
       end
     end
 
+    # Take all tuples with no waiting time. If there are no matched tuples, return
+    # empty array.
+    #
+    # @param tuple [BasicTuple]
+    #   template tuple for query
+    # @return [Array<BasicTuple>]
+    #   query result
+    def take_all!(tuple)
+      begin
+        take_all(tuple, 0)
+      rescue Rinda::RequestExpiredError
+        []
+      end
+    end
+
     # Put a log tuple with the data as a process record into tuple space. The
     # record's value of transition is "complete" by default and the timestamp
     # set automatically.
@@ -63,7 +78,7 @@ module Pione
     # @return [void]
     def process_log(record)
       record = record.merge(transition: "complete") unless record.transition
-      write(Tuple[:log].new(record))
+      write(Tuple[:process_log].new(record))
     end
 
     # Do the action with loggging.

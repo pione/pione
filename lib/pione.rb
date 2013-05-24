@@ -45,14 +45,8 @@ require 'sys/cpu'
 # load pione
 #
 
-# version
 require 'pione/version'
-
-# util
 require 'pione/util'
-
-# log
-require 'pione/log'
 
 # patch
 require 'pione/patch/array-patch'
@@ -60,6 +54,19 @@ require 'pione/patch/drb-patch'
 require 'pione/patch/rinda-patch'
 require 'pione/patch/uri-patch'
 require 'pione/patch/monitor-patch'
+
+# uri-scheme
+require 'pione/uri-scheme/basic-scheme'
+require 'pione/uri-scheme/local-scheme'
+require 'pione/uri-scheme/dropbox-scheme'
+require 'pione/uri-scheme/broadcast-scheme'
+require 'pione/uri-scheme/myftp-scheme'
+
+# location
+require 'pione/location'
+
+# log
+require 'pione/log'
 
 # system
 require 'pione/system/object'
@@ -72,16 +79,6 @@ require 'pione/system/file-cache'
 
 Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
 Pione.module_exec {const_set(:Global, Pione::System::Global)}
-
-# uri-scheme
-require 'pione/uri-scheme/basic-scheme'
-require 'pione/uri-scheme/local-scheme'
-require 'pione/uri-scheme/dropbox-scheme'
-require 'pione/uri-scheme/broadcast-scheme'
-require 'pione/uri-scheme/myftp-scheme'
-
-# location
-require 'pione/location'
 
 # relay
 require 'pione/relay/transmitter-socket'
@@ -109,28 +106,7 @@ require 'pione/model'
 require 'pione/component'
 
 # tuple
-require 'pione/tuple/basic-tuple'
-require 'pione/tuple/agent-tuple'
-require 'pione/tuple/data-tuple'
-require 'pione/tuple/finished-tuple'
-require 'pione/tuple/process-info-tuple'
-require 'pione/tuple/lift-tuple'
-require 'pione/tuple/working-tuple'
-require 'pione/tuple/attribute-tuple'
-require 'pione/tuple/bye-tuple'
-require 'pione/tuple/dry-run-tuple'
-require 'pione/tuple/foreground-tuple'
-require 'pione/tuple/request-rule-tuple'
-require 'pione/tuple/task-tuple'
-require 'pione/tuple/base-location-tuple'
-require 'pione/tuple/command-tuple'
-require 'pione/tuple/exception-tuple'
-require 'pione/tuple/log-tuple'
-require 'pione/tuple/rule-tuple'
-require 'pione/tuple/task-worker-resource-tuple'
-require 'pione/tuple/ticket-tuple'
-require 'pione/tuple/data-null-tuple'
-require 'pione/tuple/message-tuple'
+require 'pione/tuple'
 
 # parser
 require 'pione/parser/parslet-extension'

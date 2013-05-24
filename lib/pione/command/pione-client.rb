@@ -148,9 +148,6 @@ module Pione
           Util::FTPServer.start(Util::FTPLocalFS.new(location))
         end
 
-        # setup log location
-        @log_location = option[:output_location] + Time.now.strftime("pione_%Y%m%d%H%M%S.log")
-
         @tuple_space_server = TupleSpaceServer.new(
           task_worker_resource: option[:request_task_worker]
         )
@@ -300,7 +297,7 @@ module Pione
         @messenger = Agent[:messenger].start(@tuple_space_server)
 
         # logger
-        @logger = Agent[:logger].start(@tuple_space_server, @log_location)
+        @logger = Agent[:logger].start(@tuple_space_server, option[:output_location])
 
         # rule provider
         @rule_loader = Agent[:rule_provider].start(@tuple_space_server)

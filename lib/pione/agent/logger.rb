@@ -1,17 +1,15 @@
 module Pione
   module Agent
-    # Logger is an agent for logging processings in tuple space.
+    # Logger is an agent for logging process events like agent activity or rule
+    # process.
     class Logger < TupleSpaceClient
       set_agent_type :logger
 
       # @return [BasicLocation]
-      attr_reader :location
+      attr_reader :log_location
 
       # @return [Pathname]
-      attr_reader :out
-
-      # @return [Array<Log::ProcessRecord>]
-      attr_reader :records
+      attr_reader :output_location
 
       # Create a logger agent.
       #
@@ -19,24 +17,19 @@ module Pione
       #   tuple space server
       # @param location [BasicLocation]
       #   the path to store log records
-      def initialize(tuple_space_server, location)
+      def initialize(tuple_space_server, base_location)
         super(tuple_space_server)
-        @location = location
-        @temporary = Location[Pione.temporary_path(@location.basename)]
-        @out = @temporary.path.open("w+")
-        @records = []
+        @log_id = Time.now.iso8601(3)
+        @log_location = base_location + "pione-process.log"
+        @output_location = get_output_location
       end
 
       define_state :initialized
-      define_state :take
-      define_state :store
+      define_state :record
       define_state :terminated
 
-      define_state_transition :initialized => :take
-      define_state_transition :take => :store
-      define_state_transition :store => :take
-
-      define_exception_handler Exception => :terminated
+      define_state_transition :initialized => :record
+      define_state_transition :record => :record
 
       # Sleeps till the logger clears logs.
       #
@@ -44,52 +37,42 @@ module Pione
       #   timespan for clearing logs
       # @return [void]
       def wait_to_clear_logs(timespan=0.1)
-        while count_tuple(Tuple[:log].any) > 0 || @records.size > 0
+        while count_tuple(Tuple[:process_log].any) > 0
           sleep timespan
         end
       end
 
-      def store_records
-        unless @records.empty?
-          @records.sort{|a,b| a.timestamp <=> b.timestamp}.each do |record|
-            @out.puts record.format
-          end
-          @out.flush
-          @out.fsync
-          @records = []
+      # Record process_log tuples.
+      def transit_to_record
+        write_records(take_all(Tuple[:process_log].any))
+      end
+
+      # Copy from output to log when log and output are different.
+      def transit_to_terminated
+        write_records(take_all!(Tuple[:process_log].any))
+        if @log_location != @output_location
+          @output_location.copy(@log_location)
         end
+        super
       end
 
       private
 
-      # Transits to the state +take+.
-      def transit_to_take
-        timeout(2) do
-          loop do
-            if @current_tuple = take(Tuple[:log].any)
-              @records << @current_tuple.message
-              @current_tuple = nil
-            end
-          end
-        end
-      rescue TimeoutError
-        if @current_tuple
-          @records << @current_tuple.message
-          @current_tuple = nil
+      # Write records with sorting.
+      def write_records(tuples)
+        tuples.sort{|a,b| a.timestamp <=> b.timestamp}.each do |tuple|
+          @output_location.append tuple.message.format(@log_id) + "\n"
         end
       end
 
-      # Transits to the state +store+.
-      def transit_to_store
-        store_records
-      end
-
-      # State terminated.
-      def transit_to_terminated
-        store_records
-        Util.ignore_exception {@out.close}
-        @temporary.copy(@location)
-        super
+      # Get the output location. If the log location is not suportted append
+      # writing, output location is in local filesystem.
+      def get_output_location
+        if @log_location.real_appendable?
+          @log_location
+        else
+          Location[Pione.temporary_path(@location.basename)]
+        end
       end
     end
 

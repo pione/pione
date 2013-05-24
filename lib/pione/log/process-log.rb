@@ -1,6 +1,6 @@
 module Pione
   module Log
-    # ProcessLog represents process log records of PIONE.
+    # ProcessLog represents process log file.
     class ProcessLog
       # formatter table
       @format = {}
@@ -29,13 +29,25 @@ module Pione
         #
         # @param location [Location]
         #   path of process log file
-        # @return [ProcessLogFile]
-        #   log object
+        # @return [Hash{String => ProcessLog}]
+        #   pairs of log id and the log
         def read(location)
-          if location.file?
-            read_file(location)
-          else
-            read_directory(location)
+          cache = location
+          unless location.scheme == "local"
+            cache = Location[Temppath.create]
+            cache.create(location.read)
+          end
+          records = cache.path.each_line.map do |line|
+            JSON.parse(line).inject({}) do |data, pair|
+              data[pair[0].to_sym] = pair[1]
+              data
+            end.tap do |table|
+              break ProcessRecord.build(table)
+            end
+          end
+          group_by(:log_id, records).inject({}) do |table, pair|
+            key, _records = pair
+            table[key] = new(_records)
           end
         end
 
@@ -48,38 +60,14 @@ module Pione
 
         attr_reader :filter_block
 
-        private
-
-        # Read records from the log file at the location.
+        # Return the record table grouped by the key.
         #
-        # @param location [Location::BasicLocation]
-        #   log location
-        def read_file(location)
-          cache = Location[Temppath.create]
-          cache.create(location.read)
-          cache.path.each_line.map do |line|
-            JSON.parse(line).inject({}) do |data, pair|
-              data[pair[0].to_sym] = pair[1]
-              data
-            end.tap do |table|
-              break ProcessRecord.build(table)
-            end
-          end.tap do |records|
-            break new([ProcessLogBundle.new(records)])
-          end
-        end
-
-        # Read records from log files in directory at the location.
-        #
-        # @param location [Location::BasicLocation]
-        #   log directory location
-        def read_directory(location)
-          location.file_entries.inject(new([])) do |formatter, entry|
-            if /pione_\d{14}\.log/.match(entry.path.basename.to_s)
-              new(formatter.bundles + read_file(entry).bundles)
-            else
-              formatter
-            end
+        # @return [Hash{String => Array<ProcessRecord>}]
+        #   grouping records table
+        def group_by(key, records)
+          records.inject({}) do |table, record|
+            table[record.send(key)] ||= []
+            table.tap {|x| x[record.send(key)] << record}
           end
         end
       end
@@ -93,7 +81,13 @@ module Pione
       # @param records [Array<ProcessRecord>]
       #   log records
       def initialize(records)
-        @records = records.select {|record| self.class.filter_block.call(record)}
+        @records = records.select do |record|
+          if block = self.class.filter_block
+            block.call(record)
+          else
+            true
+          end
+        end
       end
 
       # Return the record table grouped by the key.
@@ -101,60 +95,15 @@ module Pione
       # @return [Hash{String => Array<ProcessRecord>}]
       #   grouping records table
       def group_by(key)
-        @records.inject({}) do |table, record|
-          table[record.send(key)] ||= []
-          table.tap {|x| x[record.send(key)] << record}
-        end
-      end
-    end
-
-    # ProcessLogFormatter is a basic class for fomatting process logs.
-    class ProcessLogFormatter < ProcessLog
-      # @return [Array<ProcessBunle>]
-      #   target logs that we format
-      attr_reader :bundles
-
-      # @param bundles [Array<ProcessLogBundle>]
-      #   log bundles
-      def initialize(bundles)
-        @bundles = bundles
+        self.class.group_by(key, @records)
       end
 
-      # Format bundle logs.
+      # Format records.
       #
       # @return [String]
       #   result string
       def format(trace_filters=[])
         raise NotImplementedError
-      end
-    end
-
-    # ProcessLogFormatError is raised when formatter cannot format some objects.
-    class ProcessLogFormatError < StandardError
-      # @param object [Object]
-      #   the object that we cannnot format
-      def initialize(object)
-        @object = object
-      end
-
-      # @api private
-      def message
-        "not formattable: %s" % @object.inspect
-      end
-    end
-
-    # ProcessLogBundle is a bundle of raw logs.
-    class ProcessLogBundle
-      attr_reader :agent_activity_log
-      attr_reader :rule_process_log
-      attr_reader :task_process_log
-
-      # @param records [Array<ProcessRecord>]
-      #   log records
-      def initialize(records)
-        @agent_activity_log = AgentActivityLog.new(records)
-        @rule_process_log = RuleProcessLog.new(records)
-        @task_process_log = TaskProcessLog.new(records)
       end
     end
 

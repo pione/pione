@@ -21,7 +21,7 @@ describe "Pione::Log::ProcessRecord" do
   end
 
   it "should get fields" do
-    TestRecord.fields.sort.should == [:a, :b, :c, :transition, :timestamp].sort
+    TestRecord.fields.sort.should == [:a, :b, :c, :transition, :timestamp, :log_id].sort
   end
 
   it "should merge" do
@@ -49,7 +49,7 @@ shared "process record" do
 
   it "should be enable to convert into JSON format" do
     should.not.raise do
-      @record.format
+      @record.format(Time.now.iso8601(3))
     end
   end
 end

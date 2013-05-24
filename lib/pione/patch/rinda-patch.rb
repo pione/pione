@@ -544,8 +544,8 @@ module Rinda
       end
     end
 
-    def take_all(tuple)
-      real_take_all(tuple).map {|res| lift_tuple(res)}
+    def take_all(tuple, sec=nil)
+      real_take_all(tuple, sec).map {|res| lift_tuple(res)}
     end
     public :take_all
 

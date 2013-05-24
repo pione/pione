@@ -3,6 +3,7 @@ module Pione
     # FTPLocation represents locations on FTP server.
     class FTPLocation < BasicLocation
       set_scheme "ftp"
+      set_real_appendable false
 
       # for myftp scheme
       SCHEMES["myftp"] = self
@@ -35,7 +36,11 @@ module Pione
       end
 
       def append(data)
-        exist? ? update(read + data) : create(data)
+        if exist?
+          update(read + data)
+        else
+          create(data)
+        end
       end
 
       def read

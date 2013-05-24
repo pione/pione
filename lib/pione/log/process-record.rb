@@ -18,6 +18,9 @@ module Pione
     # are in tuple spaces and handled by PIONE's process logger agent. If you
     # want to add record type, you need to create the subclass of this.
     class ProcessRecord
+      include SimpleIdentity
+      ignore_identity :log_id
+
       # known process record types and classes
       TYPE_TABLE = {}
 
@@ -75,6 +78,7 @@ module Pione
 
         # Subclass inherites superclass's fields.
         def inherited(subclass)
+          subclass.instance_variable_set(:@__ignore_identities__, @__ignore_identities__.clone)
           subclass.instance_variable_set(:@fields, @fields.clone)
         end
       end
@@ -88,6 +92,11 @@ module Pione
       # @return [String]
       #   transition name
       field :transition
+
+      # @!attribute [rw]
+      # @return [String]
+      #   log_id
+      field :log_id
 
       forward! :class, :type, :fields
 
@@ -115,8 +124,8 @@ module Pione
       #
       # @return [String]
       #   JSON string
-      def format
-        JSON.dump(to_hash)
+      def format(log_id)
+        JSON.dump(to_hash.merge(log_id: log_id))
       end
 
       # Convert the record into a hash table.

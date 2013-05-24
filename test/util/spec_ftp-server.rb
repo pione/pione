@@ -1,5 +1,11 @@
 require_relative "../test-util"
 
+def make_temp_file(name, content)
+  location = Location[Temppath.create]
+  location.create(content)
+  return location.path
+end
+
 shared "FTPFileSystem" do
   it "should exist" do
     @fs.should.exist(@dir_x)
@@ -74,13 +80,6 @@ shared "FTPFileSystem" do
     @fs.rmdir(dir_y)
     @fs.should.not.exist(dir_y)
   end
-end
-
-def make_temp_file(name, content)
-  temp = Tempfile.new(name)
-  temp.write content
-  temp.close(false)
-  temp.path
 end
 
 describe "Pione::Util::FTPOnMemoryFS" do
@@ -216,10 +215,11 @@ describe "Pione::Util::FTPServer" do
     @file_b = @dir_x + "B"
     @file_c = @dir_x + "C"
     @fs.mkdir(@dir_x)
-    @fs.put_file(@file_a, Tempfile.open("A"){|f| f.write "A"; f.path})
-    @fs.put_file(@file_b, Tempfile.open("B"){|f| f.write "AB"; f.path})
-    @fs.put_file(@file_c, Tempfile.open("C"){|f| f.write "ABC"; f.path})
+    @fs.put_file(@file_a, make_temp_file("A", "A"))
+    @fs.put_file(@file_b, make_temp_file("B", "AB"))
+    @fs.put_file(@file_c, make_temp_file("C", "ABC"))
     Util::FTPServer.stop
+    sleep 0.1
     Util::FTPServer.start(@fs)
     sleep 0.1
 
@@ -235,10 +235,11 @@ describe "Pione::Util::FTPServer" do
     @file_b = @dir_x + "B"
     @file_c = @dir_x + "C"
     @fs.mkdir(@dir_x)
-    @fs.put_file(@file_a, Tempfile.open("A"){|f| f.write "A"; f.path})
-    @fs.put_file(@file_b, Tempfile.open("B"){|f| f.write "AB"; f.path})
-    @fs.put_file(@file_c, Tempfile.open("C"){|f| f.write "ABC"; f.path})
+    @fs.put_file(@file_a, make_temp_file("A", "A"))
+    @fs.put_file(@file_b, make_temp_file("B", "AB"))
+    @fs.put_file(@file_c, make_temp_file("C", "ABC"))
     Util::FTPServer.stop
+    sleep 0.1
     Util::FTPServer.start(@fs)
     sleep 0.1
 

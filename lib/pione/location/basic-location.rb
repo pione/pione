@@ -51,9 +51,17 @@ module Pione
           @scheme = name
           SCHEMES[name] = self
         end
+
+        def set_real_appendable(b)
+          @appendable = b
+        end
+
+        def real_appendable?
+          @appendable
+        end
       end
 
-      forward :class, :scheme
+      forward! :class, :scheme, :real_appendable?
       forward :@uri, :host
 
       # @return [URI]
