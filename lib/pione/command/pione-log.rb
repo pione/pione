@@ -10,7 +10,7 @@ module Pione
       define_option do
         default :format, :xes
         default :trace_filter, []
-        default :output, Location["local:./output"]
+        default :location, Location["local:./output/pione-process.log"]
 
         option("--agent-activity[=TYPE]", "output only agent activity log") do |data, name|
           data[:trace_filter] << Proc.new do |trace|
@@ -32,7 +32,7 @@ module Pione
         end
 
         option("--location=LOCATION", "set log location of PIONE process") do |data, location|
-          data[:output] = Location[location]
+          data[:location] = Location[location]
         end
 
         option("--format=(XES|JSON|HTML)", "set format type") do |data, name|
@@ -40,8 +40,8 @@ module Pione
         end
 
         validate do |data|
-          unless data[:output].exist?
-            abort("File or directory not found in the location: %s" % data[:output].uri.to_s)
+          unless data[:location].exist?
+            abort("File not found in the location: %s" % data[:location].uri.to_s)
           end
         end
       end
@@ -49,7 +49,7 @@ module Pione
       start do
         Log::ProcessLog[option[:format]].tap do |formatter|
           if formatter
-            $stdout.puts(formatter.read(option[:output]).format(option[:trace_filter]))
+            $stdout.puts(formatter.read(option[:location]).format(option[:trace_filter]))
             $stdout.flush
           else
             abort("Unknown format: %s" % option[:format])
