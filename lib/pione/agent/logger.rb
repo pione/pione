@@ -17,10 +17,10 @@ module Pione
       #   tuple space server
       # @param location [BasicLocation]
       #   the path to store log records
-      def initialize(tuple_space_server, base_location)
+      def initialize(tuple_space_server, location)
         super(tuple_space_server)
         @log_id = Time.now.iso8601(3)
-        @log_location = base_location + "pione-process.log"
+        @log_location = get_log_location(location)
         @output_location = get_output_location
       end
 
@@ -59,9 +59,28 @@ module Pione
       private
 
       # Write records with sorting.
+      #
+      # @param tuples [Array<Tuple::LogTuple>]
+      #   records
+      # @return [void]
       def write_records(tuples)
         tuples.sort{|a,b| a.timestamp <=> b.timestamp}.each do |tuple|
           @output_location.append tuple.message.format(@log_id) + "\n"
+        end
+      end
+
+      # Get the log location. If the location is a directory, log filename is
+      # "pione-process.log".
+      #
+      # @param location [BasicLocation]
+      #   location
+      # @return [BasicLocation]
+      #   log location
+      def get_log_location(location)
+        if location.directory?
+          location + "pione-process.log"
+        else
+          location
         end
       end
 
@@ -71,7 +90,7 @@ module Pione
         if @log_location.real_appendable?
           @log_location
         else
-          Location[Pione.temporary_path(@location.basename)]
+          Location[Pione.temporary_path(@log_location.basename)]
         end
       end
     end

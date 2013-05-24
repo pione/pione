@@ -12,7 +12,7 @@ end
 describe "Pione::Agent::Logger" do
   before do
     ts = create_tuple_space_server
-    @location = Location[Temppath.create]
+    @location = Location[Temppath.create] + "pione-process.log"
     @logger = Agent[:logger].start(ts, @location)
     @msg1 = TestRecord.new(uuid: "e07860f6-18f0-4c1a-8a5a-7d9f3353c83f")
     @msg2 = TestRecord.new(uuid: "c8fa705d-fc30-42fa-a05f-a2493717dc39")
