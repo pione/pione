@@ -40,6 +40,7 @@ require 'rainbow'
 require 'em-ftpd'
 require 'pione/patch/em-ftpd-patch'
 require 'sys/cpu'
+require 'structx'
 
 #
 # load pione
@@ -98,10 +99,7 @@ require 'pione/tuple-space/data-finder'
 # rule-handler
 require 'pione/rule-handler.rb'
 
-# model
 require 'pione/model'
-
-# component
 require 'pione/component'
 
 # tuple

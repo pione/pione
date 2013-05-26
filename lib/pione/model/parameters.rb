@@ -99,7 +99,8 @@ module Pione
 
       # @api private
       def textize
-        "{" + @data.map{|k,v| "%s:%s" % [k.textize[1..-1], v.textize]}.join(", ") + "}"
+        # "{" + @data.map{|k,v| "%s:%s" % [k.textize[1..-1], v.textize]}.join(", ") + "}"
+        "{" + @data.map.sort.map{|k,v| "%s:%s" % [k.textize[1..-1], v.textize]}.join(", ") + "}"
       end
 
       # Return value of parameter name.

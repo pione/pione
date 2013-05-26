@@ -10,7 +10,7 @@ module Pione
 
         # import system rules
         Component::SYSTEM_RULES.each do |command_rule|
-          @table[command_rule.rule_path] = command_rule
+          @table[command_rule.path] = command_rule
         end
       end
 

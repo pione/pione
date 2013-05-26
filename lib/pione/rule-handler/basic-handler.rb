@@ -9,7 +9,7 @@ module Pione
 
       def message
         "Execution error when handling the rule '%s': inputs=%s, output=%s, params=%s" % [
-          @handler.rule.rule_path,
+          @handler.rule.path,
           @handler.inputs,
           @handler.outputs,
           @handler.params.inspect
@@ -50,7 +50,7 @@ module Pione
       def initialize(ts_server, rule, inputs, params, call_stack, opts={})
         # check arguments
         raise ArgumentError.new(inputs) unless inputs.kind_of?(Array)
-        raise ArgumentError.new(inputs) unless inputs.size == rule.inputs.size
+        raise ArgumentError.new(inputs) unless inputs.size == rule.condition.inputs.size
         raise ArgumentError.new(params) unless params.kind_of?(Parameters)
 
         # set tuple space server
@@ -60,7 +60,7 @@ module Pione
         @rule = rule
         @inputs = inputs
         @outputs = []
-        @params = @rule.params.merge(params)
+        @params = @rule.condition.params.merge(params)
         @original_params = params
         @content = rule.body
         @domain = get_handling_domain(opts)
@@ -74,7 +74,7 @@ module Pione
 
         # build rule process record
         @rule_process_record = Log::RuleProcessRecord.new.tap do |record|
-          record.name = "&%s:%s" % [@rule.rule_expr.package_expr.name, @rule.rule_expr.name]
+          record.name = "&%s:%s" % [@rule.package_name, @rule.name]
           record.rule_type = @rule.rule_type
           record.caller = caller.split("_").first.tap do |dname|
             if dname.include?("-")
@@ -89,7 +89,7 @@ module Pione
         # build task process record
         @task_process_record = Log::TaskProcessRecord.new.tap do |record|
           record.name = handler_digest
-          record.rule_name = "&%s:%s" % [@rule.rule_expr.package_expr.name, @rule.rule_expr.name]
+          record.rule_name = @rule.path
           record.rule_type = @rule.rule_type
           record.inputs = @inputs.flatten.map{|input| input.name}.join(",")
           record.parameters = @params.textize
@@ -255,8 +255,8 @@ module Pione
       # - input auto variables
       # - output auto variables
       def setup_variable_table
-        @variable_table.make_input_auto_variables(@rule.inputs, @inputs)
-        outputs = @rule.outputs.map {|expr| expr.eval(@variable_table) }
+        @variable_table.make_input_auto_variables(@rule.condition.inputs, @inputs)
+        outputs = @rule.condition.outputs.map {|expr| expr.eval(@variable_table) }
         output_tuples = outputs.map {|expr| make_output_tuple(expr) }
         @variable_table.make_output_auto_variables(outputs, output_tuples)
       end
@@ -267,7 +267,7 @@ module Pione
           not(k.toplevel?)
         }.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
         "%s([%s],{%s})" % [
-          @rule.rule_path,
+          @rule.path,
           @inputs.map{|i|
             if i.kind_of?(Array)
               i.empty? ? "[]" : "[%s, ...]" % i[0].name
@@ -284,7 +284,7 @@ module Pione
       # @return [void]
       def find_outputs
         tuples = read_all(Tuple[:data].new(domain: @domain))
-        @rule.outputs.each_with_index do |output, i|
+        @rule.condition.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
           case output.distribution
           when :all

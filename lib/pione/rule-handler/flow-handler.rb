@@ -103,14 +103,14 @@ module Pione
           @variable_table.variables.each do |var|
             val = @variable_table.get(var)
             if val.kind_of?(Callable) or val.kind_of?(Variable) or val.void?
-              if rule.params.keys.include?(var)
+              if rule.condition.params.keys.include?(var)
                 callee.expr.params.set_safety!(var, val)
               end
             end
           end
 
           # build callee parameter from rule definition
-          callee_params = rule.params.merge(callee.expr.params)
+          callee_params = rule.condition.params.merge(callee.expr.params)
 
           # expand parameters
           callee_params.eval(@variable_table).each do |atomic_params|
@@ -119,15 +119,15 @@ module Pione
             vtable = atomic_params.eval(@variable_table).as_variable_table
 
             # check rule status and find combinations
-            @data_finder.find(:input, rule.inputs, vtable).each do |res|
+            @data_finder.find(:input, rule.condition.inputs, vtable).each do |res|
               combinations << [
                 callee,
                 atomic_params,
                 rule,
                 res.combination,
                 res.variable_table,
-                Util::DomainID.genereate(rule, res.combination.flatten, atomic_params)
-              ] if rule.constraints.satisfy?(res.variable_table)
+                Util::DomainID.generate(rule, res.combination.flatten, atomic_params)
+              ] if rule.condition.constraints.satisfy?(res.variable_table)
             end
           end
 
@@ -157,7 +157,7 @@ module Pione
           # find outputs combination
           outputs_combination = @data_finder.find(
             :output,
-            rule.outputs.map{|output| output.eval(vtable)},
+            rule.condition.outputs.map{|output| output.eval(vtable)},
             vtable
           ).map{|r| r.combination }
 
@@ -193,10 +193,10 @@ module Pione
         applications = applications.uniq.map do |callee, params, rule, inputs, vtable, task_domain, order|
           # make a task tuple
           task = Tuple[:task].new(
-            rule.rule_path,
+            rule.path,
             inputs,
             params,
-            rule.features,
+            rule.condition.features,
             task_domain,
             @call_stack + [@domain] # current call stack + caller
           )
@@ -218,7 +218,7 @@ module Pione
             # put task schedule process log
             task_process_record = Log::TaskProcessRecord.new.tap do |record|
               record.name = task.digest
-              record.rule_name = rule.rule_path
+              record.rule_name = rule.path
               record.rule_type = rule.rule_type
               record.inputs = inputs.flatten.map{|input| input.name}.join(",")
               record.parameters = params.textize
@@ -308,13 +308,13 @@ module Pione
       # Validate outputs size.
       def validate_outputs
         # size check
-        if @rule.outputs.size > 0 and not(@rule.outputs.size == @outputs.size)
+        if @rule.condition.outputs.size > 0 and not(@rule.condition.outputs.size == @outputs.size)
           raise RuleExecutionError.new(self)
         end
 
         # empty list or nil check
         @outputs.each_with_index do |tuple, i|
-          output = @rule.outputs[i].eval(@variable_table)
+          output = @rule.condition.outputs[i].eval(@variable_table)
           unless output.accept_nonexistence?
             if tuple.nil? or (tuple.kind_of?(Array) && tuple.empty?)
               raise RuleExecutionError.new(self)
@@ -339,7 +339,7 @@ module Pione
       # @return [void]
       def update_by_finished_tuple(rule, finished, vtable)
         finished.outputs.each_with_index do |output, i|
-          data_expr = rule.outputs[i].eval(vtable)
+          data_expr = rule.condition.outputs[i].eval(vtable)
           case data_expr.operation
           when :write
             if output.kind_of?(Array)

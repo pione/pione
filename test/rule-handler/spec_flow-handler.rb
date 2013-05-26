@@ -3,8 +3,8 @@ require_relative '../test-util'
 $document = Component::Document.parse(<<DOCUMENT)
 Rule Test
   input '*.a'
-  input '{$INPUT[1].MATCH[1]}.b'
-  output '{$INPUT[1].MATCH[1]}.c'
+  input '{$*}.b'
+  output '{$*}.c'
 Flow
   rule TestAction
 End
@@ -12,12 +12,12 @@ DOCUMENT
 
 describe 'FlowRule' do
   before do
-    create_remote_tuple_space_server
+    @ts = create_tuple_space_server
     @rule = $document["&main:Test"]
   end
 
   after do
-    tuple_space_server.terminate
+    @ts.terminate
   end
 
   it 'should not be an action' do
@@ -29,15 +29,15 @@ describe 'FlowRule' do
   end
 
   it 'should make action handler' do
-    dir = Dir.mktmpdir
-    uri_a = "local:#{dir}/1.a"
-    uri_b = "local:#{dir}/1.b"
-    Resource[uri_a].create("1")
-    Resource[uri_b].create("2")
+    location = Location[Temppath.create]
+    location_a = location + "1.a"
+    location_b = location + "1.b"
+    location_a.create("1")
+    location_b.create("2")
 
     inputs = [
-      Tuple[:data].new(name: '1.a', uri: uri_a),
-      Tuple[:data].new(name: '1.b', uri: uri_b)
+      Tuple[:data].new(name: '1.a', location: location_a, time: Time.now),
+      Tuple[:data].new(name: '1.b', location: location_b, time: Time.now)
     ]
 
     params = Parameters.empty
@@ -75,33 +75,27 @@ DOCUMENT
 
 describe 'FlowHandler' do
   before do
-    create_remote_tuple_space_server
+    @ts = create_tuple_space_server
     @rule = doc['&main:Test']
-    write(Tuple[:rule].new('&main:Shell', doc['&main:Shell'], :known))
+    write(Tuple[:rule].new('&main:Shell', doc['&main:Shell']))
 
-    dir = Dir.mktmpdir
-    uri_a = "local:#{dir}/1.a"
-    uri_b = "local:#{dir}/1.b"
-    Resource[uri_a].create("1")
-    Resource[uri_b].create("2")
+    location = Location[Temppath.create]
+    location_a = location + "1.a"
+    location_b = location + "1.b"
+    location_a.create("1")
+    location_b.create("2")
 
     @tuples = [
-      Tuple[:data].new('test', '1.a', uri_a, Time.now),
-      Tuple[:data].new('test', '1.b', uri_b, Time.now)
+      Tuple[:data].new(domain: "test", name: '1.a', location: location_a, time: Time.now),
+      Tuple[:data].new(domain: "test", name: '1.b', location: location_b, time: Time.now)
     ]
     @tuples.each {|t| write(t) }
 
-    @handler = @rule.make_handler(
-      tuple_space_server,
-      @tuples,
-      Parameters.empty,
-      [],
-      {:domain => 'test'}
-    )
+    @handler = @rule.make_handler(@ts, @tuples, Parameters.empty, [],domain: 'test')
   end
 
   after do
-    tuple_space_server.terminate
+    @ts.terminate
   end
 
   it "should execute a flow" do

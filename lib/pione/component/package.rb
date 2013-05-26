@@ -49,7 +49,7 @@ module Pione
       # @return [Rule]
       #   entry rule
       def main
-        @rules["&%s:Main" % name].tap{|x| x.params.merge!(@params)}
+        @rules["&%s:Main" % name].tap{|x| x.condition.params.merge!(@params)}
       end
 
       # Return the named rule.

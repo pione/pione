@@ -18,7 +18,7 @@ module Pione
         # @return [Boolean]
         #   true if the rule has no output conditions
         def no_output_conditions?(rule, inputs, outputs, vtable, data_null_tuples)
-          rule.outputs.empty?
+          rule.condition.outputs.empty?
         end
 
         # Return true if data tuples don't exist against output conditions with
@@ -39,7 +39,7 @@ module Pione
         #   operation
         def not_exist_output_data?(rule, inputs, outputs, vtable, data_null_tuples)
           result = false
-          rule.outputs.each_with_index do |data_expr, i|
+          rule.condition.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
             if data_expr.write? or data_expr.touch?
               # FIXME : each tuples are empty or single data tuple, this is confusing
@@ -82,7 +82,7 @@ module Pione
         #   operation
         def exist_output_data?(rule, inputs, outputs, vtable, data_null_tuples)
           result = false
-          rule.outputs.each_with_index do |data_expr, i|
+          rule.condition.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
             if data_expr.remove?
               case data_expr.distribution
@@ -117,11 +117,11 @@ module Pione
         #   true if newer input data exist
         def exist_newer_input_data?(rule, inputs, outputs, vtable, data_null_tuples)
           # get output oldest time
-          outputs = outputs.select.with_index{|output, i| rule.outputs[i].eval(vtable).care?}
+          outputs = outputs.select.with_index{|output, i| rule.condition.outputs[i].eval(vtable).care?}
           output_oldest_time = outputs.flatten.map{|output| output.time}.sort.first
 
           # get input last time
-          inputs = inputs.select.with_index{|input, i| rule.inputs[i].eval(vtable).care?}
+          inputs = inputs.select.with_index{|input, i| rule.condition.inputs[i].eval(vtable).care?}
           input_last_time = inputs.flatten.map{|input| input.time}.sort.last
 
           #p output_oldest_time

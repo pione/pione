@@ -40,7 +40,7 @@ module Pione
         super
 
         @variable_table.set(Variable.new("__BASE__"), PioneString.new(base_location.uri).to_seq)
-        @variable_table.set(Variable.new("_"), PackageExprSequence.new([@rule.package_expr]))
+        @variable_table.set(Variable.new("_"), PackageExprSequence.new([PackageExpr.new(@rule.package_name)]))
       end
 
       # Make a working directory for the action.
@@ -96,7 +96,7 @@ module Pione
         scriptname = File.basename(path)
 
         # stdout & stderr
-        stdout = @rule.outputs.map {|output|
+        stdout = @rule.condition.outputs.map {|output|
           output.eval(@variable_table)
         }.find {|output| output.stdout?}
         out = stdout ? stdout.name : ".stdout"
@@ -126,7 +126,7 @@ module Pione
       # @return [void]
       def collect_outputs
         filenames = @working_directory.file_entries.map{|entry| entry.path.basename.to_s}
-        @rule.outputs.each_with_index do |output, i|
+        @rule.condition.outputs.each_with_index do |output, i|
           output = output.eval(@variable_table)
           case output.distribution
           when :all

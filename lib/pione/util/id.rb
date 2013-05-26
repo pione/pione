@@ -29,9 +29,9 @@ module Pione
       # @return [String]
       #   domain id string
       def generate(rule, inputs, params)
-        package_name = rule.rule_expr.package_expr.name
-        rule_name = rule.rule_expr.name
-        "%s-%s_%s" % [package_name, rule_name, TaskID.generate(inputs, params)]
+        package_name = rule.package_name
+        rule_name = rule.name
+        "%s-%s_%s" % [package_name, rule_name, TaskID.generate(inputs.flatten, params)]
       end
       module_function :generate
     end

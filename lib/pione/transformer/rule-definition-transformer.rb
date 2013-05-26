@@ -15,13 +15,15 @@ module Pione
           :rule_header => simple(:rule_expr),
           :rule_conditions => sequence(:conditions),
           :block => simple(:block) }) {
-        inputs = Naming::InputLine.values(conditions)
-        outputs = Naming::OutputLine.values(conditions)
-        params = Parameters.merge(*Naming::ParamLine.values(conditions))
         features = Feature.empty if Naming::FeatureLine.values(conditions).empty?
         features = Feature::AndExpr.new(*Naming::FeatureLine.values(conditions)) unless features
-        constraints = Constraints.new(Naming::ConstraintLine.values(conditions))
-        condition = Component::RuleCondition.new(inputs, outputs, params: params, features: features, constraints: constraints)
+        condition = Component::RuleCondition.new(
+          inputs: Naming::InputLine.values(conditions),
+          outputs: Naming::OutputLine.values(conditions),
+          params: Parameters.merge(*Naming::ParamLine.values(conditions)),
+          features: features,
+          constraints: Constraints.new(Naming::ConstraintLine.values(conditions))
+        )
         case block
         when ActionBlock
           Component::ActionRule
@@ -29,7 +31,7 @@ module Pione
           Component::FlowRule
         when EmptyBlock
           Component::EmptyRule
-        end.new(rule_expr, condition, block)
+        end.new(rule_expr.package_expr.name, rule_expr.name, condition, block)
       }
 
       # Transform +:input_line+ as Naming::InputLine.

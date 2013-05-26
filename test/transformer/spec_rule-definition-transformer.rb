@@ -47,8 +47,8 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       rule.should.kind_of(Component::ActionRule)
-      rule.inputs[0].should == DataExpr.new('*.a').to_seq
-      rule.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
+      rule.condition.inputs[0].should == DataExpr.new('*.a').to_seq
+      rule.condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
       rule.body.should ==
         ActionBlock.new("        echo \"test\" > {$OUTPUT[1].NAME}\n")
     end
@@ -63,8 +63,8 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       rule.should.kind_of(Component::FlowRule)
-      rule.inputs[0].should == DataExpr.new('*.a').to_seq
-      rule.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
+      rule.condition.inputs[0].should == DataExpr.new('*.a').to_seq
+      rule.condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
       rule.body.should == FlowBlock.new(
         CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestA")),
         CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestB"))
@@ -85,13 +85,13 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       rule.should.kind_of(Component::FlowRule)
-      rule.inputs[0].should == Message.new(
+      rule.condition.inputs[0].should == Message.new(
         "except",
         DataExpr.new("*.txt").to_seq,
         DataExpr.new("summary.txt").to_seq
       )
-      rule.outputs[0].should == DataExpr.new("summary.txt").to_seq
-      rule.params.should == Parameters.new(
+      rule.condition.outputs[0].should == DataExpr.new("summary.txt").to_seq
+      rule.condition.params.should == Parameters.new(
         Variable.new("ConvertCharSet") =>
         BooleanSequence.new([PioneBoolean.true])
       )
@@ -123,8 +123,8 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       rule.should.kind_of(Component::EmptyRule)
-      rule.inputs[0].should == DataExpr.new("*.a").to_seq
-      rule.outputs[0].should == Message.new("touch", DataExpr.new("*.a").to_seq)
+      rule.condition.inputs[0].should == DataExpr.new("*.a").to_seq
+      rule.condition.outputs[0].should == Message.new("touch", DataExpr.new("*.a").to_seq)
     end
   end
 
@@ -145,13 +145,13 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       End
     STRING
       rules[0].should.kind_of(Component::ActionRule)
-      rules[0].inputs[0].should == DataExpr.new("*.a").to_seq
-      rules[0].outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
+      rules[0].condition.inputs[0].should == DataExpr.new("*.a").to_seq
+      rules[0].condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
       rules[0].body.should ==
         ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
       rules[1].should.kind_of(Component::ActionRule)
-      rules[1].inputs[0].should == DataExpr.new("*.b").to_seq
-      rules[1].outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.c').to_seq
+      rules[1].condition.inputs[0].should == DataExpr.new("*.b").to_seq
+      rules[1].condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.c').to_seq
       rules[1].body.should ==
         ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
     end

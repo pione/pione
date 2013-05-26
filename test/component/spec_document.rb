@@ -79,10 +79,10 @@ describe 'Pione::Component::Document' do
 
   it 'should have document variable bindings' do
     doc = Component::Document.parse(src)
-    doc["&main:Main"].params["X"].should == 1.to_pione.to_seq
-    doc["&main:RuleA"].params["X"].should == 1.to_pione.to_seq
-    doc["&main:RuleB"].params["X"].should == 1.to_pione.to_seq
-    doc["&main:RuleC"].params["X"].should == 1.to_pione.to_seq
+    doc["&main:Main"].condition.params["X"].should == 1.to_pione.to_seq
+    doc["&main:RuleA"].condition.params["X"].should == 1.to_pione.to_seq
+    doc["&main:RuleB"].condition.params["X"].should == 1.to_pione.to_seq
+    doc["&main:RuleC"].condition.params["X"].should == 1.to_pione.to_seq
   end
 
   it 'should raise variable binding error' do

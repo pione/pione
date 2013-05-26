@@ -43,11 +43,11 @@ module Pione
         end.to_params
 
         # set document parameters into rules
-        rules.each {|rule| rule.params.merge!(params)}
+        rules.each {|rule| rule.condition.params.merge!(params)}
 
         # make rule table
         table = rules.inject({}) do |tbl, rule|
-          tbl.tap{|x| x[rule.rule_path] = rule}
+          tbl.tap{|x| x[rule.path] = rule}
         end
         return new(table, params)
       end
@@ -67,7 +67,7 @@ module Pione
       #   rule path
       # @return [Pione::Model::Rule]
       def [](name)
-        @rules[name].params.merge!(@params)
+        @rules[name].condition.params.merge!(@params)
         @rules[name]
       end
 
@@ -75,7 +75,7 @@ module Pione
       # @return [Rule]
       #   main rule of main package
       def main
-        @rules["&main:Main"].params.merge!(@params)
+        @rules["&main:Main"].condition.params.merge!(@params)
         @rules["&main:Main"]
       end
 

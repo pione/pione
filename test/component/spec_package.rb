@@ -39,7 +39,7 @@ describe "Pione::Component::Package" do
   end
 
   it "should get a main rule" do
-    @package.main.rule_path.should == "&TestPackage:Main"
+    @package.main.path.should == "&TestPackage:Main"
   end
 
   it "should upload package files" do

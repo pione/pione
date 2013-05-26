@@ -147,7 +147,7 @@ module Pione
       #   rule for processing the task
       # @return [Array<Task,RuleHandler,Array<Data>>]
       def transit_to_task_executing(task, rule)
-        debug_message_begin("Start Task Execution #{rule.rule_path} by worker(#{uuid})")
+        debug_message_begin("Start Task Execution #{rule.path} by worker(#{uuid})")
 
         handler = rule.make_handler(
           tuple_space_server,
@@ -209,7 +209,7 @@ module Pione
         # remove the working tuple
         take!(Tuple[:working].new(task.domain, nil))
 
-        debug_message_end "End Task Execution #{rule.rule_path} by worker(#{uuid})"
+        debug_message_end "End Task Execution #{rule.path} by worker(#{uuid})"
 
         return task, rule, handler, @__result_task_execution__
       end

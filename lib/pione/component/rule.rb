@@ -1,72 +1,27 @@
 module Pione
   module Component
     # RuleCondition represents rule condition.
-    class RuleCondition < PioneObject
-      # @return [Array<DataExpr, Array<DataExpr>>]
-      #   input data condition
-      attr_reader :inputs
+    class RuleCondition < StructX
+      include Util::VariableHoldable
 
-      # @return [Array<DataExpr, Array<DataExpr>>]
-      #   output data condition
-      attr_reader :outputs
+      member :inputs, default: []
+      member :outputs, default: []
+      member :params, default: Model::Parameters.empty
+      member :features, default: Model::Feature.empty
+      member :constraints, default: Model::Constraints.empty
+      member :input_ticket_expr, default: Model::TicketExprSequence.empty
+      member :output_ticket_expr, default: Model::TicketExprSequence.empty
 
-      forward_as_key! :@condition, :params, :features, :constraints, :input_ticket_expr, :output_ticket_expr
-
-      # Create a rule condition.
-      #
-      # @param inputs [Array<DataExpr>]
-      #   input conditions
-      # @param outputs [Array<DataExpr>]
-      #   output conditions
-      # @param condition [Hash]
-      # @option condition [Parameters] params
-      #   rule parameters
-      # @option condition [Feature] features
-      #   rule features
-      # @option condition [TicketExpr] input_ticket_expr
-      #   input ticket
-      # @option condition [TicketExpr] output_ticket_expr
-      #   output ticket
-      def initialize(inputs, outputs, condition={})
-        @inputs = inputs
-        @outputs = outputs
-        @condition = {}
-        @condition[:params] = condition[:params] || Model::Parameters.empty
-        @condition[:features] = condition[:features] || Model::Feature.empty
-        @condition[:constraints] = condition[:constraints] || Model::Constraints.empty
-        @condition[:input_ticket_expr] = condition[:input_ticket_expr] || Model::TicketExprSequence.empty
-        @condition[:output_ticket_expr] = condition[:output_ticket_expr] || Model::TicketExprSequence.empty
-        super()
-      end
-
-      # Return true if the condition includes variable.
-      #
-      # @return [Boolean]
-      #   true if the condition includes variable, or false
-      def include_variable?
-        return true if @inputs.any? {|input| input.include_variable?}
-        return true if @outputs.any? {|output| output.include_variable?}
-        return true if @condition.any? {|key, val| val.include_variable?}
-        return false
-      end
-
-      def to_hash
-        @condition.merge(inputs: @inputs, outputs: @outputs)
-      end
-
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        to_hash == other.to_hash
-      end
-      alias :eql? :"=="
-
-      def hash
-        @inputs.hash + @outputs.hash + @condition.hash
-      end
+      hold_variables members
     end
 
     # Rule is a class for PIONE rule model.
     class Rule < PioneObject
+      include SimpleIdentity
+      include Util::VariableHoldable
+
+      hold_variables :rule_expr, :condition, :body
+
       class << self
         attr_reader :rule_type
         attr_reader :handler_class
@@ -90,46 +45,28 @@ module Pione
         end
       end
 
-      # @return [Model::RuleExpr]
-      #   rule expression
-      attr_reader :rule_expr
-
-      # @return [RuleCondition]
-      #   rule condition
-      attr_reader :condition
-
-      # @return [Object]
-      #   rule body
-      attr_reader :body
-
-      forward! :@condition, :inputs, :outputs, :params, :features, :constraints
-      forward! :@condition, :input_ticket_expr, :output_ticket_expr
       forward! :class, :rule_type, :handler_class
-      forward! :@rule_expr, :rule_path, :package_expr
+
+      attr_reader :package_name
+      attr_reader :name
+      attr_reader :condition
+      attr_reader :body
 
       # Create a rule.
       #
-      # @param rule_expr [Model::RuleExpr]
-      #   rule expression
+      # @param package_name [String]
+      #   package name
+      # @param name [String]
+      #   rule name
       # @param condition [RuleCondition]
       #   rule condition
       # @param [Block] body
       #   rule body block
-      def initialize(rule_expr, condition, body)
-        @rule_expr = rule_expr
+      def initialize(package_name, name, condition, body)
+        @package_name = package_name
+        @name = name
         @condition = condition
         @body = body
-      end
-
-      # Return true if expression, condition, or body include variables.
-      #
-      # @return [Boolean]
-      #   true if expression, condition, or body include variables
-      def include_variable?
-        return true if @rule_expr.include_variable?
-        return true if @condition.include_variable?
-        return true if @body.include_variable?
-        return false
       end
 
       # Return true if this is a kind of action rule.
@@ -148,6 +85,10 @@ module Pione
         rule_type == :flow
       end
 
+      def path
+        "&%s:%s" % [@package_name, @name]
+      end
+
       # Make a task handler object for the rule.
       #
       # @param ts_server [TupleSpaceServer]
@@ -163,22 +104,6 @@ module Pione
       def make_handler(ts_server, inputs, params, call_stack, opts={})
         handler_class.new(ts_server, self, inputs, params, call_stack, opts)
       end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        return false unless @rule_expr == other.rule_expr
-        return false unless @condition == other.condition
-        return false unless @body == other.body
-        return true
-      end
-
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @rule_expr.hash + @condition.hash + @body.hash
-      end
     end
 
     # ActionRule is a rule that have some actions. This rule makes data
@@ -188,8 +113,7 @@ module Pione
       set_handler_class RuleHandler::ActionHandler
     end
 
-    # FlowRule is a rule that have flow elements. This rule makes flows of PIONE
-    # processing.
+    # FlowRule is a rule that have flow elements. This rule makes processing flow.
     class FlowRule < Rule
       set_rule_type :flow
       set_handler_class RuleHandler::FlowHandler
@@ -216,11 +140,11 @@ module Pione
       INPUT_DOMAIN = 'input'
 
       # root domain has no digest and no package
-      ROOT_DOMAIN = 'root'
+      ROOT_DOMAIN = 'Root'
 
       attr_reader :main
 
-      # Make a rule.
+      # Make a root rule.
       #
       # @param main [Rule]
       #   main rule
@@ -229,36 +153,27 @@ module Pione
       def initialize(main, params=Parameters.empty)
         @main = main
         @params = params
-        super(
-          Model::RuleExpr.new(PackageExpr.new("root"), "Root"),
-          RuleCondition.new(@main.inputs, @main.outputs),
-          FlowBlock.new(CallRule.new(@main.rule_expr.set_params(@params)))
-        )
         @domain = ROOT_DOMAIN
+        rule_expr = RuleExpr.new(PackageExpr.new(main.package_name), main.name)
+        condition = RuleCondition.new(@main.condition.inputs, @main.condition.outputs)
+        block = FlowBlock.new(CallRule.new(rule_expr.set_params(@params)))
+        super("Root", "Root", condition, block)
       end
 
-      # @api private
       def make_handler(ts_server)
         # build parameter
-        params = @main.params.merge(@params)
+        params = @main.condition.params.merge(@params)
 
         # find inputs
         finder = DataFinder.new(ts_server, INPUT_DOMAIN)
-        results = finder.find(:input, inputs, params.as_variable_table)
-        if results.empty? and not(@main.inputs.empty?)
+        results = finder.find(:input, @main.condition.inputs, params.as_variable_table)
+        if results.empty? and not(@main.condition.inputs.empty?)
           return nil
         end
-        inputs = @main.inputs.empty? ? [] : results.first.combination
+        inputs = @main.condition.inputs.empty? ? [] : results.first.combination
 
         # make handler
-        handler_class.new(
-          ts_server,
-          self,
-          inputs,
-          params,
-          [],
-          {:domain => @domain}
-        )
+        handler_class.new(ts_server, self, inputs, params, [], domain: @domain)
       end
     end
 
@@ -275,17 +190,14 @@ module Pione
       # @param [Proc] b
       #   rule process
       def initialize(name, &b)
-        expr = Model::RuleExpr.new(Model::PackageExpr.new('system'), name)
         condition = RuleCondition.new([Model::DataExpr.new('*').to_seq.set_all], [])
-        super(expr, condition, b)
+        super('System', name, condition, b)
       end
     end
 
     # &System:Terminate rule
     SYSTEM_TERMINATE = SystemRule.new('Terminate') do |tuple_space_server|
-      user_message "!!!!!!!!!!!!!!!!!"
-      user_message "!!! Terminate !!!"
-      user_message "!!!!!!!!!!!!!!!!!"
+      user_message "!!! Terminate processing !!!"
       tuple_space_server.write(Tuple[:command].new("terminate"))
     end
 
