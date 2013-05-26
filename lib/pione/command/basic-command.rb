@@ -276,7 +276,7 @@ module Pione
             begin
               receiver.instance_eval(&proc)
             rescue Object => e
-              p e
+              Util::ErrorReport.print e
             end
           end
         end
