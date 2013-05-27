@@ -23,6 +23,7 @@ require 'time'
 require 'etc'
 require 'json'
 require 'rexml/document'
+require 'logger'
 
 require 'uuidtools'
 require 'parslet'

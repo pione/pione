@@ -206,6 +206,13 @@ module Pione
       end
 
       #
+      # system log
+      #
+      define_item(:system_logger, true) do
+        Log::StandardSystemLogger.new(STDOUT)
+      end
+
+      #
       # pione-client
       #
 
