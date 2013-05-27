@@ -39,6 +39,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "rainbow", "~> 1.1.4"
   gem.add_dependency "sys-cpu", "~> 0.7.1"
   gem.add_dependency "structx", "~> 0.1.0"
+  gem.add_dependency "syslog-logger", "~> 1.6.8"
 
   # for locations
   gem.add_dependency "dropbox-sdk", "~> 1.5.1"

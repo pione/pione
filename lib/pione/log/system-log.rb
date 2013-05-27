@@ -98,21 +98,10 @@ module Pione
       end
     end
 
-    # class SyslogSystemLogger
-    #   forward @fatal, :fatal, :call
-    #   forward @error, :error, :call
-    #   forward @warn, :warn, :call
-    #   forward @info, :info, :call
-    #   forward @debug, :debug, :call
-
-    #   def initialize
-    #     @logger = Proc.new{|level, msg| Syslog.open("pione") {|syslog| syslog.log(pri, msg)} }.curry
-    #     @fatal = @logger.call(Syslog::LOG_ALERT)
-    #     @error = @logger.call(Syslog::LOG_ERR)
-    #     @warn = @logger.call(Syslog::LOG_WARNING)
-    #     @info = @logger.call(Syslog::LOG_INFO)
-    #     @debug = @logger.call(Sysmlog::LOG_DEBUG)
-    #   end
-    # end
+    class SyslogSystemLogger < StandardSystemLogger
+      def initialize
+        @logger = Logger::Syslog.new('pione')
+      end
+    end
   end
 end
