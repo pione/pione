@@ -266,10 +266,12 @@ module Pione
             package = Component::PackageReader.new(location).read
             package.upload(option[:output_location] + "package")
             if option[:rehearse]
-              if scenario = package.find_scenario(option[:rehearse])
-                option[:input_location] = scenario.input
-              else
-                abort "the scenario not found: %s" % option[:rehearse]
+              unless package.scenarios.empty?
+                if scenario = package.find_scenario(option[:rehearse])
+                  option[:input_location] = scenario.input
+                else
+                  abort "the scenario not found: %s" % option[:rehearse]
+                end
               end
             end
             @document = package

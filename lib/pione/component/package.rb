@@ -166,9 +166,13 @@ module Pione
         if (@location + "scenario" + "scenario.yml").exist?
           [PackageScenarioReader.read(@location + "scenario")]
         else
-          (@location + "scenario").entries.map do |scenario|
-            PackageScenarioReader.read(scenario)
-          end.compact
+          if (@location + "scenario").exist? and (@location + "scenario").directory?
+            (@location + "scenario").entries.map do |scenario|
+              PackageScenarioReader.read(scenario)
+            end.compact
+          else
+            []
+          end
         end
       end
 
