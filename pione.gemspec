@@ -27,22 +27,22 @@ Gem::Specification.new do |gem|
 
   # requisite for system
   gem.add_dependency "parslet", "~> 1.5.0"
-  gem.add_dependency "uuidtools", "~> 2.1.3"
+  gem.add_dependency "uuidtools", "~> 2.1.4"
   gem.add_dependency "highline", "~> 1.6.15"
-  gem.add_dependency "hamster", "~> 0.4"
-  gem.add_dependency "naming"
+  gem.add_dependency "hamster", "~> 0.4.3"
+  gem.add_dependency "naming", "~> 0.0.2"
   gem.add_dependency "forwardablex", "~> 0.1.4"
-  gem.add_dependency "temppath"
-  gem.add_dependency "ruby-xes", "~> 0.1"
-  gem.add_dependency "sys-uname"
+  gem.add_dependency "temppath", "~> 0.1.1"
+  gem.add_dependency "ruby-xes", "~> 0.1.0"
+  gem.add_dependency "sys-uname", "~> 0.9.2"
   gem.add_dependency "simple-identity", "~> 0.1.1"
-  gem.add_dependency "rainbow"
-  gem.add_dependency "sys-cpu"
-  gem.add_dependency "structx"
+  gem.add_dependency "rainbow", "~> 1.1.4"
+  gem.add_dependency "sys-cpu", "~> 0.7.1"
+  gem.add_dependency "structx", "~> 0.1.0"
 
   # for locations
-  gem.add_dependency "dropbox-sdk"
-  gem.add_dependency "em-ftpd"
+  gem.add_dependency "dropbox-sdk", "~> 1.5.1"
+  gem.add_dependency "em-ftpd", "~> 0.0.1"
 
   # test framework
   gem.add_development_dependency "bacon", "~> 1.2.0"
