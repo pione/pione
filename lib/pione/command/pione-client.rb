@@ -223,19 +223,22 @@ module Pione
       end
 
       terminate do
-        Global.monitor.synchronize do
-          # kill the thread for starting tuple space provider
-          if @start_tuple_space_provider_thread
-            if @start_tuple_space_provider_thread.alive?
-              @start_tuple_space_provider_thread.kill
+        if @terminated
+          @terminated = true
+          Global.monitor.synchronize do
+            # kill the thread for starting tuple space provider
+            if @start_tuple_space_provider_thread
+              if @start_tuple_space_provider_thread.alive?
+                @start_tuple_space_provider_thread.kill
+              end
             end
-          end
 
-          @logger.terminate
+            @logger.terminate
 
-          # terminate tuple space provider
-          if @tuple_space_provider
-            @tuple_space_provider.terminate
+            # terminate tuple space provider
+            if @tuple_space_provider
+              @tuple_space_provider.terminate
+            end
           end
         end
       end

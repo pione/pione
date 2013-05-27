@@ -129,8 +129,11 @@ BANNER
             @terminated = true
 
             super
-          rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
-            # ignore
+          rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
+            ErrorReport.warn("Disconnected in termination process of task worker agent.", self, e, __FILE__, __LINE__)
+          rescue ThreadError => e
+            # tuple space may be closed
+            ErrorReport.warn("Failed in termination process of task worker agent.", self, e, __FILE__, __LINE__)
           end
         end
       end

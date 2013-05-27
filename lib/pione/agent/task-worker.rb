@@ -126,6 +126,10 @@ module Pione
           raise Restart.new
         end
         return task
+      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
+        # tuple space may be closed
+        ErrorReport.warn("Disconnected in task wainting of task worker agent.", self, e, __FILE__, __LINE__)
+        terminate
       end
 
       # Transition method for the state +rule_loading+.
