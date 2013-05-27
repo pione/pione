@@ -163,6 +163,7 @@ module Pione
   include Parser
   include Transformer
 
+  module_function :debug_mode
   module_function :debug_mode=
   module_function :debug_mode?
 end

@@ -6,9 +6,13 @@ module Pione
       define_info do
         set_name "pione-task-worker"
         set_tail {|cmd|
-          "{Front: %s, ParentFront: %s}" % [
-            Global.front.uri, cmd.option[:no_parent_mode] ? "nil" : cmd.option[:parent_front].uri
-          ]
+          begin
+            "{Front: %s, ParentFront: %s}" % [
+              Global.front.uri, cmd.option[:no_parent_mode] ? "nil" : cmd.option[:parent_front].uri
+            ]
+          rescue => e
+            Util::ErrorReport.warn("faild to get command line options.", self, e, __FILE__, __LINE__)
+          end
         }
         set_banner <<BANNER
 Run task worker process. This command is launched by other processes like
@@ -66,21 +70,27 @@ BANNER
       end
 
       prepare do
-        @tuple_space_server = option[:parent_front].get_tuple_space_server(option[:connection_id])
-        @agent = Pione::Agent[:task_worker].new(@tuple_space_server, option[:features])
-        @command_listener = Pione::Agent[:command_listener].new(@tuple_space_server, self)
+        begin
+          @tuple_space_server = option[:parent_front].get_tuple_space_server(option[:connection_id])
+          @agent = Pione::Agent[:task_worker].new(@tuple_space_server, option[:features])
+          @command_listener = Pione::Agent[:command_listener].new(@tuple_space_server, self)
 
-        # connect caller front
-        option[:parent_front].add_task_worker_front(Global.front, option[:connection_id])
+          # connect caller front
+          option[:parent_front].add_task_worker_front(Global.front, option[:connection_id])
 
-        abort("pione-task-worker error: no tuple space server") unless @tuple_space_server
+          abort("pione-task-worker error: no tuple space server") unless @tuple_space_server
 
-        # get base uri
-        if @tuple_space_server.base_location.kind_of?(Location::DropboxLocation)
-          Location::Dropbox.init(@tuple_space_server)
-          unless Location::Dropbox.ready?
+          # get base uri
+          if @tuple_space_server.base_location.kind_of?(Location::DropboxLocation)
+            Location::Dropbox.init(@tuple_space_server)
+            unless Location::Dropbox.ready?
             abort("You aren't ready to access Dropbox.")
+            end
           end
+        rescue => e
+          msg = "Exception raised in preparing task-worker, go termination process."
+          Util::ErrorReport.warn(msg, self, e, __FILE__, __LINE__)
+          call_terminations
         end
       end
 
@@ -101,11 +111,15 @@ BANNER
         Global.monitor.synchronize do
           begin
             return if @terminated
-            @agent.terminate
 
-            while true
-              break if @agent.terminated? and @agent.running_thread.stop?
-              sleep 1
+            # terminate the agent
+            if @agent
+              @agent.terminate
+
+              while true
+                break if @agent.terminated? and @agent.running_thread and @agent.running_thread.stop?
+                sleep 1
+              end
             end
 
             # disconnect parent front

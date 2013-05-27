@@ -44,12 +44,23 @@ module Pione
 
       # Record process_log tuples.
       def transit_to_record
-        write_records(take_all(Tuple[:process_log].any))
+        begin
+          write_records(take_all(Tuple[:process_log].any))
+        rescue => e
+          # logger is terminated at last in termination processes, so tuple space may be closed
+          ErrorReport.warn("Failed to take process logs.", self, e, __FILE__, __LINE__)
+          terminate
+        end
       end
 
       # Copy from output to log when log and output are different.
       def transit_to_terminated
-        write_records(take_all!(Tuple[:process_log].any))
+        begin
+          write_records(take_all!(Tuple[:process_log].any))
+        rescue => e
+          # logger is terminated at last in termination processes, so tuple space may be closed
+          ErrorReport.warn("Failed to take process logs.", self, e, __FILE__, __LINE__)
+        end
         if @log_location != @output_location
           @output_location.copy(@log_location)
         end
