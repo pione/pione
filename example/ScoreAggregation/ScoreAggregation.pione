@@ -27,7 +27,7 @@ Rule PersonalPreStatistics
   output '{$*}.pre-stat.md'
   output '{$*}.mean'
 Action
-  ruby {$_.bin}/personal-pre-statistics.rb
+  personal-pre-statistics.rb
 End
 
 Rule PersonalStatistics
@@ -42,7 +42,7 @@ Rule PersonalBarGraph
   input '*.score'
   output '{$*}_bar-graph.png'
 Action
-  gnuplot -e 'name = "{$*}"; out = "{$O[1]}"; data = "{$I[1]}";' {$_.bin}/personal-bar-graph.plt
+  personal-bar-graph.plt
 End
 
 #
@@ -53,7 +53,7 @@ Rule TotalMean
   input '*.mean'.all
   output 'total.mean'
 Action
-  ruby {$_.bin}/total-mean.rb > {$O[1]}
+  total-mean.rb > {$O[1]}
 End
 
 Rule TotalStatistics
@@ -63,7 +63,7 @@ Rule TotalStatistics
   output '*.dev'.all
   output 'total.stat.md'
 Action
-  ruby {$_.bin}/total-statistics.rb
+  total-statistics.rb
 End
 
 #
@@ -82,14 +82,14 @@ Rule MeanSummary
   input '*.mean'.all
   output 'total.histgram'
 Action
-  ruby {$_.bin}/mean-summary.rb > {$O[1]}
+  mean-summary.rb > {$O[1]}
 End
 
 Rule HistgramGraph
   input 'total.histgram'
   output 'histgram.png'
 Action
-  gnuplot -e 'data = "{$I[1]}"; out = "{$O[1]}";' {$_.bin}/histgram-graph.plt
+  histgram-graph.sh
 End
 
 #
@@ -117,6 +117,6 @@ Rule ApplyTemplate
   input 'stat-template.erb'
   output '{$*}.html'
 Action
-  ruby {$_.bin}/apply-template.rb {$*} {$I[1]} {$I[2]} > {$O[1]}
+  apply-template.rb > {$O[1]}
 End
 

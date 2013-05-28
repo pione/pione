@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 
-require 'erb'
+require "pione"
+require "erb"
 
-title, md, template = ARGV
-content = File.read(md)
+title    = Pione.eval "$*"
+content  = Location[Pione.eval("$I[1]")].read
+template = Pione.eval "$I[2]"
 
 puts ERB.new(File.read(template)).result(binding)
