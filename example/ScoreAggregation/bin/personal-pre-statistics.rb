@@ -1,13 +1,18 @@
 #!/usr/bin/env ruby
 
-name, score_f, pre_stat_f, mean_f = ARGV
+require 'pione'
 
+# infos
+name    = Pione.eval "$*"
+score_f = Pione.eval "$I[1]"
+
+# calc stat
 scores = File.readlines(score_f).map{|line| line.split(" ")[1].to_i}
-mean = scores.reduce(:+).to_f / scores.size
-sd = Math.sqrt(scores.map{|i| (mean-i) ** 2}.reduce(:+) / scores.size)
+mean   = scores.reduce(:+).to_f / scores.size
+sd     = Math.sqrt(scores.map{|i| (mean-i) ** 2}.reduce(:+) / scores.size)
 
-File.open(pre_stat_f, "w") do |file|
-  file.write <<TXT
+# build report
+report = <<TXT
 # Statistics of #{name}
 
 ## Scores
@@ -26,6 +31,7 @@ File.open(pre_stat_f, "w") do |file|
 | Mean  | #{mean}                  |
 | SD    | #{sd}                    |
 TXT
-end
 
-File.open(mean_f, "w") {|file| file.write mean}
+# output
+Pione::Location[Pione.eval("$O[1]")].write(report)
+Pione::Location[Pione.eval("$O[2]")].write(mean)

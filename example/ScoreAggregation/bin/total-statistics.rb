@@ -1,27 +1,31 @@
 #!/usr/bin/env ruby
 
-name_list, scores_f, means_f, total_mean_f, total_stat_f = ARGV
+require "pione"
 
-total_mean = File.read(total_mean_f).chomp.to_f
-means = means_f.split(":").map{|file| File.read(file).chomp.to_f}
+name_list = Pione.eval "$*"
+scores_f  = Pione.eval "$I[1]"
+means_f   = Pione.eval "$I[2]"
+
+total_mean = Pione::Location[Pione.eval("$I[3]")].read.to_f
+
+means    = means_f.split(":").map{|file| File.read(file).to_f}
 total_sd = Math.sqrt(means.map{|mean| (total_mean-mean) ** 2}.reduce(:+) / means.size)
-names = name_list.split(":").sort
+names    = name_list.split(":").sort
 
 devs = names.inject({}) do |tbl, name|
-  mean = File.read(name + ".mean").chomp.to_i
+  mean = Pione::Location["%s.mean" % name].read.to_i
   dev = 50 + 10 * (mean - total_mean) / total_sd
-  File.open(name + ".dev", "w") {|file| file.write dev}
+  Pione::Location["%s.dev" % name].write(dev)
   tbl.tap {|x| x[name] = dev}
 end
 
 lines = names.map do |name|
   scores = File.readlines("%s.score" % name).map{|line| line.split(" ")[1].to_i}
-  mean = File.read("%s.mean" % name).chomp.to_f
+  mean = Pione::Location["%s.mean" % name].read.to_f
   [name, scores, mean, devs[name]].flatten.join(" | ")
 end
 
-File.open(total_stat_f, "w") do |file|
-  file.write <<TXT
+report = <<TXT
 # Total Statistics
 
 ## Histgram
@@ -34,5 +38,6 @@ File.open(total_stat_f, "w") do |file|
 |------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|------|-----------|
 #{lines.map{|line| "| %s |" % line}.join("\n")}
 TXT
-end
+
+Pione::Location[Pione.eval("$O[2]")].write(report)
 

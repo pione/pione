@@ -27,7 +27,7 @@ Rule PersonalPreStatistics
   output '{$*}.pre-stat.md'
   output '{$*}.mean'
 Action
-  ruby {$_.bin}/personal-pre-statistics.rb {$*} {$I[1]} {$O[1]} {$O[2]}
+  ruby {$_.bin}/personal-pre-statistics.rb
 End
 
 Rule PersonalStatistics
@@ -53,7 +53,7 @@ Rule TotalMean
   input '*.mean'.all
   output 'total.mean'
 Action
-  ruby {$_.bin}/total-mean.rb {$I[1]} > {$O[1]}
+  ruby {$_.bin}/total-mean.rb > {$O[1]}
 End
 
 Rule TotalStatistics
@@ -63,7 +63,7 @@ Rule TotalStatistics
   output '*.dev'.all
   output 'total.stat.md'
 Action
-  ruby {$_.bin}/total-statistics.rb {$*} {$I[1]} {$I[2]} {$I[3]} {$O[2]}
+  ruby {$_.bin}/total-statistics.rb
 End
 
 #
@@ -82,7 +82,7 @@ Rule MeanSummary
   input '*.mean'.all
   output 'total.histgram'
 Action
-  ruby {$_.bin}/mean-summary.rb {$I[1]} > {$O[1]}
+  ruby {$_.bin}/mean-summary.rb > {$O[1]}
 End
 
 Rule HistgramGraph
