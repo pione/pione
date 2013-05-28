@@ -17,9 +17,9 @@ class FakeHandler < RuleHandler::BasicHandler
   end
 end
 
-describe 'Pione::Log::DomainInfo' do
+describe 'Pione::Log::DomainLog' do
   before do
-    @info = Log::DomainInfo.new(FakeHandler.new)
+    @info = Log::DomainLog.new(FakeHandler.new)
   end
 
   it 'should get domain location' do
@@ -28,7 +28,7 @@ describe 'Pione::Log::DomainInfo' do
 
   it 'should create a domain information file' do
     @info.save
-    (FakeHandler::DOMAIN_LOCATION + Log::DomainInfo::FILENAME).should.exist
+    (FakeHandler::DOMAIN_LOCATION + Log::DomainLog::FILENAME).should.exist
   end
 
   it 'should get record' do

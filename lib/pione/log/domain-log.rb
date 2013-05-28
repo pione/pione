@@ -1,10 +1,10 @@
 module Pione
   module Log
-    # DomainInfo is a domain log that records domain inputs and parameters.
-    class DomainInfo
+    # DomainLog is a domain log that records domain inputs and parameters.
+    class DomainLog
       include Sys # for Uname
 
-      FILENAME = ".domain_info"
+      FILENAME = ".domain.log"
 
       forward_as_key! :@record, :system_name, :system_nodename, :system_machine, :system_version, :system_release
 

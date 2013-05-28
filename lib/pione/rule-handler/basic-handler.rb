@@ -129,15 +129,14 @@ module Pione
           debug_message("%s:%s" % [i, domain], 1)
         end
 
-        # save rule condition informations
-        save_rule_condition_infos
+        # save domain log
+        Log::DomainLog.new(self).save
 
         # execute the rule
         outputs = execute
 
         # show output list
         debug_message("%s Rule %s Result:" % [name, handler_digest])
-
         @outputs.compact.each_with_index do |output, i|
           if output.kind_of?(Array)
             output.each_with_index do |o, ii|
@@ -187,8 +186,7 @@ module Pione
       # Save domain information file.
       #
       # @return [void]
-      def save_rule_condition_infos
-        Log::DomainInfo.new(self).save
+      def save_domain_log
       end
 
       # Executes the rule.
