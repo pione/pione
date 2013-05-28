@@ -133,11 +133,25 @@ module Pione
         System::FileCache.cached?(self)
       end
 
-      # Creates a location.
+      # Write a data into the location.
       #
       # @param data [String]
       #   data content
-      # @return[void]
+      # @return [void]
+      def write(data)
+        if exist?
+          update(data)
+        else
+          create(data)
+        end
+      end
+
+      # Creates a file at the location. If a file exists at the location aleady,
+      # it raises an exception.
+      #
+      # @param data [String]
+      #   data content
+      # @return [void]
       def create(data)
         raise NotImplementedError
       end

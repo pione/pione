@@ -65,19 +65,9 @@ require 'pione/uri-scheme/dropbox-scheme'
 require 'pione/uri-scheme/broadcast-scheme'
 require 'pione/uri-scheme/myftp-scheme'
 
-# location
 require 'pione/location'
-
-# log
 require 'pione/log'
-
-# system
-require 'pione/system/object'
-require 'pione/system/common'
-require 'pione/system/config'
-require 'pione/system/global'
-require 'pione/system/init'
-require 'pione/system/file-cache'
+require 'pione/system'
 
 Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
 Pione.module_exec {const_set(:Global, Pione::System::Global)}
@@ -164,6 +154,8 @@ module Pione
   include TupleSpace
   include Parser
   include Transformer
+
+  extend Util::Evaluatable
 
   module_function :debug_mode
   module_function :debug_mode=

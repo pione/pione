@@ -132,6 +132,11 @@ module Pione
         # save domain log
         Log::DomainLog.new(self).save
 
+        # save domain info
+        domain_info_location = @domain_location
+        domain_info_location = @working_directory if @working_directory
+        System::DomainInfo.new(@variable_table).write(domain_info_location)
+
         # execute the rule
         outputs = execute
 

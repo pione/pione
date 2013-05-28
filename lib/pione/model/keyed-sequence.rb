@@ -141,6 +141,10 @@ module Pione
           rec.elements[index_elt]
         end.flatten.tap{|x| break rec.ordinal_sequence_of_element(x.first).new(x, rec.attribute)}
       end
+
+      define_pione_method("textize", [], TypeString) do |vtable, rec|
+        rec.call_pione_method(vtable, "values").call_pione_method(vtable, "textize")
+      end
     end
   end
 end

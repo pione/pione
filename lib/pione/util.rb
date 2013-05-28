@@ -14,3 +14,5 @@ require 'pione/util/ftp-server'
 require 'pione/util/ip-address'
 require 'pione/util/cpu'
 require 'pione/util/variable-holdable'
+require 'pione/util/evaluatable'
+
