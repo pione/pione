@@ -63,6 +63,18 @@ module Pione
             raise RuleExecutionError.new(self)
           end
         end
+
+        # FIXME: should not copy bin files in the package each time.
+        bin = @base_location + "package" + @rule.package_name + "bin"
+        if bin.exist?
+          bin.entries.each do |entry|
+            dest = @working_directory + "bin" + entry.basename
+            unless dest.exist?
+              entry.copy(dest)
+              dest.path.chmod(0700)
+            end
+          end
+        end
       end
 
       # Write the action into a shell script.
@@ -86,7 +98,7 @@ module Pione
 
         # message
         lines = @rule.body.eval(@variable_table).content.split("\n")
-        user_message(["-"*60, lines, "-"*60], 0, "SH")
+        user_message(["-"*60, lines, "-"*60].flatten, 0, "SH")
 
         return b.call(file.path)
       end
@@ -103,7 +115,7 @@ module Pione
         err = ".stderr"
 
         # execute command
-        `cd #{@working_directory.path}; ./#{scriptname} > #{out} 2> #{err}`
+        `cd #{@working_directory.path}; PATH=./bin/:$PATH ; ./#{scriptname} > #{out} 2> #{err}`
 
         # delete unneeded files
         if stdout.nil? and (@working_directory + out).size == 0
@@ -170,12 +182,13 @@ module Pione
         end.tap {|x| (@working_directory + ".pione-env").create(x.join("\n"))}
       end
 
-      # Write resources for other intermediate files.
+      # Move other intermediate files to the domain location.
       #
       # @return [void]
       def write_other_resources
         @working_directory.file_entries.each do |entry|
-          entry.move(make_location(entry.path.basename, @domain))
+          location = make_location(entry.path.basename, @domain)
+          entry.move(location)
         end
       end
 

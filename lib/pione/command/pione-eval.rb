@@ -28,7 +28,8 @@ module Pione
 
         begin
           # evaluate it and print the result
-          print Pione.eval(str, domain_info)
+          $stdout.puts Pione.eval(str, domain_info)
+          exit
         rescue => e
           abort("error: %s" % e)
         end
