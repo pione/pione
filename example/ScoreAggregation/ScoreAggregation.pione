@@ -42,7 +42,7 @@ Rule PersonalBarGraph
   input '*.score'
   output '{$*}_bar-graph.png'
 Action
-  personal-bar-graph.plt
+  personal-bar-graph.sh
 End
 
 #

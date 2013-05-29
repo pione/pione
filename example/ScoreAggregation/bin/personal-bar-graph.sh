@@ -12,7 +12,7 @@ set xrange [-1:16]
 set yrange [0:100]
 
 set terminal png
-set output $OUT
+set output "$OUT"
 
-plot $DATA using 0:2:xtic(1) with boxes notitle
+plot "$DATA" using 0:2:xtic(1) with boxes notitle
 EOF
