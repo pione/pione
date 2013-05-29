@@ -88,7 +88,7 @@ module Pione
         raise NotFound.new(self) unless exist?
         if dest.kind_of?(LocalLocation)
           dest.path.dirname.mkpath unless dest.path.dirname.exist?
-          FileUtils.mv(@path, dest.path)
+          FileUtils.mv(@path, dest.path, force: true)
         else
           copy(dest)
           delete
