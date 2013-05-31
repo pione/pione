@@ -3,7 +3,7 @@ module Pione
     # Evaluatable is a module for providing to ability to evaluate PIONE
     # expression string.
     module Evaluatable
-      # Evaluate the string as a PIONE expression and return PIONE model object.
+      # Evaluate the string as a PIONE expression and get the result value as model object.
       #
       # @param str [String]
       #   a PIONE expression string
@@ -11,13 +11,13 @@ module Pione
       #   domain info
       # @return [BasicModel]
       #   the result of evaluation
-      def eval!(str, domain_info=nil)
+      def val!(str, domain_info=nil)
         domain_info = load_domain_info unless domain_info
         vtable = domain_info.variable_table
         DocumentTransformer.new.apply(DocumentParser.new.expr.parse(str)).eval(vtable)
       end
 
-      # Evaluate the string as a PIONE expression and return the result as a textized string.
+      # Evaluate the string as a PIONE expression and get the result value as a textized string.
       #
       # @param str [String]
       #   a PIONE expression string
@@ -25,10 +25,10 @@ module Pione
       #   domain info
       # @return [String]
       #   the result of evaluation as an embeddable string
-      def eval(str, domain_info=nil)
+      def val(str, domain_info=nil)
         domain_info = load_domain_info unless domain_info
         vtable = domain_info.variable_table
-        eval!(str, domain_info).call_pione_method(vtable, "textize").first.value
+        val!(str, domain_info).call_pione_method(vtable, "textize").first.value
       end
 
       private

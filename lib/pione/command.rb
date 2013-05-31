@@ -19,5 +19,5 @@ require 'pione/command/pione-relay-account-db'
 require 'pione/command/pione-clean'
 require 'pione/command/pione-syntax-checker'
 require 'pione/command/pione-log'
-require 'pione/command/pione-eval'
+require 'pione/command/pione-val'
 

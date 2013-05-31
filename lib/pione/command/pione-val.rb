@@ -4,8 +4,8 @@ module Pione
     # PIONE document.
     class PioneEval < BasicCommand
       define_info do
-        set_name "pione-eval"
-        set_banner "Evaluate the string as PIONE expression."
+        set_name "pione-val"
+        set_banner "Get the evaluation result value of the PIONE expression."
       end
 
       define_option do
@@ -28,7 +28,7 @@ module Pione
 
         begin
           # evaluate it and print the result
-          $stdout.puts Pione.eval(str, domain_info)
+          $stdout.puts Pione.val(str, domain_info)
           exit
         rescue => e
           abort("error: %s" % e)
