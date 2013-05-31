@@ -26,3 +26,5 @@ require 'pione/tuple/task-worker-resource-tuple'
 require 'pione/tuple/ticket-tuple'
 require 'pione/tuple/data-null-tuple'
 require 'pione/tuple/message-tuple'
+require 'pione/tuple/touch-tuple'
+

@@ -311,7 +311,11 @@ module Pione
       def apply_touch_operation(output, tuples)
         if output.touch? and tuples.nil?
           location = @domain_location + output.name
+          # create a empty file
           location.create("") unless location.exist?
+          # write a touch tuple
+          write(Tuple[:touch].new(name: output.name, domain: @domain, time: Time.now))
+          # create an output data tuple
           Tuple[:data].new(name: output.name, domain: @domain, location: location)
         end
       end

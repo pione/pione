@@ -1,7 +1,7 @@
 require_relative '../test-util'
 require_relative 'tuple-behavior'
 
-describe 'Pione::Tuple::TaskTuple' do
+describe 'Pione::Tuple::DataTuple' do
   before do
     @domain = "A"
     @name = Model::DataExpr.new("a.txt")

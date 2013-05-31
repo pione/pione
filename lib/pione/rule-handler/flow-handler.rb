@@ -254,6 +254,9 @@ module Pione
           # copy write operation data tuple from the task domain to this domain
           update_by_finished_tuple(rule, finished, vtable)
 
+          # touch tuple
+          lift_touch_tuple(task_domain)
+
           # publish tickets into the domain
           callee.expr.output_ticket_expr.names.each do |name|
             write(Tuple[:ticket].new(@domain, name))
@@ -359,6 +362,17 @@ module Pione
             else
               touch_data_in_domain(output, @domain)
             end
+          end
+        end
+      end
+
+      def lift_touch_tuple(task_domain)
+        read_all(Tuple[:touch].new(domain: task_domain)).each do |touch|
+          if target = read!(Tuple[:data].new(name: touch.name, domain: @domain))
+            unless target.time > touch.time
+              write(target.tap {|x| x.time = touch.time})
+            end
+            write(touch.tap{|x| x.domain = @domain})
           end
         end
       end
