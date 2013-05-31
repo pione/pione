@@ -2,11 +2,11 @@
 
 require "pione"
 
-name_list = Pione.eval "$*"
-scores_f  = Pione.eval "$I[1]"
-means_f   = Pione.eval "$I[2]"
+name_list = Pione.val "$*"
+scores_f  = Pione.val "$I[1]"
+means_f   = Pione.val "$I[2]"
 
-total_mean = Pione::Location[Pione.eval("$I[3]")].read.to_f
+total_mean = Pione::Location[Pione.val("$I[3]")].read.to_f
 
 means    = means_f.split(":").map{|file| File.read(file).to_f}
 total_sd = Math.sqrt(means.map{|mean| (total_mean-mean) ** 2}.reduce(:+) / means.size)
@@ -39,5 +39,5 @@ report = <<TXT
 #{lines.map{|line| "| %s |" % line}.join("\n")}
 TXT
 
-Pione::Location[Pione.eval("$O[2]")].write(report)
+Pione::Location[Pione.val("$O[2]")].write(report)
 

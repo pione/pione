@@ -3,8 +3,8 @@
 require 'pione'
 
 # infos
-name    = Pione.eval "$*"
-score_f = Pione.eval "$I[1]"
+name    = Pione.val "$*"
+score_f = Pione.val "$I[1]"
 
 # calc stat
 scores = File.readlines(score_f).map{|line| line.split(" ")[1].to_i}
@@ -33,5 +33,5 @@ report = <<TXT
 TXT
 
 # output
-Pione::Location[Pione.eval("$O[1]")].write(report)
-Pione::Location[Pione.eval("$O[2]")].write(mean)
+Pione::Location[Pione.val("$O[1]")].write(report)
+Pione::Location[Pione.val("$O[2]")].write(mean)

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-NAME=`pione-eval '$*'`
-OUT=`pione-eval '$O[1]'`
-DATA=`pione-eval '$I[1]'`
+NAME=`pione-val '$*'`
+OUT=`pione-val '$O[1]'`
+DATA=`pione-val '$I[1]'`
 
 gnuplot <<EOF
 set title "scores of $NAME"

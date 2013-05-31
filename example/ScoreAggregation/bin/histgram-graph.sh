@@ -1,7 +1,7 @@
 #!/bin/bash
 
-DATA=`pione-eval '$I[1]'`
-OUT=`pione-eval '$O[1]'`
+DATA=`pione-val '$I[1]'`
+OUT=`pione-val '$O[1]'`
 
 gnuplot <<EOF
 set title "Histgram of member's mean score"
