@@ -48,3 +48,8 @@ Rule OutputAorBorNull
   output ('*.a' or '*.b' or null).all
 End
 
+Rule Loop
+  input 't1.a'
+  output 't1.a'.touch
+End
+

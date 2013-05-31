@@ -84,6 +84,7 @@ module Pione
           result = false
           rule.condition.outputs.each_with_index do |data_expr, i|
             data_expr = data_expr.eval(vtable)
+            # remove
             if data_expr.remove?
               case data_expr.distribution
               when :all
@@ -124,8 +125,15 @@ module Pione
           inputs = inputs.select.with_index{|input, i| rule.condition.inputs[i].eval(vtable).care?}
           input_last_time = inputs.flatten.map{|input| input.time}.sort.last
 
-          #p output_oldest_time
-          #p input_last_time
+          # special touch criterion
+          rule.condition.outputs.each_with_index do |data_expr, i|
+            data_expr = data_expr.eval(vtable)
+            if data_expr.touch?
+              if inputs.flatten.select{|data| data_expr.match(data.name)}.size > 0
+                return true
+              end
+            end
+          end
 
           # criteria
           return false unless output_oldest_time
