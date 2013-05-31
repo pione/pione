@@ -1,5 +1,18 @@
 # History
 
+## 0.2.0(2013/05/31)
+
+* Added initial package system.
+* Added pione-val.
+* Improved sequence.
+* Improved message log framework.
+* Added system log framework.
+* Changed to unify process log.
+* Added endurance test scripts.
+* Added embedded FTP server.
+* Reduced OS dependencies.
+* Added examples of WorkflowPatterns.
+
 ## 0.1.4(2013/05/13)
 
 * Sequence based expressions.
