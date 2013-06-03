@@ -18,7 +18,7 @@ describe 'Pione::Transformer::BlockTransformer' do
       End
     STRING
       FlowBlock.new(
-        CallRule.new(RuleExpr.new(PackageExpr.new("main"), "Test"))
+        CallRule.new(RuleExpr.new(PackageExpr.new("Main"), "Test"))
       )
     end
   end

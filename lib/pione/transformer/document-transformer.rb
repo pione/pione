@@ -11,7 +11,7 @@ module Pione
 
       # @param package_name [String]
       #   package name of the document
-      def initialize(package_name="main")
+      def initialize(package_name="Main")
         super()
         @current_package_name = package_name
         Thread.current[:current_package_name] = @current_package_name
@@ -21,9 +21,24 @@ module Pione
         data.pione_model_type == type
       end
 
+      rule(:toplevel_assignment_line => simple(:assignment)) {
+        Naming.AssignmentLine(assignment.set_toplevel(true))
+      }
+
+      rule(:toplevel_param_line => simple(:naming_param_line)) {
+        assignment = naming_param_line.value
+        assignment.set_toplevel(true)
+        assignment.set_user_param(true)
+        Naming.ParamLine(assignment)
+      }
+
       # Transform +:param_block+ as Naming::ParamBlock.
-      rule(:param_block => sequence(:assignment_list)) {
-        Naming.ParamBlock(assignment_list)
+      rule(:param_block => sequence(:assignments)) {
+        _assignments = assignments.map do |assignment|
+          assignment.set_toplevel(true)
+          assignment.set_user_param(true)
+        end
+        Naming.ParamBlock(_assignments)
       }
 
       # Transform +:package+ as Naming::Package.

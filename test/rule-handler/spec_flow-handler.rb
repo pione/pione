@@ -1,83 +1,13 @@
 require_relative '../test-util'
 
-$document = Component::Document.parse(<<DOCUMENT)
-Rule Test
-  input '*.a'
-  input '{$*}.b'
-  output '{$*}.c'
-Flow
-  rule TestAction
-End
-DOCUMENT
+location = Location[File.dirname(__FILE__)] + "spec_flow-handler.pione"
+$doc = Component::Document.load(location.read)
 
-describe 'FlowRule' do
+describe 'Pione::RuleHandler::FlowRule' do
   before do
     @ts = create_tuple_space_server
-    @rule = $document["&main:Test"]
-  end
-
-  after do
-    @ts.terminate
-  end
-
-  it 'should not be an action' do
-    @rule.should.not.action
-  end
-
-  it 'should be a flow' do
-    @rule.should.flow
-  end
-
-  it 'should make action handler' do
-    location = Location[Temppath.create]
-    location_a = location + "1.a"
-    location_b = location + "1.b"
-    location_a.create("1")
-    location_b.create("2")
-
-    inputs = [
-      Tuple[:data].new(name: '1.a', location: location_a, time: Time.now),
-      Tuple[:data].new(name: '1.b', location: location_b, time: Time.now)
-    ]
-
-    params = Parameters.empty
-    handler = @rule.make_handler(tuple_space_server, inputs, params, [])
-    handler.should.be.kind_of(RuleHandler::FlowHandler)
-  end
-end
-
-doc = Component::Document.parse(<<-DOCUMENT)
-Rule Test
-  input '*.a'
-  input '{$*}.b'
-  output '{$*}.c'
-Flow
-  rule Shell
-End
-
-Rule Shell
-  input '*.a'
-  input '{$*}.b'
-  output '{$*}.c'
-Action
-VAL1=`cat {$INPUT[1]}`;
-VAL2=`cat {$INPUT[2]}`;
-expr $VAL1 + $VAL2 > {$OUTPUT[1]}
-End
-
-Rule VariableBindingErrorTest
-  input '*.a'
-  output '*.b'
-Flow
-  rule Test
-End
-DOCUMENT
-
-describe 'FlowHandler' do
-  before do
-    @ts = create_tuple_space_server
-    @rule = doc['&main:Test']
-    write(Tuple[:rule].new('&main:Shell', doc['&main:Shell']))
+    @rule = $doc.find('Test')
+    write(Tuple[:rule].new('&Main:Shell', $doc.find('Shell')))
 
     location = Location[Temppath.create]
     location_a = location + "1.a"
@@ -85,37 +15,47 @@ describe 'FlowHandler' do
     location_a.create("1")
     location_b.create("2")
 
-    @tuples = [
-      Tuple[:data].new(domain: "test", name: '1.a', location: location_a, time: Time.now),
-      Tuple[:data].new(domain: "test", name: '1.b', location: location_b, time: Time.now)
-    ]
+    @tuple_a = Tuple[:data].new(domain: "Main_Test", name: '1.a', location: location_a, time: Time.now)
+    @tuple_b = Tuple[:data].new(domain: "Main_Test", name: '1.b', location: location_b, time: Time.now)
+
+    @tuples = [@tuple_a, @tuple_b]
     @tuples.each {|t| write(t) }
 
-    @handler = @rule.make_handler(@ts, @tuples, Parameters.empty, [],domain: 'test')
+    @handler = @rule.make_handler(@ts, @tuples, Parameters.empty, [], domain: 'Main_Test')
   end
 
   after do
     @ts.terminate
+  end
+
+  it "should have inputs" do
+    @handler.inputs.should.include @tuple_a
+    @handler.inputs.should.include @tuple_b
+  end
+
+  it "should have empty outputs before executing" do
+    @handler.outputs.should.empty
+  end
+
+  it "should have base-location" do
+    @handler.base_location.should == @ts.base_location
+  end
+
+  it "should have domain" do
+    @handler.domain.should == "Main_Test"
   end
 
   it "should execute a flow" do
-    # execute and get result
-    quiet_mode do
-      thread = Thread.new { @handler.execute }
-      task = read(Tuple[:task].new)
-      task.rule_path.should == '&main:Shell'
-      task.inputs.map{|d|d.name}.sort.should == ['1.a', '1.b']
-      task.params.should.empty
-      task.features.should.empty
-      Agent[:task_worker].start(tuple_space_server)
-      thread.join
-      res = @handler.outputs.first
-      res.name.should == '1.c'
-      Resource[res.uri].read.chomp.should == "3"
-      should.not.raise do
-        read(Tuple[:data].new(name: '1.c', domain: @handler.domain))
-      end
+    thread = Thread.new { @handler.execute }
+    task = read(Tuple[:task].new)
+    task.rule_path.should == '&Main:Shell'
+    task.inputs.map{|d| d.name}.sort.should == ['1.a', '1.b']
+    task_worker = Agent[:task_worker].start(@ts)
+    thread.join
+    output = @handler.outputs.first
+    output.name.should == '1.c'
+    should.not.raise do
+      read(Tuple[:data].new(name: '1.c', domain: @handler.domain))
     end
-
   end
 end

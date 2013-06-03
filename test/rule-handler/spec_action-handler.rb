@@ -1,15 +1,15 @@
 require_relative '../test-util'
 
-$doc = Component::Document.parse(Location[File.dirname(__FILE__)] + "spec_action-handler.pione")
+$doc = Component::Document.load(Location[File.dirname(__FILE__)] + "spec_action-handler.pione")
 
-describe 'ActionHandler' do
+describe 'Pione::RuleHandler::ActionHandler' do
   before do
     @ts = create_tuple_space_server
 
-    @rule_test = $doc['&main:Test']
-    @rule_sh1 = $doc['&main:Shell1']
-    @rule_sh2 = $doc['&main:Shell2']
-    @rule_ruby = $doc['&main:Ruby']
+    @rule_test = $doc.find('Test')
+    @rule_sh1 = $doc.find('Shell1')
+    @rule_sh2 = $doc.find('Shell2')
+    @rule_ruby = $doc.find('Ruby')
 
     location = Location[Temppath.create]
     location_a = location + "1.a"

@@ -1,91 +1,70 @@
 module Pione
   module Component
-    class Document < PioneObject
-      # Add ruby shebang line.
-      def ruby(str, charset=nil)
-        res = "#!/usr/bin/env ruby\n"
-        res << "# -*- coding: #{charset} -*-\n" if charset
-        return res + str
+    class DuplicatedRuleError < StandardError
+      def initialize(rule_path)
+        @rule_path = rule_path
       end
 
-      # Load a rule document and return it.
-      def self.load(filepath, package_name="main")
-        filepath = Location[filepath] unless filepath.kind_of?(Location::BasicLocation)
-        parse(filepath.read, package_name)
+      def message
+        "There are duplicated rule %s in docuemtn" % @rule_path
       end
+    end
 
-      # Parse a rule document string.
-      def self.parse(src, package_name="main")
-        src = src.read if src.kind_of?(Location::BasicLocation)
-        # parse the document and build the model
-        parser = Parser::DocumentParser.new
-        transformer = Transformer::DocumentTransformer.new(package_name)
-        toplevels = transformer.apply(parser.parse(src))
+    class Document < StructX
+      class << self
+        # Load a PIONE rule document.
+        #
+        # @param location [Location,String]
+        #   location of the PIONE document
+        # @return [Component::Document]
+        #   the document
+        def load(src, package_name="Main")
+          src = src.read if src.kind_of?(Location::BasicLocation)
 
-        # rules and assignments
-        rules = toplevels.select{|elt| elt.kind_of?(Component::Rule)}
-        assignments = toplevels.select{|elt| elt.kind_of?(Assignment)}
-        assignments.each {|assignment| assignment.set_toplevel(true)}
-        user_params = Naming::ParamLine.values(toplevels)
-        Naming::ParamBlock.values(toplevels).each do |elts|
-          user_params += elts
+          # parse the document and build the model
+          parser = Parser::DocumentParser.new
+          transformer = Transformer::DocumentTransformer.new(package_name)
+          toplevels = transformer.apply(parser.parse(src))
+
+          # rules and assignments
+          rules = toplevels.select{|elt| elt.kind_of?(Component::Rule)}
+          assignments = Naming[:AssignmentLine, :ParamLine, :ParamBlock].values(toplevels).flatten
+
+          # make document parameters
+          params = assignments.inject(VariableTable.empty) do |vtable, a|
+            vtable.tap{|t| t.set(a.variable, a.expr)}
+          end.to_params
+
+          # set document parameters into rules
+          rules.each {|rule| rule.condition.params.merge!(params)}
+
+          return new(package_name, rules, params)
         end
-        assignments += user_params.map do |param|
-          param.tap do |x|
-            x.set_toplevel(true)
-            x.set_user_param(true)
-          end
-        end
-
-        # make document parameters
-        params = assignments.inject(VariableTable.empty) do |vtable, a|
-          vtable.tap{|t| t.set(a.variable, a.expr)}
-        end.to_params
-
-        # set document parameters into rules
-        rules.each {|rule| rule.condition.params.merge!(params)}
-
-        # make rule table
-        table = rules.inject({}) do |tbl, rule|
-          tbl.tap{|x| x[rule.path] = rule}
-        end
-        return new(table, params)
       end
 
-      attr_reader :rules
-      attr_reader :params
+      member :package_name
+      member :rules
+      member :params
 
-      # Creates a document.
-      def initialize(rules, params)
-        @rules = rules
-        @params = params
-        instance_eval(&b) if block_given?
+      # Find the named rule.
+      #
+      # @param name [String]
+      #   rule name
+      # @return [Component::Rule]
+      def find(name)
+        rules.find {|rule| rule.name == name}
       end
 
-      # Returns the named rule.
-      # @param [String] name
-      #   rule path
-      # @return [Pione::Model::Rule]
-      def [](name)
-        @rules[name].condition.params.merge!(@params)
-        @rules[name]
-      end
-
-      # Returns main rule of main package.
-      # @return [Rule]
-      #   main rule of main package
-      def main
-        @rules["&main:Main"].condition.params.merge!(@params)
-        @rules["&main:Main"]
-      end
-
-      # Returns root rule.
+      # Create a root rule which calls the rule with the parameters.
+      #
+      # @param rule [Component::Rule]
+      #   rule that is called by the root rule
       # @param [Parameters] params
-      #   root root parameter
-      # @return [RootRule]
+      #   user parameters
+      # @return [Component::RootRule]
       #   root rule
-      def root_rule(params)
-        Component::RootRule.new(main, @params.merge(params))
+      def create_root_rule(rule, user_params)
+        Component::RootRule.new(rule, params.merge(user_params))
       end
     end
   end

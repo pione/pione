@@ -1,93 +1,64 @@
 require_relative '../test-util'
 
-src = <<DOCUMENT
-Param
-  $P1 := "a"
-  $P2 := "b"
-  $P3 := "c"
-End
-
-param $P4 := "d"
-param $P5 := "e"
-
-$X := 1
-
-Rule Main
-  input '*.txt'
-  output '*.result'
-Flow
-rule RuleA
-rule RuleB
-rule RuleC
-End
-
-Rule RuleA
-  input '*.txt'
-  output '{$I[1,1]}.a'
-Action
-command_a {$I[1]} > {$O[1]}
-End
-
-Rule RuleB
-  input '*.a'
-  output '{$I[1,1]}.b'
-Action
-command_b {$I[1]} > {$O[1]}
-End
-
-Rule RuleC
-  input '*.b'
-  output '{$I[1,1]}.result'
-Action
-command_c {$I[1]} > {$O[1]}
-End
-DOCUMENT
+document_location = Location[File.dirname(__FILE__)] + "spec_document.pione"
 
 describe 'Pione::Component::Document' do
-  it 'should read a document from a string' do
-    doc = Component::Document.parse(src)
-    doc.rules.size.should == 4
+  before do
+    @document = Component::Document.load(document_location)
   end
 
-  it 'should read a document from a file' do
-    temp = Tempfile.new("spec_document")
-    temp.write(src)
-    path = temp.path
-    temp.close(false)
-    doc = Component::Document.load(path)
-    doc.rules.size.should == 4
+  it 'should load a document from a file' do
+    @document.rules.map{|rule| rule.name}.tap do |x|
+      x.should.include "Main"
+      x.should.include "RuleA"
+      x.should.include "RuleB"
+      x.should.include "RuleC"
+    end
   end
 
-  it 'should get rules by rule path' do
-    doc = Component::Document.parse(src)
-    doc["&main:Main"].should.kind_of(Component::Rule)
-    doc["&main:RuleA"].should.kind_of(Component::Rule)
-    doc["&main:RuleB"].should.kind_of(Component::Rule)
-    doc["&main:RuleC"].should.kind_of(Component::Rule)
+  it 'should load a document from a string' do
+    Component::Document.load(document_location.read).should == @document
+  end
+
+  it 'should load a document with package name' do
+    document = Component::Document.load(document_location, "Test")
+    document.package_name.should == "Test"
+    document.find("Main").package_name == "Test"
+  end
+
+  it 'should get rule by name' do
+    @document.find("Main").should.kind_of(Component::FlowRule)
+    @document.find("RuleA").should.kind_of(Component::ActionRule)
+    @document.find("RuleB").should.kind_of(Component::ActionRule)
+    @document.find("RuleC").should.kind_of(Component::ActionRule)
   end
 
   it 'should have document parameters' do
-    doc = Component::Document.parse(src)
-    doc.params["P1"].should == PioneString.new("a").to_seq
-    doc.params["P2"].should == PioneString.new("b").to_seq
-    doc.params["P3"].should == PioneString.new("c").to_seq
-    doc.params["P4"].should == PioneString.new("d").to_seq
-    doc.params["P5"].should == PioneString.new("e").to_seq
-    user_params = doc.params.data.select{|var, val| var.user_param}.map{|var, val| var.name}
+    @document.params["P1"].should == PioneString.new("a").to_seq
+    @document.params["P2"].should == PioneString.new("b").to_seq
+    @document.params["P3"].should == PioneString.new("c").to_seq
+    @document.params["P4"].should == PioneString.new("d").to_seq
+    @document.params["P5"].should == PioneString.new("e").to_seq
+    @document.params["P6"].should == PioneString.new("f").to_seq
+    user_params = @document.params.data.select{|var, val| var.user_param}.map{|var, val| var.name}
     user_params.sort.should == ["P1", "P2", "P3", "P4", "P5"]
   end
 
   it 'should have document variable bindings' do
-    doc = Component::Document.parse(src)
-    doc["&main:Main"].condition.params["X"].should == 1.to_pione.to_seq
-    doc["&main:RuleA"].condition.params["X"].should == 1.to_pione.to_seq
-    doc["&main:RuleB"].condition.params["X"].should == 1.to_pione.to_seq
-    doc["&main:RuleC"].condition.params["X"].should == 1.to_pione.to_seq
+    @document.find("Main").condition.params["X"].should == 1.to_pione.to_seq
+    @document.find("RuleA").condition.params["X"].should == 1.to_pione.to_seq
+    @document.find("RuleB").condition.params["X"].should == 1.to_pione.to_seq
+    @document.find("RuleC").condition.params["X"].should == 1.to_pione.to_seq
+  end
+
+  it 'should create root rule' do
+    root = @document.create_root_rule(@document.find("Main"), Model::Parameters.empty)
+    root.should.kind_of(Component::RootRule)
   end
 
   it 'should raise variable binding error' do
     should.raise(VariableBindingError) do
-      Component::Document.parse <<-PIONE
+      Component::Document.load <<-PIONE
         $X := 1
         $X := 2
       PIONE

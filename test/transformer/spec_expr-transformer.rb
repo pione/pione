@@ -82,7 +82,7 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
 
     tc "abc.sync" do
-      rule = RuleExpr.new(PackageExpr.new("main"), "abc")
+      rule = RuleExpr.new(PackageExpr.new("Main"), "abc")
       Message.new("sync", rule)
     end
 

@@ -1,65 +1,78 @@
 require_relative '../test-util'
-require 'pione/agent/rule-provider'
 
-describe "Agent::RuleProvider" do
+describe "Pione::Agent::RuleProvider" do
   before do
-    create_remote_tuple_space_server
-    @provider = Agent[:rule_provider].start(tuple_space_server)
-    doc = Component::Document.parse(<<-DOCUMENT)
-      Rule abc
+    @ts = create_tuple_space_server
+    @agent = Agent[:rule_provider].new(@ts)
+    doc = Component::Document.load(<<-DOCUMENT)
+      Rule A
         input  '*.a'
-        output '{$INPUT[1].MATCH[1]}.b'
-      Action---
-        content "echo 'abc' > {$OUTPUT[1]}"
-      ---End
+        output '{$I[1]}.result'
+      Action
+        echo A > {$O[1]}
+      End
 
-      Rule xyz
-        input  '*.a'
-        output '{$INPUT[1].MATCH[1]}.b'
-      Action---
-        content "echo 'xyz' > {$OUTPUT[1]}"
-      ---End
+      Rule B
+        input  '*.b'
+        output '{$I[1]}.result'
+      Action
+        echo B > {$[1]}
+      End
     DOCUMENT
-    @rule_abc = doc['&main:abc']
-    @rule_xyz = doc['&main:xyz']
-    @provider.read_document(doc)
+    @rule_a = doc.find('A')
+    @rule_b = doc.find('B')
+    @agent.read_rules(doc)
   end
 
-  it "should provide known rule information" do
+  after do
+    @agent.terminate
+    @ts.terminate
+  end
+
+  it "should have rules" do
+    @agent.known_rules.should.include "&Main:A"
+    @agent.known_rules.should.include "&Main:B"
+  end
+
+  it "should add a rule" do
+    doc = Component::Document.load(<<-DOCUMENT)
+      Rule C
+        input  '*.c'
+        output '{$I[1]}.result'
+      Action
+        echo C > {$O[1]}
+      End
+    DOCUMENT
+    @agent.read_rules(doc)
+    @agent.known_rules.should.include "&Main:C"
+  end
+
+  it "should provide requested rule" do
+    @agent.start
+
     # wait provider's setup
-    @provider.wait_till(:request_waiting)
+    @agent.wait_till(:request_waiting)
+
     # write a request
-    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: '&main:abc'))
+    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: '&Main:A'))
     check_exceptions
+
     # check rule tuple
     should.not.raise(Rinda::RequestExpiredError) do
-      rule = read(Tuple[:rule].new(rule_path: '&main:abc'))
-      rule.status.should == :known
-      rule.content.class.should == Rule::ActionRule
-      rule.content.should == @rule_abc
+      tuple = read!(Tuple[:rule].new(rule_path: '&Main:A'))
+      tuple.content.class.should == Component::ActionRule
+      tuple.content.should == @rule_a
     end
+
     # write another request
-    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: '&main:xyz'))
+    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: '&Main:B'))
     check_exceptions
+
     # check rule tuple
     should.not.raise(Rinda::RequestExpiredError) do
-      rule = read(Tuple[:rule].new(rule_path: '&main:xyz'))
-      rule.status.should == :known
-      rule.content.class.should == Rule::ActionRule
-      rule.content.should == @rule_xyz
-    end
-  end
-
-  it "should provide unknown rule information" do
-    # wait provider's setup
-    @provider.wait_till(:request_waiting)
-    # write a request
-    write_and_wait_to_be_taken(Tuple[:request_rule].new(rule_path: "aaa"))
-    check_exceptions
-    # check unknown rule tuple
-    should.not.raise(Rinda::RequestExpiredError) do
-      rule = read(Tuple[:rule].new(rule_path: "aaa"))
-      rule.status.should == :unknown
+      tuple = read!(Tuple[:rule].new(rule_path: '&Main:B'))
+      tuple.content.class.should == Component::ActionRule
+      tuple.content.should == @rule_b
     end
   end
 end

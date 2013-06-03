@@ -54,8 +54,8 @@ module Pione
       rule(:toplevel_element) {
         rule_definition |
         param_block |
-        param_line |
-        assignment_line |
+        param_line.as(:toplevel_param_line) |
+        assignment_line.as(:toplevel_assignment_line) |
         expr_line |
         annotation_line
       }

@@ -8,12 +8,12 @@ module Pione
       define_state_transition :sleeping => :running
       define_state_transition :running => :sleeping
 
-      attr_reader :document
+      attr_reader :package
 
-      def initialize(tuple_space_server, document, params, stream)
-        raise ArgumentError unless document.main
+      def initialize(tuple_space_server, package, params, stream)
+        raise ArgumentError unless package.find_rule("Main")
         super(tuple_space_server)
-        @document = document
+        @package = package
         @params = params
         @stream = stream
       end
@@ -23,7 +23,8 @@ module Pione
       end
 
       def transit_to_running
-        if handler = @document.root_rule(@params).make_handler(tuple_space_server)
+        root = @package.create_root_rule(@package.find_rule("Main"), @params)
+        if handler = root.make_handler(tuple_space_server)
           handler.handle
         else
           user_message "error: no inputs"

@@ -34,12 +34,14 @@ describe "Pione::Component::Package" do
   end
 
   it "should get rules" do
-    @package.rules.keys.should.include("&TestPackage:Main")
-    @package.rules.keys.should.include("&TestPackage:Count")
+    @package.rules.map{|rule| rule.path}.tap do |x|
+      x.should.include("&TestPackage:Main")
+      x.should.include("&TestPackage:Count")
+    end
   end
 
   it "should get a main rule" do
-    @package.main.path.should == "&TestPackage:Main"
+    @package.find_rule("Main").path.should == "&TestPackage:Main"
   end
 
   it "should upload package files" do
@@ -75,3 +77,11 @@ describe "Pione::Component::PackageScenario" do
     @scenario.name.should == "TestCase1"
   end
 end
+
+describe "Pione::Component::PackageReader" do
+  it "should read package directory" do
+    path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+    Component::PackageReader.new(path).type.should == :directory
+  end
+end
+

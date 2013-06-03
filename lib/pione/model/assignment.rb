@@ -49,11 +49,13 @@ module Pione
       # Set truth of toplevel assignment.
       def set_toplevel(b)
         @variable.set_toplevel(b)
+        return self
       end
 
       # Set truth of user parameter.
       def set_user_param(b)
         @variable.set_user_param(b)
+        return self
       end
 
       # Return true if the assignment is defined in toplevel.

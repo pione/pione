@@ -27,12 +27,12 @@ end
 
 describe "Pione::Util::DomainID" do
   before do
-    document1 = Component::Document.parse(location, "ID1")
-    document2 = Component::Document.parse(location, "ID2")
-    @r1 = document1["&ID1:R1"]
-    @r2 = document1["&ID1:R2"]
-    @r3 = document2["&ID2:R1"]
-    @r4 = document2["&ID2:R2"]
+    document1 = Component::Document.load(location, "ID1")
+    document2 = Component::Document.load(location, "ID2")
+    @r1 = document1.find("R1")
+    @r2 = document1.find("R2")
+    @r3 = document2.find("R1")
+    @r4 = document2.find("R2")
     @t1 = Tuple[:data].new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
     @t2 = Tuple[:data].new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
     @p1 = Parameters.new({Variable.new("X") => PioneString.new("A").to_seq})

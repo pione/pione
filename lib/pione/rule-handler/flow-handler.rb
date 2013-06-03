@@ -287,7 +287,7 @@ module Pione
         not(read!(task) or read!(Tuple[:working].new(domain: task.domain)))
       end
 
-      # Lift output data from child domains to this domain.
+      # Lift output data from this domains to parent domain.
       #
       # @return [void]
       def lift_output_data

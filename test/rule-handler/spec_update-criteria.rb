@@ -1,7 +1,7 @@
 require_relative '../test-util'
 
 path = Pathname.new(File.join(File.dirname(__FILE__), "spec_update-criteria.pione"))
-document = Component::Document.parse(path.read)
+document = Component::Document.load(path.read)
 
 time = 10.times.map {sleep 0.001; Time.now}
 tuple = {}
@@ -23,7 +23,7 @@ testcases = YAML.load_file(ymlpath)
 
 describe 'RuleHandler::UpdateCriteria' do
   testcases.each do |rule_name, cases|
-    rule = document["&main:%s" % rule_name]
+    rule = document.find(rule_name)
     describe rule_name do
       cases.each do |case_name, testcase|
         describe case_name do

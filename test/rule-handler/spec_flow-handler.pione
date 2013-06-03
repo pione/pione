@@ -1,0 +1,25 @@
+Rule Test
+  input '*.a'
+  input '{$*}.b'
+  output '{$*}.c'
+Flow
+  rule Shell
+End
+
+Rule Shell
+  input '*.a'
+  input '{$*}.b'
+  output '{$*}.c'
+Action
+  VAL1=`cat {$I[1]}`;
+  VAL2=`cat {$I[2]}`;
+  expr $VAL1 + $VAL2 > {$O[1]}
+End
+
+Rule VariableBindingErrorTest
+  input '*.a'
+  output '*.b'
+Flow
+  rule Test
+End
+

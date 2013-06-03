@@ -60,7 +60,7 @@ module Pione
         end
 
         # --params
-        option('--params="{Var:1,...}"', "set &main:Main rule's parameters") do |data, str|
+        option('--params="{Var:1,...}"', "set user parameters") do |data, str|
           begin
             params = DocumentTransformer.new.apply(
               DocumentParser.new.parameters.parse(str)
@@ -218,7 +218,7 @@ module Pione
         end
 
         start_workers
-        @agent = Agent[:process_manager].start(@tuple_space_server, @document, option[:params], option[:stream])
+        @agent = Agent[:process_manager].start(@tuple_space_server, @package, option[:params], option[:stream])
         @agent.running_thread.join
       end
 
@@ -261,22 +261,17 @@ module Pione
 
         # read process document
         begin
-          if location.directory?
-            # package
-            package = Component::PackageReader.new(location).read
-            package.upload(option[:output_location] + "package")
-            if option[:rehearse]
-              unless package.scenarios.empty?
-                if scenario = package.find_scenario(option[:rehearse])
-                  option[:input_location] = scenario.input
-                else
-                  abort "the scenario not found: %s" % option[:rehearse]
-                end
+          # package
+          @package = Component::PackageReader.new(location).read
+          @package.upload(option[:output_location] + "package")
+          if option[:rehearse]
+            unless @package.scenarios.empty?
+              if scenario = @package.find_scenario(option[:rehearse])
+                option[:input_location] = scenario.input
+              else
+                abort "the scenario not found: %s" % option[:rehearse]
               end
             end
-            @document = package
-          else
-            @document = Component::Document.parse(location.read)
           end
         rescue Pione::Parser::ParserError => e
           abort("Pione syntax error: " + e.message)
@@ -306,7 +301,7 @@ module Pione
 
         # rule provider
         @rule_loader = Agent[:rule_provider].start(@tuple_space_server)
-        @rule_loader.read_document(@document)
+        @rule_loader.read_rules(@package)
         @rule_loader.wait_till(:request_waiting)
 
         # input generators
@@ -366,7 +361,7 @@ module Pione
       # @return [void]
       def print_parameter_list
         puts "Parameters:"
-        @document.params.data.select{|var, val| var.user_param}.each do |var, val|
+        @package.params.data.select{|var, val| var.user_param}.each do |var, val|
           puts "  %s := %s" % [var.name, val.textize]
         end
       end

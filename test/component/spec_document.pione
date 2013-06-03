@@ -1,0 +1,51 @@
+Param
+  $P1 := "a"
+  $P2 := "b"
+  $P3 := "c"
+End
+
+param $P4 := "d"
+param $P5 := "e"
+
+$P6 := "f"
+
+$X := 1
+
+Rule Main
+  input '*.txt'
+  output '*.result'
+Flow
+  rule RuleA
+  rule RuleB
+  rule RuleC
+End
+
+Rule RuleA
+  input '*.txt'
+  output '{$I[1,1]}.a'
+Action
+  command_a {$I[1]} > {$O[1]}
+End
+
+Rule RuleB
+  input '*.a'
+  output '{$I[1,1]}.b'
+Action
+  command_b {$I[1]} > {$O[1]}
+End
+
+Rule RuleC
+  input '*.b'
+  output '{$I[1,1]}.result'
+Action
+  command_c {$I[1]} > {$O[1]}
+End
+
+Rule TestParams
+  input '*.input'
+  output '{$*}.output'
+  param $P1
+Action
+  echo `echo {$I[1]}` {$P1} > {$O[1]}
+End
+

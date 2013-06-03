@@ -188,7 +188,12 @@ module Pione
       def write_other_resources
         @working_directory.file_entries.each do |entry|
           location = make_location(entry.path.basename, @domain)
-          entry.move(location)
+          begin
+            entry.move(location)
+          rescue => e
+            msg = "cannot move %s to %s" % [entry.path, location]
+            Util::ErrorReport.warn(msg, self, e, __FILE__, __LINE__)
+          end
         end
       end
 

@@ -14,72 +14,30 @@ module Pione
       end
     end
 
-    # Package is a container of rules, script, scenario, and etc.
-    class Package
-      include SimpleIdentity
+    # Package is a container of rules, scripts, scenarios, and etc.
+    class Package < StructX
+      member :info, default: {}
+      member :bin
+      member :scenarios, default: []
+      member :documents, default: []
 
-      attr_reader :info
-      attr_reader :bin
-      attr_reader :scenarios
-      attr_reader :documents
-      attr_reader :rules
-      attr_reader :params
+      forward_as_key Proc.new{info}, "PackageName", :name
+      forward :@unified_document, :find, :find_rule
+      forward! :@unified_document, :rules, :create_root_rule
 
-      forward_as_key :@info, "PackageName", :name
-
-      # @param info [Hash]
-      #   package information table
-      # @param bin [Location]
-      #   package bin directory
-      # @param scenarios [Array<PackageScenario>]
-      #   scenarios
-      # @param documents [Array<Document>]
-      #   PIONE documents
-      def initialize(info, bin, scenarios, documents)
-        @info = info
-        @bin = bin
-        @scenarios = scenarios
-        @documents = documents
-        build_rules
-        build_params
-      end
-
-      # Return the package entry rule.
-      #
-      # @return [Rule]
-      #   entry rule
-      def main
-        @rules["&%s:Main" % name].tap{|x| x.condition.params.merge!(@params)}
-      end
-
-      # Return the named rule.
-      #
-      # @param [String] name
-      #   rule path
-      # @return [Rule]
-      #   the rule
-      def [](name)
-        @rules[name].params.merge!(@params)
-        @rules[name]
-      end
-
-      # Return root rule.
-      #
-      # @param prams [Parameters]
-      #   root parameters
-      # @return [RootRule]
-      #   root rule
-      def root_rule(params)
-        Component::RootRule.new(main, @params.merge(params))
+      def initialize(*args)
+        super(*args)
+        build_unified_document
+        validate
       end
 
       # Upload the package files to the location.
       #
       # @return [void]
       def upload(dest)
-        if @bin.exist?
+        if bin and bin.exist?
           # upload bin files
-          @bin.entries.each do |entry|
+          bin.entries.each do |entry|
             entry.copy(dest + name + "bin" + entry.basename)
           end
         end
@@ -93,34 +51,31 @@ module Pione
       #   the scenario
       def find_scenario(name)
         if name == :anything
-          @scenarios.first
+          scenarios.first
         else
-          @scenarios.find {|scenario| scenario.name == name}
+          scenarios.find {|scenario| scenario.name == name}
         end
       end
 
       private
 
-      # Build rules from all documents in the package.
-      def build_rules
-        @rules = {}
-        @documents.each do |doc|
-          doc.rules.each do |name, rule|
-            unless @rules[name]
-              @rules[name] = rule
-            else
-              raise InvalidPackage.new(self, "duplicated rules: %s" % name)
-            end
-          end
+      # Build an unified document from all documents in the package.
+      def build_unified_document
+        rules = documents.map{|doc| doc.rules}.flatten
+        params = documents.inject(Model::Parameters.empty) do |_params, document|
+          _params.merge(document.params)
         end
+        @unified_document = Component::Document.new(name, rules, params)
       end
 
-      # Build parameters from all documents in the package.
-      def build_params
-        @params = Model::Parameters.empty
-        @documents.each do |doc|
-          doc.params.each do |param|
-            @params.merge!(param)
+      # Validate package consistency.
+      def validate
+        @unified_document.rules.map{|rule| rule.path}.sort.inject do |prev, elt|
+          if prev == elt
+            msg = "There are duplicated rules '%s' in the package '%s'"
+            raise InvalidPackage.new(self, msg % [name, package])
+          else
+            elt
           end
         end
       end
@@ -128,10 +83,14 @@ module Pione
 
     # PackageReader is a reader for packages.
     class PackageReader
+      attr_reader :location
+      attr_reader :type
+
       # @param location [Location]
       #   package location
       def initialize(location)
         @location = location
+        @type = check_package_type
       end
 
       # Read the package.
@@ -139,14 +98,50 @@ module Pione
       # @return [Package]
       #   the package
       def read
-        infos = read_package_info
-        bin = @location + "bin"
-        scenarios = find_scenarios
-        documents = find_documents(infos["PackageName"])
-        Package.new(infos, bin, scenarios, documents)
+        case @type
+        when :directory
+          return read_package_directory
+        when :pione_document_file
+          return read_pione_document_file
+        end
       end
 
       private
+
+      # Check package type.
+      #
+      # @return [Symbol]
+      #   package type
+      def check_package_type
+        return :directory if @location.directory?
+        if File.extname(@location.basename) == ".pione"
+          return :pione_document_file
+        end
+        raise ArgumentError.new(@location)
+      end
+
+      # Read package directory.
+      #
+      # @return [Package]
+      #   the package
+      def read_package_directory
+        info = read_package_info
+        Package.new(
+          info: info,
+          bin: @location + "bin",
+          scenarios: find_scenarios,
+          documents: find_documents(info["PackageName"])
+        )
+      end
+
+      # Read PIONE document.
+      #
+      # @return [Package]
+      #   the package
+      def read_pione_document_file
+        document = Component::Document.load(@location, "Main")
+        Package.new(info: {"PackageName" => "Main"}, documents: [document])
+      end
 
       # Read the informations from the package location.
       #

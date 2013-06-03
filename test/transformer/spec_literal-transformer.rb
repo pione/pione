@@ -53,7 +53,7 @@ describe 'Pione::Transformer::LiteralTransformer' do
   end
 
   transformer_spec('rule_name', :rule_name) do
-    tc("abc" => RuleExpr.new(PackageExpr.new("main"), "abc"))
+    tc("abc" => RuleExpr.new(PackageExpr.new("Main"), "abc"))
   end
 
   transformer_spec('ticket', :ticket) do

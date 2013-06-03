@@ -14,15 +14,13 @@ module Pione
         end
       end
 
-      def read_document(doc)
-        doc.rules.each do |rule_path, rule|
-          add_rule(rule_path, rule)
-        end
-      end
-
-      def add_rule(rule_path, content)
-        raise ArgumentError unless content.kind_of?(Component::Rule)
-        @table[rule_path] = content
+      # Read rules from the document or the package.
+      #
+      # @param document [Component::Document,Component::Package]
+      #   document or package
+      # @return [void]
+      def read_rules(document)
+        document.rules.each {|rule| @table[rule.path] = rule}
       end
 
       # Return known rule pathes.

@@ -66,8 +66,8 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       rule.condition.inputs[0].should == DataExpr.new('*.a').to_seq
       rule.condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
       rule.body.should == FlowBlock.new(
-        CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestA")),
-        CallRule.new(RuleExpr.new(PackageExpr.new("main"), "TestB"))
+        CallRule.new(RuleExpr.new(PackageExpr.new("Main"), "TestA")),
+        CallRule.new(RuleExpr.new(PackageExpr.new("Main"), "TestB"))
       )
     end
 
@@ -102,16 +102,16 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
             FlowBlock.new(
               CallRule.new(Message.new(
                   "params",
-                  RuleExpr.new(PackageExpr.new("main"), "NKF"),
+                  RuleExpr.new(PackageExpr.new("Main"), "NKF"),
                   StringSequence.new([PioneString.new("-w")])
               ))
             )}
         ),
         CallRule.new(
-          RuleExpr.new(PackageExpr.new("main"), "CountChar")
+          RuleExpr.new(PackageExpr.new("Main"), "CountChar")
         ),
         CallRule.new(
-          RuleExpr.new(PackageExpr.new("main"), "Summarize")
+          RuleExpr.new(PackageExpr.new("Main"), "Summarize")
         )
       )
     end

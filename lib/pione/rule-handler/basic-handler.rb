@@ -188,12 +188,6 @@ module Pione
 
       private
 
-      # Save domain information file.
-      #
-      # @return [void]
-      def save_domain_log
-      end
-
       # Executes the rule.
       #
       # @return [Array<Data,Array<Data>>]

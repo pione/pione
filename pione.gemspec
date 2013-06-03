@@ -30,7 +30,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "uuidtools", "~> 2.1.4"
   gem.add_dependency "highline", "~> 1.6.15"
   gem.add_dependency "hamster", "~> 0.4.3"
-  gem.add_dependency "naming", "~> 0.0.2"
+  gem.add_dependency "naming", "~> 0.1.0"
   gem.add_dependency "forwardablex", "~> 0.1.4"
   gem.add_dependency "temppath", "~> 0.1.1"
   gem.add_dependency "ruby-xes", "~> 0.1.0"
