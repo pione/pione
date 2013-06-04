@@ -23,7 +23,7 @@ module Pione
 
       forward_as_key Proc.new{info}, "PackageName", :name
       forward :@unified_document, :find, :find_rule
-      forward! :@unified_document, :rules, :create_root_rule
+      forward! :@unified_document, :rules, :create_root_rule, :params
 
       def initialize(*args)
         super(*args)
@@ -83,6 +83,18 @@ module Pione
 
     # PackageReader is a reader for packages.
     class PackageReader
+      class << self
+        # Read a pacakge from the location.
+        #
+        # @param location [Location::BasicLocation]
+        #   location of package
+        # @return [Package]
+        #   the package
+        def read(location)
+          new(location).read
+        end
+      end
+
       attr_reader :location
       attr_reader :type
 
