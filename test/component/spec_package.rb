@@ -83,5 +83,10 @@ describe "Pione::Component::PackageReader" do
     path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
     Component::PackageReader.new(path).type.should == :directory
   end
+
+  it "should read the package and return it" do
+    path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+    Component::PackageReader.read(path).should.kind_of Component::Package
+  end
 end
 
