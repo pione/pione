@@ -2,12 +2,11 @@ module Pione
   module Command
     # PioneClient is a command to request processing.
     class PioneClient < FrontOwnerCommand
+      include TupleSpaceServerInterface
+
       define_info do
         set_name "pione-client"
-        set_tail {|cmd|
-          args = [cmd.option[:filename], cmd.option[:output_uri], cmd.option[:stream]]
-          "{Document: %s, OutputURI: %s, Stream: %s}" % args
-        }
+        set_tail {|cmd| Global.front.uri}
         set_banner "Requests to process PIONE document."
       end
 
@@ -118,7 +117,6 @@ module Pione
       attr_reader :task_worker
       attr_reader :features
       attr_reader :tuple_space_server
-      attr_reader :name
 
       def initialize
         super()
@@ -133,93 +131,54 @@ module Pione
       end
 
       prepare do
-        @filename = ARGF.filename
+        # FTP server
+        setup_ftp_server(myftp) if myftp = option[:myftp]
 
-        # ftp server
-        if myftp = option[:myftp]
-          location = Location[myftp.path]
-          location.path.mkdir unless location.exist?
-          if myftp.userinfo
-            Util::FTPServer.auth_info = Util::FTPAuthInfo.new(myftp.user, myftp.password)
-          end
-          if myftp.port
-            Util::FTPServer.port = myftp.port
-          end
-          Util::FTPServer.start(Util::FTPLocalFS.new(location))
-        end
+        # run tuple space server
+        @tuple_space_server = TupleSpaceServer.new(task_worker_resource: option[:request_task_worker])
+        set_tuple_space_server(@tuple_space_server)
 
-        @tuple_space_server = TupleSpaceServer.new(
-          task_worker_resource: option[:request_task_worker]
-        )
-
-        # setup base uri
+        # setup output location
         case option[:output_location]
         when Location::LocalLocation
           option[:output_location] = Location[option[:output_location].path.expand_path]
           option[:output_location].path.mkpath
         when Location::DropboxLocation
-          # start session
-          session = nil
-          consumer_key = nil
-          consumer_secret = nil
-
-          cache = Pathname.new("~/.pione/dropbox_api.cache").expand_path
-          if cache.exist?
-            session = DropboxSession.deserialize(cache.read)
-            Location::Dropbox.set_session(session)
-            consumer_key = session.instance_variable_get(:@consumer_key)
-            consumer_secret = session.instance_variable_get(:@consumer_secret)
-          else
-            api = YAML.load(Pathname.new("~/.pione/dropbox_api.yml").expand_path.read)
-            consumer_key = api["key"]
-            consumer_secret = api["secret"]
-            session = DropboxSession.new(consumer_key, consumer_secret)
-            Location::Dropbox.set_session(session)
-            authorize_url = session.get_authorize_url
-            puts "AUTHORIZING", authorize_url
-            puts "Please visit that web page and hit 'Allow', then hit Enter here."
-            STDIN.gets
-            session.get_access_token
-
-            # cache session
-            cache.open("w+") {|c| c.write session.serialize}
-          end
-
-          # check session state
-          unless session.authorized?
-            abort("We cannot authorize dropbox access to PIONE.")
-          end
-
-          # share access token in tuple space
-          Location::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
+          setup_dropbox
         end
 
         @tuple_space_server.set_base_location(option[:output_location])
       end
 
-      start do
-        read_process_document
+      start(:pre) {read_package}
 
+      # Print list of user parameters.
+      start do
         if option[:list_params]
-          print_parameter_list
+          puts "Parameters:"
+          unless @package.params.empty?
+            @package.params.data.select{|var, val| var.user_param}.each do |var, val|
+              puts "  %s := %s" % [var.name, val.textize]
+            end
+          else
+            puts "  there are no user parameters in %s" % ARGF.path
+          end
           exit!
         end
+      end
 
-        write_tuples
-        connect_relay if option[:relay]
-        start_agents
+      # Run processing.
+      start do
+        # write tuples
+        write(Tuple[:process_info].new('standalone', 'Standalone'))
+        write(Tuple[:dry_run].new(option[:dry_run]))
 
-        # start tuple space provider with thread
-        # the thread is terminated when the client terminated
-        unless option[:without_tuple_space_provider]
-          @start_tuple_space_provider_thread = Thread.new do
-            start_tuple_space_provider
-          end
-        end
+        # setup_relay
+        setup_relay if option[:relay]
 
-        start_workers
-        @agent = Agent[:process_manager].start(@tuple_space_server, @package, option[:params], option[:stream])
-        @agent.running_thread.join
+        start_precedent_agents
+        start_task_workers
+        start_process_manager
       end
 
       terminate do
@@ -245,54 +204,88 @@ module Pione
 
       private
 
-      # Read PIONE process document.
+      # Setup FTP server with the URI.
+      def setup_ftp_server(uri)
+        location = Location[uri.path]
+        location.path.mkdir unless location.exist?
+        if uri.userinfo
+          Util::FTPServer.auth_info = Util::FTPAuthInfo.new(uri.user, uri.password)
+        end
+        if uri.port
+          Util::FTPServer.port = myftp.port
+        end
+        Util::FTPServer.start(Util::FTPLocalFS.new(location))
+      end
+
+      # Setup dropbox.
+      def setup_dropbox
+        # start session
+        session = nil
+        consumer_key = nil
+        consumer_secret = nil
+
+        cache = Pathname.new("~/.pione/dropbox_api.cache").expand_path
+        if cache.exist?
+          session = DropboxSession.deserialize(cache.read)
+          Location::Dropbox.set_session(session)
+          consumer_key = session.instance_variable_get(:@consumer_key)
+          consumer_secret = session.instance_variable_get(:@consumer_secret)
+        else
+          api = YAML.load(Pathname.new("~/.pione/dropbox_api.yml").expand_path.read)
+          consumer_key = api["key"]
+          consumer_secret = api["secret"]
+          session = DropboxSession.new(consumer_key, consumer_secret)
+          Location::Dropbox.set_session(session)
+          authorize_url = session.get_authorize_url
+          puts "AUTHORIZING", authorize_url
+          puts "Please visit that web page and hit 'Allow', then hit Enter here."
+          STDIN.gets
+          session.get_access_token
+
+          # cache session
+          cache.open("w+") {|c| c.write session.serialize}
+        end
+
+        # check session state
+        unless session.authorized?
+          abort("We cannot authorize dropbox access to PIONE.")
+        end
+
+        # share access token in tuple space
+        Location::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
+      end
+
+      # Read a package.
       #
       # @return [void]
-      def read_process_document
-        # process definition document is not found.
+      def read_package
+        # package is not found.
         if ARGF.filename == "-"
           abort("There are no process definition documents.")
         end
 
-        # get script dirname
-        @dir = File.dirname(File.expand_path(__FILE__))
+        # read package
+        @package = Component::PackageReader.read(Location[ARGF.path])
+        @package.upload(option[:output_location] + "package")
 
-        location = Location[ARGF.path]
-
-        # read process document
-        begin
-          # package
-          @package = Component::PackageReader.new(location).read
-          @package.upload(option[:output_location] + "package")
-          if option[:rehearse]
-            unless @package.scenarios.empty?
-              if scenario = @package.find_scenario(option[:rehearse])
-                option[:input_location] = scenario.input
-              else
-                abort "the scenario not found: %s" % option[:rehearse]
-              end
-            end
+        # check rehearse scenario
+        if option[:rehearse] and not(@package.scenarios.empty?)
+          if scenario = @package.find_scenario(option[:rehearse])
+            option[:input_location] = scenario.input
+          else
+            abort "the scenario not found: %s" % option[:rehearse]
           end
-        rescue Pione::Parser::ParserError => e
-          abort("Pione syntax error: " + e.message)
-        rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e
-          abort("Pione model error: " + e.message)
         end
-      end
-
-      # Write initial tuples.
-      #
-      # @return [void]
-      def write_tuples
-        [ Tuple[:process_info].new('standalone', 'Standalone'),
-          Tuple[:dry_run].new(option[:dry_run])
-        ].each {|tuple| @tuple_space_server.write(tuple) }
+      rescue Pione::Parser::ParserError => e
+        abort("Pione syntax error: " + e.message)
+      rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e
+        abort("Pione model error: " + e.message)
       end
 
       # Start agent activities.
       #
       # @return [void]
-      def start_agents
+      def start_precedent_agents
         # messenger
         @messenger = Agent[:messenger].start(@tuple_space_server)
 
@@ -312,30 +305,34 @@ module Pione
 
         # command listener
         @command_listener = Agent[:command_listener].start(@tuple_space_server, self)
-      end
 
-      # Wake up tuple space provider process and connect my tuple space server
-      # to it.
-      def start_tuple_space_provider
-        @tuple_space_provider = Pione::TupleSpaceProvider.instance
-        @tuple_space_provider.add_tuple_space_server(@tuple_space_server)
+        # start tuple space provider and connect tuple space server
+        unless option[:without_tuple_space_provider]
+          @start_tuple_space_provider_thread = Thread.new do
+            @tuple_space_provider = Pione::TupleSpaceProvider.instance
+            @tuple_space_provider.add_tuple_space_server(@tuple_space_server)
+          end
+        end
       end
 
       # Start task workers.
       #
       # @return [void]
-      def start_workers
+      def start_task_workers
         option[:task_worker].times do
-          Thread.new {
-            Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])
-          }
+          Thread.new {Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])}
         end
+      end
+
+      def start_process_manager
+        @agent = Agent[:process_manager].start(@tuple_space_server, @package, option[:params], option[:stream])
+        @agent.running_thread.join
       end
 
       # Connect relay server.
       #
       # @return [void]
-      def connect_relay
+      def setup_relay
         Global.relay_tuple_space_server = @tuple_space_server
         @relay_ref = DRbObject.new_with_uri(option[:relay])
         @relay_ref.__connect
@@ -354,16 +351,6 @@ module Pione
         abort
       rescue Relay::RelaySocket::AuthError
         abort("You failed authentication to connect the relay server: %s" % @relay_ref.__drburi)
-      end
-
-      # Print parameter list of the document.
-      #
-      # @return [void]
-      def print_parameter_list
-        puts "Parameters:"
-        @package.params.data.select{|var, val| var.user_param}.each do |var, val|
-          puts "  %s := %s" % [var.name, val.textize]
-        end
       end
     end
   end
