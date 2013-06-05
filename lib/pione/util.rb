@@ -15,4 +15,5 @@ require 'pione/util/ip-address'
 require 'pione/util/cpu'
 require 'pione/util/variable-holdable'
 require 'pione/util/evaluatable'
+require 'pione/util/process-info'
 

@@ -52,7 +52,7 @@ module Pione
         unless thread.alive?
           Process.abort("You cannot run pione-task-worker.")
         end
-        return thread
+        return Util::ProcessInfo.new(pid, thread)
       end
 
       define_state :task_waiting

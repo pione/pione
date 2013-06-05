@@ -194,6 +194,22 @@ module Pione
       end
     end
 
+    # RehearsalResult represents error result of rehearsal test.
+    class RehearsalResult < StructX
+      member :key
+      member :name
+
+      # Create an error message.
+      def to_s
+        case key
+        when :different
+          "%s is different from expected result." % name
+        when :not_exist
+          "%s doesn't exist." % name
+        end
+      end
+    end
+
     # PackageScenario is a class for expected scenario of rule's behavior.
     class PackageScenario
       include SimpleIdentity
@@ -228,6 +244,25 @@ module Pione
       #   the output location
       def output
         @location + "output"
+      end
+
+      # Validate reheasal results.
+      def validate(result_location)
+        return [] unless output.exist?
+
+        errors = []
+        output.entries.each do |entry|
+          name = entry.basename
+          result = result_location + name
+          if result.exist?
+            if entry.read != result.read
+              errors << RehearsalResult.new(:different, name)
+            end
+          else
+            errors << RehearsalResult.new(:not_exist, name)
+          end
+        end
+        return errors
       end
     end
 

@@ -312,7 +312,7 @@ module Pione
       terminate(:post) do
         Global.monitor.synchronize do
           # exit with no exception
-          exit!
+          exit! Global.exit_status
         end
       end
     end

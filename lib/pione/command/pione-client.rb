@@ -122,6 +122,7 @@ module Pione
         super()
         @worker_threads = []
         @tuple_space_server = nil
+        @child_process_infos = []
       end
 
       private
@@ -173,12 +174,17 @@ module Pione
         write(Tuple[:process_info].new('standalone', 'Standalone'))
         write(Tuple[:dry_run].new(option[:dry_run]))
 
-        # setup_relay
-        setup_relay if option[:relay]
-
+        # start
+        start_relay_connection if option[:relay]
         start_precedent_agents
         start_task_workers
         start_process_manager
+
+        # check result
+        check_rehearsal_result if option[:rehearse]
+
+        @child_process_infos.each {|info| info.kill}
+        @child_process_infos.each {|info| info.wait}
       end
 
       terminate do
@@ -309,30 +315,29 @@ module Pione
         # start tuple space provider and connect tuple space server
         unless option[:without_tuple_space_provider]
           @start_tuple_space_provider_thread = Thread.new do
-            @tuple_space_provider = Pione::TupleSpaceProvider.instance
+            @tuple_space_provider = Pione::TupleSpaceProvider.instance(@child_process_infos)
             @tuple_space_provider.add_tuple_space_server(@tuple_space_server)
           end
         end
       end
 
       # Start task workers.
-      #
-      # @return [void]
       def start_task_workers
         option[:task_worker].times do
-          Thread.new {Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])}
+          Thread.new do
+            @child_process_infos << Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])
+          end
         end
       end
 
+      # Start process manager agent.
       def start_process_manager
         @agent = Agent[:process_manager].start(@tuple_space_server, @package, option[:params], option[:stream])
         @agent.running_thread.join
       end
 
       # Connect relay server.
-      #
-      # @return [void]
-      def setup_relay
+      def start_relay_connection
         Global.relay_tuple_space_server = @tuple_space_server
         @relay_ref = DRbObject.new_with_uri(option[:relay])
         @relay_ref.__connect
@@ -351,6 +356,21 @@ module Pione
         abort
       rescue Relay::RelaySocket::AuthError
         abort("You failed authentication to connect the relay server: %s" % @relay_ref.__drburi)
+      end
+
+      # Check rehearsal result.
+      def check_rehearsal_result
+        return unless option[:rehearse] and not(@package.scenarios.empty?)
+        return unless scenario = @package.find_scenario(option[:rehearse])
+
+        errors = scenario.validate(option[:output_location])
+        if errors.empty?
+          puts "Rehearsal Result: Succeeded"
+        else
+          puts "Rehearsal Result: Failed"
+          errors.each {|error| puts "- %s" % error.to_s}
+          Global.exit_status = false
+        end
       end
     end
   end

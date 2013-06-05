@@ -24,7 +24,7 @@ module Pione
       # Creates the tuple space provider as new process.
       # @return [BasicFront]
       #   tuple space provider or receiver front
-      def self.spawn
+      def self.spawn(child_process_infos=[])
         user_message "create process for %s" % command_name
         # create provider process
         args = [command_name, '--parent-front', Global.front.uri]
@@ -55,6 +55,7 @@ module Pione
           end
         end
         if thread.alive?
+          child_process_infos << Util::ProcessInfo.new(pid, thread)
           return front
         else
           # failed to run pione-tuple-space-provider
@@ -65,7 +66,7 @@ module Pione
       # Returns the provider instance.
       # @return [PresenceNotifier]
       #   tuple space provider or receiver instance as druby object
-      def self.instance
+      def self.instance(child_process_infos=[])
         @monitor.synchronize do
           # get provider reference
           begin
@@ -74,7 +75,7 @@ module Pione
             front
           rescue
             # create new provider
-            self.spawn
+            self.spawn(child_process_infos)
           end.presence_notifier
         end
       end
