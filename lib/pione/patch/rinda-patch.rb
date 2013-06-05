@@ -810,7 +810,7 @@ module Rinda
 
   class TupleSpaceProxy
     def take_all(tuple, sec=nil)
-      @ts.take_all(tuple)
+      @ts.take_all(tuple, sec)
     end
   end
 end
