@@ -1,0 +1,94 @@
+param $COND1 := true
+param $COND2 := not :: $COND1
+param $COND3 := true # processing is endless if $COND3 is true
+
+Rule Main
+  output 'o1'
+  output 'o2' or null
+Flow
+  rule Init
+  rule A
+  rule B
+  rule C
+  rule D
+  rule E
+  rule F
+End
+
+Rule Init
+  output 'i1'.touch
+End
+
+Rule A
+  input 'i1'
+  output 'p1' or 'p2'
+Flow
+  rule A1
+  rule A2
+End
+
+Rule A1
+  output 'p1'.touch
+  constraint $COND1
+End
+
+Rule A2
+  output 'p2'.touch
+  constraint $COND2
+End
+
+Rule B
+  input 'p1'
+  output 'p3'.touch
+End
+
+Rule C
+  input 'p2'
+  output 'p5'.touch
+End
+
+Rule D
+  input 'p3'
+  output 'p4'.touch
+End
+
+Rule E
+  input 'p4' or 'p5'
+  output 'o1'.touch
+End
+
+Rule F
+  input 'p1'
+  input 'p4'
+  output 'p1' or 'o2'
+Flow
+  rule Once
+  rule F1
+  rule F2
+End
+
+Rule Once
+  output 'once'.touch
+End
+
+Rule F1
+  input 'p1'
+  input 'once'
+  output 'p1'
+  constraint $COND3
+Flow
+  rule F1Touch
+End
+
+Rule F1Touch
+  input 'p1'
+  input 'once'
+  output 'p1'.touch
+  output 'once'.remove
+End
+
+Rule F2
+  output 'o2'.touch
+  constraint not :: $COND3
+End
+
