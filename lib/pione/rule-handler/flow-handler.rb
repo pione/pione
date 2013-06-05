@@ -209,6 +209,9 @@ module Pione
             # clear finished tuple
             remove_finished_tuple(task.domain)
 
+            # clear up data in the domain
+            take_all!(Tuple[:data].new(domain: task.domain))
+
             # copy input data from this domain to the task domain
             inputs.flatten.each {|input| copy_data_into_domain(input, task_domain)}
 
@@ -295,14 +298,16 @@ module Pione
           old_location = output.location
           new_location = make_output_location(output.name)
           unless new_location == old_location or lifted.include?(old_location)
-            # move data from old to new
-            old_location.move(new_location)
-            # sync cache if the old is cached in this machine
-            FileCache.sync(old_location, new_location)
-            # write lift tuple
-            write(Tuple[:lift].new(old_location, new_location))
-            # push history
-            lifted << old_location
+            if old_location.exist?
+              # move data from old to new
+              old_location.move(new_location)
+              # sync cache if the old is cached in this machine
+              FileCache.sync(old_location, new_location)
+              # write lift tuple
+              write(Tuple[:lift].new(old_location, new_location))
+              # push history
+              lifted << old_location
+            end
           end
           lifted
         end
