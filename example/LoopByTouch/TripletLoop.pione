@@ -1,0 +1,24 @@
+Rule TripletLoop
+  input '1'
+  output '2' or '3'
+Flow
+  rule TripletA
+  rule TripletB
+  rule TripletC
+End
+
+Rule TripletA
+  input '1'
+  output '2'.touch
+End
+
+Rule TripletB
+  input '2'
+  output '3'.touch
+End
+
+Rule TripletC
+  input '3'
+  output '1'.touch
+End
+

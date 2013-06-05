@@ -1,0 +1,5 @@
+Rule SingleLoop
+  input '1'
+  output '1'.touch
+End
+

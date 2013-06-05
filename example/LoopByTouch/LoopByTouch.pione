@@ -1,28 +1,20 @@
+param $N := 3
+
 Rule Main
   output '1' or '2' or '3'
 Flow
   rule Init
-  rule A
-  rule B
-  rule C
+  case $N
+  when 1
+    rule SingleLoop
+  when 2
+    rule PairLoop
+  when 3
+    rule TripletLoop
+  end
 End
 
 Rule Init
-  output '1'.touch
-End
-
-Rule A
-  input '1'
-  output '2'.touch
-End
-
-Rule B
-  input '2'
-  output '3'.touch
-End
-
-Rule C
-  input '3'
   output '1'.touch
 End
 
