@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneTaskWorker.run
+Pione::Command::PioneTaskWorker.run(ARGV)

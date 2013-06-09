@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneSyntaxChecker.run
+Pione::Command::PioneSyntaxChecker.run(ARGV)

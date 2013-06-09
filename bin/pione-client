@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneClient.run
+Pione::Command::PioneClient.run(ARGV)

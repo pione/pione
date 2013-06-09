@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneRelayAccountDB.run
+Pione::Command::PioneRelayAccountDB.run(ARGV)

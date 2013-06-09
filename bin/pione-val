@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneEval.run
+Pione::Command::PioneVal.run(ARGV)

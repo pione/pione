@@ -65,7 +65,7 @@ module Pione
       # Parse the command options.
       #
       # @return [void]
-      def parse
+      def parse(argv)
         OptionParser.new do |opt|
           # set banner
           opt.banner = "Usage: %s [options]" % opt.program_name
@@ -83,7 +83,7 @@ module Pione
           definitions.sort{|a,b| a.first <=> b.first}.each do |args, b|
             opt.on(*args, Proc.new{|*args| self.instance_exec(@data, *args, &b)})
           end
-        end.parse!(ARGV)
+        end.parse!(argv)
       rescue OptionParser::InvalidOption => e
         e.args.each {|arg| $stderr.puts "Unknown option: %s" % arg }
         abort
@@ -232,25 +232,15 @@ module Pione
         # Run the command.
         #
         # @return [void]
-        def run(*args)
-          self.new(*args).run
+        def run(argv)
+          self.new(argv).run
         end
       end
 
-      # Return a command option.
-      #
-      # @return [CommandOption]
-      #   command option
-      def option
-        self.class.option
-      end
+      forward! :class, :option, :info
 
-      # Return a command info.
-      #
-      # @return [CommandInfo]
-      #   command info
-      def info
-        self.class.info
+      def initialize(argv)
+        @argv = argv
       end
 
       # Run the command.
@@ -273,11 +263,7 @@ module Pione
         caller = lambda  do |name|
           self.class.__send__(name).reverse.each do |proc|
             puts "%s(%s):%s:%s" % [info.name, name, *proc.source_location] if Pione.debug_mode?
-            begin
-              receiver.instance_eval(&proc)
-            rescue Object => e
-              Util::ErrorReport.print e
-            end
+            receiver.instance_eval(&proc)
           end
         end
         caller.call(:pre_terminations)
@@ -295,8 +281,10 @@ module Pione
           end
         end
 
+        Signal.trap(:TERM) { call_terminations }
+
         # parse options
-        option.parse
+        option.parse(@argv)
       end
 
       prepare do
@@ -312,7 +300,7 @@ module Pione
       terminate(:post) do
         Global.monitor.synchronize do
           # exit with no exception
-          exit! Global.exit_status
+          exit Global.exit_status
         end
       end
     end

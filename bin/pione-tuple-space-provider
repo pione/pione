@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneTupleSpaceProvider.run
+Pione::Command::PioneTupleSpaceProvider.run(ARGV)

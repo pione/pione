@@ -88,11 +88,6 @@ module Pione
           data[:relay] = uri
         end
 
-        # --name
-        option('--name=NAME') do |data, name|
-          data[:name] = name
-        end
-
         # --list-parameters
         option('--list-params', 'show user parameter list in the document') do |data|
           data[:list_params] = true
@@ -118,8 +113,8 @@ module Pione
       attr_reader :features
       attr_reader :tuple_space_server
 
-      def initialize
-        super()
+      def initialize(*options)
+        super(*options)
         @worker_threads = []
         @tuple_space_server = nil
         @child_process_infos = []
@@ -164,7 +159,7 @@ module Pione
           else
             puts "  there are no user parameters in %s" % ARGF.path
           end
-          exit!
+          exit
         end
       end
 
@@ -265,13 +260,13 @@ module Pione
       #
       # @return [void]
       def read_package
-        # package is not found.
-        if ARGF.filename == "-"
-          abort("There are no process definition documents.")
+        # package is not found
+        if @argv.first.nil?
+          abort("There are no PIONE documents or packages.")
         end
 
         # read package
-        @package = Component::PackageReader.read(Location[ARGF.path])
+        @package = Component::PackageReader.read(Location[@argv.first])
         @package.upload(option[:output_location] + "package")
 
         # check rehearse scenario
@@ -323,9 +318,18 @@ module Pione
 
       # Start task workers.
       def start_task_workers
+        features = DocumentTransformer.new.apply(
+          DocumentParser.new.feature_expr.parse(option[:features])
+        )
         option[:task_worker].times do
-          Thread.new do
-            @child_process_infos << Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])
+          if option[:stand_alone]
+            Thread.new do
+              Agent[:task_worker].start(@tuple_space_server, features)
+            end
+          else
+            Thread.new do
+              @child_process_infos << Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])
+            end
           end
         end
       end

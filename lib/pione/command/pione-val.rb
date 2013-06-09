@@ -1,8 +1,7 @@
 module Pione
   module Command
-    # PioneSyntaxChecker is a command for checking syntax tree and model of the
-    # PIONE document.
-    class PioneEval < BasicCommand
+    # PioneVal command enables you to get evaluation result of PIONE expressions from out of PIONE system.
+    class PioneVal < BasicCommand
       define_info do
         set_name "pione-val"
         set_banner "Get the evaluation result value of the PIONE expression."
@@ -18,7 +17,7 @@ module Pione
 
       start do
         # get expression string
-        str = ARGV[0] || abort("no expressions")
+        str = @argv.first || abort("no expressions")
 
         # setup domain info
         domain_info = nil
