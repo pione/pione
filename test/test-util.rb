@@ -80,7 +80,7 @@ module TestUtil
     member :stderr
 
     def success?
-      exception and exception.success?
+      exception.kind_of?(SystemExit) and exception.success?
     end
 
     def report

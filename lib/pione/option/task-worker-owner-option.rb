@@ -1,23 +1,22 @@
 module Pione
   module Option
     # TaskWorkerOwnerOption provides options for commands that make task
-    # workers. Options are:
-    #
-    # - task-worker
-    # - features
+    # workers.
     module TaskWorkerOwnerOption
       extend OptionInterface
 
-      default :task_worker, Agent::TaskWorker.default_number
-
-      # --task-worker
-      option('-t N', '--task-worker=N', 'set task worker number that this process creates') do |data, n|
-        data[:task_worker] = n.to_i
+      define(:task_worker) do |item|
+        item.short = '-t N'
+        item.long = '--task-worker=N'
+        item.desc = 'set task worker number that this process creates'
+        item.default = Agent::TaskWorker.default_number
+        item.value = proc {|n| n.to_i}
       end
 
-      # --features
-      option('--features=FEATURES', 'set features') do |data, features|
-        data[:features] = features
+      define(:features) do |item|
+        item.long = '--features=FEATURES'
+        item.desc = 'set features'
+        item.value = proc {|features| features}
       end
     end
   end

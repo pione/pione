@@ -4,23 +4,29 @@ module Pione
     # processes.
     class ChildProcess < FrontOwnerCommand
       define_option do
-        default :no_parent_front, false
-
-        # --parent-front
-        option('--parent-front=URI', 'set parent front URI') do |data, uri|
-          data[:parent_front] = DRbObject.new_with_uri(uri)
-        end
-
-        # --no-parent
-        option('--no-parent', 'turn on no parent mode') do |data|
-          data[:no_parent_mode] = true
-        end
-
-        validate do |data|
-          if not(data[:no_parent_mode]) and data[:parent_front].nil?
-            abort("option error: no caller front address")
+        define(:parent_front) do |item|
+          item.long = '--parent-front=URI'
+          item.desc = 'set parent front URI'
+          item.default = false
+          item.action = proc do |option, uri|
+            option[:parent_front] = DRbObject.new_with_uri(uri)
           end
         end
+
+        define(:no_parent) do |item|
+          item.long = '--no-parent'
+          item.desc = 'turn on no parent mode'
+          item.default = false
+          item.action = proc do |option|
+            option[:no_parent_mode] = true
+          end
+        end
+
+        # validate do |option|
+        #   if not(option[:no_parent_mode]) and option[:parent_front].nil?
+        #     abort("option error: no caller front address")
+        #   end
+        # end
       end
 
       prepare do

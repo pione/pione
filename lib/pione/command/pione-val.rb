@@ -8,10 +8,13 @@ module Pione
       end
 
       define_option do
-        default :domain_info, Location["./domain.dump"]
+        use Option::CommonOption.debug
 
-        option('--domain-info=LOCATION', 'location of Domain info file') do |data, location|
-          data[:domain_info] = Location[location]
+        define(:domain_info) do |item|
+          item.long = '--domain-info=LOCATION'
+          item.desc = 'location of Domain info file'
+          item.default = Location["./domain.dump"]
+          item.value = lambda {|location| Location[location]}
         end
       end
 
@@ -29,6 +32,12 @@ module Pione
           # evaluate it and print the result
           $stdout.puts Pione.val(str, domain_info)
           exit
+        rescue Model::UnboundVariableError => e
+          if option[:domain_info].exist?
+            raise
+          else
+            abort("domain info file '%s' not found" % option[:domain_info].uri.to_s)
+          end
         rescue => e
           abort("error: %s" % e)
         end

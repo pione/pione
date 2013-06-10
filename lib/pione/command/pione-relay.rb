@@ -9,19 +9,27 @@ module Pione
       end
 
       define_option do
-        default :relay_port, Global.relay_port
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+        use Option::CommonOption.show_communication
+        use Option::CommonOption.my_ip_address
 
-        option("--realm name", "set relay realm name for client authentification") do |data, name|
-          Global.relay_realm = name
+        define(:realm) do |item|
+          item.long = "--realm name"
+          item.desc = "set relay realm name for client authentification"
+          item.action = lambda {|_, name| Global.relay_realm = name}
         end
 
-        option("--relay-port port", "set relay port") do |data, port|
-          data[:relay_port] = port
+        define(:relay_port) do |item|
+          item.long = "--relay-port port"
+          item.desc = "set relay port"
+          item.default = Global.relay_port
+          item.value = lambda {|port| port}
         end
 
-        validate do |data|
+        validate do |option|
           abort("error: no realm name") if Global.relay_realm.nil? or Global.relay_realm.empty?
-          abort("error: no relay port") unless data[:relay_port]
+          abort("error: no relay port") unless option[:relay_port]
         end
       end
 
@@ -35,7 +43,7 @@ module Pione
 
         puts DRb.front.uri
         DRb::DRbServer.new(
-          "relay://:%s" % data[:relay_port],
+          "relay://:%s" % option[:relay_port],
           nil,
           {:SSLCertName => Global.relay_ssl_certname}
         )

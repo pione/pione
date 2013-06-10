@@ -297,6 +297,7 @@ module Pione
       def inspect
         "#<%s %s:%s>" % [self.class, scheme, @path.to_s]
       end
+      alias :to_s :inspect
 
       # @api private
       def ==(other)

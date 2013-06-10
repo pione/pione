@@ -9,30 +9,50 @@ module Pione
       end
 
       define_option do
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+
         default :readline_mode, true
-        default :syntax, false
-        default :transform, false
 
-        option('-e', '--expr=EXPR', 'check the expression string and exit') do |data, e|
-          data[:expr] = e
-          data[:readline_mode] = false
+        define(:expr) do |item|
+          item.short = '-e'
+          item.long = '--expr=EXPR'
+          item.desc = 'check the expression string and exit'
+          item.action = lambda do |option, e|
+            option[:expr] = e
+            option[:readline_mode] = false
+          end
         end
 
-        option('-s', '--syntax', 'show syntax tree') do |data|
-          data[:syntax] = true
+        define(:syntax) do |item|
+          item.short = '-s'
+          item.long = '--syntax'
+          item.desc = 'show syntax tree'
+          item.default = false
+          item.value = true
         end
 
-        option('-t', '--transformer', 'show transformer result') do |data|
-          data[:transform] = true
+        define(:transform) do |item|
+          item.short = '-t'
+          item.long = '--transformer'
+          item.desc = 'show transformer result'
+          item.default = false
+          item.value = true
         end
 
-        option('-f', '--file=PATH', 'check syntax of the document') do |data, path|
-          data[:document] = path
-          data[:readline_mode] = false
+        define(:file) do |item|
+          item.short = '-f'
+          item.long = '--file=PATH'
+          item.desc = 'check syntax of the document'
+          item.action = lambda do |option, path|
+            option[:document] = path
+            option[:readline_mode] = false
+          end
         end
       end
 
-      def initialize
+      def initialize(*argv)
+        super
         @history = File.join(Global.dot_pione_dir, "pione-history")
       end
 

@@ -1,6 +1,9 @@
 require_relative '../test-util'
+require_relative 'command-behavior'
 
 describe "Pione::Command::PioneVal" do
+  behaves_like "command"
+
   it "should get value" do
     res = TestUtil::Command.succeed do
       Command::PioneVal.run ["1 + 1"]

@@ -9,32 +9,53 @@ module Pione
       end
 
       define_option do
-        option("-a", "--add", "add a client") do |data|
-          data[:action] = :add
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+
+        define(:add) do |item|
+          item.short = "-a"
+          item.long = "--add"
+          item.desc = "add a client"
+          item.action = lambda {|option| option[:action] = :add}
         end
 
-        option("-d", "--delete", "delete a client") do |data|
-          data[:action] = :delete
+        define(:delete) do |item|
+          item.short = "-d"
+          item.long = "--delete"
+          item.desc = "delete a client"
+          item.action = lambda {|option| option[:action] = :delete}
         end
 
-        option("-l", "--list", "list clients") do |data|
-          data[:action] = :list
+        define(:list) do |item|
+          item.short = "-l"
+          item.long = "--list"
+          item.desc = "list clients"
+          item.action = lambda {|option| option[:action] = :list}
         end
 
-        option("-u name", "--user name", "user name") do |data, name|
-          data[:name] = name
+        define(:name) do |item|
+          item.short = "-u"
+          item.long = "--user=NAME"
+          item.desc = "user name"
+          item.value = lambda {|name| name}
         end
 
-        option("-p password", "--password password", "password") do |data, password|
-          data[:password] = password
+        define(:password) do |item|
+          item.short = "-p"
+          item.long = "--password=PASSWORD"
+          item.desc = "password"
+          item.value = lambda {|password| password}
         end
 
-        option("-f path", "--file path", "client db path") do |data, path|
-          Global.relay_client_db_path = path
+        define(:file) do |item|
+          item.short = "-f"
+          item.long = "--file=PATH"
+          item.desc = "client db path"
+          item.action = lambda {|option, path| Global.relay_client_db_path = path}
         end
 
-        validate do |data|
-          abort("error: -a, -d, or -l") unless data[:action]
+        validate do |option|
+          abort("error: -a, -d, or -l") unless option[:action]
         end
       end
 

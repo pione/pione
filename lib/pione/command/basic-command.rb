@@ -50,7 +50,7 @@ module Pione
 
     # CommandOption is a class for holding option data set.
     class CommandOption < PioneObject
-      def_delegators :@data, :[], :[]=
+      forward! :@option, :"[]", :"[]="
 
       # Creata a command option context.
       #
@@ -59,7 +59,13 @@ module Pione
       def initialize(command_info)
         extend Option::OptionInterface
         @command_info = command_info
-        @data = {}
+        @option = {}
+        @items = []
+        @validators = []
+      end
+
+      def item(name)
+        @items.find {|item| item.name == name}
       end
 
       # Parse the command options.
@@ -68,20 +74,28 @@ module Pione
       def parse(argv)
         OptionParser.new do |opt|
           # set banner
-          opt.banner = "Usage: %s [options]" % opt.program_name
+          opt.banner = "Usage: %s [options]" % @command_info.name
           opt.banner << "\n" + @command_info.banner if @command_info.banner
 
           # set version
+          opt.program_name = @command_info.name
           opt.version = Pione::VERSION
 
-          # set default values
-          default_table.each do |key, value|
-            @data[key] = value
-          end
+          # default values
+          @items.each {|item| @option[item.name] = item.default if item.default}
 
-          # set options
-          definitions.sort{|a,b| a.first <=> b.first}.each do |args, b|
-            opt.on(*args, Proc.new{|*args| self.instance_exec(@data, *args, &b)})
+          # setup option parser
+          @items.sort{|a,b| a.long <=> b.long}.each do |item|
+            args = [item.short, item.long, item.desc].compact
+            if item.action
+              opt.on(*args, Proc.new{|*args| self.instance_exec(@option, *args, &item.action)})
+            elsif item.values.kind_of?(Proc)
+              opt.on(*args, Proc.new{|*args| @option[item.name] << self.instance_exec(*args, &item.values)})
+            elsif item.value.kind_of?(Proc)
+              opt.on(*args, Proc.new{|*args| @option[item.name] = self.instance_exec(*args, &item.value)})
+            else
+              opt.on(*args, Proc.new{ @option[item.name] = item.value})
+            end
           end
         end.parse!(argv)
       rescue OptionParser::InvalidOption => e
@@ -91,12 +105,20 @@ module Pione
         abort(e.message)
       end
 
+      def default(name, value)
+        @option[name] = value
+      end
+
+      def validate(&b)
+        @validators << b
+      end
+
       # Check validness of the command options.
       #
       # @return [void]
       def check
-        validators.each do |validator|
-          validator.call(@data)
+        @validators.each do |validator|
+          validator.call(@option)
         end
       end
     end
@@ -104,7 +126,7 @@ module Pione
     # BasicCommand is a base class for PIONE commands.
     class BasicCommand < PioneObject
       @info = CommandInfo.new
-      @option = CommandOption.new(@info).tap {|x| x.use Option::CommonOption}
+      @option = CommandOption.new(@info)
       @pre_preparations = []
       @preparations = []
       @post_preparations = []
@@ -133,7 +155,7 @@ module Pione
           parent_option = self.option
           subclass.instance_eval do
             @info = CommandInfo.new
-            @option = CommandOption.new(@info).tap {|x| x.use parent_option}
+            @option = CommandOption.new(@info)
           end
           setter = lambda{|name, data| subclass.instance_variable_set(name, data.clone)}
           setter.call(:@pre_preparations, self.pre_preparations)

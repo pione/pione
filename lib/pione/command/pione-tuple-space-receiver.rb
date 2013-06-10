@@ -18,10 +18,20 @@ TXT
       end
 
       define_option do
-        use Option::PresenceNotifierOption
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+        use Option::CommonOption.show_communication
+        use Option::CommonOption.my_ip_address
+        use Option::CommonOption.show_presence_notifier
+        use Option::ChildProcessOption.parent_front
+        use Option::ChildProcessOption.no_parent
 
-        option("--presence-port=PORT", "set presence port number") do |data, port|
-          Global.presence_port = port.to_i
+        define(:presence_port) do |item|
+          item.long = "--presence-port=PORT"
+          item.desc = "set presence port number"
+          item.action = lambda do |option, port|
+            Global.presence_port = port.to_i
+          end
         end
       end
 

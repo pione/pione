@@ -10,11 +10,16 @@ module Pione
       end
 
       define_option do
-        use Option::TupleSpaceReceiverOption
-        use Option::TaskWorkerOwnerOption
+        use Option::CommonOption.color
+        use Option::CommonOption.daemon
+        use Option::CommonOption.debug
+        use Option::CommonOption.my_ip_address
+        use Option::CommonOption.show_communication
+        use Option::TaskWorkerOwnerOption.task_worker
+        use Option::TaskWorkerOwnerOption.features
 
-        validate do |data|
-          unless data[:task_worker] > 0
+        validate do |option|
+          unless option[:task_worker] > 0
             abort("error: no task worker resources")
           end
         end

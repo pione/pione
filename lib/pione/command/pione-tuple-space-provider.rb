@@ -17,18 +17,14 @@ TXT
       end
 
       define_option do
-        use Option::TupleSpaceProviderOption
-
-        default :notifier_addresses, []
-
-        validate do |data|
-          # broadcast addresses
-          data[:notifier_addresses].each do |uri|
-            unless uri.scheme == "broadcast"
-              abort("error: invalid broadcast address '%s'" % uri.to_s)
-            end
-          end
-        end
+        use Option::CommonOption.debug
+        use Option::CommonOption.show_communication
+        use Option::CommonOption.color
+        use Option::CommonOption.presence_notification_address
+        use Option::CommonOption.my_ip_address
+        use Option::CommonOption.show_presence_notifier
+        use Option::ChildProcessOption.parent_front
+        use Option::ChildProcessOption.no_parent
       end
 
       attr_reader :tuple_space_provider
@@ -39,11 +35,6 @@ TXT
       end
 
       prepare do
-        # setup notifier addresses
-        unless option[:notifier_addresses].empty?
-          Global.tuple_space_provider_broadcast_addresses = option[:notifier_addresses]
-        end
-
         # make tuple space provider
         @tuple_space_provider = TupleSpaceProvider.new
       end

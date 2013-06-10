@@ -7,6 +7,10 @@ module Pione
         set_banner "Clean working directories and file cache directories."
       end
 
+      define_option do
+        use Option::CommonOption.debug
+      end
+
       start do
         FileUtils.remove_entry_secure(Global.working_directory_root)
         FileUtils.remove_entry_secure(Global.file_cache_directory_root)

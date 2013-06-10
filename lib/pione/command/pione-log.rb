@@ -8,40 +8,59 @@ module Pione
       end
 
       define_option do
-        default :format, :xes
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+
         default :trace_filter, []
-        default :location, Location["local:./output/pione-process.log"]
 
-        option("--agent-activity[=TYPE]", "output only agent activity log") do |data, name|
-          data[:trace_filter] << Proc.new do |trace|
-            trace.attributes.include?(XES.string("pione:traceType", "agent_activity")) and
-              (name.nil? or trace.events.first.org_resource == name)
+        define(:agent_activity) do |item|
+          item.long = "--agent-activity[=TYPE]"
+          item.desc = "output only agent activity log"
+          item.action = proc do |option, name|
+            option[:trace_filter] << Proc.new do |trace|
+              trace.attributes.include?(XES.string("pione:traceType", "agent_activity")) and
+                (name.nil? or trace.events.first.org_resource == name)
+            end
           end
         end
 
-        option("--rule-process", "generate rule process log") do |data|
-          data[:trace_filter] << Proc.new do |trace|
-            trace.attributes.include?(XES.string("pione:traceType", "rule_process"))
+        define(:rule_process) do |item|
+          item.long = "--rule-process"
+          item.desc = "generate rule process log"
+          item.action = proc do |option|
+            option[:trace_filter] << Proc.new do |trace|
+              trace.attributes.include?(XES.string("pione:traceType", "rule_process"))
+            end
           end
         end
 
-        option("--task-process", "generate task process log") do |data|
-          data[:trace_filter] << Proc.new do |trace|
-            trace.attributes.include?(XES.string("pione:traceType", "task_process"))
+        define(:task_process) do |item|
+          item.long = "--task-process"
+          item.desc = "generate task process log"
+          item.action = proc do |option|
+            option[:trace_filter] << Proc.new do |trace|
+              trace.attributes.include?(XES.string("pione:traceType", "task_process"))
+            end
           end
         end
 
-        option("--location=LOCATION", "set log location of PIONE process") do |data, location|
-          data[:location] = Location[location]
+        define(:location) do |item|
+          item.long = "--location=LOCATION"
+          item.desc = "set log location of PIONE process"
+          item.default = Location["local:./output/pione-process.log"]
+          item.value = proc {|location| Location[location]}
         end
 
-        option("--format=(XES|JSON|HTML)", "set format type") do |data, name|
-          data[:format] = name.downcase.to_sym
+        define(:format) do |item|
+          item.long = "--format=(XES|JSON|HTML)"
+          item.desc = "set format type"
+          item.default = :xes
+          item.value = proc {|name| name.downcase.to_sym}
         end
 
-        validate do |data|
-          unless data[:location].exist?
-            abort("File not found in the location: %s" % data[:location].uri.to_s)
+        validate do |option|
+          unless option[:location].exist?
+            abort("File not found in the location: %s" % option[:location].uri.to_s)
           end
         end
       end

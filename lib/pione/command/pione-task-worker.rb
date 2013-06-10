@@ -21,36 +21,42 @@ BANNER
       end
 
       define_option do
-        use Option::ChildProcessOption
+        use Option::CommonOption.color
+        use Option::CommonOption.show_communication
+        use Option::CommonOption.debug
+        use Option::CommonOption.my_ip_address
+        use Option::ChildProcessOption.parent_front
+        use Option::ChildProcessOption.no_parent
 
-        default :features, Model::Feature::EmptyFeature.new
-
-        # --connection-id
-        option('--connection-id=ID', 'set connection id') do |data, id|
-          data[:connection_id] = id
+        define(:connection_id) do |item|
+          item.long = '--connection-id=ID'
+          item.desc = 'set connection id'
+          item.value = proc {|id| id}
         end
 
-        # --feature
-        option('--features=FEATURES', 'set features') do |data, features|
-          begin
-            features = DocumentTransformer.new.apply(
-              DocumentParser.new.feature_expr.parse(features)
-            )
-            data[:features] = features
-          rescue Parslet::ParseFailed => e
-            puts "invalid parameters: " + str
-            Util::ErrorReport.print(e)
-            abort
+        define(:features) do |item|
+          item.long = '--features=FEATURES'
+          item.desc = 'set features'
+          item.value = proc do |features|
+            begin
+              DocumentTransformer.new.apply(
+                DocumentParser.new.feature_expr.parse(features)
+              )
+            rescue Parslet::ParseFailed => e
+              puts "invalid parameters: " + str
+              Util::ErrorReport.print(e)
+              abort
+            end
           end
         end
 
-        validate do |data|
+        validate do |option|
           # check requisite options
-          abort("error: no connection id") if data[:connection_id].nil?
+          abort("error: no connection id") if option[:connection_id].nil?
 
           # get the parent front server
           begin
-            data[:parent_front].uuid
+            option[:parent_front].uuid
           rescue => e
             if Pione.debug_mode?
               debug_message "pione-task-worker cannot get the parent front server: %s" % e
@@ -127,8 +133,6 @@ BANNER
 
             # flag
             @terminated = true
-
-            super
           rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
             ErrorReport.warn("Disconnected in termination process of task worker agent.", self, e, __FILE__, __LINE__)
           rescue ThreadError => e

@@ -11,99 +11,123 @@ module Pione
       end
 
       define_option do
-        use Option::TaskWorkerOwnerOption
-        use Option::TupleSpaceProviderOwnerOption
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+        use Option::CommonOption.show_communication
+        use Option::CommonOption.my_ip_address
+        use Option::CommonOption.presence_notification_address
+        use Option::CommonOption.show_presence_notifier
+        use Option::TaskWorkerOwnerOption.task_worker
+        use Option::TaskWorkerOwnerOption.features
+        use Option::TupleSpaceProviderOwnerOption.without_tuple_space_provider
 
-        default :output_location, Location["local:./output/"]
-        default :stream, false
-        default :params, Model::Parameters.empty
-        default :dry_run, false
-        default :task_worker, Agent::TaskWorker.default_number
-        default :request_task_worker, 1
-        default :stand_alone, false
-        default :relay, nil
-        default :filename, "-"
-        default :without_tuple_space_provider, false
-        default :features, "^Interactive"
-        default :list_params, false
-
-        # --input
-        option('-i LOCATION', '--input=LOCATION', 'set input directory') do |data, uri|
-          begin
-            data[:input_location] = Location[uri]
-          rescue ArgumentError
-            abort("opiton error: bad location '%s'" % uri)
-          end
-        end
-
-        # --output
-        option('-o LOCATION', '--output=LOCATION', 'set output directory') do |data, uri|
-          begin
-            data[:output_location] = Location[uri]
-            if URI.parse(uri).scheme == "myftp"
-              data[:myftp] = URI.parse(uri).normalize
+        define(:input_location) do |item|
+          item.short = '-i LOCATION'
+          item.long = '--input=LOCATION'
+          item.desc = 'set input directory'
+          item.value = proc do |uri|
+            begin
+              Location[uri]
+            rescue ArgumentError
+              abort("ERROR: bad location '%s'" % uri)
             end
-          rescue ArgumentError
-            abort("opiton error: bad location '%s'" % uri)
           end
         end
 
-        # --stream
-        option('--stream', 'turn on stream mode') do |data|
-          data[:stream] = true
-        end
-
-        # --request-task-worker
-        option('--request-task-worker=N', 'set request number of task workers') do |data, n|
-          data[:request_task_worker] = n.to_i
-        end
-
-        # --params
-        option('--params="{Var:1,...}"', "set user parameters") do |data, str|
-          begin
-            params = DocumentTransformer.new.apply(
-              DocumentParser.new.parameters.parse(str)
-            )
-            data[:params].merge!(params)
-          rescue Parslet::ParseFailed => e
-            puts "invalid parameters: " + str
-            Util::ErrorReport.print(e)
-            abort
+        define(:output_location) do |item|
+          item.short = '-o LOCATION'
+          item.long = '--output=LOCATION'
+          item.desc = 'set output directory'
+          item.default = Location["local:./output/"]
+          item.action = proc do |option, uri|
+            begin
+              option[:output_location] = Location[uri]
+              if URI.parse(uri).scheme == "myftp"
+                option[:myftp] = URI.parse(uri).normalize
+              end
+            rescue ArgumentError
+              abort("ERROR: bad location '%s'" % uri)
+            end
           end
         end
 
-        # --stand-alone
-        option('--stand-alone', 'turn on stand alone mode') do |data|
-          data[:stand_alone] = true
-          data[:without_tuple_space_provider] = true
+        define(:stream) do |item|
+          item.long = '--stream'
+          item.desc = 'turn on stream mode'
+          item.default = false
+          item.value = true
         end
 
-        # --dry-run
-        option('--dry-run', 'turn on dry run mode') do |data, b|
-          data[:dry_run] = true
+        define(:request_task_worker) do |item|
+          item.long = '--request-task-worker=N'
+          item.desc = 'set request number of task workers'
+          item.default = 1
+          item.value = proc {|n| n.to_i}
         end
 
-        # --relay
-        option('--relay=URI', 'turn on relay mode and set relay address') do |data, uri|
-          data[:relay] = uri
+        define(:params) do |item|
+          item.long = '--params="{Var:1,...}"'
+          item.desc = "set user parameters"
+          item.default = Model::Parameters.empty
+          item.action = proc do |option, str|
+            begin
+              params = DocumentTransformer.new.apply(
+                DocumentParser.new.parameters.parse(str)
+              )
+              option[:params].merge!(params)
+            rescue Parslet::ParseFailed => e
+              $stderr.puts "invalid parameters: " + str
+              Util::ErrorReport.print(e)
+              abort
+            end
+          end
         end
 
-        # --list-parameters
-        option('--list-params', 'show user parameter list in the document') do |data|
-          data[:list_params] = true
+        define(:stand_alone) do |item|
+          item.long = '--stand-alone'
+          item.desc = 'turn on stand alone mode'
+          item.default = false
+          item.action = proc do |option|
+            option[:stand_alone] = true
+            option[:without_tuple_space_provider] = true
+          end
         end
 
-        option('--rehearse[=SCENARIO]', 'rehearse the scenario') do |data, scenario_name|
-          data[:rehearse] = scenario_name || :anything
+        define(:dry_run) do |item|
+          item.long = '--dry-run'
+          item.desc = 'turn on dry run mode'
+          item.default = false
+          item.value = true
         end
 
-        validate do |data|
-          unless data[:task_worker] > 0 or
-              (not(data[:stand_alone]) and data[:task_worker] == 0)
-            abort("option error: invalid resource size '%s'" % data[:task_worker])
+        item(:features).default = "^Interactive"
+
+        define(:relay) do |item|
+          item.long = '--relay=URI'
+          item.desc = 'turn on relay mode and set relay address'
+          item.default = nil
+          item.value = proc {|uri| uri}
+        end
+
+        define(:list_params) do |item|
+          item.long = '--list-params'
+          item.desc = 'show user parameter list in the document'
+          item.value = true
+        end
+
+        define(:rehearse) do |item|
+          item.long = '--rehearse[=SCENARIO]'
+          item.desc = 'rehearse the scenario'
+          item.value = proc {|scenario_name| scenario_name || :anything}
+        end
+
+        validate do |option|
+          unless option[:task_worker] > 0 or
+              (not(option[:stand_alone]) and option[:task_worker] == 0)
+            abort("option error: invalid resource size '%s'" % option[:task_worker])
           end
 
-          if data[:stream] and data[:input_location].nil?
+          if option[:stream] and option[:input_location].nil?
             abort("option error: no input URI on stream mode")
           end
         end

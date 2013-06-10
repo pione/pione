@@ -9,46 +9,65 @@ module Pione
       end
 
       define_option do
-        default :identifiers, []
-        default :exclusions, []
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+        use Option::CommonOption.show_communication
 
-        option('-i', '--identifier=NAME', 'show tuples that have the identifier') do |data, name|
-          data[:identifiers] << name
+        define(:identifiers) do |item|
+          item.short = '-i'
+          item.long = '--identifier=NAME'
+          item.desc = 'show tuples that have the identifier'
+          item.default = []
+          item.values = lambda {|name| name}
         end
 
-        option('-e', '--exclude=NAME', 'exclude the tuple identifier') do |data, name|
-          data[:exclusions] << name
+        define(:exclusions) do |item|
+          item.short = '-e'
+          item.long = '--exclude=NAME'
+          item.desc = 'exclude the tuple identifier'
+          item.default = []
+          item.values = lambda {|name| name}
         end
 
-        option('--package=NAME', 'show tuples which domain has the package name') do |data, name|
-          data[:package] = name
+        define(:package) do |item|
+          item.long = '--package=NAME'
+          item.desc = 'show tuples which domain has the package name'
+          item.value = lambda {|name| name}
         end
 
-        option('--rule=NAME', 'show tuples which domain has the rule name') do |data, name|
-          data[:rule] = name
+        define(:rule) do |item|
+          item.long = '--rule=NAME'
+          item.desc = 'show tuples which domain has the rule name'
+          item.value = lambda {|name| name}
         end
 
-        option('--rule-path=NAME', 'show tuples which domain has the rule path') do |data, path|
-          data[:rule_path] = path
+        define(:rule_path) do |item|
+          item.long = '--rule-path=NAME'
+          item.desc = 'show tuples which domain has the rule path'
+          item.value = lambda {|path| path}
         end
 
-        option('--data-name=NAME', 'show tuples that has the the name') do |data, name|
-          data[:data_name] = name
+        define(:data_name) do |item|
+          item.long = '--data-name=NAME'
+          item.desc = 'show tuples that has the the name'
+          item.value = lambda {|name| name}
         end
 
-        option(
-          '--type=TYPE',
-          'show the bag which has the type("bag", "read_waiter", or "take_waiter")'
-        ) do |data, bag_type|
-          data[:bag_type] = bag_type.to_sym
+        define(:bag_type) do |item|
+          item.long = '--type=TYPE'
+          item.desc = 'show the bag which has the type("bag", "read_waiter", or "take_waiter")'
+          item.value = lambda {|bag_type| bag_type.to_sym}
         end
 
-        option('--client=ADDRESS', 'druby address of target client process') do |data, address|
-          data[:address] = address
+        define(:address) do |item|
+          item.long = '--client=ADDRESS'
+          item.desc = 'druby address of target client process'
+          item.value = lambda {|address| address}
         end
       end
 
-      def initialize
+      def initialize(*argv)
+        super
         @tuple_space_servers = []
       end
 

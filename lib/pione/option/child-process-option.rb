@@ -5,14 +5,20 @@ module Pione
     module ChildProcessOption
       extend OptionInterface
 
-      # --parent-front
-      option('--parent-front=URI', 'set parent front URI') do |data, uri|
-        data[:parent_front] = DRbObject.new_with_uri(uri)
+      define(:parent_front) do |item|
+        item.long = '--parent-front=URI'
+        item.desc = 'set parent front URI'
+        item.action = proc do |option, uri|
+          option[:parent_front] = DRbObject.new_with_uri(uri)
+        end
       end
 
-      # --no-parent
-      option('--no-parent', 'turn on no parent mode') do
-        data[:no_parent_mode] = true
+      define(:no_parent) do |item|
+        item.long = '--no-parent'
+        item.desc = 'turn on no parent mode'
+        item.action = proc do |option|
+          option[:no_parent_mode] = true
+        end
       end
     end
   end

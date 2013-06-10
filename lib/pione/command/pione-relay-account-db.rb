@@ -9,40 +9,65 @@ module Pione
       end
 
       define_option do
-        option("-a", "--add", "add an account") do |data|
-          data[:action] = :add
+        use Option::CommonOption.debug
+        use Option::CommonOption.color
+
+        define(:add) do |item|
+          item.short = "-a"
+          item.long = "--add"
+          item.desc = "add an account"
+          item.action = lambda {|option| option[:action] = :add}
         end
 
-        option("-d", "--delete", "delete an account") do |data|
-          data[:action] = :delete
+        define(:delete) do |item|
+          item.short = "-d"
+          item.long = "--delete"
+          item.desc = "delete an account"
+          item.action = lambda {|option| option[:action] = :delete}
         end
 
-        option("-l", "--list", "list accounts") do |data|
-         data[:action] = :list
+        define(:list) do |item|
+          item.short = "-l"
+          item.long = "--list"
+          item.desc = "list accounts"
+          item.action = lambda {|option| option[:action] = :list}
         end
 
-        option("-r realm", "--realm realm", "realm name") do |data, realm|
-          data[:realm] = realm
+        define(:realm) do |item|
+          item.short = "-r"
+          item.long = "--realm=REALM"
+          item.desc = "realm name"
+          item.value = lambda {|name| name}
         end
 
-        option("-u name", "--user name", "user name") do |data, name|
-          data[:name] = name
+        define(:name) do |item|
+          item.short = "-u"
+          item.long = "--user=NAME"
+          item.desc = "user name"
+          item.value = lambda {|name| name}
         end
 
-        option("-p password", "--password password", "password") do |data, password|
-          data[:password] = password
+        define(:password) do |item|
+          item.short = "-p"
+          item.long = "--password=PASSWORD"
+          item.desc = "password"
+          item.value = lambda {|password| password}
         end
 
-        option("-f path", "--file path", "account db path") do |data, path|
-          Global.relay_account_db_path = path
+        define(:file) do |item|
+          item.short = "-f"
+          item.long = "--file=PATH"
+          item.desc = "account db path"
+          item.action = lambda {|path| Global.relay_account_db_path = path}
         end
 
-        validate do |data|
-          abort("error: -a, -d, or -l") unless data[:action]
+        validate do |option|
+          abort("error: -a, -d, or -l") unless option[:action]
         end
       end
 
-      def initialize
+      def initialize(*options)
+        super(*options)
         @realm = nil
         @name = nil
         @password = nil

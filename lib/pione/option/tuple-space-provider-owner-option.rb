@@ -4,14 +4,11 @@ module Pione
     # space provider agent.
     module TupleSpaceProviderOwnerOption
       extend OptionInterface
-      use TupleSpaceProviderOption
 
-      # --without-tuple-space-provider
-      option(
-        '--without-tuple-space-provider',
-        'process without tuple space provider'
-      ) do |data|
-        data[:without_tuple_space_provider] = true
+      define(:without_tuple_space_provider) do |item|
+        item.long = '--without-tuple-space-provider'
+        item.desc = 'process without tuple space provider'
+        item.value = true
       end
     end
   end
