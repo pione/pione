@@ -11,15 +11,14 @@ module Pione
       end
 
       define_option do
-        use Option::CommonOption.debug
-        use Option::CommonOption.color
-        use Option::CommonOption.show_communication
-        use Option::CommonOption.my_ip_address
-        use Option::CommonOption.presence_notification_address
-        use Option::CommonOption.show_presence_notifier
-        use Option::TaskWorkerOwnerOption.task_worker
-        use Option::TaskWorkerOwnerOption.features
-        use Option::TupleSpaceProviderOwnerOption.without_tuple_space_provider
+        use :debug
+        use :color
+        use :show_communication
+        use :my_ip_address
+        use :presence_notification_address
+        use :show_presence_notifier
+        use :task_worker
+        use :features
 
         define(:input_location) do |item|
           item.short = '-i LOCATION'
@@ -119,6 +118,12 @@ module Pione
           item.long = '--rehearse[=SCENARIO]'
           item.desc = 'rehearse the scenario'
           item.value = proc {|scenario_name| scenario_name || :anything}
+        end
+
+        define(:without_tuple_space_provider) do |item|
+          item.long = '--without-tuple-space-provider'
+          item.desc = 'process without tuple space provider'
+          item.value = true
         end
 
         validate do |option|

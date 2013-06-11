@@ -9,9 +9,9 @@ module Pione
       end
 
       define_option do
-        use Option::CommonOption.debug
-        use Option::CommonOption.color
-        use Option::CommonOption.show_communication
+        use :color
+        use :debug
+        use :show_communication
 
         define(:identifiers) do |item|
           item.short = '-i'

@@ -8,7 +8,7 @@ module Pione
       end
 
       define_option do
-        use Option::CommonOption.debug
+        use :debug
 
         define(:domain_info) do |item|
           item.long = '--domain-info=LOCATION'

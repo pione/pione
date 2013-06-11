@@ -18,13 +18,13 @@ TXT
       end
 
       define_option do
-        use Option::CommonOption.debug
-        use Option::CommonOption.color
-        use Option::CommonOption.show_communication
-        use Option::CommonOption.my_ip_address
-        use Option::CommonOption.show_presence_notifier
-        use Option::ChildProcessOption.parent_front
-        use Option::ChildProcessOption.no_parent
+        use :debug
+        use :color
+        use :my_ip_address
+        use :no_parent
+        use :parent_front
+        use :show_communication
+        use :show_presence_notifier
 
         define(:presence_port) do |item|
           item.long = "--presence-port=PORT"

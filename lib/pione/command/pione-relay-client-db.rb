@@ -9,8 +9,8 @@ module Pione
       end
 
       define_option do
-        use Option::CommonOption.debug
-        use Option::CommonOption.color
+        use :color
+        use :debug
 
         define(:add) do |item|
           item.short = "-a"

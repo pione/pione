@@ -8,7 +8,7 @@ module Pione
       end
 
       define_option do
-        use Option::CommonOption.debug
+        use :debug
       end
 
       start do

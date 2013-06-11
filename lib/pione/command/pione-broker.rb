@@ -10,13 +10,13 @@ module Pione
       end
 
       define_option do
-        use Option::CommonOption.color
-        use Option::CommonOption.daemon
-        use Option::CommonOption.debug
-        use Option::CommonOption.my_ip_address
-        use Option::CommonOption.show_communication
-        use Option::TaskWorkerOwnerOption.task_worker
-        use Option::TaskWorkerOwnerOption.features
+        use :color
+        use :daemon
+        use :debug
+        use :features
+        use :my_ip_address
+        use :show_communication
+        use :task_worker
 
         validate do |option|
           unless option[:task_worker] > 0

@@ -136,9 +136,6 @@ require 'pione/front/tuple-space-provider-front'
 require 'pione/front/tuple-space-receiver-front'
 require 'pione/front/relay-front'
 
-# command-option
-require 'pione/option'
-
 # command
 require 'pione/command'
 

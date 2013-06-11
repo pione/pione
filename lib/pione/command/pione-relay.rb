@@ -9,10 +9,10 @@ module Pione
       end
 
       define_option do
-        use Option::CommonOption.debug
-        use Option::CommonOption.color
-        use Option::CommonOption.show_communication
-        use Option::CommonOption.my_ip_address
+        use :color
+        use :debug
+        use :my_ip_address
+        use :show_communication
 
         define(:realm) do |item|
           item.long = "--realm name"

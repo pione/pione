@@ -3,6 +3,7 @@ module Pione
   module Command; end
 end
 
+require 'pione/command/option'
 require 'pione/command/basic-command'
 require 'pione/command/front-owner-command'
 require 'pione/command/daemon-process'

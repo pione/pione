@@ -21,12 +21,11 @@ BANNER
       end
 
       define_option do
-        use Option::CommonOption.color
-        use Option::CommonOption.show_communication
-        use Option::CommonOption.debug
-        use Option::CommonOption.my_ip_address
-        use Option::ChildProcessOption.parent_front
-        use Option::ChildProcessOption.no_parent
+        use :color
+        use :debug
+        use :my_ip_address
+        use :no_parent
+        use :parent_front
 
         define(:connection_id) do |item|
           item.long = '--connection-id=ID'
