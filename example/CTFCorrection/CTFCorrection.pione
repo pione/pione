@@ -1,0 +1,78 @@
+BasicParams
+  $RESOLUTION := 3.80 # tiff2mrc -r
+  $CTF_DETERMINE_Cc := 0.7 # ctfDetermine -Cc
+  $CTF_DETERMINE_Cs := 2.1 # ctfDetermine -Cs
+End
+
+AdvancedParams
+  $TIFF2MRC_m := 0
+  $TIFF2MRC_Offset := 0.0
+  $MRC_IMAGE_CENTER_Nx := 1000 # FIXME
+  $MRC_IMAGE_CENTER_Ny := 1000 # FIXME
+  $MRC_IMAGE_ABNORMAL_VALUE_REMOVE_u_MAX := 65535
+  $MRC_IMAGE_ABNORMAL_VALUE_REMOVE_u_HALF := 16384
+  $MRC_IMAGE_ABNORMAL_VALUE_REMOVE_m := 1
+  $MRC_DETERMINE_D := 50000
+  $MRC_DETERMINE_m := 128
+  $MRC_DETERMINE_CutLow := 0.025
+  $MRC_DETERMINE_CutHigh := 0.15
+  $MRC_DETERMINE_d := 3
+  $MRC_IMAGE_CTF_COMPENSATION_m := 1
+End
+
+Rule Main
+  input ('*.tif' or '*.mrc').all
+  output '*.ctf'.all
+Flow
+  rule Tiff2Mrc
+  rule Mrc2Cen
+  rule Cen2Nor
+  rule Nor2Fft
+  rule Fft2Ctfinfo
+  rule Ctfinfo2Ctf
+End
+
+Rule Tiff2Mrc
+  input '*.tif'
+  output '{$*}.mrc'
+Action
+  tiff2mrc -i {$I[1]} -o {$O[1]}.mrc -r {$RESOLUTION} -m {$TIFF2MRC_m} -Offset {$TIFF2MRC_Offset}
+End
+
+Rule Mrc2Cen
+  input '*.mrc'
+  output '{$*}.cen'
+Action
+  mrcImageCenterGet -i {$I[1]} -o {$O[1]} -Nx {$MRC_IMAGE_CENTER_Nx} -Ny {$MRC_IMAGE_CENTER_Ny}
+End
+
+Rule Cen2Nor
+  input '*.cen'
+  output '{$*}.nor'
+Action
+  mrcImageAbnormalValueRemove -i {$I[1]} -o {$O[1]} -u {$MRC_IMAGE_ABNORMAL_VALUE_REMOVE_u_MAX} {$MRC_IMAGE_ABNORMAL_VALUE_REMOVE_u_HALF} -m {$MRC_IMAGE_ABNORMAL_VALUE_REMOVE_m}
+End
+
+Rule Nor2Fft
+  input '*.nor'
+  output '{$*}.fft'
+Action
+  mrcImageFFT -i {$I[1]} -o {$O[1]}
+End
+
+Rule Fft2Ctfinfo
+  input '*.fft'
+  output '{$*}.ctfinfo'
+Action
+  ctfDetermine -i {$I[1]} -o {$O[1]} -D {$MRC_DETERMINE_D} -m {$MRC_DETERMINE_m} -CutLow {$MRC_DETERMINE_CutLow} -CutHigh {$MRC_DETERMINE_CutHigh} -d {$MRC_DETERMINE_d} -Cc {$CTF_DETERMINE_Cc} -Cs {$CTF_DETERMINE_Cs}
+End
+
+Rule Ctfinfo2Ctf
+  input '*.fft'
+  input '{$*}.ctfinfo'
+  output '{$*}.ctf'
+Action
+  mv {$I[2]} {$I[2]}.tmp2
+  grep .: {$I[2]}.tmp2 > {$I[2]}
+  mrcImageCTFCompensation -i {$I[1]} -info2 {$I[2]} -o {$O[1]} -m {$MRC_IMAGE_CTF_COMPENSATION_m}
+End
