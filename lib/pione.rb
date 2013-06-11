@@ -58,13 +58,7 @@ require 'pione/patch/rinda-patch'
 require 'pione/patch/uri-patch'
 require 'pione/patch/monitor-patch'
 
-# uri-scheme
-require 'pione/uri-scheme/basic-scheme'
-require 'pione/uri-scheme/local-scheme'
-require 'pione/uri-scheme/dropbox-scheme'
-require 'pione/uri-scheme/broadcast-scheme'
-require 'pione/uri-scheme/myftp-scheme'
-
+require 'pione/uri-scheme'
 require 'pione/location'
 require 'pione/log'
 require 'pione/system'
