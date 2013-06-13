@@ -171,8 +171,15 @@ module TestUtil::Parser
 end
 
 module TestUtil::Transformer
-  TestCase = Struct.new(:string, :expected)
-  TestCaseEq = Struct.new(:string, :expected)
+  class TestCase < StructX
+    member :string
+    member :expected
+  end
+
+  class TestCaseEq < StructX
+    member :string
+    member :expected
+  end
 
   def spec(name, parser, context, &b)
     testcases = Array.new

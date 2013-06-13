@@ -44,5 +44,13 @@ describe "Pione::Command::PioneClient" do
     Location[path + "message.txt"].should.exist
     Location[path + "message.txt"].read.should.start_with "Hello, world!"
   end
+
+  it "should show parameters list of package" do
+    args = ["example/HelloWorld/HelloWorld.pione", "--list-params"]
+    res = TestUtil::Command.succeed do
+      Pione::Command::PioneClient.run args
+    end
+    res.stdout.string.size.should > 0
+  end
 end
 

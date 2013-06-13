@@ -1,0 +1,17 @@
+Basic Param
+  $A := 1
+End
+
+Advanced Param
+  $B := 2
+End
+
+param $C := 3
+advanced param $D := 4
+
+Rule Main
+  input '*.a'
+  output '{$*}.b'
+Action
+  echo {$A} {$B} {$C} {$D} > {$O[1]}
+End

@@ -109,11 +109,12 @@ module Pione
       #     param $VAR := "abc"
       rule(:param_line) {
         ( space? >>
+          ((keyword_basic | keyword_advanced).as(:param_type) >> space).maybe >>
           keyword_param >>
           space >>
           ( expr.as(:expr) |
             syntax_error("it should be expr", :expr)
-          ) >>
+          ).as(:param_expr) >>
           line_end
         ).as(:param_line)
       }

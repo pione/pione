@@ -14,20 +14,32 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
   end
 
   transformer_spec("param_line", :param_line) do
-    tc("param {var: 1}") do
-      Naming.ParamLine(
-        Parameters.new(
-          {Variable.new("var") => IntegerSequence.new([PioneInteger.new(1)])}
-        )
-      )
+    transform "param $X" do |param_line|
+      param_line.should.kind_of Naming::ParamLine
+      param_line.value.should == Variable.new("X")
     end
-    tc("param {var1: 1, var2: 2}") do
-      Naming.ParamLine(
-        Parameters.new(
-          { Variable.new("var1") => IntegerSequence.new([PioneInteger.new(1)]),
-            Variable.new("var2") => IntegerSequence.new([PioneInteger.new(2)]) }
-        )
-      )
+    transform "param $X := 1" do |param_line|
+      param_line.should.kind_of Naming::ParamLine
+      param_line.value.tap do |param|
+        param.variable.should == Variable.new("X")
+        param.expr.should == IntegerSequence.new([PioneInteger.new(1)])
+      end
+    end
+
+    transform("basic param $X") do |param_line|
+      param_line.value.param_type.should == :basic
+    end
+
+    transform("basic param $X := 1") do |param_line|
+      param_line.value.variable.param_type.should == :basic
+    end
+
+    transform("advanced param $X") do |param_line|
+      param_line.value.param_type.should == :advanced
+    end
+
+    transform("advanced param $X := 1") do |param_line|
+      param_line.value.variable.param_type.should == :advanced
     end
   end
 
@@ -75,7 +87,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       Rule Main
         input '*.txt'.except('summary.txt')
         output 'summary.txt'
-        param {ConvertCharSet: true}
+        param $ConvertCharSet := true
       Flow
       if $ConvertCharset
         rule NKF.params("-w")

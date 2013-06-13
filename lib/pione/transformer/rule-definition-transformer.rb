@@ -47,9 +47,17 @@ module Pione
       }
 
       # Transform +param_line+ as Naming::ParamLine.
-      rule(:param_line => simple(:param)) {
-        unless TypeAssignment.match(param) or TypeParameters.match(param) or param.kind_of?(Variable)
+      rule(:param_line => subtree(:tree)) {
+        param = tree[:param_expr]
+        param_type = tree[:param_type]
+        unless TypeAssignment.match(param) or param.kind_of?(Variable)
           raise PioneModelTypeError.new(param, TypeAssignment)
+        end
+        case param_type
+        when "advanced"
+          param.set_param_type(:advanced)
+        else
+          param.set_param_type(:basic)
         end
         Naming.ParamLine(param)
       }

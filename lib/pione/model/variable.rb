@@ -4,10 +4,15 @@ module Pione
     # its value with the variable table.
     class Variable < Callable
       set_pione_model_type TypeSequence
+
+      # variable name
       attr_reader :name
 
       # true if the variable is user parameter
       attr_reader :user_param
+
+      # parameter tyep
+      attr_reader :param_type
 
       # Create a variable with name.
       #
@@ -17,6 +22,7 @@ module Pione
         @name = name.to_s
         @toplevel = nil
         @user_param = nil
+        @param_type = nil
         super()
       end
 
@@ -49,6 +55,14 @@ module Pione
       # Set truth of user parameter.
       def set_user_param(b)
         @user_param = b
+      end
+
+      # Set the parameter type.
+      #
+      # @param type [Symbol]
+      #   :advanced or :basic
+      def set_param_type(type)
+        @param_type = type
       end
 
       # Return true if the variable is defined in toplevel.

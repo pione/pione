@@ -13,9 +13,14 @@ param_line:
     - "param $Var := 1"
     - "param $NUM := 1.0"
     - "param $STR := \"abc\""
-    - "param {Var: 1}"
+    - "basic param $X"
+    - "basic param $X := 1"
+    - "advanced param $X"
+    - "advanced param $X := 1"
   invalid:
-    - param $
+    - "param $"
+    - "basicparam $X := 1"
+    - "advancedparam $X := 1"
 feature_line:
   valid:
     - feature +A

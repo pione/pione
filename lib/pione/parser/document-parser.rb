@@ -104,9 +104,10 @@ module Pione
       #   TXT
       rule(:param_block) {
         ( space? >>
+          ((keyword_Basic | keyword_Advanced).as(:param_type) >> space).maybe >>
           keyword_Param >>
           line_end >>
-          (assignment_line | pad).repeat >>
+          (assignment_line | pad).repeat.as(:in_block_assignments) >>
           (keyword_End | syntax_error("it should be block end", :keyword_End)) >>
           line_end
         ).as(:param_block)

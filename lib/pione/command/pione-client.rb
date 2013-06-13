@@ -180,10 +180,22 @@ module Pione
       # Print list of user parameters.
       start do
         if option[:list_params]
-          puts "Parameters:"
           unless @package.params.empty?
-            @package.params.data.select{|var, val| var.user_param}.each do |var, val|
-              puts "  %s := %s" % [var.name, val.textize]
+            # print basic parameters
+            basic_user_params = @package.params.basic
+            unless basic_user_params.empty?
+              puts "Basic Paramters:"
+              basic_user_params.data.each do |var, val|
+                puts "  %s := %s" % [var.name, val.textize]
+              end
+            end
+
+            advanced_user_params = @package.params.advanced
+            unless advanced_user_params.empty?
+              puts "Advanced Paramters:"
+              advanced_user_params.data.each do |var, val|
+                puts "  %s := %s" % [var.name, val.textize]
+              end
             end
           else
             puts "  there are no user parameters in %s" % ARGF.path

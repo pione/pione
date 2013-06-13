@@ -58,6 +58,15 @@ module Pione
         return self
       end
 
+      # Set the prameter type.
+      #
+      # @param type [Symbol]
+      #   :advanced or :basic
+      def set_param_type(type)
+        @variable.set_param_type(type)
+        return self
+      end
+
       # Return true if the assignment is defined in toplevel.
       #
       # @return [Boolean]

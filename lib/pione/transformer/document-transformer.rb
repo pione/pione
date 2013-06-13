@@ -33,10 +33,18 @@ module Pione
       }
 
       # Transform +:param_block+ as Naming::ParamBlock.
-      rule(:param_block => sequence(:assignments)) {
+      rule(:param_block => subtree(:tree)) {
+        param_type = tree[:param_type]
+        assignments = tree[:in_block_assignments]
         _assignments = assignments.map do |assignment|
           assignment.set_toplevel(true)
           assignment.set_user_param(true)
+          case param_type
+          when "Advanced"
+            assignment.set_param_type(:advanced)
+          else
+            assignment.set_param_type(:basic)
+          end
         end
         Naming.ParamBlock(_assignments)
       }

@@ -1,0 +1,6 @@
+Rule Main
+  input '*.a'
+  output '{$*}.b'
+Action
+  echo {$I[1]} > {$O[1]}
+End

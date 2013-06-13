@@ -294,6 +294,16 @@ module Pione
         end
       end
 
+      # Create a new parameters that have basic user parameters only.
+      def basic
+        self.class.new(@data.select{|var, val| var.param_type == :basic})
+      end
+
+      # Create a new parameters that have advanced user parameters only.
+      def advanced
+        self.class.new(@data.select{|var, val| var.param_type == :advanced})
+      end
+
       # @api private
       def string_form
         "{" + @data.map{|k,v| "#{k}: #{v}"}.join(", ") + "}"

@@ -60,3 +60,18 @@ param_block:
         # param $Z := 3
         $Z := 3
       End
+    # basic param block
+    - |
+      Basic Param
+        $X := 1
+        $Y := 2
+        $Z := 3
+      End
+    # advanced param block
+    - |
+      Advanced Param
+        $X := 1
+        $Y := 2
+        $Z := 3
+      End
+

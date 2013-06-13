@@ -1,0 +1,13 @@
+Basic Param
+  $A := 1
+End
+
+param $B := 2
+
+Rule Main
+  input '*.a'
+  output '{$*}.b'
+Action
+  echo {$A} {$B} > {$O[1]}
+End
+
