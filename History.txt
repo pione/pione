@@ -1,5 +1,11 @@
 # History
 
+## 0.2.1(2013/06/15)
+
+* Added basic/advaneced parameter.
+* Enabled to run rehearsal test.
+* Imporved test coverage.
+
 ## 0.2.0(2013/05/31)
 
 * Added initial package system.
