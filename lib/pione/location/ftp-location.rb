@@ -44,15 +44,11 @@ module Pione
       end
 
       def read
-        begin
-          data = nil
-          file = Temppath.create
-          connect {|ftp| ftp.get(@path, file.to_s)}
-          data = File.read(file.to_s)
-          return data
-        rescue Net::FTPPermError
-          raise NotFound.new(@uri)
-        end
+        file = Temppath.create
+        connect {|ftp| ftp.get(@path, file.to_s)}
+        return File.read(file.to_s)
+      rescue Net::FTPPermError
+        raise NotFound.new(@uri)
       end
 
       def update(data)

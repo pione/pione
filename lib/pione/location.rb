@@ -6,5 +6,5 @@ end
 require 'pione/location/basic-location'
 require 'pione/location/local-location'
 require 'pione/location/ftp-location'
+require 'pione/location/http-location'
 require 'pione/location/dropbox-location'
-

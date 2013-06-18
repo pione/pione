@@ -59,9 +59,17 @@ module Pione
         def real_appendable?
           @appendable
         end
+
+        def set_writable(b)
+          @writable = b
+        end
+
+        def writable?
+          @writable
+        end
       end
 
-      forward! :class, :scheme, :real_appendable?
+      forward! :class, :scheme, :real_appendable?, :writable?
       forward :@uri, :host
 
       # @return [URI]
