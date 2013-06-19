@@ -1,2 +1,8 @@
 PackageName: MakePair
+Documents:
+  - "MakePair.pione"
+Scenarios:
+  - "scenario/case1"
+  - "scenario/case2"
+  - "scenario/case3"
 

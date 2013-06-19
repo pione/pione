@@ -1,3 +1,11 @@
 #!/usr/bin/env ruby
 
-puts ARGF.read.chomp.size
+require "pione"
+
+input  = Pione.val "$I[1]"
+output = Pione.val "$O[1]"
+word   = Pione.val "$WORD"
+
+counter = 0
+File.read(input).gsub(word){counter += 1}
+File.write(output, counter)

@@ -1,0 +1,10 @@
+ScenarioName: Case2
+Params: '{WORD: "abc"}'
+Inputs:
+  - "1.txt"
+  - "2.txt"
+  - "3.txt"
+Outputs:
+  - "1.count"
+  - "2.count"
+  - "3.count"

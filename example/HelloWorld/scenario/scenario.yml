@@ -1,2 +1,3 @@
 ScenarioName: HelloWorld
-Parameters: nil
+Outputs:
+  - "message.txt"

@@ -1,0 +1,4 @@
+ScenarioName: A
+Params: '{NAME: "A"}'
+Outputs:
+  - "message.txt"

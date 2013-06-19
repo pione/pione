@@ -3,5 +3,7 @@ Authors: Keita Yamaguchi
 Version: 0.1
 Documents:
   - Test.pione
-Test:
-  - test/test.sh
+Scenarios:
+  - scenario/case1
+  - scenario/case2
+  - scenario/case3

@@ -1,3 +1,5 @@
+param $WORD := "world"
+
 Rule Main
   input '*.txt'.all
   output '*.count'.all
@@ -9,6 +11,6 @@ Rule Count
   input '*.txt'
   output '{$*}.count'
 Action
-  {$_.bin}/count {$I[1]} > {$O[1]}
+  count
 End
 

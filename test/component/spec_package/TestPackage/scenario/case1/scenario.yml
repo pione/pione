@@ -1,1 +1,6 @@
-ScenarioName: TestCase1
+ScenarioName: Case1
+Params: '{WORD: "a"}'
+Inputs:
+  - "1.txt"
+Outputs:
+  - "1.count"

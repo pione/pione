@@ -1,2 +1,5 @@
 PackageName: HelloWorld
-Parameters: nil
+Documents:
+  - "HelloWorld.pione"
+Scenarios:
+  - "scenario"

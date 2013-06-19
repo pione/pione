@@ -1,1 +1,5 @@
 PackageName: ScoreAggregation
+Documents:
+  - "ScoreAggregation.pione"
+Scenarios:
+  - "scenario/case1"

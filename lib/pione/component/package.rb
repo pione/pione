@@ -141,7 +141,7 @@ module Pione
         Package.new(
           info: info,
           bin: @location + "bin",
-          scenarios: find_scenarios,
+          scenarios: find_scenarios(info["Scenarios"]),
           documents: find_documents(info["PackageName"])
         )
       end
@@ -169,18 +169,13 @@ module Pione
       #
       # @return [Array<PackageScenario>]
       #   scenarios
-      def find_scenarios
-        if (@location + "scenario" + "scenario.yml").exist?
-          [PackageScenarioReader.read(@location + "scenario")]
-        else
-          if (@location + "scenario").exist? and (@location + "scenario").directory?
-            (@location + "scenario").entries.map do |scenario|
-              PackageScenarioReader.read(scenario)
-            end.compact
-          else
-            []
+      def find_scenarios(scenarios)
+        return [] if scenarios.nil?
+        scenarios.map do |path|
+          if (@location + path + "scenario.yml").exist?
+            PackageScenarioReader.read(@location + path)
           end
-        end
+        end.compact
       end
 
       # Find documents from the packcage location.
@@ -238,12 +233,28 @@ module Pione
         input_location if input_location.exist?
       end
 
+      # Return input file locations.
+      #
+      # @return [BasicLocation]
+      #   input file locations
+      def inputs
+        info["Inputs"].map {|name| @location + "input" + name}
+      end
+
       # Return the output location.
       #
       # @return [BasicLocation]
       #   the output location
       def output
         @location + "output"
+      end
+
+      # Return output file locations.
+      #
+      # @return [BasicLocation]
+      #   output file locations
+      def outputs
+        info["Outputs"].map {|name| @location + "output" + name}
       end
 
       # Validate reheasal results.

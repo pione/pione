@@ -1,0 +1,17 @@
+ScenarioName: from 9 to 11
+Inputs:
+  - "9.i"
+  - "10.i"
+  - "11.i"
+Outputs:
+  - "comb-9-10.pair"
+  - "comb-9-11.pair"
+  - "comb-10-11.pair"
+  - "perm-9-10.pair"
+  - "perm-9-11.pair"
+  - "perm-10-9.pair"
+  - "perm-10-11.pair"
+  - "perm-11-9.pair"
+  - "perm-11-10.pair"
+  - "succ-9-10.pair"
+  - "succ-10-11.pair"

@@ -4,7 +4,9 @@ describe "Pione::Component::Package" do
   before do
     path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
     @package = Component::PackageReader.new(path).read
-    @scenario1 = @package.scenarios[0]
+    @case1 = @package.scenarios[0]
+    @case2 = @package.scenarios[1]
+    @case3 = @package.scenarios[2]
   end
 
   it "should equal" do
@@ -26,7 +28,10 @@ describe "Pione::Component::Package" do
   end
 
   it "should get scenarios" do
-    @package.scenarios.map{|scenario| scenario.name}.should.include "TestCase1"
+    names = @package.scenarios.map{|scenario| scenario.name}
+    names.should.include "Case1"
+    names.should.include "Case2"
+    names.should.include "Case3"
   end
 
   it "should get docuemtns" do
@@ -52,15 +57,19 @@ describe "Pione::Component::Package" do
   end
 
   it "should find sceinarios" do
-    @package.find_scenario(:anything).name.should == "TestCase1"
-    @package.find_scenario("TestCase1").name.should == "TestCase1"
+    @package.find_scenario(:anything).name.should == "Case1"
+    @package.find_scenario("Case1").name.should == "Case1"
+    @package.find_scenario("Case2").name.should == "Case2"
+    @package.find_scenario("Case3").name.should == "Case3"
   end
 end
 
 describe "Pione::Component::PackageScenario" do
   before do
-    @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage" + "scenario" + "case1"
-    @scenario = Component::PackageScenarioReader.new(@path).read
+    @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage" + "scenario"
+    @case1 = Component::PackageScenarioReader.new(@path  + "case1").read
+    @case2 = Component::PackageScenarioReader.new(@path  + "case2").read
+    @case3 = Component::PackageScenarioReader.new(@path  + "case3").read
   end
 
   it 'should equal' do
@@ -74,7 +83,27 @@ describe "Pione::Component::PackageScenario" do
   end
 
   it "should get the scenario name" do
-    @scenario.name.should == "TestCase1"
+    @case1.name.should == "Case1"
+    @case2.name.should == "Case2"
+    @case3.name.should == "Case3"
+  end
+
+  it "should get input files" do
+    @case1.inputs[0].basename.should == "1.txt"
+    @case2.inputs[0].basename.should == "1.txt"
+    @case2.inputs[1].basename.should == "2.txt"
+    @case2.inputs[2].basename.should == "3.txt"
+    @case3.inputs[0].basename.should == "a.txt"
+    @case3.inputs[1].basename.should == "b.txt"
+  end
+
+  it "should get output files" do
+    @case1.outputs[0].basename.should == "1.count"
+    @case2.outputs[0].basename.should == "1.count"
+    @case2.outputs[1].basename.should == "2.count"
+    @case2.outputs[2].basename.should == "3.count"
+    @case3.outputs[0].basename.should == "a.count"
+    @case3.outputs[1].basename.should == "b.count"
   end
 end
 

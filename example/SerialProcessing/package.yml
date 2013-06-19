@@ -1,1 +1,5 @@
-PackageName: SerialProcessing
+PackageName: "SerialProcessing"
+Documents:
+  - "SerialProcessing.pione"
+Scenarios:
+  - "scenario"
