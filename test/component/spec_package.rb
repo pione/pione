@@ -1,4 +1,5 @@
 require_relative '../test-util'
+require 'webrick'
 
 describe "Pione::Component::Package" do
   before do
@@ -108,14 +109,64 @@ describe "Pione::Component::PackageScenario" do
 end
 
 describe "Pione::Component::PackageReader" do
-  it "should read package directory" do
-    path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
-    Component::PackageReader.new(path).type.should == :directory
+  shared "package" do
+    it "should read the package and return it" do
+      Component::PackageReader.read(@path).should.kind_of Component::Package
+    end
+
+    it "should get package informations" do
+      package = Component::PackageReader.read(@path)
+      package.name.should == "TestPackage"
+    end
+
+    it "should get scenarios" do
+      package = Component::PackageReader.read(@path)
+      package.name.should == "TestPackage"
+      case1 = package.scenarios[0]
+      case1.name.should == "Case1"
+      case1.inputs[0].basename.should == "1.txt"
+      case2 = package.scenarios[1]
+      case2.name.should == "Case2"
+      case2.inputs[0].basename.should == "1.txt"
+      case2.inputs[1].basename.should == "2.txt"
+      case2.inputs[2].basename.should == "3.txt"
+      case3 = package.scenarios[2]
+      case3.name.should == "Case3"
+      case3.inputs[0].basename.should == "a.txt"
+      case3.inputs[1].basename.should == "b.txt"
+    end
   end
 
-  it "should read the package and return it" do
-    path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
-    Component::PackageReader.read(path).should.kind_of Component::Package
+  shared "package directory" do
+    it "should read package directory" do
+      Component::PackageReader.new(@path).type.should == :directory
+    end
+  end
+
+  describe "package directory in local location" do
+    before do
+      @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+    end
+
+    behaves_like "package"
+    behaves_like "package directory"
+  end
+
+  describe "package in HTTP location" do
+    before do
+      document_root = File.join(File.dirname(__FILE__), "spec_package")
+      logger = WEBrick::Log.new(StringIO.new("", "w"))
+      @server = WEBrick::HTTPServer.new(DocumentRoot: document_root, Port: 54673, Logger: logger, AccessLog: logger)
+      @path = Location["http://localhost:%s/TestPackage/" % @server.config[:Port]]
+      Thread.new { @server.start }
+    end
+
+    after do
+      @server.shutdown
+    end
+
+    behaves_like "package"
+    behaves_like "package directory"
   end
 end
 

@@ -125,11 +125,14 @@ module Pione
       # @return [Symbol]
       #   package type
       def check_package_type
-        return :directory if @location.directory?
-        if File.extname(@location.basename) == ".pione"
+        case File.extname(@location.basename)
+        when ".ppg"
+          return :archive
+        when ".pione"
           return :pione_document_file
+        else
+          return :directory
         end
-        raise ArgumentError.new(@location)
       end
 
       # Read package directory.
@@ -142,7 +145,7 @@ module Pione
           info: info,
           bin: @location + "bin",
           scenarios: find_scenarios(info["Scenarios"]),
-          documents: find_documents(info["PackageName"])
+          documents: find_documents(info["PackageName"], info["Documents"])
         )
       end
 
@@ -182,10 +185,10 @@ module Pione
       #
       # @return [Array<Document>]
       #   documents
-      def find_documents(package_name)
-        @location.entries.select do |entry|
-          entry.file? and entry.path.extname == ".pione"
-        end.map {|entry| Document.load(entry, package_name) }
+      def find_documents(package_name, document_names)
+        document_names.map do |name|
+          Document.load(@location + name, package_name)
+        end
       end
     end
 
