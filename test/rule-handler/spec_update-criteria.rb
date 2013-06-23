@@ -1,7 +1,7 @@
 require_relative '../test-util'
 
 path = Pathname.new(File.join(File.dirname(__FILE__), "spec_update-criteria.pione"))
-document = Component::Document.load(path.read)
+document = Component::Document.load(path)
 
 time = 10.times.map {sleep 0.001; Time.now}
 tuple = {}

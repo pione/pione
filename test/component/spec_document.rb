@@ -17,7 +17,7 @@ describe 'Pione::Component::Document' do
   end
 
   it 'should load a document from a string' do
-    Component::Document.load(document_location.read).should == @document
+    Component::Document.parse(document_location.read).should == @document
   end
 
   it 'should load a document with package name' do
@@ -58,7 +58,7 @@ describe 'Pione::Component::Document' do
 
   it 'should raise variable binding error' do
     should.raise(VariableBindingError) do
-      Component::Document.load <<-PIONE
+      Component::Document.parse <<-PIONE
         $X := 1
         $X := 2
       PIONE

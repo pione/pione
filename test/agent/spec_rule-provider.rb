@@ -4,7 +4,7 @@ describe "Pione::Agent::RuleProvider" do
   before do
     @ts = create_tuple_space_server
     @agent = Agent[:rule_provider].new(@ts)
-    doc = Component::Document.load(<<-DOCUMENT)
+    doc = Component::Document.parse(<<-DOCUMENT)
       Rule A
         input  '*.a'
         output '{$I[1]}.result'
@@ -35,7 +35,7 @@ describe "Pione::Agent::RuleProvider" do
   end
 
   it "should add a rule" do
-    doc = Component::Document.load(<<-DOCUMENT)
+    doc = Component::Document.parse(<<-DOCUMENT)
       Rule C
         input  '*.c'
         output '{$I[1]}.result'

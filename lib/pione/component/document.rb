@@ -12,15 +12,31 @@ module Pione
 
     class Document < StructX
       class << self
-        # Load a PIONE rule document.
+        # Load a PIONE rule document as file.
         #
-        # @param location [Location,String]
+        # @param location [BasicLocation]
         #   location of the PIONE document
+        # @param package_name [String]
+        #   package name
+        # @param package_path [String]
+        #   relative path of the document in package
         # @return [Component::Document]
         #   the document
-        def load(src, package_name="Main")
-          src = src.read if src.kind_of?(Location::BasicLocation)
+        def load(src, package_name="Main", package_path="Unknown.pione")
+          parse(src.read, package_name, package_path)
+        end
 
+        # Parse a PIONE rule document as string.
+        #
+        # @param location [String]
+        #   PIONE document
+        # @param package_name [String]
+        #   package name
+        # @param path [String]
+        #   relative path of the document
+        # @return [Component::Document]
+        #   the document as Ruby object
+        def parse(src, package_name="Main", package_path="Unknown.pione")
           # parse the document and build the model
           parser = Parser::DocumentParser.new
           transformer = Transformer::DocumentTransformer.new(package_name)
@@ -38,13 +54,14 @@ module Pione
           # set document parameters into rules
           rules.each {|rule| rule.condition.params.merge!(params)}
 
-          return new(package_name, rules, params)
+          return new(package_name, rules, params, package_path)
         end
       end
 
       member :package_name
       member :rules
       member :params
+      member :package_path
 
       # Find the named rule.
       #

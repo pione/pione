@@ -1,7 +1,7 @@
 require_relative '../test-util'
 
 location = Location[File.dirname(__FILE__)] + "spec_flow-handler.pione"
-$doc = Component::Document.load(location.read)
+$doc = Component::Document.load(location)
 
 describe 'Pione::RuleHandler::FlowRule' do
   before do

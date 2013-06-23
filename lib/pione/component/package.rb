@@ -105,6 +105,11 @@ module Pione
         @type = check_package_type
       end
 
+      # Return the location of package information file.
+      def info_location
+        @location + "package.yml"
+      end
+
       # Read the package.
       #
       # @return [Package]
@@ -176,7 +181,7 @@ module Pione
         return [] if scenarios.nil?
         scenarios.map do |path|
           if (@location + path + "scenario.yml").exist?
-            PackageScenarioReader.read(@location + path)
+            PackageScenarioReader.read(@location, path)
           end
         end.compact
       end
@@ -187,7 +192,7 @@ module Pione
       #   documents
       def find_documents(package_name, document_names)
         document_names.map do |name|
-          Document.load(@location + name, package_name)
+          Document.load(@location + name, package_name, name)
         end
       end
     end
@@ -213,6 +218,7 @@ module Pione
       include SimpleIdentity
 
       attr_reader :location
+      attr_reader :package_path
       attr_reader :info
 
       forward_as_key :@info, "ScenarioName", :name
@@ -221,9 +227,11 @@ module Pione
       #   scenario location
       # @param info [Hash]
       #   scenario information table
-      def initialize(location, info)
+      def initialize(location, package_path, info)
         @location = location
+        @package_path = package_path
         @info = info
+        @package_path = package_path
       end
 
       # Return the input location. If the scenario doesn't have input location,
@@ -232,7 +240,7 @@ module Pione
       # @return [BasicLocation]
       #   the input location
       def input
-        input_location = @location + "input"
+        input_location = @location + @package_path + "input"
         input_location if input_location.exist?
       end
 
@@ -241,7 +249,7 @@ module Pione
       # @return [BasicLocation]
       #   input file locations
       def inputs
-        info["Inputs"].map {|name| @location + "input" + name}
+        info["Inputs"].map {|name| @location + @package_path + "input" + name}
       end
 
       # Return the output location.
@@ -249,7 +257,7 @@ module Pione
       # @return [BasicLocation]
       #   the output location
       def output
-        @location + "output"
+        @location + @package_path + "output"
       end
 
       # Return output file locations.
@@ -257,7 +265,7 @@ module Pione
       # @return [BasicLocation]
       #   output file locations
       def outputs
-        info["Outputs"].map {|name| @location + "output" + name}
+        info["Outputs"].map {|name| @location + @package_path + "output" + name}
       end
 
       # Validate reheasal results.
@@ -282,14 +290,24 @@ module Pione
 
     # PackageScenarioReader is a reader for loading scenarios.
     class PackageScenarioReader
-      def self.read(location)
-        new(location).read
+      # Read scenario from the location.
+      def self.read(location, package_path)
+        new(location, package_path).read
       end
+
+      attr_reader :location
+      attr_reader :package_path
 
       # @param location [Location]
       #   the scenario location
-      def initialize(location)
+      def initialize(location, package_path)
         @location = location
+        @package_path = package_path
+      end
+
+      # Return the location of scenario information file.
+      def info_location
+        @location + @package_path + "scenario.yml"
       end
 
       # Read scenario files.
@@ -299,7 +317,7 @@ module Pione
       def read
         begin
           info = read_scenario_informations
-          PackageScenario.new(@location, info)
+          PackageScenario.new(@location, @package_path, info)
         rescue
           nil
         end
@@ -307,16 +325,92 @@ module Pione
 
       private
 
-      # Read scenario information table.
+      # Read scenario informations.
       #
       # @return [Hash]
       #   scenario information table
       def read_scenario_informations
-        path = @location + "scenario.yml"
+        path = info_location
         if path.exist?
           YAML.load(path.read)
         else
-          {"ScenarioName" => @location.basename}
+          {"ScenarioName" => (@location + @package_path).basename}
+        end
+      end
+    end
+
+    # PackageArchiver makes PPG file as PIONE archive.
+    class PackageArchiver
+      attr_reader :location
+
+      # @param location [BasicLoaction]
+      #   package location
+      def initialize(location)
+        @location = location
+        @reader = PackageReader.new(location)
+        @package = @reader.read
+      end
+
+      # Create a package archive file.
+      #
+      # @param location [BasicLocation]
+      #   location of the package archive
+      # @param output [BasicLocation]
+      #   location of the archive file.
+      def archive(output_dir)
+        path = Temppath.create
+        Zip::Archive.open(path.to_s, Zip::CREATE) do |ar|
+          archive_package_info(ar)
+          archive_documents(ar)
+          archive_scenarios(ar)
+        end
+        Location[path].copy(output_dir + "%s.ppg" % @package.name)
+      end
+
+      private
+
+      def archive_package_info(ar)
+        ar.add_buffer("package.yml", @reader.info_location.to_s)
+      end
+
+      def archive_documents(ar)
+        @package.documents.each do |doc|
+          ar.add_buffer(doc.package_path, (@location + doc.package_path).read)
+        end
+      end
+
+      def archive_scenarios(ar)
+        @package.scenarios.each do |scenario|
+          ar.add_dir(scenario.package_path)
+          archive_scenario_info(ar, scenario)
+          archive_scenario_inputs(ar, scenario)
+          archive_scenario_outputs(ar, scenario)
+        end
+      end
+
+      def archive_scenario_info(ar, scenario)
+        package_path = File.join(scenario.package_path, "scenario.yml")
+        location = @location + scenario.package_path + "scenario.yml"
+        ar.add_buffer(package_path, location.read)
+      end
+
+      def archive_scenario_inputs(ar, scenario)
+        if not(scenario.inputs.empty?)
+          ar.add_dir(File.join(scenario.package_path, "input"))
+          scenario.inputs.each do |input|
+            package_path = File.join(scenario.package_path, "input", input.basename)
+            ar.add_buffer(package_path, input.read)
+          end
+        end
+      end
+
+      def archive_scenario_outputs(ar, scenario)
+        if not(scenario.outputs.empty?)
+          ar.add_dir(scenario.package_path + "output")
+          scenario.outputs.each do |output|
+            package_path = File.join(scenario.package_path, "output", output.basename)
+            ar.add_buffer(package_path, output.read)
+          end
         end
       end
     end

@@ -44,6 +44,8 @@ require 'pione/patch/em-ftpd-patch'
 require 'sys/cpu'
 require 'structx'
 require 'syslog-logger'
+require 'zipruby'
+require 'retriable'
 
 #
 # load pione

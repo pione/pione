@@ -8,10 +8,7 @@ describe "Pione::Location::HTTPLocation" do
     logger = WEBrick::Log.new(StringIO.new("", "w"))
     @server = WEBrick::HTTPServer.new(DocumentRoot: @path, Port: 54673, Logger: logger, AccessLog: logger)
     Thread.new do
-      begin
-        @server.start
-      rescue WEBrick::ServerError
-        sleep 1
+      retriable(on: WEBrick::ServerError, tries: 5, interval: 1) do
         @server.start
       end
     end

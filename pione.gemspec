@@ -32,7 +32,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "hamster", "~> 0.4.3"
   gem.add_dependency "naming", "~> 0.1.0"
   gem.add_dependency "forwardablex", "~> 0.1.4"
-  gem.add_dependency "temppath", "~> 0.1.1"
+  gem.add_dependency "temppath", "~> 0.2.0"
   gem.add_dependency "ruby-xes", "~> 0.1.0"
   gem.add_dependency "sys-uname", "~> 0.9.2"
   gem.add_dependency "simple-identity", "~> 0.1.1"
@@ -40,6 +40,8 @@ Gem::Specification.new do |gem|
   gem.add_dependency "sys-cpu", "~> 0.7.1"
   gem.add_dependency "structx", "~> 0.1.0"
   gem.add_dependency "syslog-logger", "~> 1.6.8"
+  gem.add_dependency "zipruby", "~> 0.3.6"
+  gem.add_dependency "retriable"
 
   # for locations
   gem.add_dependency "dropbox-sdk", "~> 1.5.1"

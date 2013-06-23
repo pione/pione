@@ -67,20 +67,20 @@ end
 
 describe "Pione::Component::PackageScenario" do
   before do
-    @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage" + "scenario"
-    @case1 = Component::PackageScenarioReader.new(@path  + "case1").read
-    @case2 = Component::PackageScenarioReader.new(@path  + "case2").read
-    @case3 = Component::PackageScenarioReader.new(@path  + "case3").read
+    @location = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+    @case1 = Component::PackageScenarioReader.new(@location, "scenario/case1").read
+    @case2 = Component::PackageScenarioReader.new(@location, "scenario/case2").read
+    @case3 = Component::PackageScenarioReader.new(@location, "scenario/case3").read
   end
 
   it 'should equal' do
-    Component::PackageScenario.new(@path, {"ScenarioName" => "Test"}).should ==
-      Component::PackageScenario.new(@path, {"ScenarioName" => "Test"})
+    Component::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test"}).should ==
+      Component::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test"})
   end
 
   it 'should not equal' do
-    Component::PackageScenario.new(@path, {"ScenarioName" => "Test1"}).should !=
-      Component::PackageScenario.new(@path, {"ScenarioName" => "Test2"})
+    Component::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test1"}).should !=
+      Component::PackageScenario.new(@path, "scenario/case1", {"ScenarioName" => "Test2"})
   end
 
   it "should get the scenario name" do
@@ -167,6 +167,19 @@ describe "Pione::Component::PackageReader" do
 
     behaves_like "package"
     behaves_like "package directory"
+  end
+end
+
+describe "Pione::Component::PackageArchiver" do
+  before do
+    @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+  end
+
+  it "should create archive file" do
+    dir = Location[Temppath.create]
+    Component::PackageArchiver.new(@path).archive(dir)
+    (dir + "TestPackage.ppg").should.exist
+    (dir + "TestPackage.ppg").size.should > 0
   end
 end
 
