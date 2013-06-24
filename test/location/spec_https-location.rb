@@ -17,10 +17,7 @@ describe "Pione::Location::HTTPSLocation" do
     )
     Thread.new do
       $stderr = StringIO.new("", "w")
-      begin
-        @server.start
-      rescue WEBrick::ServerError
-        sleep 1
+      retriable(on: WEBrick::ServerError, tries: 5, interval: 1) do
         @server.start
       end
       $stderr = STDOUT
