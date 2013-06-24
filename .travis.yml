@@ -3,6 +3,6 @@ rvm:
 #  - "1.9.2" # PIONE doesn't support 1.9.2
   - "1.9.3"
 #  - "2.0.0" # pione doesn't work with 2.0
-  - jruby-19mode
+#  - jruby-19mode
 #  - rbx-19mode # pione doesn't work with 2.0
 script: rake test
