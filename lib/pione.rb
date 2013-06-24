@@ -1,7 +1,11 @@
 #
 # load libraries
 #
+
+# bundler
 require 'bundler/setup'
+
+# standard
 require 'set'
 require 'socket'
 require 'digest'
@@ -28,6 +32,7 @@ require 'ostruct'
 require 'net/ftp'
 require 'net/http'
 
+# gems
 require 'uuidtools'
 require 'parslet'
 require 'highline'
@@ -40,7 +45,7 @@ require 'sys/uname'
 require 'simple-identity'
 require 'rainbow'
 require 'em-ftpd'
-require 'pione/patch/em-ftpd-patch'
+require 'pione/patch/em-ftpd-patch' # patch
 require 'sys/cpu'
 require 'structx'
 require 'syslog-logger'
@@ -54,14 +59,7 @@ require 'childprocess'
 
 require 'pione/version'
 require 'pione/util'
-
-# patch
-require 'pione/patch/array-patch'
-require 'pione/patch/drb-patch'
-require 'pione/patch/rinda-patch'
-require 'pione/patch/uri-patch'
-require 'pione/patch/monitor-patch'
-
+require 'pione/patch'
 require 'pione/uri-scheme'
 require 'pione/location'
 require 'pione/log'
@@ -70,71 +68,16 @@ require 'pione/system'
 Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
 Pione.module_exec {const_set(:Global, Pione::System::Global)}
 
-# relay
-require 'pione/relay/transmitter-socket'
-require 'pione/relay/trampoline'
-require 'pione/relay/receiver-socket'
-require 'pione/relay/relay-socket'
-require 'pione/relay/relay-client-db'
-require 'pione/relay/relay-account-db'
-
-# tuple-space
-require 'pione/tuple-space/tuple-space-server-interface'
-require 'pione/tuple-space/presence-notifier'
-require 'pione/tuple-space/tuple-space-server'
-require 'pione/tuple-space/tuple-space-receiver'
-require 'pione/tuple-space/tuple-space-provider'
-require 'pione/tuple-space/data-finder'
-
-# rule-handler
+require 'pione/relay'
+require 'pione/tuple-space'
 require 'pione/rule-handler.rb'
-
 require 'pione/model'
 require 'pione/component'
-
-# tuple
 require 'pione/tuple'
-
-# parser
-require 'pione/parser/parslet-extension'
-require 'pione/parser/common-parser'
-require 'pione/parser/literal-parser'
-require 'pione/parser/feature-expr-parser'
-require 'pione/parser/expr-parser'
-require 'pione/parser/flow-element-parser'
-require 'pione/parser/block-parser'
-require 'pione/parser/rule-definition-parser'
-require 'pione/parser/document-parser'
-
-# transformer
+require 'pione/parser'
 require 'pione/transformer'
-
-# agent
-require 'pione/agent/basic-agent'
-require 'pione/agent/tuple-space-client'
-require 'pione/agent/command-listener'
-require 'pione/agent/task-worker'
-require 'pione/agent/input-generator'
-require 'pione/agent/rule-provider'
-require 'pione/agent/logger'
-require 'pione/agent/broker'
-require 'pione/agent/process-manager'
-require 'pione/agent/trivial-routine-worker'
-require 'pione/agent/tuple-space-server-client-life-checker'
-require 'pione/agent/messenger'
-
-# front
-require 'pione/front/basic-front'
-require 'pione/front/task-worker-owner'
-require 'pione/front/tuple-space-provider-owner'
-require 'pione/front/client-front'
-require 'pione/front/broker-front'
-require 'pione/front/task-worker-front'
-require 'pione/front/tuple-space-provider-front'
-require 'pione/front/tuple-space-receiver-front'
-require 'pione/front/relay-front'
-
-# command
+require 'pione/agent'
+require 'pione/front'
 require 'pione/command'
 
 #
