@@ -1,6 +1,6 @@
 PackageName: TestPackage
 Authors: Keita Yamaguchi
-Version: 0.1
+Version: 0.1.0
 Documents:
   - Test.pione
 Scenarios:

@@ -21,4 +21,5 @@ require 'pione/command/pione-clean'
 require 'pione/command/pione-syntax-checker'
 require 'pione/command/pione-log'
 require 'pione/command/pione-val'
+require 'pione/command/pione-package'
 

@@ -3,7 +3,7 @@ require 'webrick'
 
 describe "Pione::Component::Package" do
   before do
-    path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+    path = TestUtil::Package.get("TestPackage1")
     @package = Component::PackageReader.new(path).read
     @case1 = @package.scenarios[0]
     @case2 = @package.scenarios[1]
@@ -67,7 +67,7 @@ end
 
 describe "Pione::Component::PackageScenario" do
   before do
-    @location = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+    @location = TestUtil::Package.get("TestPackage1")
     @case1 = Component::PackageScenarioReader.new(@location, "scenario/case1").read
     @case2 = Component::PackageScenarioReader.new(@location, "scenario/case2").read
     @case3 = Component::PackageScenarioReader.new(@location, "scenario/case3").read
@@ -145,7 +145,7 @@ describe "Pione::Component::PackageReader" do
 
   describe "package directory in local location" do
     before do
-      @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+      @path = TestUtil::Package.get("TestPackage1")
     end
 
     behaves_like "package"
@@ -154,10 +154,10 @@ describe "Pione::Component::PackageReader" do
 
   describe "package in HTTP location" do
     before do
-      document_root = File.join(File.dirname(__FILE__), "spec_package")
+      document_root = TestUtil::TEST_PACKAGE_DIR.path.to_s
       logger = WEBrick::Log.new(StringIO.new("", "w"))
       @server = WEBrick::HTTPServer.new(DocumentRoot: document_root, Port: 54673, Logger: logger, AccessLog: logger)
-      @path = Location["http://localhost:%s/TestPackage/" % @server.config[:Port]]
+      @path = Location["http://localhost:%s/TestPackage1/" % @server.config[:Port]]
       Thread.new { @server.start }
     end
 
@@ -172,14 +172,24 @@ end
 
 describe "Pione::Component::PackageArchiver" do
   before do
-    @path = Location[File.expand_path("../spec_package", __FILE__)] + "TestPackage"
+    @path = TestUtil::Package.get("TestPackage1")
+  end
+
+  it "should get package name" do
+    archiver = Component::PackageArchiver.new(@path)
+    archiver.package_name.should == "TestPackage"
+  end
+
+  it "should get package id" do
+    archiver = Component::PackageArchiver.new(@path)
+    archiver.package_id.should == "0.1.0"
   end
 
   it "should create archive file" do
-    dir = Location[Temppath.create]
-    Component::PackageArchiver.new(@path).archive(dir)
-    (dir + "TestPackage.ppg").should.exist
-    (dir + "TestPackage.ppg").size.should > 0
+    pkg = Location[Temppath.create]
+    Component::PackageArchiver.new(@path).archive(pkg)
+    pkg.should.exist
+    pkg.size.should > 0
   end
 end
 

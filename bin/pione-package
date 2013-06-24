@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+
+require 'pione'
+Pione::Command::PionePackage.run(ARGV)

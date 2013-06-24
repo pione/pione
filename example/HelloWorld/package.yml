@@ -1,4 +1,5 @@
 PackageName: HelloWorld
+Version: 0.1.0
 Documents:
   - "HelloWorld.pione"
 Scenarios:

@@ -31,6 +31,11 @@ module Pione
         validate
       end
 
+      # Return the package ID. Package ID is the hash ID of git repository or the version.
+      def package_id
+        info["HashID"] || info["Version"]
+      end
+
       # Upload the package files to the location.
       #
       # @return [void]
@@ -249,7 +254,11 @@ module Pione
       # @return [BasicLocation]
       #   input file locations
       def inputs
-        info["Inputs"].map {|name| @location + @package_path + "input" + name}
+        if info.has_key?("Inputs")
+          info["Inputs"].map {|name| @location + @package_path + "input" + name}
+        else
+          []
+        end
       end
 
       # Return the output location.
@@ -265,7 +274,11 @@ module Pione
       # @return [BasicLocation]
       #   output file locations
       def outputs
-        info["Outputs"].map {|name| @location + @package_path + "output" + name}
+        if info.has_key?("Outputs")
+          info["Outputs"].map {|name| @location + @package_path + "output" + name}
+        else
+          []
+        end
       end
 
       # Validate reheasal results.
@@ -343,6 +356,9 @@ module Pione
     class PackageArchiver
       attr_reader :location
 
+      forward :@package, :name, :package_name
+      forward :@package, :package_id
+
       # @param location [BasicLoaction]
       #   package location
       def initialize(location)
@@ -353,18 +369,16 @@ module Pione
 
       # Create a package archive file.
       #
-      # @param location [BasicLocation]
-      #   location of the package archive
-      # @param output [BasicLocation]
-      #   location of the archive file.
-      def archive(output_dir)
+      # @param output_location [BasicLocation]
+      #   location of the archive file
+      def archive(output_location)
         path = Temppath.create
         Zip::Archive.open(path.to_s, Zip::CREATE) do |ar|
           archive_package_info(ar)
           archive_documents(ar)
           archive_scenarios(ar)
         end
-        Location[path].copy(output_dir + "%s.ppg" % @package.name)
+        Location[path].copy(output_location)
       end
 
       private
@@ -406,7 +420,7 @@ module Pione
 
       def archive_scenario_outputs(ar, scenario)
         if not(scenario.outputs.empty?)
-          ar.add_dir(scenario.package_path + "output")
+          ar.add_dir(File.join(scenario.package_path, "output"))
           scenario.outputs.each do |output|
             package_path = File.join(scenario.package_path, "output", output.basename)
             ar.add_buffer(package_path, output.read)

@@ -5,6 +5,8 @@ module TestUtil
   include Pione::TupleSpaceServerInterface
 
   DIR = Location[File.dirname(__FILE__)]
+  TEST_DATA_DIR = DIR + "test-data"
+  TEST_PACKAGE_DIR = TEST_DATA_DIR + "package"
 
   def write_and_wait_to_be_taken(tuple, sec=5)
     observer = notify('take', tuple)
@@ -71,152 +73,6 @@ module TestUtil
   def remote_drb_server
     @__remote_drb_server__
   end
-end
-
-module TestUtil
-  class CommandResult < StructX
-    member :exception
-    member :stdout
-    member :stderr
-
-    def success?
-      exception.kind_of?(SystemExit) and exception.success?
-    end
-
-    def report
-      unless success?
-        puts "ERROR: %s" % exception.message
-        exception.backtrace.each do |line|
-          puts "TRACE: %s" % line
-        end
-        puts stdout.string[0..100] if stdout.string.size > 0
-        puts stderr.string[0..100] if stderr.string.size > 0
-      end
-    end
-  end
-
-  module Command
-    class << self
-      def execute(&b)
-        res = CommandResult.new(stdout: StringIO.new("", "w"), stderr: StringIO.new("", "w"))
-        $stdout = res.stdout
-        $stderr = res.stderr
-        begin
-          b.call
-        rescue Object => e
-          res.exception = e
-        end
-        $stdout = STDOUT
-        $stderr = STDERR
-        return res
-      end
-
-      def succeed(&b)
-        res = execute(&b)
-        res.report
-        res.should.success
-        return res
-      end
-
-      def fail(&b)
-        res = execute(&b)
-        res.should.not.success
-        return res
-      end
-    end
-  end
-end
-
-module TestUtil::Parser
-  # Makes a test parser class by the sub-parser module.
-  def make_test_parser(parser_module)
-    klass = Class.new(Parslet::Parser)
-    klass.instance_eval do
-      include parser_module
-    end
-    return klass
-  end
-  module_function :make_test_parser
-
-  def spec(mod, rb, context)
-    #parser = make_test_parser(mod)
-    parser = Pione::Parser::DocumentParser
-    basename = File.basename(rb, ".rb")
-    path = File.join(File.dirname(rb), basename + ".yml")
-    YAML.load(File.read(path)).each do |name, testcase|
-      context.describe name do
-        if strings = testcase["valid"]
-          strings.each do |string|
-            it "should parse as %s:%s%s" % [name, string.include?("\n") ? "\n" : " ", string.chomp] do
-              should.not.raise(Parslet::ParseFailed) do
-                parser.new.send(name).parse(string)
-              end
-            end
-          end
-        end
-
-        if strings = testcase["invalid"]
-          strings.each do |string|
-            it "should fail when parsing as %s:%s%s" % [name, string.include?("\n") ? "\n" : "", string.chomp] do
-              should.raise(Parslet::ParseFailed) do
-                parser.new.send(name).parse(string)
-              end
-            end
-          end
-        end
-      end
-    end
-  end
-  module_function :spec
-end
-
-module TestUtil::Transformer
-  class TestCase < StructX
-    member :string
-    member :expected
-  end
-
-  class TestCaseEq < StructX
-    member :string
-    member :expected
-  end
-
-  def spec(name, parser, context, &b)
-    testcases = Array.new
-
-    def testcases.tc(obj)
-      case obj
-      when Hash
-        obj.each do |key, val|
-          push(TestCaseEq.new(key, val))
-        end
-      else
-        push(TestCaseEq.new(obj, yield))
-      end
-    end
-
-    def testcases.transform(obj, &b)
-      push(TestCase.new(obj, b))
-    end
-
-    testcases.instance_eval(&b)
-    context.describe name do
-      testcases.each do |tc|
-        it "should get %s:%s%s" % [name, tc.string.include?("\n") ? "\n" : " ", tc.string.chomp] do
-          res = DocumentTransformer.new.apply(
-            DocumentParser.new.send(parser).parse(tc.string)
-          )
-          case tc
-          when TestCaseEq
-            res.should == tc.expected
-          when TestCase
-            tc.expected.call(res)
-          end
-        end
-      end
-    end
-  end
-  module_function :spec
 end
 
 # Hash extension.
@@ -338,6 +194,11 @@ module Pione::Agent
     end
   end
 end
+
+require_relative "test-util/command"
+require_relative "test-util/parser"
+require_relative "test-util/transformer"
+require_relative "test-util/package"
 
 def setup_for_test
   include Pione
