@@ -41,7 +41,8 @@ Gem::Specification.new do |gem|
   gem.add_dependency "structx", "~> 0.1.0"
   gem.add_dependency "syslog-logger", "~> 1.6.8"
   gem.add_dependency "zipruby", "~> 0.3.6"
-  gem.add_dependency "retriable"
+  gem.add_dependency "retriable", "~> 1.3.3"
+  gem.add_dependency "childprocess", "~> 0.3.9"
 
   # for locations
   gem.add_dependency "dropbox-sdk", "~> 1.5.1"

@@ -46,6 +46,7 @@ require 'structx'
 require 'syslog-logger'
 require 'zipruby'
 require 'retriable'
+require 'childprocess'
 
 #
 # load pione
