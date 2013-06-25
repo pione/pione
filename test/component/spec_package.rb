@@ -169,9 +169,25 @@ describe "Pione::Component::PackageReader" do
     behaves_like "package directory"
   end
 
-  describe "package archive" do
+  describe "package archive in local location" do
     before do
       @path = TestUtil::TEST_PACKAGE_DIR + "TestPackage1-0.1.0.ppg"
+    end
+
+    behaves_like "package"
+  end
+
+  describe "package archive in HTTP location" do
+    before do
+      document_root = TestUtil::TEST_PACKAGE_DIR.path.to_s
+      logger = WEBrick::Log.new(StringIO.new("", "w"))
+      @server = WEBrick::HTTPServer.new(DocumentRoot: document_root, Port: 54673, Logger: logger, AccessLog: logger)
+      @path = Location["http://localhost:%s/TestPackage1-0.1.0.ppg" % @server.config[:Port]]
+      Thread.new { @server.start }
+    end
+
+    after do
+      @server.shutdown
     end
 
     behaves_like "package"

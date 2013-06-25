@@ -31,6 +31,10 @@ module Pione
         false
       end
 
+      def copy(dest)
+        http_get {|rec| dest.write rec.body}
+      end
+
       private
 
       # Send a request HTTP Get and evaluate the block with the response.
