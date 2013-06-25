@@ -122,4 +122,12 @@ shared "location" do
     (@dir + "D").directory_entries.should.not.include(@dir + "D" + "Y")
     (@dir + "D").directory_entries.should.not.include(@dir + "D" + "Z")
   end
+
+  it "should get local location" do
+    @file.create("A")
+    local = @file.local
+    local.scheme.should == "local"
+    local.should.exist
+    local.should.file
+  end
 end

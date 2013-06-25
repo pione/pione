@@ -90,6 +90,16 @@ module Pione
         raise ArgumentError.new(uri) unless @uri.scheme = scheme
       end
 
+      # Copy the content to temporary local location and return it. If the
+      # scheme is local, return itselft.
+      def local
+        if scheme == "local"
+          self
+        else
+          Location[Temppath.create].tap {|tmp| copy(tmp)}
+        end
+      end
+
       # Create new location appended the name.
       #
       # @param name [String]

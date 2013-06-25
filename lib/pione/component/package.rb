@@ -455,12 +455,7 @@ module Pione
       end
 
       def expand(output)
-        # import local location
-        location = @location
-        unless @location.scheme == "local"
-          location = Location[Temppath.create]
-          @location.copy(location)
-        end
+        location = @location.local
 
         # expand
         Zip::Archive.open(location.path.to_s) do |ar|
