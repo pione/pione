@@ -9,7 +9,7 @@ module Pione
         begin
           b.call
         rescue Exception => e
-          ErrorReport.warn("the error ignored", nil, e, __FILE_, __LINE__)
+          ErrorReport.warn("the error ignored", nil, e, __FILE__, __LINE__)
         end
       end
 
