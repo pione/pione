@@ -11,17 +11,17 @@ describe "Pione::Component::Package" do
   end
 
   it "should equal" do
-    Component::Package.new({"PackageName" => "Test"}, [], [], []).should ==
-      Component::Package.new({"PackageName" => "Test"}, [], [], [])
+    Component::Package.new({"PackageName1" => "Test"}, [], [], []).should ==
+      Component::Package.new({"PackageName1" => "Test"}, [], [], [])
   end
 
   it "should not equal" do
-    Component::Package.new({"PackageName" => "Test1"}, [], [], []).should !=
-      Component::Package.new({"PackageName" => "Test2"}, [], [], [])
+    Component::Package.new({"PackageName1" => "Test1"}, [], [], []).should !=
+      Component::Package.new({"PackageName1" => "Test2"}, [], [], [])
   end
 
   it "should get the package name" do
-    @package.name.should == "TestPackage"
+    @package.name.should == "TestPackage1"
   end
 
   it "should get bin" do
@@ -41,13 +41,13 @@ describe "Pione::Component::Package" do
 
   it "should get rules" do
     @package.rules.map{|rule| rule.path}.tap do |x|
-      x.should.include("&TestPackage:Main")
-      x.should.include("&TestPackage:Count")
+      x.should.include("&TestPackage1:Main")
+      x.should.include("&TestPackage1:Count")
     end
   end
 
   it "should get a main rule" do
-    @package.find_rule("Main").path.should == "&TestPackage:Main"
+    @package.find_rule("Main").path.should == "&TestPackage1:Main"
   end
 
   it "should upload package files" do
@@ -116,12 +116,12 @@ describe "Pione::Component::PackageReader" do
 
     it "should get package informations" do
       package = Component::PackageReader.read(@path)
-      package.name.should == "TestPackage"
+      package.name.should == "TestPackage1"
     end
 
     it "should get scenarios" do
       package = Component::PackageReader.read(@path)
-      package.name.should == "TestPackage"
+      package.name.should == "TestPackage1"
       case1 = package.scenarios[0]
       case1.name.should == "Case1"
       case1.inputs[0].basename.should == "1.txt"
@@ -168,6 +168,14 @@ describe "Pione::Component::PackageReader" do
     behaves_like "package"
     behaves_like "package directory"
   end
+
+  describe "package archive" do
+    before do
+      @path = TestUtil::TEST_PACKAGE_DIR + "TestPackage1-0.1.0.ppg"
+    end
+
+    behaves_like "package"
+  end
 end
 
 describe "Pione::Component::PackageArchiver" do
@@ -177,7 +185,7 @@ describe "Pione::Component::PackageArchiver" do
 
   it "should get package name" do
     archiver = Component::PackageArchiver.new(@path)
-    archiver.package_name.should == "TestPackage"
+    archiver.package_name.should == "TestPackage1"
   end
 
   it "should get package id" do
@@ -188,8 +196,18 @@ describe "Pione::Component::PackageArchiver" do
   it "should create archive file" do
     pkg = Location[Temppath.create]
     Component::PackageArchiver.new(@path).archive(pkg)
+
     pkg.should.exist
+    pkg.should.file
     pkg.size.should > 0
+
+    Zip::Archive.open(pkg.path.to_s) do |ar|
+      ar.each do |file|
+        unless file.directory?
+          file.read.should == (@path + file.name).read
+        end
+      end
+    end
   end
 end
 

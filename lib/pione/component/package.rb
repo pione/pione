@@ -121,6 +121,8 @@ module Pione
       #   the package
       def read
         case @type
+        when :archive
+          return read_pione_archive
         when :directory
           return read_package_directory
         when :pione_document_file
@@ -166,6 +168,16 @@ module Pione
       def read_pione_document_file
         document = Component::Document.load(@location, "Main")
         Package.new(info: {"PackageName" => "Main"}, documents: [document])
+      end
+
+      # Read PIONE archive.
+      #
+      # @return [Package]
+      #   the package
+      def read_pione_archive
+        tmp = Location[Temppath.mkdir]
+        PackageExpander.new(@location).expand(tmp)
+        PackageReader.read(tmp)
       end
 
       # Read the informations from the package location.
@@ -384,7 +396,7 @@ module Pione
       private
 
       def archive_package_info(ar)
-        ar.add_buffer("package.yml", @reader.info_location.to_s)
+        ar.add_buffer("package.yml", @reader.info_location.read)
       end
 
       def archive_documents(ar)
@@ -421,9 +433,33 @@ module Pione
       def archive_scenario_outputs(ar, scenario)
         if not(scenario.outputs.empty?)
           ar.add_dir(File.join(scenario.package_path, "output"))
-          scenario.outputs.each do |output|
+         scenario.outputs.each do |output|
             package_path = File.join(scenario.package_path, "output", output.basename)
             ar.add_buffer(package_path, output.read)
+          end
+        end
+      end
+    end
+
+    # PackageExpander expands package files from archive.
+    class PackageExpander
+      attr_reader :location
+
+      forward :@package, :name, :package_name
+      forward :@package, :package_id
+
+      # @param location [BasicLoaction]
+      #   package location
+      def initialize(location)
+        @location = location
+      end
+
+      def expand(output)
+        Zip::Archive.open(@location.path.to_s) do |ar|
+          ar.each do |file|
+            unless file.directory?
+              (output + file.name).write(file.read)
+            end
           end
         end
       end
