@@ -8,8 +8,8 @@ module Pione
       def ignore_exception(&b)
         begin
           b.call
-        rescue Exception
-          # do nothing
+        rescue Exception => e
+          ErrorReport.warn("the error ignored", nil, e, __FILE_, __LINE__)
         end
       end
 

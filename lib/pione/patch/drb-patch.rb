@@ -136,7 +136,7 @@ module DRb
             req_id, succ, result = recv_reply
             DRb.waiter_table.push(req_id, [succ, result])
           end
-        rescue Exception => e
+        rescue => e
           @watcher_mutex.synchronize do
             @watchers.each do |watcher|
               if watcher.alive?
@@ -333,7 +333,7 @@ module DRb
           result = DRbArray.new(result)
         end
         return true, result
-      rescue StandardError, ScriptError, Interrupt => e
+      rescue StandardError, ScriptError => e
         return false, e
       end
 

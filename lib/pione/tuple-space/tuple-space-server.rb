@@ -151,7 +151,7 @@ module Pione
         @terminated = true
         write(Tuple[:command].new("terminate", nil))
         @client_life_checker.terminate
-        @client_life_checker.running_thread.join
+        @client_life_checker.running_thread.kill
         sleep 1
       end
 

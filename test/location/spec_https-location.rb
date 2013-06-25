@@ -15,7 +15,7 @@ describe "Pione::Location::HTTPSLocation" do
       SSLEnable: true,
       SSLCertName: [["CN", WEBrick::Utils.getservername]]
     )
-    Thread.new do
+    @thread = Thread.new do
       $stderr = StringIO.new("", "w")
       retriable(on: WEBrick::ServerError, tries: 5, interval: 1) do
         @server.start
@@ -26,6 +26,7 @@ describe "Pione::Location::HTTPSLocation" do
 
   after do
     @server.shutdown
+    @thread.kill
   end
 
   def location(path)

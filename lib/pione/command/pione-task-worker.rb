@@ -115,28 +115,32 @@ BANNER
       terminate do
         Global.monitor.synchronize do
           begin
+            # flag
             return if @terminated
+            @terminated = true
 
             # terminate the agent
             if @agent
               @agent.terminate
 
-              while true
-                break if @agent.terminated? and @agent.running_thread and @agent.running_thread.stop?
-                sleep 1
+              Timeout.timeout(5) do
+                while true
+                  break if @agent.terminated? and @agent.running_thread and @agent.running_thread.stop?
+                  sleep 1
+                end
               end
             end
 
             # disconnect parent front
             option[:parent_front].remove_task_worker_front(self, option[:connection_id])
 
-            # flag
-            @terminated = true
           rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
-            ErrorReport.warn("Disconnected in termination process of task worker agent.", self, e, __FILE__, __LINE__)
+            Util::ErrorReport.warn("Disconnected in termination process of task worker agent.", self, e, __FILE__, __LINE__)
           rescue ThreadError => e
             # tuple space may be closed
-            ErrorReport.warn("Failed in termination process of task worker agent.", self, e, __FILE__, __LINE__)
+            Util::ErrorReport.warn("Failed in termination process of task worker agent.", self, e, __FILE__, __LINE__)
+          rescue Timeout::Error => e
+            Util::ErrorReport.warn("Timeouted in termination of pione-task-worker.", self, e, __FILE__, __LINE__)
           end
         end
       end

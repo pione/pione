@@ -216,12 +216,10 @@ module Pione
 
       # Terminate to transit.
       def terminate
-        # abort the agent when called by other thread
-        abort unless @running_thread == Thread.current
-        # transit to terminated
         begin
           res = call_transition_method(:terminated)
-        rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
+        rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
+          Util::ErrorReport.warn("raised a connection error when we terminated", self, e, __FILE__, __LINE__)
         end
         # set agent state
         set_current_state(:terminated)

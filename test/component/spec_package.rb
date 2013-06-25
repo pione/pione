@@ -183,11 +183,12 @@ describe "Pione::Component::PackageReader" do
       logger = WEBrick::Log.new(StringIO.new("", "w"))
       @server = WEBrick::HTTPServer.new(DocumentRoot: document_root, Port: 54673, Logger: logger, AccessLog: logger)
       @path = Location["http://localhost:%s/TestPackage1-0.1.0.ppg" % @server.config[:Port]]
-      Thread.new { @server.start }
+      @thread = Thread.new { @server.start }
     end
 
     after do
       @server.shutdown
+      @thread.kill
     end
 
     behaves_like "package"

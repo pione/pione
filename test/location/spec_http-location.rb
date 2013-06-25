@@ -7,7 +7,7 @@ describe "Pione::Location::HTTPLocation" do
     @path = File.join(File.dirname(__FILE__), "spec_http-location")
     logger = WEBrick::Log.new(StringIO.new("", "w"))
     @server = WEBrick::HTTPServer.new(DocumentRoot: @path, Port: 54673, Logger: logger, AccessLog: logger)
-    Thread.new do
+    @thread = Thread.new do
       retriable(on: WEBrick::ServerError, tries: 10, interval: 2) do
         @server.start
       end
@@ -16,6 +16,7 @@ describe "Pione::Location::HTTPLocation" do
 
   after do
     @server.shutdown
+    @thread.kill
   end
 
   def location(path)
