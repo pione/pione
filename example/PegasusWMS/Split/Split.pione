@@ -1,0 +1,27 @@
+Rule Main
+  output 'count.txt.*'.all
+Flow
+  rule GetHTML
+  rule Split
+  rule Count
+End
+
+Rule GetHTML
+  output 'pegasus.html'
+Action
+  curl -o {$O[1]} "http://pegasus.isi.edu"
+End
+
+Rule Split
+  input 'pegasus.html'
+  output 'part.*'.all
+Action
+  split -l 100 -a 1 "{$I[1]}" part.
+End
+
+Rule Count
+  input 'part.*'
+  output 'count.txt.{$*}'
+Action
+  wc {$I[1]} > {$O[1]}
+End

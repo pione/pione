@@ -1,0 +1,20 @@
+Rule Main
+  output 'count.txt'
+Flow
+  rule GetHTML
+  rule Count
+End
+
+Rule GetHTML
+  output 'pegasus.html'
+Action
+  curl -o {$O[1]} "http://pegasus.isi.edu"
+End
+
+Rule Count
+  input 'pegasus.html'
+  output 'count.txt'
+Action
+  wc {$I[1]} > {$O[1]}
+End
+
