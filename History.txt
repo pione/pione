@@ -1,5 +1,16 @@
 # History
 
+## 0.2.2(2013/07/02)
+
+* Enabled to load remote package.
+* Added pione-package command.
+* Added PIONE archive(".ppg" file).
+* Added git package.
+* Fixed the problem about pione-client termination.
+* Refactored location system.
+* Added HTTPS location.
+* Added examples.
+
 ## 0.2.1(2013/06/15)
 
 * Added basic/advaneced parameter.
