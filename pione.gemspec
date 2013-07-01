@@ -43,6 +43,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "zipruby", "~> 0.3.6"
   gem.add_dependency "retriable", "~> 1.3.3"
   gem.add_dependency "childprocess", "~> 0.3.9"
+  gem.add_dependency "git", "~> 1.2.5"
 
   # for locations
   gem.add_dependency "dropbox-sdk", "~> 1.5.1"

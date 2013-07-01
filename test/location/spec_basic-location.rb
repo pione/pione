@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-class TestLocation < Location::BasicLocation
+class TestLocation < Location::DataLocation
   set_scheme "test"
 end
 
@@ -31,5 +31,9 @@ describe 'Location::BasicLocation' do
 
   it 'should get basename' do
     Location["test:/a/name"].basename.should == "name"
+  end
+
+  it 'should get extension name' do
+    Location["test:/a/name.txt"].extname.should == ".txt"
   end
 end

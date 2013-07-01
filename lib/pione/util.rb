@@ -17,4 +17,5 @@ require 'pione/util/variable-holdable'
 require 'pione/util/evaluatable'
 require 'pione/util/process-info'
 require 'pione/util/package-parameters-list'
+require 'pione/util/zip'
 

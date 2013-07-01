@@ -29,12 +29,21 @@ describe "Pione::Util::ErrorReport" do
     end
   end
 
-  it "should not warn in normal mode" do
-    Util::ErrorReport.warn("test warning", @rec, @exc, @file, @line)
+  it "should show debug message in debug mode" do
+    Pione.debug_mode {Util::ErrorReport.debug("test debug message", @rec, @file, @line)}
     $stderr.string.tap do |s|
-      s.should.not.include "test warning"
+      s.should.include "test debug message"
+      s.should.include @rec.to_s
+      s.should.include @file.to_s
+      s.should.include @line.to_s
+    end
+  end
+
+  it "should not warn in normal mode" do
+    Util::ErrorReport.debug("test debug message", @rec, @file, @line)
+    $stderr.string.tap do |s|
+      s.should.not.include "test debug message"
       s.should.not.include @rec.to_s
-      s.should.not.include @exc.to_s
       s.should.not.include @file.to_s
       s.should.not.include @line.to_s
     end

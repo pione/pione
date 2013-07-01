@@ -140,8 +140,11 @@ module Pione
       end
 
       def setup_item_value(opt, item, defs)
-        if item.value.kind_of?(Proc)
+        case item.value
+        when Proc
           opt.on(*defs, Proc.new{|*args| @option[item.name] = self.instance_exec(*args, &item.value)})
+        when :as_is
+          opt.on(*defs, Proc.new{|*args| @option[item.name] = args.first})
         end
       end
 

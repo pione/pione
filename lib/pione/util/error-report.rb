@@ -15,6 +15,13 @@ module Pione
         end
       end
       module_function :warn
+
+      def debug(msg, receiver, file, line)
+        if Pione.debug_mode?
+          $stderr.puts "PIONE debug [%s:%i] %s (%s)" % [file, line, msg, receiver]
+        end
+      end
+      module_function :debug
     end
   end
 end

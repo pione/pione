@@ -191,6 +191,21 @@ module Pione
         Pathname.new(Dir.mktmpdir(nil, Global.file_cache_directory_root))
       end
 
+      # Git repository directory
+      define_item(:git_repository_directory, false) do
+        Location[Global.dot_pione_dir + "git-repository"]
+      end
+
+      # Git package directory
+      define_item(:git_package_directory, false) do
+        Location[Global.dot_pione_dir] + "git-package"
+      end
+
+      # archive_package_cache_dir
+      define_item(:archive_package_cache_dir, false) do
+        Location[Global.dot_pione_dir + "archive-package-cache"]
+      end
+
       # system front server
       define_item(:front, false)
 

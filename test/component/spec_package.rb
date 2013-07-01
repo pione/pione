@@ -1,23 +1,22 @@
 require_relative '../test-util'
-require 'webrick'
 
 describe "Pione::Component::Package" do
   before do
-    path = TestUtil::Package.get("TestPackage1")
-    @package = Component::PackageReader.new(path).read
+    @location = TestUtil::Package.get("TestPackage1")
+    @package = Component::PackageReader.new(@location).read
     @case1 = @package.scenarios[0]
     @case2 = @package.scenarios[1]
     @case3 = @package.scenarios[2]
   end
 
   it "should equal" do
-    Component::Package.new({"PackageName1" => "Test"}, [], [], []).should ==
-      Component::Package.new({"PackageName1" => "Test"}, [], [], [])
+    Component::Package.new(location: @location, info: {"PackageName1" => "Test"}).should ==
+      Component::Package.new(location: @location, info: {"PackageName1" => "Test"})
   end
 
   it "should not equal" do
-    Component::Package.new({"PackageName1" => "Test1"}, [], [], []).should !=
-      Component::Package.new({"PackageName1" => "Test2"}, [], [], [])
+    Component::Package.new(location: @location, info: {"PackageName1" => "Test1"}).should !=
+      Component::Package.new(location: @location, info: {"PackageName1" => "Test2"})
   end
 
   it "should get the package name" do
@@ -105,126 +104,6 @@ describe "Pione::Component::PackageScenario" do
     @case2.outputs[2].basename.should == "3.count"
     @case3.outputs[0].basename.should == "a.count"
     @case3.outputs[1].basename.should == "b.count"
-  end
-end
-
-describe "Pione::Component::PackageReader" do
-  shared "package" do
-    it "should read the package and return it" do
-      Component::PackageReader.read(@path).should.kind_of Component::Package
-    end
-
-    it "should get package informations" do
-      package = Component::PackageReader.read(@path)
-      package.name.should == "TestPackage1"
-    end
-
-    it "should get scenarios" do
-      package = Component::PackageReader.read(@path)
-      package.name.should == "TestPackage1"
-      case1 = package.scenarios[0]
-      case1.name.should == "Case1"
-      case1.inputs[0].basename.should == "1.txt"
-      case2 = package.scenarios[1]
-      case2.name.should == "Case2"
-      case2.inputs[0].basename.should == "1.txt"
-      case2.inputs[1].basename.should == "2.txt"
-      case2.inputs[2].basename.should == "3.txt"
-      case3 = package.scenarios[2]
-      case3.name.should == "Case3"
-      case3.inputs[0].basename.should == "a.txt"
-      case3.inputs[1].basename.should == "b.txt"
-    end
-  end
-
-  shared "package directory" do
-    it "should read package directory" do
-      Component::PackageReader.new(@path).type.should == :directory
-    end
-  end
-
-  describe "package directory in local location" do
-    before do
-      @path = TestUtil::Package.get("TestPackage1")
-    end
-
-    behaves_like "package"
-    behaves_like "package directory"
-  end
-
-  describe "package in HTTP location" do
-    before do
-      document_root = TestUtil::TEST_PACKAGE_DIR.path.to_s
-      logger = WEBrick::Log.new(StringIO.new("", "w"))
-      @server = WEBrick::HTTPServer.new(DocumentRoot: document_root, Port: 54673, Logger: logger, AccessLog: logger)
-      @path = Location["http://localhost:%s/TestPackage1/" % @server.config[:Port]]
-      Thread.new { @server.start }
-    end
-
-    after do
-      @server.shutdown
-    end
-
-    behaves_like "package"
-    behaves_like "package directory"
-  end
-
-  describe "package archive in local location" do
-    before do
-      @path = TestUtil::TEST_PACKAGE_DIR + "TestPackage1-0.1.0.ppg"
-    end
-
-    behaves_like "package"
-  end
-
-  describe "package archive in HTTP location" do
-    before do
-      document_root = TestUtil::TEST_PACKAGE_DIR.path.to_s
-      logger = WEBrick::Log.new(StringIO.new("", "w"))
-      @server = WEBrick::HTTPServer.new(DocumentRoot: document_root, Port: 54673, Logger: logger, AccessLog: logger)
-      @path = Location["http://localhost:%s/TestPackage1-0.1.0.ppg" % @server.config[:Port]]
-      @thread = Thread.new { @server.start }
-    end
-
-    after do
-      @server.shutdown
-      @thread.kill
-    end
-
-    behaves_like "package"
-  end
-end
-
-describe "Pione::Component::PackageArchiver" do
-  before do
-    @path = TestUtil::Package.get("TestPackage1")
-  end
-
-  it "should get package name" do
-    archiver = Component::PackageArchiver.new(@path)
-    archiver.package_name.should == "TestPackage1"
-  end
-
-  it "should get package id" do
-    archiver = Component::PackageArchiver.new(@path)
-    archiver.package_id.should == "0.1.0"
-  end
-
-  it "should create archive file" do
-    pkg = Location[Temppath.create]
-    Component::PackageArchiver.new(@path).archive(pkg)
-
-    pkg.should.exist
-    pkg.should.file
-    pkg.size.should > 0
-
-    Zip::Archive.open(pkg.path.to_s) do |ar|
-      ar.each do |file|
-        unless file.directory?
-          file.read.should == (@path + file.name).read
-        end
-      end
-    end
   end
 end
 

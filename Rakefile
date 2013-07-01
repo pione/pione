@@ -1,4 +1,5 @@
 require "bundler/gem_tasks"
+require "pione"
 
 $stand_alone = "bin/pione-client --stand-aline"
 
@@ -118,6 +119,18 @@ end
 desc 'other test'
 task 'test:other' do
   sh "bundle exec bacon -I lib test/spec_*.rb"
+end
+
+desc "create test git package"
+task "test:build-test-git-package" do
+  path = Temppath.mkdir
+  cd path do
+    sh "git clone https://github.com/pione/HelloWorld.git"
+    # sh "zip HelloWorld.zip -r HelloWorld"
+    Util::Zip.compress(Location["HelloWorld"], Location["HelloWorld.zip"])
+  end
+  sh "mkdir -p test/test-data/git-repository/"
+  sh "mv %s %s" % [File.join(path, "HelloWorld.zip"), "test/test-data/git-repository/"]
 end
 
 desc 'clean'

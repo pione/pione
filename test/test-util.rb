@@ -1,6 +1,8 @@
 require 'bacon'
 require 'pione'
 
+Global.git_package_directory = Location[Temppath.mkdir]
+
 module TestUtil
   include Pione::TupleSpaceServerInterface
 
@@ -199,6 +201,7 @@ require_relative "test-util/command"
 require_relative "test-util/parser"
 require_relative "test-util/transformer"
 require_relative "test-util/package"
+require_relative "test-util/webserver"
 
 def setup_for_test
   include Pione

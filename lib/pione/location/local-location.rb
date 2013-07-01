@@ -1,7 +1,7 @@
 module Pione
   module Location
     # LocalLocation represents local disk locations.
-    class LocalLocation < BasicLocation
+    class LocalLocation < DataLocation
       set_scheme "local"
       set_real_appendable true
 
@@ -54,6 +54,10 @@ module Pione
         end
       end
 
+      def mkdir
+        @path.mkpath unless exist?
+      end
+
       def mtime
         @path.exist? ? @path.mtime : (raise NotFound.new(self))
       end
@@ -62,12 +66,27 @@ module Pione
         @path.exist? ? @path.size : (raise NotFound.new(self))
       end
 
-      def entries
-        @path.entries.select do |entry|
-          not(entry.to_s == "." or entry.to_s == "..")
-        end.map do |entry|
+      def entries(option={})
+        rel_entries(option).map do |entry|
           Location["local:%s" % (@path + entry).expand_path]
         end
+      rescue Errno::ENOENT
+        raise NotFound.new(self)
+      end
+
+      def rel_entries(option={})
+        list = []
+        @path.entries.each do |entry|
+          if not(entry.to_s == "." or entry.to_s == "..")
+            list << entry
+            entry_location = self + entry
+            if option[:rec] and entry_location.directory?
+              _list = entry_location.rel_entries(option).map {|subentry| entry + subentry}
+              list = list + _list
+            end
+          end
+        end
+        return list
       rescue Errno::ENOENT
         raise NotFound.new(self)
       end

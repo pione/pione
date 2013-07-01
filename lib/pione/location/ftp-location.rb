@@ -1,7 +1,7 @@
 module Pione
   module Location
     # FTPLocation represents locations on FTP server.
-    class FTPLocation < BasicLocation
+    class FTPLocation < DataLocation
       set_scheme "ftp"
       set_real_appendable false
 
@@ -67,6 +67,10 @@ module Pione
         connect {|ftp| ftp.delete(@path.to_s)} if exist?
       end
 
+      def mkdir
+        connect {|ftp| makedirs(ftp, @path)} unless exist?
+      end
+
       def mtime
         connect {|ftp| exist? ? ftp.mtime(@path.to_s) : (raise NotFound.new(self))}
       end
@@ -75,12 +79,23 @@ module Pione
         connect {|ftp| exist? ? ftp.size(@path.to_s) : (raise NotFound.new(self))}
       end
 
-      def entries
+      def entries(option={})
+        rel_entries(option).map {|entry| rebuild(@path + entry)}
+      end
+
+      def rel_entries(option={})
+        list = []
         connect do |ftp|
-          ftp.nlst(@path.to_s).map do |entry|
-            rebuild(@path + entry)
+          ftp.nlst(@path.to_s).each do |entry|
+            list << entry
+            entry_location = rebuild(@path + entry)
+            if option[:rec] and entry_location.directory?
+              _list = entry_location.rel_entries(option).map {|subentry| entry + subentry}
+              list = list + _list
+            end
           end
         end
+        return list
       end
 
       def exist?

@@ -1,6 +1,6 @@
 module Pione
   module Location
-    class HTTPLocation < BasicLocation
+    class HTTPLocation < DataLocation
       set_scheme "http"
       set_real_appendable false
       set_writable false

@@ -53,6 +53,8 @@ require 'zipruby'
 require 'retriable'
 require 'childprocess'
 
+ChildProcess.posix_spawn = true
+
 #
 # load pione
 #

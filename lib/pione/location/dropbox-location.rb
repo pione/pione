@@ -1,7 +1,7 @@
 module Pione
   module Location
     # DropboxLocation represents locations on Dropbox server.
-    class DropboxLocation < BasicLocation
+    class DropboxLocation < DataLocation
       set_scheme "dropbox"
 
       class << self
@@ -25,6 +25,10 @@ module Pione
 
           @session = DropboxSession.new(consumer_key, consumer_secret)
           @session.set_access_token(access_token_key, access_token_secret)
+        end
+
+        def rebuild(path)
+          Location["dropbox:%s" % path]
         end
 
         # Share dropbox's access token with PIONE agents.
@@ -89,14 +93,23 @@ module Pione
         Time.parse(metadata["modified"])
       end
 
-      def entries
+      def entries(option={})
+        rel_entries(option).map {|entry| rebuild(@path + entry)}
+      end
+
+      def rel_entries(option={})
+        list = []
+        raise NotFound.new(self) if not(directory?)
         metadata = @client.metadata(@path)
-        if not(metadata["is_dir"]) or metadata["is_deleted"]
-          raise NotFound.new(self)
+        metadata["contents"].select{|entry| not(entry["is_deleted"])}.each do |entry|
+          list << entry["path"][0, @path.size]
+          entry_location = rebuild(@path + entry)
+          if option[:rec] and entry_location.directory?
+            _list = entry_location.rel_entries(option).map {|subentry| entry + subentry}
+            list = list + _list
+          end
         end
-        metadata["contents"].select{|entry| not(entry["is_dir"]) and not(entry["is_deleted"])}.map do |entry|
-          Location["dropbox:%s" % entry["path"]]
-        end
+        return list
       end
 
       def exist?
@@ -104,6 +117,16 @@ module Pione
         return not(metadata["is_deleted"])
       rescue DropboxError
         return false
+      end
+
+      def file?
+        metadata = @client.metadata(@path)
+        return (not(metadata["is_dir"]) and not(metadata["is_deleted"]))
+      end
+
+      def directory?
+        metadata = @client.metadata(@path)
+        return (metadata["is_dir"] and not(metadata["is_deleted"]))
       end
 
       def move(dest)
