@@ -3,7 +3,7 @@
 #
 
 # bundler
-require 'bundler/setup'
+require 'bundler/setup' rescue nil
 
 # standard
 require 'set'
