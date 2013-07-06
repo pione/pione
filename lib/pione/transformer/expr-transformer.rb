@@ -4,7 +4,7 @@ module Pione
     module ExprTransformer
       include TransformerModule
 
-      # Transform +:expr_operator_application+ as Model::Message
+      # Transform +expr_operator_application+ into +Model::Message+.
       rule(:expr_operator_application =>
            { :left => simple(:left),
              :operator => simple(:operator),

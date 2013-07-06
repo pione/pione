@@ -9,93 +9,151 @@ $var_y = Variable.new("Y")
 $var_z = Variable.new("Z")
 
 describe 'Pione::Transformer::ExprTransformer' do
-
   transformer_spec("binary operator", :expr) do
-    tc "1 + 2" do
-      Message.new(
-        "+",
-        IntegerSequence.new([1.to_pione]),
-        IntegerSequence.new([2.to_pione])
-      )
+    test "1 + 2" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "+"
+      msg.receiver.should == IntegerSequence.of(1)
+      msg.arguments.size.should == 1
+      msg.arguments[0].should == IntegerSequence.of(2)
     end
 
-    tc '"a" + "b"' do
-      Message.new("+", StringSequence.new([$a]), StringSequence.new([$b]))
+    test '"a" + "b"' do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "+"
+      msg.receiver.should == StringSequence.new([$a])
+      msg.arguments.size.should == 1
+      msg.arguments[0].should == StringSequence.new([$b])
     end
 
-    tc "false || true" do
-      Message.new(
-        "||",
-        BooleanSequence.new([PioneBoolean.false]),
-        BooleanSequence.new([PioneBoolean.true])
-      )
+    test "false || true" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "||"
+      msg.receiver.should == BooleanSequence.of(false)
+      msg.arguments.size.should == 1
+      msg.arguments[0].should == BooleanSequence.of(true)
     end
 
-    tc "$X * 3" do
-      Message.new("*", $var_x, IntegerSequence.new([3.to_pione]))
+    test "$X * 3" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "*"
+      msg.receiver.should == $var_x
+      msg.arguments.size.should == 1
+      msg.arguments[0].should == IntegerSequence.of(3)
     end
 
-    tc "($X == \"a\") && ($Y == \"b\")" do
-      left = Message.new("==", $var_x, StringSequence.new([$a]))
-      right = Message.new("==", $var_y, StringSequence.new([$b]))
-      Message.new("&&", left, right)
+    test "($X == \"a\") && ($Y == \"b\")" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "&&"
+      msg.receiver.should == Message.new("==", $var_x, StringSequence.new([$a]))
+      msg.arguments.size.should == 1
+      msg.arguments[0].should == Message.new("==", $var_y, StringSequence.new([$b]))
     end
   end
 
   transformer_spec("data_expr", :expr) do
-    tc "'test.a'" do
-      DataExpr.new("test.a").to_seq
+    test "'test.a'" do |data_expr|
+      data_expr.should == DataExpr.new("test.a").to_seq
     end
 
-    tc "null" do
-      DataExprNull.instance.to_seq
+    test "null" do |data_expr|
+      data_expr.should == DataExprNull.instance.to_seq
     end
   end
 
   transformer_spec("message", :expr) do
-    tc "1.next" do
-      Message.new("next", IntegerSequence.new([1.to_pione]))
+    test "1.next" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "next"
+      msg.receiver.should == IntegerSequence.of(1)
+      msg.arguments.should.empty
     end
 
-    tc "1.next.next" do
-      Message.new("next", Message.new("next", IntegerSequence.new([1.to_pione])))
+    test "1.next.next" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "next"
+      msg.receiver.tap do |rec|
+        rec.should.kind_of Model::Message
+        rec.name.should == "next"
+        rec.receiver.should == IntegerSequence.of(1)
+        rec.arguments.should.empty
+      end
+      msg.arguments.should.empty
     end
 
-    tc "\"abc\".index(1,1)" do
-      Message.new(
-        "index",
-        StringSequence.new([$abc]),
-        IntegerSequence.new([1.to_pione]),
-        IntegerSequence.new([1.to_pione])
-      )
+    test "\"abc\".index(1,1)" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "index"
+      msg.receiver.should == StringSequence.new([$abc])
+      msg.arguments.size.should == 2
+      msg.arguments[0].should == IntegerSequence.of(1)
+      msg.arguments[1].should == IntegerSequence.of(1)
     end
 
-    tc "(1 + 2).prev" do
-      Message.new(
-        "prev",
-        Message.new(
-          "+",
-          IntegerSequence.new([1.to_pione]),
-          IntegerSequence.new([2.to_pione])
-        )
-      )
+    test "(1 + 2).prev" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "prev"
+      msg.receiver.tap do |rec|
+        rec.should.kind_of Model::Message
+        rec.name.should == "+"
+        rec.receiver.should == IntegerSequence.of(1)
+        rec.arguments.size.should == 1
+        rec.arguments[0].should == IntegerSequence.of(2)
+      end
+      msg.arguments.should.empty
     end
 
-    tc "abc.sync" do
-      rule = RuleExpr.new(PackageExpr.new("Main"), "abc")
-      Message.new("sync", rule)
+    test "Test.as_string" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "as_string"
+      msg.receiver.should == RuleExpr.new(PackageExpr.new("Main"), "Test")
+      msg.arguments.should.empty
     end
 
-    tc "'*.txt'.all" do
-      Message.new("all", DataExpr.new("*.txt").to_seq)
+    test "'*.txt'.all" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "all"
+      msg.receiver.should == DataExpr.new("*.txt").to_seq
+      msg.arguments.should.empty
     end
 
-    tc "'*.txt'.all()" do
-      Message.new("all", DataExpr.new("*.txt").to_seq)
+    test "'*.txt'.all()" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "all"
+      msg.receiver.should == DataExpr.new("*.txt").to_seq
+      msg.arguments.should.empty
     end
 
-    tc "'*.txt'.all(true)" do
-      Message.new("all", DataExpr.new("*.txt").to_seq, BooleanSequence.new([PioneBoolean.true]))
+    test "'*.txt'.all(true)" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "all"
+      msg.receiver.should == DataExpr.new("*.txt").to_seq
+      msg.arguments.size.should == 1
+      msg.arguments[0].should == BooleanSequence.of(true)
+    end
+
+    test "$var[1]" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "[]"
+      msg.receiver.should == Model::Variable.new("var")
+      msg.arguments.size.should == 1
+      msg.arguments[0].should == IntegerSequence.of(1)
+    end
+
+    test "$var[1, 2]" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "[]"
+      msg.receiver.should == Model::Variable.new("var")
+      msg.arguments.size.should == 2
+      msg.arguments[0].should == IntegerSequence.of(1)
+      msg.arguments[1].should == IntegerSequence.of(2)
+    end
+
+    test "not :: true" do |msg|
+      msg.should.kind_of Model::Message
+      msg.name.should == "not"
+      msg.receiver.should == BooleanSequence.of(true)
+      msg.arguments.should.empty
     end
   end
 
@@ -105,13 +163,13 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
 
     tc "{X: 1}" do
-      Parameters.new({$var_x => IntegerSequence.new([PioneInteger.new(1)])})
+      Parameters.new({$var_x => IntegerSequence.of(1)})
     end
 
     tc "{X: 1, Y: 2}" do
       Parameters.new(
-        { $var_x => IntegerSequence.new([PioneInteger.new(1)]),
-          $var_y => IntegerSequence.new([PioneInteger.new(2)]) }
+        { $var_x => IntegerSequence.of(1),
+          $var_y => IntegerSequence.of(2) }
       )
     end
 

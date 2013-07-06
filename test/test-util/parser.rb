@@ -29,7 +29,7 @@ module TestUtil
 
           if strings = testcase["invalid"]
             strings.each do |string|
-              it "should fail when parsing as %s:%s%s" % [name, string.include?("\n") ? "\n" : "", string.chomp] do
+              it "should fail when parsing as %s:%s%s" % [name, string.include?("\n") ? "\n" : " ", string.chomp] do
                 should.raise(Parslet::ParseFailed) do
                   parser.new.send(name).parse(string)
                 end

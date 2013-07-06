@@ -2,20 +2,26 @@ require_relative '../test-util'
 
 describe 'Pione::Transformer::FeatureExprTransformer' do
   transformer_spec("feature_expr", :feature_expr) do
-    tc('+A' => Feature::RequisiteExpr.new("A"))
-    tc('-A' => Feature::BlockingExpr.new("A"))
-    tc('?A' => Feature::PreferredExpr.new("A"))
-    tc('^A' => Feature::PossibleExpr.new("A"))
-    tc('!A' => Feature::RestrictiveExpr.new("A"))
-    tc('*' => Feature.empty)
-    tc('@' => Feature.boundless)
-    tc '+A & +B' do
-      Feature::AndExpr.new(Feature::RequisiteExpr.new("A"),
-                           Feature::RequisiteExpr.new("B"))
+    test('+A', Feature::RequisiteExpr.new("A"))
+    test('-A', Feature::BlockingExpr.new("A"))
+    test('?A', Feature::PreferredExpr.new("A"))
+    test('^A', Feature::PossibleExpr.new("A"))
+    test('!A', Feature::RestrictiveExpr.new("A"))
+    test('*', Feature.empty)
+    test('@', Feature.boundless)
+
+    test '+A & +B' do |expr|
+      expr.should.kind_of Feature::AndExpr
+      expr.elements.size.should == 2
+      expr.elements.should.include Feature::RequisiteExpr.new("A")
+      expr.elements.should.include Feature::RequisiteExpr.new("B")
     end
-    tc '+A | +B' do
-      Feature::OrExpr.new(Feature::RequisiteExpr.new("A"),
-                          Feature::RequisiteExpr.new("B"))
+
+    test '+A | +B' do |expr|
+      expr.should.kind_of Feature::OrExpr
+      expr.elements.size.should == 2
+      expr.elements.should.include Feature::RequisiteExpr.new("A")
+      expr.elements.should.include Feature::RequisiteExpr.new("B")
     end
   end
 end

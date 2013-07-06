@@ -14,43 +14,14 @@ module Pione
       # root
       #
 
-      root(:toplevel_elements)
-
-      # @!method toplevel_elements
-      #
-      # Return +toplevel_elements+ parser. This is root parser for reading a
-      # document.
-      #
-      # @return [Parslet::Atoms::Entity]
-      #   +toplevel_elements+ parser
+      # +toplevel_elements+ matches all toplevel elements. This is root parser
+      # for reading a document.
       rule(:toplevel_elements) {
         (empty_lines? >> space? >> toplevel_element >> empty_lines?).repeat
       }
+      root(:toplevel_elements)
 
-      # @!method toplevel_element
-      #
-      # Return +toplevel_element+ parser.
-      #
-      # @return [Parslet::Atoms::Entity]
-      #   +toplevel_element+ parser
-      #
-      # @example
-      #   # document toplevel assignment
-      #   DocumentParser.toplevel_element.parse("$X := 1")
-      # @example
-      #   # define rule
-      #   DocumentParser.new.toplevel_element.parse <<TXT
-      #     Rule Main
-      #       input '*.txt'
-      #       ...
-      #     Flow
-      #       rule SubRule
-      #       ...
-      #     End
-      #   TXT
-      # @example
-      #   # you can write any expressions in toplevel but it is ignored
-      #   DocumentParser.new.toplevel_element.parse("1 + 1")
+      # +toplevel_element+ matches toplevel elements.
       rule(:toplevel_element) {
         rule_definition |
         param_block |
@@ -64,78 +35,66 @@ module Pione
       # document statement
       #
 
-      rule(:document_statements) {
-        document_statement.repeat.as(:document_statements)
-      }
-
       # document_statement
-      rule(:document_statement) {
-        package_line |
-        require_line
-      }
+      rule(:document_statement) { package_line | require_line }
+      rule(:document_statements) { document_statement.repeat.as(:document_statements) }
 
-      # @!method assignment_line
-      #
-      # Return +assignment_line+ parser.
-      #
-      # @return [Parslet::Atoms::Entity]
-      #   +assignment_line+ parser
+      # +assignment_line+ matches variable assignment lines.
+      rule(:assignment_line) { line(assignment) }
+
+      # +param_block+ matches parameter statement blocks.
       #
       # @example
-      #   DocumentParser.new.assignment_line("$X := 1")
-      rule(:assignment_line) {
-        space? >> assignment >> line_end
-      }
-
-      # @!method param_block
-      #
-      # Return +param_block+ parser.
-      #
-      # @return [Parslet::Atoms::Entity]
-      #   +param block+ parser
-      #
-      # @example
-      #   DocumentParser.new.param_block <<TXT
-      #     Param
-      #       $X := 1
-      #       $Y := 2
-      #       $Z := 3
-      #     End
-      #   TXT
+      #   Param
+      #     $X := 1
+      #     $Y := 2
+      #     $Z := 3
+      #   End
+      # @example Basic Paramter Block
+      #   Basic Param
+      #     $X := 1
+      #     $Y := 2
+      #     $Z := 3
+      #   End
+      # @example Advanced Parameter Block
+      #   Advanced Param
+      #     $X := 1
+      #     $Y := 2
+      #     $Z := 3
+      #   End
       rule(:param_block) {
-        ( space? >>
-          ((keyword_Basic | keyword_Advanced).as(:param_type) >> space).maybe >>
-          keyword_Param >>
-          line_end >>
-          (assignment_line | pad).repeat.as(:in_block_assignments) >>
-          (keyword_End | syntax_error("it should be block end", :keyword_End)) >>
-          line_end
-        ).as(:param_block)
+        (param_block_header >> param_block_body >> param_block_footer!).as(:param_block)
       }
+
+      # +param_block_modifier+ matches all parameter block modifiers.
+      rule(:param_block_modifier) { keyword_Basic | keyword_Advanced }
+
+      # +param_block_header+ matches parameter block headers.
+      rule(:param_block_header) {
+        line((param_block_modifier.as(:param_type) >> space).maybe >> keyword_Param)
+      }
+
+      # +param_block_body+ matches assignments in parameter statement block.
+      rule(:param_block_body) {
+        (assignment_line | pad).repeat.as(:in_block_assignments)
+      }
+
+      # +param_block_footer+ matches parameter statement block footer.
+      rule(:param_block_footer) { line(keyword_End) }
+      rule(:param_block_footer!) { param_block_footer.or_error("it should be block end") }
 
       # package_line
       rule(:package_line) {
-        ( space? >>
-          keyword_package >>
-          space >>
-          package_name >>
-          line_end
-        ).as(:package)
+        line(keyword_package >> space >> package_name).as(:package)
       }
 
       # require_line
       rule(:require_line) {
-        ( space? >>
-          keyword_require >>
-          space >>
-          package_name >>
-          line_end
-        ).as(:require)
+        line(keyword_require >> space >> package_name).as(:require)
       }
 
-      rule(:expr_line) {
-        space? >> expr >> line_end
-      }
+      # +expr_line+ matches expression lines.
+      rule(:expr_line) { line(expr) }
     end
   end
 end

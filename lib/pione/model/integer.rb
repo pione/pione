@@ -2,6 +2,18 @@ module Pione
   module Model
     # PioneInteger represents integer value in PIONE system.
     class PioneInteger < Value
+      class << self
+        # Build PioneInteger object from the ruby value.
+        #
+        # @param obj [Boolean]
+        #   the ruby value
+        # @return [PioneBoolean]
+        #   the pione object of +obj+
+        def of(obj)
+          new(obj)
+        end
+      end
+
       # @api private
       def textize
         @value.to_s
@@ -16,6 +28,12 @@ module Pione
       set_pione_model_type TypeInteger
       set_element_class PioneInteger
       set_shortname "ISeq"
+
+      class << self
+        def of(*elts)
+          IntegerSequence.new(elts.map {|elt| PioneInteger.of(elt)})
+        end
+      end
     end
 
     TypeInteger.instance_eval do

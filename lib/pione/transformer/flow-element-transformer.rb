@@ -4,62 +4,40 @@ module Pione
     module FlowElementTransformer
       include TransformerModule
 
-      # Extract the content of +:flow_elements+.
-      rule(:flow_elements => sequence(:elements)) {
-        elements
+      # Extract the content of +flow_elements+.
+      rule(:flow_elements => sequence(:elements)) { elements }
+
+      # Transform +call_rule+ into +Model::CallRule+.
+      rule(:call_rule => subtree(:rule_expr)) { CallRule.new(rule_expr) }
+
+      # Trasnform +if_block+ into +Model::ConditionalBlock+.
+      rule(:if_block => subtree(:tree)) {
+        pione_true = Model::BooleanSequence.new([Model::PioneBoolean.true])
+
+        block = Hash.new
+        block[pione_true] = Model::FlowBlock.new(*tree[:true_elements])
+        block[:else] = Model::FlowBlock.new(*tree[:else_elements]) if tree[:else_elements]
+
+        Model::ConditionalBlock.new(tree[:condition], block)
       }
 
-      # Transform +:call_rule: as Model::CallRule.
-      rule(:call_rule => subtree(:rule_expr)) {
-        CallRule.new(rule_expr)
+      # Transform +:case_block+ into +Model::ConditionalBlock+.
+      rule(:case_block => subtree(:tree)) {
+        block = Hash.new
+        tree[:when_blocks].each {|b| block[b.value] = b.elements }
+        block[:else] = Model::FlowBlock.new(*tree[:else_elements]) if tree[:else_elements]
+
+        Model::ConditionalBlock.new(tree[:condition], block)
       }
 
-      # Trasnform +:if_block+ as Model::ConditionalBlock.
-      rule(:if_block =>
-           { :condition => simple(:condition),
-             :if_true_elements => sequence(:if_true),
-             :if_else_block => simple(:if_false)
-           }) {
-        block = {
-          Model::BooleanSequence.new([Model::PioneBoolean.true]) =>
-          Model::FlowBlock.new(*if_true)
-        }
-        block[:else] = if_false if if_false
-        Model::ConditionalBlock.new(condition, block)
+      # Transform +when_block+ into +Model::WhenBlock+.
+      rule(:when_block => subtree(:tree)) {
+        OpenStruct.new(value: tree[:value], elements: Model::FlowBlock.new(*tree[:elements]))
       }
 
-      # Transform +:else_block+ as Model::FlowBlock.
-      rule(:else_block => {:elements => sequence(:elements)}) {
-        Model::FlowBlock.new(*elements)
-      }
-
-      # Transform +:case_block+ as Model::ConditionalBlock.
-      rule(:case_block =>
-        { :condition => simple(:condition),
-          :when_blocks => sequence(:when_blocks),
-          :case_else_block => simple(:else_block) }) {
-        block = {}
-        when_blocks.each do |when_block|
-          block[when_block.value] = when_block.body
-        end
-        block[:else] = else_block if else_block
-        Model::ConditionalBlock.new(condition, block)
-      }
-
-      # Transform +:when_block+ as Model::WhenBlock.
-      rule(:when_block =>
-        { :value => simple(:value),
-          :elements => sequence(:elements) }
-      ) {
-        OpenStruct.new(value: value, body: Model::FlowBlock.new(*elements))
-      }
-
-    # Transform +:assignment+ as Model::Assignment.
-      rule(:assignment =>
-        { :symbol => simple(:symbol),
-          :value => simple(:value) }
-      ) {
-        Model::Assignment.new(symbol, value)
+      # Transform +assignment+ into +Model::Assignment+.
+      rule(:assignment => subtree(:tree)) {
+        Model::Assignment.new(tree[:symbol], tree[:value])
       }
     end
   end

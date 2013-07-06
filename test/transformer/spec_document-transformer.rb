@@ -2,7 +2,7 @@ require_relative '../test-util'
 
 describe 'Pione::Transformer::DocumentTransformer' do
   transformer_spec("param_block", :param_block) do
-    transform(<<-STRING) do |res|
+    test(<<-STRING) do |res|
       Param
         $X := 1
         $Y := 2
@@ -23,7 +23,7 @@ describe 'Pione::Transformer::DocumentTransformer' do
       assignments[2].expr.should == IntegerSequence.new([PioneInteger.new(3)])
     end
 
-    transform(<<-STRING) do |res|
+    test(<<-STRING) do |res|
       Basic Param
         $X := 1
         $Y := 2
@@ -35,7 +35,7 @@ describe 'Pione::Transformer::DocumentTransformer' do
       end
     end
 
-    transform(<<-STRING) do |res|
+    test(<<-STRING) do |res|
       Advanced Param
         $X := 1
         $Y := 2

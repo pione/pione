@@ -1,6 +1,6 @@
 module Pione
   module Parser
-    # CommonParser is a set of symbols, keywords, and utility parsers.
+    # CommonParser provides a set of symbols, keywords, and utility parsers.
     module CommonParser
       include Parslet
 
@@ -42,16 +42,18 @@ module Pione
       # make symbols
       SYMBOLS.each do |key, val|
         rule(key) { str(val) }
+        rule(("%s!" % key).to_sym) { str(val).or_error("it should be '%s'" % val) }
       end
 
-      # @!attribute [r] symbols
-      #   +symbols+ matches all symbols in PIONE document.
-      #   @return [Parslet::Atoms::Entity] +symbols+ atom
+      # +symbols+ matches all symbols in PIONE document.
       rule(:symbols) {
         SYMBOLS.keys.inject(nil) do |res, elt|
           res ? res | send(elt) : send(elt)
         end
       }
+
+      rule(:colon_eq) { colon >> equals }
+      rule(:colon_colon) { colon >> colon }
 
       #
       # keywords
@@ -93,80 +95,65 @@ module Pione
       end
 
       #
-      # utilities
+      # utility parsers
       #
 
-      # @!attribute [r] identifier
-      #   +identifier+ matches any sequences excluding space, symbols, and
-      #     line end.
-      #   @return [Parslet::Atoms::Entity] +identifier+ atom
+      # +eof+ is parslet version of "End of File".
+      rule(:eof) { any.absent? }
+
+      # +comment+ matches comment strings.
+      rule(:comment) { str("#") >> ((str("\n") | eof).absent? >> any).repeat }
+
+      # +identifier+ matches any sequences excluding space, symbols, and line
+      # end.
       rule(:identifier) {
         ((space | symbols | line_end).absent? >> any).repeat(1) >> question.maybe
       }
 
-      # @!attribute [r] digit
-      #   +digit+ matches 0-9.
-      #   @return [Parslet::Atoms::Entity] +digit+ atom
+      # +digit+ matches 0-9.
       rule(:digit) { match('[0-9]') }
 
-      # @!method space
-      #
-      # Return +space+ parser. +space+ matches sequences of space character,
-      # tab, or comment.
-      #
-      # @return [Parslet::Atoms::Entity] +space+ atom
-      rule(:space) {
-        ( match("[ \t]") |
-          str("#") >> ((str("\n") | any.absent?).absent? >> any).repeat
-        ).repeat(1)
-      }
+      # +space+ matches sequences of space character, tab, or comment.
+      rule(:space) { (match("[ \t]") | comment).repeat(1) }
 
-      # @!method space?
-      #
-      # Return +space?+ parser. +space?+ matches +space+ or empty.
-      #
-      # @return [Parslet::Atoms::Entity]
-      #   +space?+ parser
+      # +space?+ matches +space+ or empty.
       rule(:space?) { space.maybe }
 
-      # @!method pad
-      #
-      # Return +pad+ parser. +pad+ matches sequences of space character, tab,
-      # newline, or comment.
-      #
-      # @return [Parslet::Atoms::Entity]
-      #   +pad+ parser
-      rule(:pad) {
-        ( match("[ \t\n]") |
-          str("#") >> ((str("\n") | any.absent?).absent? >> any).repeat
-        ).repeat(1)
-      }
+      # +pad+ matches sequences of space character, tab, newline, or comment.
+      rule(:pad) { (match("[ \t\n]") | comment).repeat(1) }
 
-      # @!method pad?
-      #
-      # Return +pad?+ parser. +pad?+ matches +pad+ or empty.
-      #
-      # @return [Parslet::Atoms::Entity]
-      #   +pad?+ parser
+      # +pad?+ matches +pad+ or empty.
       rule(:pad?) { pad.maybe }
 
-      # @!attribute [r] line_end
-      #   +line_end+ matches a space sequence until line end.
-      #   @return [Parslet::Atoms::Entity] +line_end+ atom
-      rule(:line_end) { space? >> (str("\n") | any.absent?) }
+      # +line_end+ matches a space sequence until line end.
+      rule(:line_end) { space? >> (str("\n") | eof) }
 
-      # @!attribute [r] empty_lines
-      #   +empty_line+ matches empty lines.
-      #   @return [Parslet::Atoms::Entity] +empty_line+ atom
+      # +empty_line+ matches empty lines.
       rule(:empty_lines) {
-        (space? >> str("\n")).repeat(1) >>
-        (space? >> any.absent?).maybe
+        (space? >> str("\n")).repeat(1) >> (space? >> eof).maybe
       }
 
-      # @!attribute [r] empty_lines?
-      #   +empty_lines?+ matches empty lines or empty.
-      #   @return [Parslet::Atoms::Entity] empty_line? atom
+      # +empty_lines?+ matches empty lines or empty.
       rule(:empty_lines?) { empty_lines.maybe }
+
+      #
+      # utility methods
+      #
+
+      # Enclose the atom by "space?".
+      def spaced?(atom = nil)
+        space? >> (atom ? atom : yield) >> space?
+      end
+
+      # Enclose the atom by "pad?".
+      def padded?(atom = nil)
+        pad? >> (atom ? atom : yield) >> pad?
+      end
+
+      # Create an atom that matches a line with the content.
+      def line(content)
+        space? >> content >> line_end
+      end
     end
   end
 end

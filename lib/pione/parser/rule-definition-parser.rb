@@ -10,148 +10,90 @@ module Pione
       include FlowElementParser
       include BlockParser
 
-      # @!attribute [r] rule_definition
-      #   @return [Parslet::Atoms::Entity] rule definition
-      #   @example
-      #     Rule Main
-      #       input '*.txt'
-      #       ...
-      #     Flow
-      #       rule SubRule
-      #       ...
-      #     End
+      # +rule_definition+ matches rule definition blocks.
+      #
+      # @example
+      #   Rule Main
+      #     input '*.txt'
+      #     ...
+      #   Flow
+      #     rule SubRule
+      #     ...
+      #   End
       rule(:rule_definition) {
-        ( space? >>
-          rule_header >>
-          rule_conditions >>
-          block.as(:block)
-        ).as(:rule_definition)
+        (rule_header >> rule_conditions >> block.as(:block)).as(:rule_definition)
       }
 
-      # @!attribute [r] rule_header
-      #   @return [Parslet::Atoms::Entity] rule header
-      #   @example
-      #     Rule Main
+      # +rule_header+ matches rule headers.
       rule(:rule_header) {
-        ( keyword_Rule >>
-          space >>
-          ( rule_name | syntax_error("it should be rule name", :rule_name)) >>
-          line_end
-        ).as(:rule_header)
+        line(keyword_Rule >> space >> rule_name.or_error("should be rule name")).as(:rule_header)
       }
 
-      # @!attribute [r] rule_conditions
-      #   @return [Parslet::Atoms::Entity] rule condition list
-      rule(:rule_conditions) {
-        rule_condition.repeat.as(:rule_conditions)
-      }
-
-      # @!attribute [r] rule_condition
-      #   @return [Parslet::Atoms::Entity] rule condition
-      #   @example
-      #     # input condition
-      #     input '*.in'
-      #   @example
-      #     # output condition
-      #     output '*.out'
-      #   @example
-      #     # param line
-      #     param $VAR := "abc"
-      #   @example
-      #     # feature condition
-      #     feature *
+      # @example input condition
+      #   input '*.in'
+      # @example
+      #   # output condition
+      #   output '*.out'
+      # @example
+      #   # param line
+      #   param $VAR := "abc"
+      # @example
+      #   # feature condition
+      #   feature *
       rule(:rule_condition) {
-        input_line |
-        output_line |
-        param_line |
-        feature_line |
-        constraint_line |
-        annotation_line
+        input_line | output_line | param_line | feature_line |
+        constraint_line | annotation_line
       }
+      rule(:rule_conditions) { rule_condition.repeat.as(:rule_conditions) }
 
       #
       # rule conditions
       #
 
-      # @!attribute [r] input_line
-      #   @return [Parslet::Atoms::Entity] input line
-      #   @example
-      #     input '*.in'
+      # +input_line+ matches input condition lines.
+      #
+      # @example
+      #   input '*.in'
       rule(:input_line) {
-        ( space? >>
-          keyword_input >>
-          space >>
-          ( expr.as(:expr) |
-            syntax_error("it should be data_expr", :data_expr)
-          ) >>
-          line_end
-        ).as(:input_line)
+        line(keyword_input >> space >> expr!.as(:expr)).as(:input_line)
       }
 
-      # @!attribute [r] output_line
-      #   @return [Parslet::Atoms::Entity] output line
-      #   @example
-      #     output '*.out'
+      # +output_line+ matches output condition lines.
+      #
+      # @example
+      #   output '*.out'
       rule(:output_line) {
-        ( space? >>
-          keyword_output >>
-          space >>
-          ( expr.as(:expr) |
-            syntax_error("it should be data_expr", :data_expr)
-          ) >>
-          line_end
-        ).as(:output_line)
+        line(keyword_output >> space >> expr!.as(:expr)).as(:output_line)
       }
 
-      # @!attribute [r] param_line
-      #   @return [Parslet::Atoms::Entity] parameter line
-      #   @example
-      #     param $VAR := "abc"
+      # basic or advanced modifier
+      rule(:param_modifier) { keyword_basic | keyword_advanced }
+
+      # +param_line+ matches parameter lines.
+      #
+      # @example
+      #   param $var := "abc"
+      # @example basic parameter
+      #   basic param $var := "abc"
+      # @example advanced parameter
+      #   adevanced param $var := "abc"
       rule(:param_line) {
-        ( space? >>
-          ((keyword_basic | keyword_advanced).as(:param_type) >> space).maybe >>
-          keyword_param >>
-          space >>
-          ( expr.as(:expr) |
-            syntax_error("it should be expr", :expr)
-          ).as(:param_expr) >>
-          line_end
-        ).as(:param_line)
+        line((param_modifier.as(:type) >> space).maybe >> keyword_param >> space >> expr!.as(:param_expr)).as(:param_line)
       }
 
-      # @!attribute [r] feature_line
-      #   @return [Parslet::Atoms::Entity] feature line
-      #   @example
-      #     feature *
+      # +feature_line+ matches feature lines.
       rule(:feature_line) {
-        ( space? >>
-          keyword_feature >>
-          space >>
-          ( expr.as(:expr) |
-            syntax_error("it should be feature_expr", :feature_expr)
-          ) >>
-          line_end
-        ).as(:feature_line)
+        line(keyword_feature >> space >> expr!.as(:expr)).as(:feature_line)
       }
 
+      # +constraint_line+ matches constraint lines.
       rule(:constraint_line) {
-        ( space? >>
-          keyword_constraint >>
-          space? >>
-          ( expr.as(:expr) |
-            syntax_error("it should be expr", :expr)
-          ) >>
-          line_end
-        ).as(:constraint_line)
+        line(keyword_constraint >> space? >> expr!.as(:expr)).as(:constraint_line)
       }
 
+      # +annotation_line+ matches annotation lines.
       rule(:annotation_line) {
-        ( space? >>
-          atmark >>
-          space? >>
-          ( expr.as(:expr) | syntax_error("it should be expr", :expr)) >>
-          line_end
-        ).as(:annotation_line)
+        line(atmark >> space? >> expr!.as(:expr)).as(:annotation_line)
       }
     end
   end

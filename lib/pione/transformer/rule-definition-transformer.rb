@@ -10,7 +10,13 @@ module Pione
       end
       module_function :check_model_type
 
-      # Transform +:rule_definition+ as Model::Rule.
+      BLOCK_TO_RULE_TYPE = {
+        Model::ActionBlock => Component::ActionRule,
+        Model::FlowBlock   => Component::FlowRule,
+        Model::EmptyBlock  => Component::EmptyRule
+      }
+
+      # Transform +rule_definition+ into +Component::Rule+.
       rule(:rule_definition => {
           :rule_header => simple(:rule_expr),
           :rule_conditions => sequence(:conditions),
@@ -24,57 +30,48 @@ module Pione
           features: features,
           constraints: Constraints.new(Naming::ConstraintLine.values(conditions))
         )
-        case block
-        when ActionBlock
-          Component::ActionRule
-        when FlowBlock
-          Component::FlowRule
-        when EmptyBlock
-          Component::EmptyRule
-        end.new(rule_expr.package_expr.name, rule_expr.name, condition, block)
+        BLOCK_TO_RULE_TYPE[block.class].new(rule_expr.package_expr.name, rule_expr.name, condition, block)
       }
 
-      # Transform +:input_line+ as Naming::InputLine.
+      # Transform +:input_line+ into +Naming::InputLine+.
       rule(:input_line => simple(:data_expr)) {
         TypeDataExpr.check(data_expr)
         Naming.InputLine(data_expr)
       }
 
-      # Transform +output_line+ as Naming::OutputLine.
+      # Transform +output_line+ into +Naming::OutputLine+.
       rule(:output_line => simple(:data_expr)) {
         TypeDataExpr.check(data_expr)
         Naming.OutputLine(data_expr)
       }
 
-      # Transform +param_line+ as Naming::ParamLine.
+      # Transform +param_line+ into +Naming::ParamLine+.
       rule(:param_line => subtree(:tree)) {
-        param = tree[:param_expr]
-        param_type = tree[:param_type]
-        unless TypeAssignment.match(param) or param.kind_of?(Variable)
-          raise PioneModelTypeError.new(param, TypeAssignment)
+        expr = tree[:param_expr]
+        type = tree[:type]
+        unless TypeAssignment.match(expr) or expr.kind_of?(Variable)
+          raise PioneModelTypeError.new(expr, TypeAssignment)
         end
-        case param_type
+        case type
         when "advanced"
-          param.set_param_type(:advanced)
+          expr.set_param_type(:advanced)
         else
-          param.set_param_type(:basic)
+          expr.set_param_type(:basic)
         end
-        Naming.ParamLine(param)
+        Naming.ParamLine(expr)
       }
 
-      # Transform +:feature_line+ as Naming::FeatureLine.
+      # Transform +feature_line+ into +Naming::FeatureLine+.
       rule(:feature_line => simple(:feature)) {
         TypeFeature.check(feature)
         Naming.FeatureLine(feature)
       }
 
-      rule(:constraint_line => simple(:constraint)) {
-        Naming.ConstraintLine(constraint)
-      }
+      # Transform +constraint_line+ into +Naming::ConstraintLine+.
+      rule(:constraint_line => simple(:constraint)) { Naming.ConstraintLine(constraint) }
 
-      rule(:annotation_line => simple(:expr)) {
-        Naming.AnnotationLine(expr)
-      }
+      # Transform +annotation_line+ into +Naming::AnnotationLine+.
+      rule(:annotation_line => simple(:expr)) { Naming.AnnotationLine(expr) }
     end
   end
 end

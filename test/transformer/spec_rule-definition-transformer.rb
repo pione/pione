@@ -2,23 +2,26 @@ require_relative '../test-util'
 
 describe 'Pione::Transformer::RuleDefinitionTransformer' do
   transformer_spec("input_line", :input_line) do
-    tc("input '*.txt'") do
-      Naming.InputLine(DataExpr.new("*.txt").to_seq)
+    test "input '*.txt'" do |input|
+      input.should.kind_of Naming::InputLine
+      input.value.should == DataExpr.new("*.txt").to_seq
     end
   end
 
   transformer_spec("output_line", :output_line) do
-    tc("output '*.txt'") do
-      Naming.OutputLine(DataExpr.new("*.txt").to_seq)
+    test("output '*.txt'") do |output|
+      output.should.kind_of Naming::OutputLine
+      output.value.should == DataExpr.new("*.txt").to_seq
     end
   end
 
   transformer_spec("param_line", :param_line) do
-    transform "param $X" do |param_line|
+    test "param $X" do |param_line|
       param_line.should.kind_of Naming::ParamLine
       param_line.value.should == Variable.new("X")
     end
-    transform "param $X := 1" do |param_line|
+
+    test "param $X := 1" do |param_line|
       param_line.should.kind_of Naming::ParamLine
       param_line.value.tap do |param|
         param.variable.should == Variable.new("X")
@@ -26,31 +29,32 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       end
     end
 
-    transform("basic param $X") do |param_line|
+    test "basic param $X" do |param_line|
       param_line.value.param_type.should == :basic
     end
 
-    transform("basic param $X := 1") do |param_line|
+    test "basic param $X := 1" do |param_line|
       param_line.value.variable.param_type.should == :basic
     end
 
-    transform("advanced param $X") do |param_line|
+    test "advanced param $X" do |param_line|
       param_line.value.param_type.should == :advanced
     end
 
-    transform("advanced param $X := 1") do |param_line|
+    test "advanced param $X := 1" do |param_line|
       param_line.value.variable.param_type.should == :advanced
     end
   end
 
   transformer_spec("feature_line", :feature_line) do
-    tc("feature +A") do
-      Naming.FeatureLine(Feature::RequisiteExpr.new("A"))
+    test "feature +A" do |f|
+      f.should.kind_of Naming::FeatureLine
+      f.value.should == Feature::RequisiteExpr.new("A")
     end
   end
 
   transformer_spec("rule_definition", :rule_definition) do
-    transform(<<-STRING) do |rule|
+    test(<<-STRING) do |rule|
       Rule Test
         input  '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
@@ -65,7 +69,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
         ActionBlock.new("        echo \"test\" > {$OUTPUT[1].NAME}\n")
     end
 
-    transform(<<-STRING) do |rule|
+    test(<<-STRING) do |rule|
       Rule Test
         input '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
@@ -83,17 +87,17 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       )
     end
 
-    transform(<<-STRING) do |rule|
+    test(<<-STRING) do |rule|
       Rule Main
         input '*.txt'.except('summary.txt')
         output 'summary.txt'
         param $ConvertCharSet := true
       Flow
-      if $ConvertCharset
-        rule NKF.params("-w")
-      end
-      rule CountChar
-      rule Summarize
+        if $ConvertCharset
+          rule NKF.params("-w")
+        end
+        rule CountChar
+        rule Summarize
       End
     STRING
       rule.should.kind_of(Component::FlowRule)
@@ -128,7 +132,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       )
     end
 
-    transform(<<-STRING) do |rule|
+    test(<<-STRING) do |rule|
       Rule EmptyRule
         input '*.a'
         output '*.a'.touch
@@ -141,31 +145,31 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
   end
 
   transformer_spec("rule_definitions", :toplevel_elements) do
-    transform(<<-STRING) do |rules|
+    test(<<-STRING) do |rules|
       Rule TestA
         input  '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
       Action
-      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
+        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
       End
 
       Rule TestB
         input  '*.b'
         output '{$INPUT[1].MATCH[1]}.c'
       Action
-      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
+        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}
       End
     STRING
       rules[0].should.kind_of(Component::ActionRule)
       rules[0].condition.inputs[0].should == DataExpr.new("*.a").to_seq
       rules[0].condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
       rules[0].body.should ==
-        ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
+        ActionBlock.new("        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
       rules[1].should.kind_of(Component::ActionRule)
       rules[1].condition.inputs[0].should == DataExpr.new("*.b").to_seq
       rules[1].condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.c').to_seq
       rules[1].body.should ==
-        ActionBlock.new("      cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
+        ActionBlock.new("        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
     end
   end
 end

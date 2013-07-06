@@ -76,6 +76,10 @@ module Pione
         SyntaxErrorAtom.new(msg, expected_elements, $ignore_error)
       end
 
+      def should(atom, msg, *expected_elements)
+        atom | syntax_error(msg, *expected_elements)
+      end
+
       def ignore_error(&b)
         res = yield
         return IgnoreErrorAtom.new(res)
@@ -130,7 +134,6 @@ module Pione
 
     module Exception
       def except(exception)
-        #ExceptionAtom.new(self, exception)
         ExceptionAtom.new(self, exception)
       end
     end
@@ -140,4 +143,8 @@ end
 class Parslet::Atoms::Base
   include Pione::Parser::Ignore
   include Pione::Parser::Exception
+
+  def or_error(msg, *expected_elements)
+    self | SyntaxErrorAtom.new(msg, expected_elements, $ignore_error)
+  end
 end

@@ -1,39 +1,21 @@
-flow_block_begin_line:
+flow_block_header:
   valid:
     - "Flow"
-    - "Flow-"
-    - "Flow--"
-    - "Flow---"
-    - "Flow----"
-    - "Flow-----"
   invalid:
-    - "-Flow"
-    - "--Flow"
-    - "---Flow"
-action_block_begin_line:
+    - "flow"
+
+action_block_header:
   valid:
     - "Action"
-    - "Action-"
-    - "Action--"
-    - "Action---"
-    - "Action----"
-    - "Action-----"
   invalid:
-    - "-Action"
-    - "--Action"
-    - "---Action"
+    - "action"
+
 block_end_line:
   valid:
     - "End"
-    - "-End"
-    - "--End"
-    - "---End"
-    - "----End"
-    - "-----End"
   invalid:
-    - "End-"
-    - "End--"
-    - "End---"
+    - "end"
+
 flow_block:
   valid:
     - |
@@ -83,12 +65,17 @@ flow_block:
     - |
       Flow
         rule Test
+
 action_block:
   valid:
     - |
       Action
         echo "abc" > A.txt
       End
+
 empty_block:
   valid:
     - "End"
+  invalid:
+    - "end"
+

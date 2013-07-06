@@ -49,6 +49,23 @@ module Pione
         def and(*args)
           new(args.all?{|arg| arg.true?})
         end
+
+        # Build PioneBoolean object from the ruby value.
+        #
+        # @param obj [Boolean]
+        #   the ruby value
+        # @return [PioneBoolean]
+        #   the pione object of +obj+
+        def of(obj)
+          case obj
+          when true
+            self.true
+          when false
+            self.false
+          else
+            raise ArgumentError.new(obj)
+          end
+        end
       end
 
       # Create a value.
@@ -107,6 +124,12 @@ module Pione
       set_pione_model_type TypeBoolean
       set_element_class PioneBoolean
       set_shortname "BSeq"
+
+      class << self
+        def of(*elts)
+          BooleanSequence.new(elts.map{|elt| PioneBoolean.of(elt)})
+        end
+      end
 
       def value
         @value ||= @elements.inject(true){|b, elt| b and elt.value}

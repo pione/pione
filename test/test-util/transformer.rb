@@ -28,6 +28,14 @@ module TestUtil
         push(TestCase.new(obj, b))
       end
 
+      def testcases.test(obj, res=nil, &b)
+        if res
+          push(TestCaseEq.new(obj, res))
+        else
+          push(TestCase.new(obj, b))
+        end
+      end
+
       testcases.instance_eval(&b)
       context.describe name do
         testcases.each do |tc|

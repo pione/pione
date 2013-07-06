@@ -9,7 +9,7 @@ call_rule_line:
     - "rule &package:$var"
     # - rule $var:Test # should be invalid?
     - rule :$var
-if_block_begin:
+if_block_header:
   valid:
     - "if $Var"
     - "if 1"
@@ -80,7 +80,7 @@ if_block:
       else
         rule Test
       end
-case_block_begin:
+case_block_header:
   valid:
     - case $Var
     - case 1
@@ -90,7 +90,7 @@ case_block_begin:
     - case +A
     - case -A
     - case ?A
-when_block_begin:
+when_block_header:
   valid:
     - when $Var
     - when 1
