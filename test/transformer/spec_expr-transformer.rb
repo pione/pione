@@ -158,27 +158,24 @@ describe 'Pione::Transformer::ExprTransformer' do
   end
 
   transformer_spec("parameters", :expr) do
-    tc "{}" do
-      Parameters.new({})
+    test("{}", Parameters.new({}))
+
+    test "{X: 1}" do |params|
+      params.should.kind_of Model::Parameters
+      params.get($var_x).should == IntegerSequence.of(1)
     end
 
-    tc "{X: 1}" do
-      Parameters.new({$var_x => IntegerSequence.of(1)})
+    test "{X: 1, Y: 2}" do |params|
+      params.should.kind_of Model::Parameters
+      params.get($var_x).should == IntegerSequence.of(1)
+      params.get($var_y).should == IntegerSequence.of(2)
     end
 
-    tc "{X: 1, Y: 2}" do
-      Parameters.new(
-        { $var_x => IntegerSequence.of(1),
-          $var_y => IntegerSequence.of(2) }
-      )
-    end
-
-    tc "{X: \"a\", Y: \"b\", Z: \"c\"}" do
-      Parameters.new(
-        { $var_x => StringSequence.new([$a]),
-          $var_y => StringSequence.new([$b]),
-          $var_z => StringSequence.new([$c]) }
-      )
+    test "{X: \"a\", Y: \"b\", Z: \"c\"}" do |params|
+      params.should.kind_of Model::Parameters
+      params.get($var_x).should == StringSequence.new([$a])
+      params.get($var_y).should == StringSequence.new([$b])
+      params.get($var_z).should == StringSequence.new([$c])
     end
   end
 end
