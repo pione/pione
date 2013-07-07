@@ -9,6 +9,7 @@ call_rule_line:
     - "rule &package:$var"
     # - rule $var:Test # should be invalid?
     - rule :$var
+
 if_block_header:
   valid:
     - "if $Var"
@@ -23,9 +24,11 @@ if_block_header:
     - "if ?A"
   invalid:
     - "if $$"
+
 conditional_block_end:
   valid:
     - "end"
+
 else_block:
   valid:
     - |
@@ -33,6 +36,7 @@ else_block:
         rule Test
     - |
       else
+
 if_block:
   valid:
     - |
@@ -80,6 +84,7 @@ if_block:
       else
         rule Test
       end
+
 case_block_header:
   valid:
     - case $Var
@@ -90,6 +95,7 @@ case_block_header:
     - case +A
     - case -A
     - case ?A
+
 when_block_header:
   valid:
     - when $Var
@@ -104,6 +110,7 @@ when_block_header:
     - when *
     - "when !A"
     - when ^A
+
 when_block:
   valid:
     - when $Var
@@ -115,6 +122,7 @@ when_block:
         rule Test1
         rule Test2
         rule Test3
+
 case_block:
   valid:
     - |
@@ -156,6 +164,7 @@ case_block:
         rule Test2
       else
       end
+
 flow_element:
   valid:
     - rule Test
@@ -170,6 +179,54 @@ flow_element:
       when 2
         rule Test2
       end
+
+flow_elements:
+  valid:
+    - |
+      rule Test
+    - |
+      
+      rule Test
+    - |
+      rule Test
+      
+    - |
+      rule Test1
+      rule Test2
+    - |
+      
+      rule Test1
+      rule Test2
+    - |
+      rule Test1
+      
+      rule Test2
+    - |
+      rule Test1
+      rule Test2
+      
+    - |
+      # comment
+      rule Test
+    - |
+      rule Test
+      # comment
+    - |
+      rule Test1
+      rule Test2
+    - |
+      # comment
+      rule Test1
+      rule Test2
+    - |
+      rule Test1
+      # comment
+      rule Test2
+    - |
+      rule Test1
+      rule Test2
+      # comment
+
 assignment:
   valid:
     - "$X := 1"

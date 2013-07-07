@@ -8,7 +8,7 @@ module Pione
       include LiteralParser
       include ExprParser
 
-      rule(:flow_elements) { flow_element.repeat(1) }
+      rule(:flow_elements) { (flow_element | empty_line).repeat(1) }
       rule(:flow_elements!) { flow_elements.or_error("flow elements not found") }
 
       # +flow_element+ matches all flow element.
