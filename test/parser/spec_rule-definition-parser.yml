@@ -2,10 +2,14 @@ input_line:
   valid:
     - input '*.txt'
     - input "*.txt".as_data_expr
+    - input $X
+
 output_line:
   valid:
     - output '*.txt'
     - output "*.txt".as_data_expr
+    - output $X
+
 param_line:
   valid:
     - "param $abc"
@@ -19,8 +23,11 @@ param_line:
     - "advanced param $X := 1"
   invalid:
     - "param $"
+    - "Basic param $X := 1"
     - "basicparam $X := 1"
+    - "Advanced param $X := 1"
     - "advancedparam $X := 1"
+
 feature_line:
   valid:
     - feature +A
@@ -31,29 +38,61 @@ feature_line:
     - feature +
     - feature -
     - feature ?
+
 rule_header:
   valid:
     - Rule Test
     - Rule test
+
 rule_condition:
   valid:
-    - input "*.txt"
-    - output "*.txt"
+    - input '*.txt'
+    - output '*.txt'
     - param $var
     - feature +A
+    - constraint $N.odd?
+
 rule_conditions:
   valid:
-    - |
-      input "*.a"
-      input "*.b"
-      output "*.c"
+    - | # input and output
+      input '*.a'
+      input '*.b'
+    - | # full conditions
+      input '*.a'
+      input '*.b'
+      output '*.c'
       param $var
       feature +A
-    - |
-      output "*.a"
-      input "*.b"
+    - | # some conditions
+      output '*.a'
+      input '*.b'
       feature -A
       param $var
+    - | # heading empty line
+      
+      input '*.a'
+      output '*.b'
+    - | # middle empty line
+      input '*.a'
+      
+      output '*.b'
+    - | # tail empty line
+      input '*.a'
+      output '*.b'
+      
+    - | # heading comment
+      # comment
+      input '*.a'
+      output '*.b'
+    - | # middle comment
+      input '*.a'
+      # comment
+      output '*.b'
+    - | # tail comment
+      input '*.a'
+      output '*.b'
+      # comment
+
 rule_definition:
   valid:
     - |
@@ -68,22 +107,22 @@ rule_definition:
         input '*.a'
         output '*.b'
       Action
-      echo "a"
+        echo "a"
       End
     - |
       Rule Test
         input  '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
       Action
-      echo "test" > {$OUTPUT[1].NAME}
+        echo "test" > {$OUTPUT[1].NAME}
       End
     - |
       Rule Test
         input '*.a'
         output '{$INPUT[1].MATCH[1]}.b'
       Flow
-      rule TestA
-      rule TestB.sync
+        rule TestA
+        rule TestB.sync
       End
     - |
       Rule Test
@@ -92,3 +131,4 @@ rule_definition:
       Flow
         rule TestA
       End
+

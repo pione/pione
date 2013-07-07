@@ -95,6 +95,7 @@ module Pione
 
       # +expr_line+ matches expression lines.
       rule(:expr_line) { line(expr) }
+      rule(:expr_lines) { expr_line.repeat(1) }
     end
   end
 end

@@ -101,8 +101,11 @@ module Pione
       # +eof+ is parslet version of "End of File".
       rule(:eof) { any.absent? }
 
+      # +newline+ matches newline characters.
+      rule(:newline) { str(";") | str("\n") }
+
       # +comment+ matches comment strings.
-      rule(:comment) { str("#") >> ((str("\n") | eof).absent? >> any).repeat }
+      rule(:comment) { str("#") >> (newline.absent? >> any).repeat }
 
       # +identifier+ matches any sequences excluding space, symbols, and line
       # end.
@@ -126,14 +129,14 @@ module Pione
       rule(:pad?) { pad.maybe }
 
       # +line_end+ matches a space sequence until line end.
-      rule(:line_end) { space? >> (str("\n") | eof) }
+      rule(:line_end) { space? >> (newline | eof) }
 
-      # +empty_line+ matches empty lines.
-      rule(:empty_lines) {
-        (space? >> str("\n")).repeat(1) >> (space? >> eof).maybe
-      }
+      # +empty_line+ matches an empty line.
+      rule(:empty_line) { space? >> newline | space >> eof }
+      rule(:empty_line?) { empty_line.maybe }
 
-      # +empty_lines?+ matches empty lines or empty.
+      # +empty_lines+ matches empty lines.
+      rule(:empty_lines) { empty_line.repeat(1) >> eof.maybe }
       rule(:empty_lines?) { empty_lines.maybe }
 
       #

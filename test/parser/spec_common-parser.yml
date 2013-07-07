@@ -1,0 +1,63 @@
+digit:
+  valid:
+    - "0"
+    - "1"
+    - "2"
+    - "3"
+    - "4"
+    - "5"
+    - "6"
+    - "7"
+    - "8"
+    - "9"
+  invalid:
+    - "01"
+    - "10"
+    - "100"
+    - "a"
+    - "abc"
+
+space:
+  valid:
+    - " "
+    - "  "
+    - "   "
+    - "	"
+    - "		"
+    - "			"
+    - " 	"
+  invalid:
+    - "　"
+    - "a"
+    - " a"
+
+eof:
+  valid:
+    - ""
+  invalid:
+    - "a"
+    - "\n"
+
+empty_line:
+  valid:
+    - " "
+    - "  "
+    - "    "
+    - "\n"
+    - " \n"
+    - "  \n"
+    - "   \n"
+    - ";"
+    - " ;"
+    - "  ;"
+    - "   ;"
+    - "#comment"
+    - " #comment"
+    - "  #comment"
+    - "   #comment"
+  invalid:
+    - "a "
+    - " a"
+    - " a "
+    - "a #a"
+

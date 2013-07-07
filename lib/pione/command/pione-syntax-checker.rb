@@ -49,6 +49,12 @@ module Pione
             option[:readline_mode] = false
           end
         end
+
+        define :parser do |item|
+          item.long = "--parser=NAME"
+          item.desc = "set parser"
+          item.value = lambda {|name| name}
+        end
       end
 
       def initialize(*argv)
@@ -67,7 +73,8 @@ module Pione
         when :file
           print_result(DocumentParser.new, Pathname.new(option[:document]).read)
         when :expr
-          print_result(DocumentParser.new.expr, option[:expr])
+          parser_name = option[:parser] ? option[:parser] : :expr
+          print_result(DocumentParser.new.send(parser_name), option[:expr])
         end
       end
 

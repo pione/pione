@@ -65,32 +65,6 @@ describe 'Pione::Parser::CommonParser' do
     end
   end
 
-  describe 'digit' do
-    it 'should parse digit' do
-      (0..9).each do |n|
-        should.not.raise(Parslet::ParseFailed) do
-          TestParser.new.digit.parse(n.to_s)
-        end
-      end
-    end
-
-    it 'should fail with number sequences' do
-      (10..100).each do |n|
-        should.raise(Parslet::ParseFailed) do
-          TestParser.new.digit.parse(n.to_s)
-        end
-      end
-    end
-
-    it 'should fail with other characters' do
-      ('a'..'z').each do |char|
-        should.raise(Parslet::ParseFailed) do
-          TestParser.new.digit.parse(char)
-        end
-      end
-    end
-  end
-
   describe 'space / space?' do
     it 'should parse space string' do
       strings = [' ', '  ', "\t", "\t\t", " \t ", "\t \t"]
@@ -270,7 +244,7 @@ describe 'Pione::Parser::CommonParser' do
     end
 
     it 'should fail in test_empty_lines_4' do
-      strings = [ "item item", "item "]
+      strings = ["item item", "item i"]
       strings.each do |s|
         should.raise(Parslet::ParseFailed) do
           TestParser.new.test_empty_lines_4.parse(s)
@@ -278,4 +252,8 @@ describe 'Pione::Parser::CommonParser' do
       end
     end
   end
+
+  TestUtil::Parser.spec(Pione::Parser::CommonParser, __FILE__, self)
 end
+
+

@@ -21,7 +21,7 @@ module Pione
       #     ...
       #   End
       rule(:rule_definition) {
-        (rule_header >> rule_conditions >> block.as(:block)).as(:rule_definition)
+        (rule_header >> rule_conditions! >> block.as(:block)).as(:rule_definition)
       }
 
       # +rule_header+ matches rule headers.
@@ -31,20 +31,18 @@ module Pione
 
       # @example input condition
       #   input '*.in'
-      # @example
-      #   # output condition
+      # @example output condition
       #   output '*.out'
-      # @example
-      #   # param line
+      # @example param line
       #   param $VAR := "abc"
-      # @example
-      #   # feature condition
+      # @example feature condition
       #   feature *
       rule(:rule_condition) {
         input_line | output_line | param_line | feature_line |
         constraint_line | annotation_line
       }
-      rule(:rule_conditions) { rule_condition.repeat.as(:rule_conditions) }
+      rule(:rule_conditions) { (rule_condition | empty_line).repeat(1).as(:rule_conditions) }
+      rule(:rule_conditions!) { rule_conditions.or_error("should be rule conditions") }
 
       #
       # rule conditions
