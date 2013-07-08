@@ -111,6 +111,6 @@ describe 'Model::VariableTable' do
     input2[2].matched_data[0].should == "3.b"
     input2[2].matched_data[1].should == "3"
 
-    @table.get(Variable.new('*')).should == StringSequence.new([PioneString.new('1')], separator: ":")
+    @table.get(Variable.new('*')).should == StringSequence.new([PioneString.new('1')])
   end
 end

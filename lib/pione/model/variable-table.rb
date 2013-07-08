@@ -289,7 +289,7 @@ module Pione
 
         # set the special variable if index is 1
         if prefix == 'I' && index == 1
-          set(Variable.new("*"), StringSequence.new([PioneString.new(md[1])], separator: DataExpr::SEPARATOR))
+          set(Variable.new("*"), StringSequence.new([PioneString.new(md[1])]))
         end
       end
 
@@ -313,7 +313,7 @@ module Pione
         var = Variable.new(prefix)
 
         # setup data expression sequence(this is $I/$O)
-        seq = get(var) || KeyedSequence.empty(separator: DataExpr::SEPARATOR)
+        seq = get(var) || KeyedSequence.empty
 
         asterisk = []
 
@@ -333,7 +333,7 @@ module Pione
         # set special variable if index equals 1
         if prefix == 'I' && index == 1
           strs = asterisk.map{|str| PioneString.new(str)}
-          set(Variable.new("*"), StringSequence.new(strs, separator: DataExpr::SEPARATOR))
+          set(Variable.new("*"), StringSequence.new(strs))
         end
 
         # update sequence

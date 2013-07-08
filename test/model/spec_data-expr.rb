@@ -221,13 +221,6 @@ describe 'Model::DataExpr' do
     exp.should.not.match 'test-1.a'
   end
 
-  it 'should handle OR relation' do
-    expr = DataExpr.new('a') | DataExpr.new('b')
-    expr.should.match 'a'
-    expr.should.match 'b'
-    expr.should.not.match 'c'
-  end
-
   it 'should expand variables' do
     vtable1 = VariableTable.new(Variable.new('VAR') => PioneString.new('1').to_seq)
     exp1 = DataExpr.new('{$VAR}.a').eval(vtable1)
@@ -303,34 +296,6 @@ describe "Model::DataExprNull" do
   end
 end
 
-describe "Model::DataExprOr" do
-  before do
-    @a = Model::DataExpr.new('A')
-    @a_aster = Model::DataExpr.new('A*')
-    @aa_each = Model::DataExpr.new('AA')
-    @b = Model::DataExpr.new('B')
-    @null = Model::DataExprNull.instance
-  end
-
-  it "should match" do
-    expr = Model::DataExprOr.new([@a, @b])
-    expr.should.match('A')
-    expr.should.match('B')
-    expr.should.not.match('C')
-  end
-
-  it "should get/set exceptions" do
-    Model::DataExprOr.new([@a_aster, @b]).except(@aa_each).tap do |expr|
-      expr.exceptions.should == [@aa_each]
-      expr.should.match("AAA")
-      expr.should.match("B")
-      expr.should.not.match("AA")
-      expr.should.not.match("A")
-      expr.should.match("AB")
-    end
-  end
-end
-
 #
 # test cases
 #
@@ -338,21 +303,26 @@ yamlname = 'spec_data-expr_match.yml'
 ymlpath = File.join(File.dirname(__FILE__), yamlname)
 testcases = YAML.load_file(ymlpath)
 
-describe "Model::DataExpr variation tests" do
-  testcases.each do |expr, testcase|
-    data_expr = DocumentTransformer.new.apply(
-      DocumentParser.new.expr.parse(expr)
-    )
+describe "Model::DataExprSequence" do
+  testcases.each do |title, cases|
+    describe title do
+      cases.each do |expr, testcase|
 
-    testcase['match'].map do |name|
-      it "#{expr} should match #{name}" do
-        data_expr.eval(VariableTable.new).first.should.match(name)
-      end
-    end
+        data_expr = DocumentTransformer.new.apply(
+          DocumentParser.new.expr.parse(expr)
+        )
 
-    testcase['unmatch'].map do |name|
-      it "#{expr} should unmatch #{name}" do
-        data_expr.eval(VariableTable.new).first.should.not.match(name)
+        testcase['match'].map do |name|
+          it "#{expr} should match #{name}" do
+            data_expr.eval(VariableTable.new).should.match(name)
+          end
+        end if testcase['match']
+
+        testcase['unmatch'].map do |name|
+          it "#{expr} should unmatch #{name}" do
+            data_expr.eval(VariableTable.new).should.not.match(name)
+          end
+        end if testcase['unmatch']
       end
     end
   end

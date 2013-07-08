@@ -128,7 +128,6 @@ module Pione
         end
       end
 
-
       # Return true if the sequence is void.
       #
       # @return [Boolean]
@@ -137,15 +136,25 @@ module Pione
         self.class == Sequence and empty?
       end
 
-      # Concatenate another sequence.
+      # Return true if the sequence is assertive about attributes.
+      def assertive?
+        true
+      end
+
+      # Concatenate self and another sequence. If self and another are
+      # assertive, raise +SequenceAttributeError+ exception when the attributes
+      # are different.
       #
       # @param other [Sequence]
       #   other sequence
       # @return [Sequence]
       #   a new sequence that have members of self and other
       def concat(other)
-        raise SequenceAttributeError.new(other) unless @attribute == other.attribute
-        self.class.new(@elements + other.elements, @attribute)
+        if assertive? and other.assertive?
+          raise SequenceAttributeError.new(other) unless @attribute == other.attribute
+        end
+        attr = not(other.assertive?) ? @attribute : other.attribute
+        self.class.new(@elements + other.elements, attr)
       end
 
       # Push the element to the sequecence.

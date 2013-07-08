@@ -41,26 +41,7 @@ module Pione
     #   # incomplete name
     #   DataExpr.new("*.txt")
     class DataExpr < Element
-      # separator symbol for all distribution
-      SEPARATOR = ':'
-
       class << self
-        alias :orig_new :new
-
-        # Create a data expression. If the name includes separators, create DataExprOr instance.
-        def new(*args)
-          # check OR expression
-          name = args.first
-          if self == DataExpr and name and name.include?(SEPARATOR)
-            name.split(SEPARATOR).map do |single_name|
-              orig_new(single_name, *args.drop(1))
-            end.tap {|exprs| return DataExprOr.new(exprs)}
-          end
-
-          # other cases
-          return orig_new(*args)
-        end
-
         # Create a named expression.
         #
         # @param name [String]
@@ -97,6 +78,10 @@ module Pione
         @data[:exceptions] = data[:exceptions] || []
         @data[:matched_data] = data[:matched_data] || []
         @data[:location] = data[:location] || nil
+      end
+
+      def set_name(name)
+        self.class.new(name, @data)
       end
 
       def set_data(data)
@@ -149,6 +134,7 @@ module Pione
       def match(other)
         # check exceptions
         return false if match_exceptions(other)
+
         # match test
         return compile_to_regexp(name).match(other)
       end
@@ -181,22 +167,6 @@ module Pione
           name.sub!(/(\*|\?)/){$1 == "*" ? val : val[0]}
         end
         return name
-      end
-
-      # Create OR relation data expression. Self and the other element have the
-      # same attributes.
-      #
-      # @example
-      #   expr = DataExpr.new("A") | DataExpr.new("B")
-      #   expr.match("A") # => true
-      #   expr.match("B") # => true
-      #   expr.match("C") # => false
-      # @example
-      #   DataExpr.all("A") | DataExpr.each("B")
-      #   # => raise ArgumentError
-      def |(other)
-        raise ArgumentError.new(other) unless other.kind_of?(DataExpr)
-        return DataExprOr.new([self, other])
       end
 
       # @api private
@@ -304,22 +274,27 @@ module Pione
       alias :eql? :"=="
     end
 
-    # DataExprOr represents or-relation of data expressions. Expressions have
-    # same properties about distribution and mode.
-    class DataExprOr < DataExpr
-      attr_reader :elements
-      alias :core :elements
+    class DataExprSequence < OrdinalSequence
+      set_pione_model_type TypeDataExpr
+      set_element_class DataExpr
+      set_shortname "DSeq"
+      DataExpr.set_sequence_class self
+      DataExprNull.set_sequence_class self
 
-      # @param elements [Array<DataExpr>]
-      #   elements that have OR relation
-      # @param data [Hash]
-      #   options of the expression
-      # @option opts [Array<DataExpr>] :exceptions
-      #   exceptional expressions
-      def initialize(elements, data={})
-        @elements = elements
-        @data = {}
-        @data[:exceptions] = data[:exceptions] || []
+      define_sequence_attribute :output_mode, :file, :stdout, :stderr
+      define_sequence_attribute :update_criteria, :care, :neglect
+      define_sequence_attribute :operation, :write, :remove, :touch
+      define_sequence_attribute :location, nil
+      define_sequence_attribute :exceptions, []
+
+      forward! Proc.new{@elements.first}, :match, :name
+
+      def accept_nonexistence?
+        @elements.any?{|elt| elt.accept_nonexistence?}
+      end
+
+      def assertive?
+        not(@elements.all?{|elt| elt.kind_of? DataExprNull})
       end
 
       # Match if the name is matched one of elements.
@@ -330,85 +305,27 @@ module Pione
       #   the matchde data, or nil
       def match(name)
         # check exceptions
-        return false if match_exceptions(name)
+        return nil if match_exceptions(name)
+
         # check to match the expression
         @elements.each do |element|
           if md = element.match(name)
             return md
           end
-        end.tap {return nil}
-      end
-
-      def accept_nonexistence?
-        @elements.any?{|elt| elt.accept_nonexistence?}
-      end
-
-      # Evaluate the data expression. This evaluates all elements of the expression.
-      #
-      # @param vtable [VariableTable]
-      #   variable table for evaluation
-      # @return [BasicModel]
-      #   evaluation result
-      def eval(vtable)
-        new_elements = @elements.map {|elt| elt.eval(vtable)}
-        new_exceptions = exceptions.map {|exc| exc.eval(vtable)}
-        self.class.new(new_elements, @data.merge(exceptions: new_exceptions))
-      end
-
-      def textize
-        "data_expr_or(%s)" % @elements.map{|elt| elt.textize}.join(", ")
-      end
-
-      # @api private
-      def to_s
-        "#<DataExprOr #{@elements} #{@data}>"
-      end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        return @elements == other.elements
-      end
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @elements.hash
-      end
-
-      private
-
-      # Check attribute consistency.
-      #
-      # @return [void]
-      def check_attribute_consistency(name)
-        unless @elements.all?{|elt| send(name) == elt.send(name) or elt.kind_of?(DataExprNull)}
-          raise ArgumentError.new(@elements)
         end
+
+        # failed to match
+        return nil
       end
 
-      def find_not_null_element
-        @elements.find{|elt| not(elt.kind_of?(DataExprNull))}
+      def match?(name)
+        not(match(name).nil?)
       end
-    end
+      alias :"=~" :match?
 
-    class DataExprSequence < OrdinalSequence
-      set_pione_model_type TypeDataExpr
-      set_element_class DataExpr
-      set_shortname "DSeq"
-      DataExpr.set_sequence_class self
-      DataExprNull.set_sequence_class self
-      DataExprOr.set_sequence_class self
-
-      define_sequence_attribute :output_mode, :file, :stdout, :stderr
-      define_sequence_attribute :update_criteria, :care, :neglect
-      define_sequence_attribute :operation, :write, :remove, :touch
-      define_sequence_attribute :location, nil
-
-      forward! Proc.new{@elements.first}, :match, :name
-
-      def accept_nonexistence?
-        @elements.first.accept_nonexistence?
+      # Return true if the name matchs exceptions.
+      def match_exceptions(name)
+        not(exceptions.select{|ex| ex.match(name)}.empty?)
       end
     end
 
@@ -508,17 +425,17 @@ module Pione
       end
 
       define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |vtable, rec, other|
-        map2(rec, other) do |rec_elt, other_elt|
-          DataExprOr.new([rec_elt, other_elt])
-        end
+        rec.call_pione_method(vtable, "|", other)
       end
 
+      # Return names which the receiver matches.
       define_pione_method("match", [TypeString], TypeString) do |vtable, rec, name|
         rec.match(name.value).to_a.inject(StringSequence.empty) do |seq, matched|
           seq.push(PioneString.new(matched))
         end
       end
 
+      # Return true if the recevier match the name.
       define_pione_method("match?", [TypeString], TypeBoolean) do |vtable, rec, name|
         sequential_map2(TypeBoolean, rec, name) do |rec_elt, name_elt|
           not(rec_elt.match(name_elt.value).nil?)
@@ -530,17 +447,25 @@ module Pione
           case rec_elt
           when DataExprNull
             ""
-          when DataExprOr
-            rec_elt.elements.map{|elt| elt.name}.join(DataExpr::SEPARATOR)
           when DataExpr
             rec_elt.name
           end
-        end.set_separator(DataExpr::SEPARATOR)
+        end
       end
 
       define_pione_method("accept_nonexistence?", [], TypeBoolean) do |vtable, rec|
-        TypeBoolean.map1(rec) do |elt|
-          PioneBoolean.new(elt.accept_nonexistence?)
+        BooleanSequence.of(rec.accept_nonexistence?)
+      end
+
+      define_pione_method("suffix", [TypeString], TypeDataExpr) do |vtable, rec, new_suffix|
+        TypeDataExpr.map1(rec) do |elt|
+          case elt
+          when DataExprNull
+            elt
+          when DataExpr
+            basename = File.basename(elt.name, ".*")
+            elt.set_name("%s.%s" % [basename, new_suffix.value])
+          end
         end
       end
     end

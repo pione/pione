@@ -1,45 +1,59 @@
-"'*.a'":
-  match:
-    - "1.a"
-    - "2.a"
-    - "3.a"
-    - "123.a"
-  unmatch:
-    - "1.b"
-    - ".a"
-    - "a"
-    - "1.1a"
-    - "1.aa"
-    - "123.aa"
-"'A:B'":
-  match:
-    - "A"
-    - "B"
-  unmatch:
-    - "AB"
-    - "BA"
-"'*.a:*.b'":
-  match:
-    - "1.a"
-    - "1.b"
-  unmatch:
-    - "1.ab"
-    - "1.ba"
-    - ".a"
-    - ".b"
-"'A' or 'B'":
-  match:
-    - "A"
-    - "B"
-  unmatch:
-    - "AB"
-    - "BA"
-"'*.a' or '*.b'":
-  match:
-    - "1.a"
-    - "1.b"
-  unmatch:
-    - "1.ab"
-    - "1.ba"
-    - ".a"
-    - ".b"
+"literal match":
+  "'1.a'":
+    match:
+      - "1.a"
+    unmatch:
+      - "01.a"
+      - "1.ab"
+      - "1..a"
+
+"wildcard match":
+  "'*.a'":
+    match:
+      - "1.a"
+      - "2.a"
+      - "3.a"
+      - "123.a"
+    unmatch:
+      - "1.b"
+      - ".a"
+      - "a"
+      - "1.1a"
+      - "1.aa"
+      - "123.aa"
+
+"':' is not special":
+  "'A:B'":
+    unmatch:
+      - "A"
+      - "B"
+      - "AB"
+      - "BA"
+  "'*.a:*.b'":
+    unmatch:
+      - "1.a"
+      - "1.b"
+      - "1.ab"
+      - "1.ba"
+      - ".a"
+      - ".b"
+
+"or-relation match":
+  "'A' or 'B'":
+    match:
+      - "A"
+      - "B"
+    unmatch:
+      - "AB"
+      - "BA"
+
+"or-relation match with wildcard":
+  "'*.a' or '*.b'":
+    match:
+      - "1.a" # first pattern match
+      - "1.b" # second pattern match
+    unmatch:
+      - "1.ab"
+      - "1.ba"
+      - ".a" # wildcard needs one or more characters
+      - ".b"
