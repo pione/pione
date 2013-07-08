@@ -1,66 +1,66 @@
-# type check
-- '"integer"' : (1 | 2 | 3).type
-- '"string"' : ("a" | "b" | "c").type
-- '"float"' : (0.1 | 1.0 | 0.1e10).type
-- '"boolean"' : (true | false).type
+"#type":
+  - '"integer"' : (1 | 2 | 3).type
+  - '"string"' : ("a" | "b" | "c").type
+  - '"float"' : (0.1 | 1.0 | 0.1e10).type
+  - '"boolean"' : (true | false).type
 
-# each, each?, all, all?
-- true  : '"a".each?'
-- false : '"a".all?'
-- true  : '"a".each.each?'
-- false : '"a".each.all?'
-- true  : '"a".all.all?'
-- false : '"a".all.each?'
+"#each, #each?, #all, #all?":
+  - true  : '"a".each?'
+  - false : '"a".all?'
+  - true  : '"a".each.each?'
+  - false : '"a".each.all?'
+  - true  : '"a".all.all?'
+  - false : '"a".all.each?'
 
-# sequence
-- "(1 | 2 | 3)" : ((1 | 2) | 3)
-- "(1 | 2 | 3)" : (1 | (2 | 3))
+"#sequence":
+  - "(1 | 2 | 3)" : ((1 | 2) | 3)
+  - "(1 | 2 | 3)" : (1 | (2 | 3))
 
-# length
-- true: '"abc".length == 1'
-- true: '("a" | "b" | "c").length == 3'
-- true: '("a" + "b" + "c").length == 1'
+"#length":
+  - true: '"abc".length == 1'
+  - true: '("a" | "b" | "c").length == 3'
+  - true: '("a" + "b" + "c").length == 1'
 
-# []
-- '"a"' : '("a" | "b" | "c")[1]'
-- '"b"' : '("a" | "b" | "c")[2]'
-- '"c"' : '("a" | "b" | "c")[3]'
-- '"a" | "b"' : '("a" | "b" | "c")[1 | 2]'
-- '"a" | "b" | "c"' : '("a" | "b" | "c")[1 | 2 | 3]'
-- '"c" | "b" | "a"' : '("a" | "b" | "c")[3 | 2 | 1]'
-- '"a"' : '"a"[1]'
+"#[]":
+  - '"a"' : '("a" | "b" | "c")[1]'
+  - '"b"' : '("a" | "b" | "c")[2]'
+  - '"c"' : '("a" | "b" | "c")[3]'
+  - '"a" | "b"' : '("a" | "b" | "c")[1 | 2]'
+  - '"a" | "b" | "c"' : '("a" | "b" | "c")[1 | 2 | 3]'
+  - '"c" | "b" | "a"' : '("a" | "b" | "c")[3 | 2 | 1]'
+  - '"a"' : '"a"[1]'
 
-# head
-- '1' : '(1 | 2 | 3).head'
-- '1' : '1.head'
+"#head":
+  - '1' : '(1 | 2 | 3).head'
+  - '1' : '1.head'
 
-# tail
-- '2 | 3' : '(1 | 2 | 3).tail'
-# - 'error' : '1.tail'
+"#tail":
+  - '2 | 3' : '(1 | 2 | 3).tail'
+  # - 'error' : '1.tail'
 
-# last
-- '3' : '(1 | 2 | 3).last'
-- '1' : '1.last'
+"#last":
+  - '3' : '(1 | 2 | 3).last'
+  - '1' : '1.last'
 
-# init
-- '1 | 2' : '(1 | 2 | 3).init'
-# - 'error' : '1.init'
+"#init":
+  - '1 | 2' : '(1 | 2 | 3).init'
+  # - 'error' : '1.init'
 
-# memeber
-- 'true' : '(1 | 2 | 3).member?(1)'
-- 'true' : '(1 | 2 | 3).member?(2)'
-- 'true' : '(1 | 2 | 3).member?(3)'
-- 'false' : '(1 | 2 | 3).member?(4)'
-- 'true | true | true' : '(1 | 2 | 3).member?(1 | 2 | 3)'
-- 'true | false' : '(1 | 2).member?(1 | 3)'
+"#memeber":
+  - 'true' : '(1 | 2 | 3).member?(1)'
+  - 'true' : '(1 | 2 | 3).member?(2)'
+  - 'true' : '(1 | 2 | 3).member?(3)'
+  - 'false' : '(1 | 2 | 3).member?(4)'
+  - 'true | true | true' : '(1 | 2 | 3).member?(1 | 2 | 3)'
+  - 'true | false' : '(1 | 2).member?(1 | 3)'
 
-# empty?
-# literal for empty sequences don't not exist now
-- 'false' : '(1 | 2 | 3).empty?'
-- 'false' : '(1 | 2).empty?'
-- 'false' : '1.empty?'
+"#empty?":
+  # literal for empty sequences don't not exist now
+  - 'false' : '(1 | 2 | 3).empty?'
+  - 'false' : '(1 | 2).empty?'
+  - 'false' : '1.empty?'
 
-# reverse
-- '3 | 2 | 1' : '(1 | 2 | 3).reverse'
-- '1' : '1.reverse'
+"#reverse":
+  - '3 | 2 | 1' : '(1 | 2 | 3).reverse'
+  - '1' : '1.reverse'
 

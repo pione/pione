@@ -98,27 +98,6 @@ class Bacon::Context
 end
 
 module TestUtil
-  # Test pione method.
-  def test_pione_method(name)
-    yamlname = 'spec_%s.yml' % name
-    ymlpath = File.join(File.dirname(__FILE__), 'model', yamlname)
-    testcases = YAML.load_file(ymlpath)
-
-    describe "pione method test cases" do
-      testcases.each do |testcase|
-        expect = testcase.keys.first
-        expr = testcase[expect].to_s
-        expect = expect.to_s
-        vtable = VariableTable.new
-        it '%s should be %s' % [expr, expect] do
-          expect = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expect))
-          expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expr))
-          expect.eval(vtable).should == expr.eval(vtable)
-        end
-      end
-    end
-  end
-
   # Test uri scheme.
   def test_uri_scheme(name)
     yamlname = 'spec_%s.yml' % name
@@ -202,6 +181,7 @@ require_relative "test-util/parser"
 require_relative "test-util/transformer"
 require_relative "test-util/package"
 require_relative "test-util/webserver"
+require_relative "test-util/pione-method"
 
 def setup_for_test
   include Pione
