@@ -76,7 +76,9 @@ module Pione
       # @example advanced parameter
       #   adevanced param $var := "abc"
       rule(:param_line) {
-        line((param_modifier.as(:type) >> space).maybe >> keyword_param >> space >> expr!.as(:param_expr)).as(:param_line)
+        modifier = (param_modifier.as(:type) >> space).maybe
+        expr = (assignment | variable).or_error("should be assignment or variable").as(:param_expr)
+        line(modifier >> keyword_param >> space >> expr).as(:param_line)
       }
 
       # +feature_line+ matches feature lines.

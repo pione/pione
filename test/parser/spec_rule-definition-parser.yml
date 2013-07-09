@@ -1,32 +1,60 @@
 input_line:
   valid:
+    # literal
+    - input 'a.txt'
+    # wildcard
     - input '*.txt'
+    # with method
     - input "*.txt".as_data_expr
+    # with sequence
+    - input 'a' | 'b' | 'c'
+    # with variable
     - input $X
+    # with embedded variable
+    - input '{$I[1][1]}.a'
 
 output_line:
   valid:
+    # literal
+    - output 'a.txt'
+    # wildcard
     - output '*.txt'
+    # with method
     - output "*.txt".as_data_expr
+    # with sequence
+    - output 'a' | 'b' | 'c'
+    # with variable
     - output $X
+    # with embedded variable
+    - output '{$I[1][1]}.a'
 
 param_line:
   valid:
-    - "param $abc"
-    - "param $Var"
-    - "param $Var := 1"
-    - "param $NUM := 1.0"
-    - "param $STR := \"abc\""
+    # simple
+    - "param $X"
+    # simple with default value
+    - "param $X := 1"
+    # implicit basic parameter
     - "basic param $X"
+    # implicit basic parameter with default value
     - "basic param $X := 1"
+    # advanced parameter
     - "advanced param $X"
+    # adevanced parameter with default value
     - "advanced param $X := 1"
   invalid:
+    # with invalid variable
     - "param $"
-    - "Basic param $X := 1"
-    - "basicparam $X := 1"
-    - "Advanced param $X := 1"
-    - "advancedparam $X := 1"
+    # with value
+    - "param 1"
+    # with block basic modifier
+    - "Basic param $X"
+    # invalid keyword
+    - "basicparam $X"
+    # with block advanced modifier
+    - "Advanced param $X"
+    # invalid keyword
+    - "advancedparam $X"
 
 feature_line:
   valid:
@@ -46,11 +74,18 @@ rule_header:
 
 rule_condition:
   valid:
-    - input '*.txt'
-    - output '*.txt'
-    - param $var
-    - feature +A
-    - constraint $N.odd?
+    # input condition
+    - "input '*.txt'"
+    # output condition
+    - "output '*.txt'"
+    # parameter condition
+    - "param $var"
+    # feature condition
+    - "feature +A"
+    # constraint condition
+    - "constraint $N.odd?"
+    # annotation
+    - '@ note :: "test"'
 
 rule_conditions:
   valid:
@@ -63,6 +98,7 @@ rule_conditions:
       output '*.c'
       param $var
       feature +A
+      constraint $i
     - | # some conditions
       output '*.a'
       input '*.b'
@@ -92,37 +128,45 @@ rule_conditions:
       input '*.a'
       output '*.b'
       # comment
+    - | # multilines
+      input '*.a'; input '*.b'; input '*.c'
+      output '*.x'; output '*.y'; output '*.z'
 
 rule_definition:
   valid:
-    - |
-      Rule test
+    - | # simple flow rule
+      Rule Test
         input '*.a'
         output '*.b'
       Flow
-        rule Test
+        rule Test1
       End
-    - |
-      Rule test
+    - | # simple action rule
+      Rule Test
         input '*.a'
         output '*.b'
       Action
         echo "a"
       End
+    - | # simple empty rule
+      Rule Test
+        input '*.a'
+        output '*.a'.update
+      End
     - |
       Rule Test
         input  '*.a'
-        output '{$INPUT[1].MATCH[1]}.b'
+        output '{$I[1][1]}.b'
       Action
-        echo "test" > {$OUTPUT[1].NAME}
+        echo "test" > {$O[1].NAME}
       End
     - |
       Rule Test
         input '*.a'
-        output '{$INPUT[1].MATCH[1]}.b'
+        output '{$I[1][1]}.b'
       Flow
         rule TestA
-        rule TestB.sync
+        rule TestB
       End
     - |
       Rule Test
