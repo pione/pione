@@ -66,7 +66,7 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       rule.condition.inputs[0].should == DataExpr.new('*.a').to_seq
       rule.condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
       rule.body.should ==
-        ActionBlock.new("        echo \"test\" > {$OUTPUT[1].NAME}\n")
+        ActionBlock.new("echo \"test\" > {$OUTPUT[1].NAME}\n")
     end
 
     test(<<-STRING) do |rule|
@@ -164,12 +164,12 @@ describe 'Pione::Transformer::RuleDefinitionTransformer' do
       rules[0].condition.inputs[0].should == DataExpr.new("*.a").to_seq
       rules[0].condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.b').to_seq
       rules[0].body.should ==
-        ActionBlock.new("        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
+        ActionBlock.new("cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
       rules[1].should.kind_of(Component::ActionRule)
       rules[1].condition.inputs[0].should == DataExpr.new("*.b").to_seq
       rules[1].condition.outputs[0].should == DataExpr.new('{$INPUT[1].MATCH[1]}.c').to_seq
       rules[1].body.should ==
-        ActionBlock.new("        cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
+        ActionBlock.new("cat {$INPUT[1].NAME} > {$OUTPUT[1].NAME}\n")
     end
   end
 end

@@ -89,7 +89,7 @@ module Pione
         else
           # apply offside rule
           content = @rule.body.eval(@variable_table).content
-          file.create(Util::Indentation.cut(content))
+          file.create(content)
           # chmod 700
           if @working_directory.scheme == "local"
             FileUtils.chmod(0700, file.path)

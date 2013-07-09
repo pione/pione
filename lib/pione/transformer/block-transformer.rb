@@ -14,7 +14,7 @@ module Pione
         { :key => simple(:keyword_Action),
           :content => simple(:content) }
       ) {
-        val = content.str
+        val = Util::Indentation.cut(content.str)
         ActionBlock.new(val).tap do |x|
           x.set_line_and_column(keyword_Action.line_and_column)
         end

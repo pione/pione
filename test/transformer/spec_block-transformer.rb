@@ -8,7 +8,7 @@ describe 'Pione::Transformer::BlockTransformer' do
       End
     STRING
       block.should.kind_of ActionBlock
-      block.content.should == "        echo \"a\"\n"
+      block.content.should == "echo \"a\"\n"
     end
   end
 
