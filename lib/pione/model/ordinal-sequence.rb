@@ -64,6 +64,8 @@ module Pione
           "float"
         when BooleanSequence
           "boolean"
+        when DataExprSequence
+          "data-expr"
         else
           "undefined"
         end.tap {|x| break PioneString.new(x).to_seq}

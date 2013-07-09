@@ -345,7 +345,7 @@ module Pione
       end
 
       define_pione_method("all?", [], TypeBoolean) do |vtable, rec|
-        rec.all?
+        BooleanSequence.of(rec.all?)
       end
 
       define_pione_method("each", [], TypeDataExpr) do |vtable, rec|
@@ -353,7 +353,7 @@ module Pione
       end
 
       define_pione_method("each?", [], TypeBoolean) do |vtable, rec|
-        rec.each?
+        BooleanSequence.of(rec.each?)
       end
 
       define_pione_method("stdout", [], TypeDataExpr) do |vtable, rec|
@@ -361,7 +361,7 @@ module Pione
       end
 
       define_pione_method("stdout?", [], TypeBoolean) do |vtable, rec|
-        rec.stdout?
+        BooleanSequence.of(rec.stdout?)
       end
 
       define_pione_method("stderr", [], TypeDataExpr) do |vtable, rec|
@@ -369,7 +369,7 @@ module Pione
       end
 
       define_pione_method("stderr?", [], TypeBoolean) do |vtable, rec|
-        rec.stderr?
+        BooleanSequence.of(rec.stderr?)
       end
 
       define_pione_method("neglect", [], TypeDataExpr) do |vtable, rec|
@@ -377,7 +377,7 @@ module Pione
       end
 
       define_pione_method("neglect?", [], TypeBoolean) do |vtable, rec|
-        rec.neglect?
+        BooleanSequence.of(rec.neglect?)
       end
 
       define_pione_method("care", [], TypeDataExpr) do |vtable, rec|
@@ -385,7 +385,7 @@ module Pione
       end
 
       define_pione_method("care?", [], TypeBoolean) do |vtable, rec|
-        rec.care?
+        BooleanSequence.of(rec.care?)
       end
 
       define_pione_method("write", [], TypeDataExpr) do |vtable, rec|
@@ -393,7 +393,7 @@ module Pione
       end
 
       define_pione_method("write?", [], TypeBoolean) do |vtable, rec|
-        rec.write?
+        BooleanSequence.of(rec.write?)
       end
 
       define_pione_method("remove", [], TypeDataExpr) do |vtable, rec|
@@ -401,7 +401,7 @@ module Pione
       end
 
       define_pione_method("remove?", [], TypeBoolean) do |vtable, rec|
-        rec.remove?
+        BooleanSequence.of(rec.remove?)
       end
 
       define_pione_method("touch", [], TypeDataExpr) do |vtable, rec|
@@ -409,7 +409,7 @@ module Pione
       end
 
       define_pione_method("touch?", [], TypeBoolean) do |vtable, rec|
-        rec.touch?
+        BooleanSequence.of(rec.touch?)
       end
 
       define_pione_method("except", [TypeDataExpr], TypeDataExpr) do |vtable, rec, target|
@@ -424,6 +424,7 @@ module Pione
         end.flatten.tap{|x| break DataExprSequence.new(x)}
       end
 
+      # Same as +#|+. Data expression sequence represents or-relations.
       define_pione_method("or", [TypeDataExpr], TypeDataExpr) do |vtable, rec, other|
         rec.call_pione_method(vtable, "|", other)
       end
@@ -442,6 +443,7 @@ module Pione
         end
       end
 
+      # Convert the data expression into a string. null data expression converts into empty string.
       define_pione_method("as_string", [], TypeString) do |vtable, rec|
         sequential_map1(TypeString, rec) do |rec_elt|
           case rec_elt
@@ -457,14 +459,18 @@ module Pione
         BooleanSequence.of(rec.accept_nonexistence?)
       end
 
+      define_pione_method("suffix", [TypeDataExpr], TypeDataExpr) do |vtable, rec, new_suffix|
+        rec.call_pione_method(vtable, "suffix", new_suffix.call_pione_method(vtable, "as_string"))
+      end
+
       define_pione_method("suffix", [TypeString], TypeDataExpr) do |vtable, rec, new_suffix|
-        TypeDataExpr.map1(rec) do |elt|
-          case elt
+        TypeDataExpr.map2(rec, new_suffix) do |rec_elt, new_suffix_elt|
+          case rec_elt
           when DataExprNull
-            elt
+            rec_elt
           when DataExpr
-            basename = File.basename(elt.name, ".*")
-            elt.set_name("%s.%s" % [basename, new_suffix.value])
+            basename = File.basename(rec_elt.name, ".*")
+            rec_elt.set_name("%s.%s" % [basename, new_suffix_elt.value])
           end
         end
       end

@@ -1,33 +1,93 @@
 "#|":
+  # make sequence
   - "'a' | 'b' | 'c'" : "'a' | 'b' | 'c'"
 
-"#except":
-  - "'a'.except('b')" : "'a'.except('b')"
-  - "'a'.except('b'.except('c'))" : "'a'.except('b'.except('c'))"
+"#all & #all?":
+  # default is "each"
+  - "false" : "'a'.all?"
+  # turn to be all
+  - "true" : "'a'.all.all?"
+  # turn to be each
+  - "false" : "'a'.each.all?"
+  # sequential receiver
+  - "false" : "('a' | 'b' | 'c').all?"
+  # sequential receiver turns to be all
+  - "true" :  "('a' | 'b' | 'c').all.all?"
+  # sequential receiver truns to be each
+  - "false" :  "('a' | 'b' | 'c').each.all?"
 
-"#exceptions":
+"#each & #each?":
+  # default is "each"
+  - "true" : "'a'.each?"
+  # turn to be all
+  - "false" : "'a'.all.each?"
+  # trun to be each
+  - "true" : "'a'.each.each?"
+  # sequential receiver
+  - "true" : "('a' | 'b' | 'c').each?"
+  # sequential receiver turns to be all
+  - "false" : "('a' | 'b' | 'c').all.each?"
+  # sequential receiver turns to be each
+  - "true" : "('a' | 'b' | 'c').each.each?"
+
+"#or":
+  # make sequence
+  - "'a' | 'b' | 'c'" : "'a' or 'b' or 'c'"
+  # with null
+  - "'a' | null" : "'a' or null"
+
+"#except & #exceptions":
+  # return data-expr
+  - '"data-expr"' : "'a'.except('b').type"
+  # set single exception
   - "'b'" : "'a'.except('b').exceptions"
+  # set exception of exception
+  - "'b'.except('c')" : "'a'.except('b'.except('c')).exceptions"
+  # multiple exceptions
+  - "'b' | 'c'" : "'a'.except('b').except('c').exceptions"
 
 "#accept_nonexistence?":
+  # single
   - "false" : "'a'.accept_nonexistence?"
-  - "false" : "('a' or 'a').accept_nonexistence?"
-  - "true" : "('a' or null).accept_nonexistence?"
-  - "true" : "(null or 'a').accept_nonexistence?"
-  - "true" : "(null or null).accept_nonexistence?"
+  # single null
+  - "true" : "null.accept_nonexistence?"
+  # with footing null
+  - "true" : "('a' | null).accept_nonexistence?"
+  # with heading null
+  - "true" : "(null | 'a').accept_nonexistence?"
+  # sequential null
+  - "true" : "(null | null).accept_nonexistence?"
+  # sequential receiver
   - "false" : "('a' | 'b' | 'c').accept_nonexistence?"
+  # sequential receiver with null
   - "true" : "('a' or null | 'b' | 'c').accept_nonexistence?"
-  - "true" : "('a' or null | 'b' or null | 'c').accept_nonexistence?"
-  - "true" : "('a' or null | 'b' or null | 'c' or null).accept_nonexistence?"
+  - "true" : "('a' | 'b' or null | 'c').accept_nonexistence?"
+  - "true" : "('a' | 'b' | 'c' or null).accept_nonexistence?"
 
 "#as_string":
+  # simple conversion
   - '"1.a"' : "'1.a'.as_string"
+  # with wildcard
   - '"*.a"' : "'*.a'.as_string"
+  # null is empty string
+  - '""' : 'null.as_string'
+  # sequential receiver
   - '"a" | "b" | "c"' : "('a' | 'b' | 'c').as_string"
 
 "#suffix":
+  # simple replacement
+  - "'abc.b'" : "'abc.a'.suffix('b')"
+  # with string
   - "'abc.b'" : "'abc.a'.suffix(\"b\")"
+  # with wildcard
   - "'*.b'" : "'*.a'.suffix(\"b\")"
+  # null is reflexive
   - "null" : "null.suffix(\"b\")"
-  - "'X.b' or 'Y.b' or 'Z.b'" : "('X.a' or 'Y.a' or 'Z.a').suffix(\"b\")"
+  # sequential receiver
   - "'X.b' | 'Y.b' | 'Z.b'" : "('X.a' | 'Y.a' | 'Z.a').suffix(\"b\")"
+  # sequential argument
+  - "'*.x' | '*.y' | '*.z'" : "'*.a'.suffix(\"x\" | \"y\" | \"z\")"
+  # sequential receiver and argument
+  - "'*.x' | '*.y' | '*.z' | '*.x' | '*.y' | '*.z' | '*.x' | '*.y' | '*.z'" :
+      "('*.a' | '*.b' | '*.c').suffix('x' | 'y' | 'z')"
 
