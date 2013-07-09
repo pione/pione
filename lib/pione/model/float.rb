@@ -26,6 +26,10 @@ module Pione
       set_element_class PioneFloat
       set_shortname "FSeq"
 
+      def self.of(*args)
+        new(args.map{|arg| arg.kind_of?(PioneFloat) ? arg : PioneFloat.new(arg)})
+      end
+
       def value
         @value ||= @elements.inject(0.0){|n, elt| n + elt.value}
       end

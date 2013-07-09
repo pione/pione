@@ -289,6 +289,10 @@ module Pione
 
       forward! Proc.new{@elements.first}, :match, :name
 
+      def self.of(*args)
+        new(args.map {|arg| arg.kind_of?(DataExpr) ? arg : DataExpr.new(arg)})
+      end
+
       def accept_nonexistence?
         @elements.any?{|elt| elt.accept_nonexistence?}
       end

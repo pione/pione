@@ -51,16 +51,6 @@ describe 'Pione::Transformer::ExprTransformer' do
     end
   end
 
-  transformer_spec("data_expr", :expr) do
-    test "'test.a'" do |data_expr|
-      data_expr.should == DataExpr.new("test.a").to_seq
-    end
-
-    test "null" do |data_expr|
-      data_expr.should == DataExprNull.instance.to_seq
-    end
-  end
-
   transformer_spec("message", :expr) do
     test "1.next" do |msg|
       msg.should.kind_of Model::Message

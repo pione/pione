@@ -2,15 +2,18 @@ require_relative '../test-util'
 
 describe 'Pione::Transformer::LiteralTransformer' do
   transformer_spec('boolean', :boolean) do
+    # literal true
     test('true', BooleanSequence.of(true))
+
+    # literal false
     test('false', BooleanSequence.of(false))
   end
 
   transformer_spec('string', :string) do
-    test('"abc"', StringSequence.new([PioneString.new('abc')]))
-    test('"a\bc"', StringSequence.new([PioneString.new('abc')]))
-    test('"a\'"', StringSequence.new([PioneString.new('a\'')]))
-    test('"a\""', StringSequence.new([PioneString.new('a"')]))
+    test('"abc"', StringSequence.of('abc'))
+    test('"a\bc"', StringSequence.of('abc'))
+    test('"a\'"', StringSequence.of('a\''))
+    test('"a\""', StringSequence.of('a"'))
   end
 
   transformer_spec('integer', :integer) do
@@ -25,14 +28,14 @@ describe 'Pione::Transformer::LiteralTransformer' do
   end
 
   transformer_spec('float', :float) do
-    test('0.1', FloatSequence.new([PioneFloat.new(0.1)]))
-    test('123.1', FloatSequence.new([PioneFloat.new(123.1)]))
-    test('01.23', FloatSequence.new([PioneFloat.new(1.23)]))
-    test('000123.456', FloatSequence.new([PioneFloat.new(123.456)]))
-    test('-1.2', FloatSequence.new([PioneFloat.new(-1.2)]))
-    test('-01.1', FloatSequence.new([PioneFloat.new(-1.1)]))
-    test('+1.9', FloatSequence.new([PioneFloat.new(1.9)]))
-    test('+01.8', FloatSequence.new([PioneFloat.new(1.8)]))
+    test('0.1', FloatSequence.of(0.1))
+    test('123.1', FloatSequence.of(123.1))
+    test('01.23', FloatSequence.of(1.23))
+    test('000123.456', FloatSequence.of(123.456))
+    test('-1.2', FloatSequence.of(-1.2))
+    test('-01.1', FloatSequence.of(-1.1))
+    test('+1.9', FloatSequence.of(1.9))
+    test('+01.8', FloatSequence.of(1.8))
   end
 
   transformer_spec('variable', :variable) do
@@ -40,11 +43,24 @@ describe 'Pione::Transformer::LiteralTransformer' do
     test("$var", Variable.new('var'))
   end
 
-  transformer_spec('data_name', :data_name) do
-    test("'abc'", DataExpr.new('abc').to_seq)
-    test("'a\\bc'", DataExpr.new('abc').to_seq)
-    test("'a\\''", DataExpr.new("a'").to_seq)
-    test("'a\\\"'", DataExpr.new("a\"").to_seq)
+  transformer_spec("data_expr", :expr) do
+    # literal data expression
+    test("'test.a'", DataExprSequence.of("test.a"))
+
+    # wildcard
+    test("'*.a'", DataExprSequence.of("*.a"))
+
+    # with escape
+    test("'a\\bc'", DataExprSequence.of('abc'))
+
+    # sigle quote with escape
+    test("'a\\''", DataExprSequence.of("a'"))
+
+    # double quote with escape
+    test("'a\\\"'", DataExprSequence.of("a\""))
+
+    # null
+    test("null", DataExprSequence.of(DataExprNull.instance))
   end
 
   transformer_spec('package_name', :package_name) do

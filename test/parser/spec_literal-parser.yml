@@ -13,6 +13,30 @@ boolean:
     # case sensitive
     - "False"
 
+string:
+  valid:
+    # simple string
+    - '"test"'
+    # parens are not special
+    - '"(test)"'
+    # empty string
+    - '""'
+    # asterisk is not special
+    - '"test*"'
+    # with UTF-8 characters
+    - '"日本語"'
+    # escape
+    - '"\""'
+  invalid:
+    # single quote
+    - "'abc'"
+    # no quote
+    - 'test'
+    # right double quotation only
+    - 'test"'
+    # left double quotation only
+    - '"test'
+
 data_expr:
   valid:
     # empty data expr
@@ -96,22 +120,6 @@ rule_name:
     - ''
     - '/'
     - '//'
-
-string:
-  valid:
-    - '""'
-    - '"test"'
-    - '"(test)"'
-    - '"test*"'
-    - '"日本語"'
-    - '"\a"'
-  invalid:
-    - 'test'
-    - 'test"'
-    - '"test'
-    - '"\"'
-    - '\""'
-    - '"" '
 
 integer:
   valid:

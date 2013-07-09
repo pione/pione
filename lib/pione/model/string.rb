@@ -39,6 +39,10 @@ module Pione
       set_element_class PioneString
       set_shortname "StrSeq"
 
+      def self.of(*args)
+        new(args.map {|arg| arg.kind_of?(PioneString) ? arg : PioneString.new(arg)})
+      end
+
       def value
         @value ||= @elements.map{|elt| elt.value}.join
       end
