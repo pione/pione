@@ -13,16 +13,19 @@ expr_operator_application:
     - "1 * 1"
     - "1 % 1"
     - "1 / 1"
+
 message:
   valid:
     - ".abc(1)"
     - ".sync"
     - ".abc(1, \"s\", '*.txt')"
     - ".abc(1.0.abc(3.def))"
+
 data_expr:
   valid:
     - "'test.a'"
     - "null"
+
 rule_expr:
   valid:
     - "&package:rule_name"
@@ -32,6 +35,7 @@ rule_expr:
     - "$var:rule_name"
     - "&package:$var"
     - "$var:$var"
+
 parameters:
   valid:
     - "{}"
@@ -46,6 +50,7 @@ parameters:
     - "{var:\n 1}"
     - "{var: \n1}"
     - "{\n var1: \n 1, \nvar2: \n 2\n }"
+
 index:
   valid:
     - "[1]"
@@ -58,6 +63,7 @@ index:
     - "[1,\n2]"
   invalid:
     - "[]"
+
 expr:
   valid:
     - "1"

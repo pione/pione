@@ -100,9 +100,6 @@ module Pione
       # +enlosed_expr+ matches expressions enclosed by parens.
       rule(:enclosed_expr) { lparen >> expr >> rparen! }
 
-      # +data_expr+ matches data expressions.
-      rule(:data_expr) { data_name | keyword_null.as(:data_null) }
-
       # +rule_expr+ matches rule expressions.
       #
       # @example

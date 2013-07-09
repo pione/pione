@@ -110,7 +110,19 @@ module Pione
       # +identifier+ matches any sequences excluding space, symbols, and line
       # end.
       rule(:identifier) {
-        ((space | symbols | line_end).absent? >> any).repeat(1) >> question.maybe
+        head = (space | symbols | digit | line_end).absent? >> any
+        tail = (space | symbols | line_end).absent? >> any
+        special_tail = question | exclamation
+
+        head >> tail.repeat >> special_tail.maybe
+      }
+
+      rule(:capital_identifier) {
+        head = match("[A-Z]")
+        tail = (space | symbols | line_end).absent? >> any
+        special_tail = question | exclamation
+
+        head >> tail.repeat >> special_tail.maybe
       }
 
       # +digit+ matches 0-9.
@@ -144,13 +156,13 @@ module Pione
       #
 
       # Enclose the atom by "space?".
-      def spaced?(atom = nil)
-        space? >> (atom ? atom : yield) >> space?
+      def spaced?(atom)
+        space? >> atom >> space?
       end
 
       # Enclose the atom by "pad?".
-      def padded?(atom = nil)
-        pad? >> (atom ? atom : yield) >> pad?
+      def padded?(atom)
+        pad? >> atom >> pad?
       end
 
       # Create an atom that matches a line with the content.

@@ -1,27 +1,45 @@
 boolean:
   valid:
+    # literal true
     - "true"
+    # literal false
     - "false"
   invalid:
+    # invalid keyword
     - "T"
     - "F"
+    # case sensitive
     - "True"
+    # case sensitive
     - "False"
-data_name:
+
+data_expr:
   valid:
+    # empty data expr
     - "''"
+    # literal data expr
     - "'test'"
+    # parens are not special
     - "'(test)'"
-    - "'test*'"
+    # wildcard
+    - "'*.a'"
+    # UTF-8 characters
     - "'日本語'"
-    - "'\\a'"
-    - "'\\\\a'"
+    # escape by backslash
+    - "'\\'a'"
+    # nonexistence
+    - "null"
   invalid:
+    # no single quotes
     - "test"
+    # no post single quote
     - "'test"
+    # no pre single quote
     - "test'"
+    # invalid escape
     - "'\\'"
     - "\\''"
+
 identifier:
   valid:
     - 'a'
@@ -36,17 +54,18 @@ identifier:
     - "'a'"
     - ' '
     - "\n"
+
 variable:
   valid:
     - '$a'
     - '$abc'
     - '$a_b'
     - '$a0'
-    - '$0'
     - '$A'
     - '$AA'
     - '$日本語'
   invalid:
+    - '$0'
     - '$'
     - '$ '
     - 'a'
@@ -54,6 +73,7 @@ variable:
     - '$$'
     - '$+'
     - '$-'
+
 package_name:
   valid:
     - "&abc"
@@ -63,6 +83,7 @@ package_name:
   invalid:
     - "&"
     - "&&"
+
 rule_name:
   valid:
     - 'Main'
@@ -75,6 +96,7 @@ rule_name:
     - ''
     - '/'
     - '//'
+
 string:
   valid:
     - '""'
@@ -90,25 +112,54 @@ string:
     - '"\"'
     - '\""'
     - '"" '
+
 integer:
   valid:
+    # simple number
+    - '0'
     - '1'
+    - '2'
     - '123'
+    # 0 padding
+    - '00'
     - '01'
-    - '+1'
-    - '+01'
-    - '-1'
-    - '-01'
+    - '02'
+    - '00000123'
+    # positive
     - '+0'
+    - '+1'
+    - '+2'
+    - '+123'
+    # positive with padding
+    - '+00'
+    - '+01'
+    - '+02'
+    - '+00000123'
+    # negative
     - '-0'
+    - '-1'
+    - '-2'
+    - '-123'
+    # negative with padding
+    - '-00'
+    - '-01'
+    - '-02'
+    - '-00000123'
   invalid:
-    - '-'
+    # positive sign
     - '+'
+    # negative sign
+    - '-'
+    # empty
     - ''
+    # float
     - '0.1'
+    # dot heading
     - '.1'
+    # with symbol
     - '1a'
     - 'a1'
+
 float:
   valid:
     - '0.1'
@@ -130,14 +181,22 @@ float:
     - '0.1a'
     - '0.a1'
     - '0.1e'
+
 ticket:
   valid:
+    # identifiers with no paddings
     - "<t>"
     - "<T>"
-    - "<1>"
     - "<Ticket>"
-    - "< T >"
-    - "<T >"
-    - "< T>"
   invalid:
+    # not identifier
+    - "<1>"
+    # with right padding
+    - "<T >"
+    # with left padding
+    - "< T>"
+    # with both padding
+    - "< T >"
+    # with inner padding
     - "<a b>"
+

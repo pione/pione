@@ -1,5 +1,62 @@
+eof:
+  valid:
+    # reach no characters
+    - ""
+  invalid:
+    # any characters
+    - "a"
+    # newline
+    - "\n"
+
+newline:
+  valid:
+    # newline
+    - "\n"
+    # explicit line end
+    - ";"
+
+comment:
+  valid:
+    # simple comment
+    - "# comment"
+    # comment out any character
+    - "# comment 日本語 # comment"
+  invalid:
+    # newline breaks comment
+    - "# comment\naaaa"
+
+identifier:
+  valid:
+    # simple
+    - "a"
+    - "abc"
+    - "aBC"
+    - "A"
+    - "ABC"
+    - "Abc"
+    # underscore
+    - "a_"
+    - "_a"
+    - "a_a"
+    # spacial tail "!"
+    - "a!"
+    - "abc!"
+    # spaceial tail "?"
+    - "a?"
+    - "abc?"
+  invalid:
+    # digit only
+    - "1"
+    # space
+    - " "
+    # head space
+    - " a"
+    # tail space
+    - "a "
+
 digit:
   valid:
+    # from 0 to 9
     - "0"
     - "1"
     - "2"
@@ -11,51 +68,114 @@ digit:
     - "8"
     - "9"
   invalid:
+    # number, but not digit
     - "01"
     - "10"
     - "100"
+    # any alphabet
     - "a"
     - "abc"
 
 space:
   valid:
+    # simple space
     - " "
+    # spaces
     - "  "
     - "   "
+    # simple tab
     - "	"
+    # tabs
     - "		"
     - "			"
+    # mix spaces and tabs
     - " 	"
   invalid:
+    # newline
+    - "\n"
+    - " \n"
+    - "\n "
+    - " \n "
+    # unicode space characters excluding U+0020 are not acceptted
     - "　"
+    # any characters
     - "a"
+    # tail any characters
     - " a"
 
-eof:
+pad:
   valid:
-    - ""
-  invalid:
-    - "a"
+    # simple space
+    - " "
+    # spaces
+    - "  "
+    - "   "
+    # simple tab
+    - "	"
+    # tabs
+    - "		"
+    - "			"
+    # simple newline
     - "\n"
+    # newlines
+    - "\n\n"
+    - "\n\n\n"
+    # mix spaces, tabs, and newlines
+    - " \n	"
+  invalid:
+    # unicode space characters excluding U+0020 are not acceptted
+    - "　"
+    # any characters
+    - "a"
+    # tail any characters
+    - " a"
+
+line_end:
+  valid:
+    # spaces and newline
+    - "\n"
+    - ";"
+    - " \n"
+    - "  \n"
+    - " ;"
+    - "  ;"
+    # spaces and eof
+    - ""
+    - " "
+    - "  "
+    # spaces and comment
+    - "# comment"
+    - " # comment"
+    - "  # comment"
+  invalid:
+    # any alphabets
+    - "a"
+    - " a"
+    - "  a"
+    - "a "
+    - "a  "
+    - "a   "
 
 empty_line:
   valid:
+    # spaces and eof
     - " "
-    - "  "
-    - "    "
+    - "   "
+    # spaces and newline
     - "\n"
     - " \n"
     - "  \n"
-    - "   \n"
     - ";"
     - " ;"
     - "  ;"
-    - "   ;"
+    # spaces and comment
     - "#comment"
     - " #comment"
     - "  #comment"
-    - "   #comment"
   invalid:
+    # reach no characters(to avoid endless loop)
+    - ""
+    # any alphabets
     - "a "
     - " a"
     - " a "

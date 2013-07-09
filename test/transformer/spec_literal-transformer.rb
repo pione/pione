@@ -58,7 +58,6 @@ describe 'Pione::Transformer::LiteralTransformer' do
 
   transformer_spec('ticket', :ticket) do
     test("<T>", TicketExpr.new("T").to_seq)
-    test("< T>", TicketExpr.new("T").to_seq)
-    test("<T >", TicketExpr.new("T").to_seq)
+    test("<t>", TicketExpr.new("t").to_seq)
   end
 end

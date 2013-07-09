@@ -55,6 +55,9 @@ module Pione
       #   $*
       rule(:variable) { doller >> (asterisk | identifier).as(:variable) }
 
+      # +data_expr+ matches data expressions.
+      rule(:data_expr) { data_name | keyword_null.as(:data_null) }
+
       # +data_name+ matches data name.
       #
       # @example
@@ -70,7 +73,7 @@ module Pione
       #
       # @example
       #   &Main
-      rule(:package_name) { ampersand >> identifier.repeat(1).as(:package_name) }
+      rule(:package_name) { ampersand >> identifier.as(:package_name) }
 
       # +rule_name+ matches rule name.
       #
@@ -115,11 +118,13 @@ module Pione
         padded?(comma) >> parameters_element.or_error("it should be parameter key")
       }
 
-      # +ticket+ matches ticket object.
+      # +ticket+ matches ticket object. Be careful tickets are capitalized
+      # identifier and not permitted with padding between "<" and ">". This is
+      # because we avoid conflicts with other operators.
       #
       # @example
       #   <T>
-      rule(:ticket) { less_than >> spaced?(identifier.as(:ticket)) >> greater_than }
+      rule(:ticket) { less_than >> identifier.as(:ticket) >> greater_than }
     end
   end
 end
