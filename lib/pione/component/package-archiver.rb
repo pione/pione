@@ -34,11 +34,16 @@ module Pione
 
       private
 
+      def date_tag
+        Time.now.strftime("%Y%m%d%H%M")
+      end
+
       def filename
+        tag = @tag || @branch || @package.tag || (@location.location_type == :data ? date_tag : nil)
         PackageFilename.new(
           package_name: @package.name,
           edition: @package.edition,
-          tag: @tag || @branch || @package.tag,
+          tag: tag,
           hash_id: @package.hash_id
         ).to_s
       end
@@ -48,8 +53,8 @@ module Pione
       end
 
       def archive_documents(ar)
-        @package.documents.each do |doc|
-          ar.add_buffer(doc.package_path, (@location + doc.package_path).read)
+        @package.document_paths.each do |path|
+          ar.add_buffer(path, (@location + path).read)
         end
       end
 

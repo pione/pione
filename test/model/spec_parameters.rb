@@ -1,78 +1,37 @@
 require_relative '../test-util'
 
-describe 'Pione::Model::Parameters' do
+describe 'Pione::Model::ParameterSetSequence' do
   before do
-    @a = PioneString.new("a")
-    @b = PioneString.new("b")
-    @c = PioneString.new("c")
-    @d = PioneString.new("d")
-    @i1 = PioneInteger.new(1)
-    @i2 = PioneInteger.new(2)
-    @i3 = PioneInteger.new(3)
-    @true = PioneBoolean.new(true)
-    @false = PioneBoolean.new(false)
+    @a = StringSequence.of("a")
+    @b = StringSequence.of("b")
+    @c = StringSequence.of("c")
+    @d = StringSequence.of("d")
+    @i1 = IntegerSequence.of(1)
+    @i2 = IntegerSequence.of(2)
+    @i3 = IntegerSequence.of(3)
+    @true = BooleanSequence.of(true)
+    @false = BooleanSequence.of(false)
     @var_x = Variable.new("X")
     @var_y = Variable.new("Y")
     @var_z = Variable.new("Z")
     @var_a = Variable.new("A")
-    @params = Parameters.new({@var_x => @a, @var_y => @b, @var_z => @c})
+    @params = ParameterSetSequence.of({@var_x => @a, @var_y => @b, @var_z => @c})
   end
 
   it 'should be equal' do
-    @params.should == Parameters.new({@var_x => @a, @var_y => @b, @var_z => @c})
+    @params.should == ParameterSetSequence.of({@var_x => @a, @var_y => @b, @var_z => @c})
   end
 
   it 'should be not equal' do
-    @params.should != Parameters.new({@var_z => @a, @var_y => @b, @var_x => @c})
+    @params.should != ParameterSetSequence.of({@var_z => @a, @var_y => @b, @var_x => @c})
   end
 
-  it 'should get the value' do
-    @params.tap do |x|
-      x.get(@var_x).should == @a
-      x.get(@var_y).should == @b
-      x.get(@var_z).should == @c
-    end
-  end
-
-  it 'should set a parameter' do
-    new_params = @params.set(@var_a, @d)
-    new_params.get(@var_x).should == @a
-    new_params.get(@var_y).should == @b
-    new_params.get(@var_z).should == @c
-    new_params.get(@var_a).should == @d
-    @params.get(@var_a).should.nil
-  end
-
-  it 'should overwrite a parameter' do
-    new_params = @params.set(@var_x, @d)
-    new_params.get(@var_x).should == @d
-    new_params.get(@var_y).should == @b
-    new_params.get(@var_z).should == @c
-    @params.get(@var_x).should == @a
-  end
-
-  it 'should delete a parameter' do
-    new_params = @params.delete(@var_x)
-    new_params.get(@var_x).should.nil
-    new_params.get(@var_y).should == @b
-    new_params.get(@var_z).should == @c
-    @params.get(@var_x).should == @a
-  end
-
-  it 'should be empty' do
-    Parameters.new({}).should.be.empty
-  end
-
-  it 'should not be emtpy' do
-    @params.should.not.be.empty
-  end
-
-  it 'should expand sequence with each modifier' do
-    seq_a = StringSequence.new([@a, @b, @c]).set_each
-    seq_b = IntegerSequence.new([@i1, @i2, @i3]).set_each
-    seq_c = BooleanSequence.new([@true, @false]).set_each
-    params = Parameters.new(@var_x => seq_a, @var_y => seq_b, @var_z => seq_c)
-    params.to_a.tap do |list|
+  it 'should expand parameter set with each modifier' do
+    seq_a = StringSequence.of("a", "b", "c").set(distribution: :each)
+    seq_b = IntegerSequence.of(1, 2, 3).set(distribution: :each)
+    seq_c = BooleanSequence.of(true, false).set(distribution: :each)
+    param_set = ParameterSet.new(table: {"X" => seq_a, "Y" => seq_b, "Z" => seq_c})
+    param_set.expand.entries.tap do |list|
       list.size.should == 18
       comb = [
         [@a, @i1, @true], [@a, @i2, @true], [@a, @i3, @true],
@@ -84,20 +43,22 @@ describe 'Pione::Model::Parameters' do
       ]
       comb.each do |elts|
         list.should.include(
-          Parameters.new(@var_x => elts[0].to_seq, @var_y => elts[1].to_seq, @var_z => elts[2].to_seq)
+          ParameterSet.new(table: {"X" => elts[0], "Y" => elts[1], "Z" => elts[2]})
         )
       end
     end
   end
 
-  it 'should expand sequences with all modifier' do
-    seq_a = StringSequence.new([@a, @b, @c]).set_all
-    seq_b = IntegerSequence.new([@i1, @i2, @i3]).set_all
-    seq_c = BooleanSequence.new([@true, @false]).set_all
-    params = Parameters.new(@var_x => seq_a, @var_y => seq_b, @var_z => seq_c)
-    params.to_a.tap do |list|
+  it 'should expand sequences with all distribution' do
+    seq_a = StringSequence.of("a", "b", "c").set(distribution: :all)
+    seq_b = IntegerSequence.of(1, 2, 3).set(distribution: :all)
+    seq_c = BooleanSequence.of(true, false).set(distribution: :all)
+    param_set = ParameterSet.new(table: {"X" => seq_a, "Y" => seq_b, "Z" => seq_c})
+    param_set.expand.entries.tap do |list|
       list.size.should == 1
-      list.should.include(Parameters.new(@var_x => seq_a, @var_y => seq_b, @var_z => seq_c))
+      list.should.include(ParameterSet.new(table: {"X" => seq_a, "Y" => seq_b, "Z" => seq_c}))
     end
   end
+
+  test_pione_method("parameter-set")
 end

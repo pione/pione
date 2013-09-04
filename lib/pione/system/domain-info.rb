@@ -4,29 +4,20 @@ module Pione
     # externals.
     class DomainInfo < StructX
       # Read domin info file from the location.
-      #
-      # @param location [BasicLocation]
-      #   the location of domain info file
-      # @return [DomainInfo]
-      #   domain information object
       def self.read(location)
         location = location + ".domain.dump" if location.directory?
         new(Marshal.load(location.read))
       end
 
-      member :variable_table
+      member :env
 
       # Write domain info file into the location.
-      #
-      # @param location [BasicLocation]
-      #   the location of domain info file
-      # @return [void]
       def write(location)
         location = location + ".domain.dump" if location.directory?
         unless location.exist?
-          location.create(Marshal.dump(variable_table))
+          location.create(Marshal.dump(env.dumpable))
         else
-          location.update(Marshal.dump(variable_table))
+          location.update(Marshal.dump(env.dumpable))
         end
       end
     end

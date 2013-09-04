@@ -6,8 +6,8 @@ end
 
 describe "Pione::System::Evaluatable" do
   it "should evaluate and get PIONE model object" do
-    TestEvalator.val!("1").should == PioneInteger.new(1).to_seq
-    TestEvalator.val!('"A"').should == PioneString.new("A").to_seq
+    TestEvalator.val!("1").should == IntegerSequence.of(1)
+    TestEvalator.val!('"A"').should == StringSequence.of("A")
   end
 
   it "should evaluate and get the result string" do

@@ -256,6 +256,7 @@ module Rinda
         domain = domain(template)
         name = name(template)
         prepare_table(domain)
+
         if domain
           @bin[domain].values.each do |tuple|
             return tuple if yield(tuple)

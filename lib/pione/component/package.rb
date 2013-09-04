@@ -17,23 +17,28 @@ module Pione
     # Package is a container of rules, scripts, scenarios, and etc.
     class Package < StructX
       member :location
-      member :info, default: {}
+      member :info, default: lambda { Hash.new }
       member :bin
-      member :scenario_paths, default: []
-      member :documents, default: []
+      member :scenario_paths, default: lambda { Array.new }
+      member :document_paths, default: lambda { Array.new }
+      member :context, default: lambda { Lang::PackageContext.new }
 
       forward_as_key Proc.new{info}, "PackageName", :name
       forward_as_key Proc.new{info}, "Edition", :edition
       forward_as_key Proc.new{info}, "Tag", :tag
       forward_as_key Proc.new{info}, "HashID", :hash_id
-      forward :@unified_document, :find, :find_rule
-      forward! :@unified_document, :rules, :create_root_rule, :params
 
       def initialize(*args)
         super(*args)
         info["Edition"] = "origin" unless info["Edition"]
-        build_unified_document
-        validate
+      end
+
+      # Evaluate the package context in the environment. This method will
+      # introduce a new package id, and the context is evaluated under it.
+      def eval(env)
+        package_id = env.add_package(name)
+        env.temp(current_package_id: package_id) {|_env| context.eval(_env) }
+        return package_id
       end
 
       def scenarios
@@ -65,29 +70,6 @@ module Pione
           else
             scenario = PackageScenarioReader.read(location, path)
             return scenario if scenario.name == name
-          end
-        end
-      end
-
-      private
-
-      # Build an unified document from all documents in the package.
-      def build_unified_document
-        rules = documents.map{|doc| doc.rules}.flatten
-        params = documents.inject(Model::Parameters.empty) do |_params, document|
-          _params.merge(document.params)
-        end
-        @unified_document = Component::Document.new(name, rules, params)
-      end
-
-      # Validate package consistency.
-      def validate
-        @unified_document.rules.map{|rule| rule.path}.sort.inject do |prev, elt|
-          if prev == elt
-            msg = "There are duplicated rules '%s' in the package '%s'"
-            raise InvalidPackage.new(self, msg % [name, package])
-          else
-            elt
           end
         end
       end

@@ -4,11 +4,19 @@ module Pione
     class PioneClient < FrontOwnerCommand
       include TupleSpaceServerInterface
 
+      #
+      # command info
+      #
+
       define_info do
         set_name "pione-client"
         set_tail {|cmd| Global.front.uri}
         set_banner "Requests to process PIONE document."
       end
+
+      #
+      # options
+      #
 
       define_option do
         use :debug
@@ -67,12 +75,12 @@ module Pione
         define(:params) do |item|
           item.long = '--params="{Var:1,...}"'
           item.desc = "set user parameters"
-          item.default = Model::Parameters.empty
+          item.default = Model::ParameterSetSequence.new
           item.action = proc do |option, str|
             begin
-              params = DocumentTransformer.new.apply(
-                DocumentParser.new.parameters.parse(str)
-              )
+              stree = DocumentParser.new.parameter_set.parse(str)
+              opt = {package_name: "-", filename: "-"}
+              params = DocumentTransformer.new.apply(stree, opt)
               option[:params].merge!(params)
             rescue Parslet::ParseFailed => e
               $stderr.puts "invalid parameters: " + str
@@ -138,15 +146,18 @@ module Pione
         end
       end
 
+      #
+      # instance methods
+      #
+
       attr_reader :task_worker
       attr_reader :features
-      attr_reader :tuple_space_server
+      attr_reader :tuple_space # client's tuple space
 
       def initialize(*options)
         super(*options)
         @worker_threads = []
-        @tuple_space_server = nil
-        @child_process_infos = []
+        @space = nil
       end
 
       private
@@ -160,8 +171,8 @@ module Pione
         setup_ftp_server(myftp) if myftp = option[:myftp]
 
         # run tuple space server
-        @tuple_space_server = TupleSpaceServer.new(task_worker_resource: option[:request_task_worker])
-        set_tuple_space_server(@tuple_space_server)
+        @tuple_space = TupleSpaceServer.new(task_worker_resource: option[:request_task_worker])
+        set_tuple_space_server(@tuple_space)
 
         # setup output location
         case option[:output_location]
@@ -171,8 +182,15 @@ module Pione
         when Location::DropboxLocation
           setup_dropbox
         end
+        @tuple_space.set_base_location(option[:output_location])
 
-        @tuple_space_server.set_base_location(option[:output_location])
+        # environment
+        @env = Lang::Environment.new
+
+        # feature
+        stree = DocumentParser.new.expr.parse(option[:features])
+        opt = {package_name: "*feature*", filename: "*feature*"}
+        @features = DocumentTransformer.new.apply(stree, opt)
       end
 
       start(:pre) {read_package}
@@ -180,26 +198,7 @@ module Pione
       # Print list of user parameters.
       start do
         if option[:list_params]
-          unless @package.params.empty?
-            # print basic parameters
-            basic_user_params = @package.params.basic
-            unless basic_user_params.empty?
-              puts "Basic Paramters:"
-              basic_user_params.data.each do |var, val|
-                puts "  %s := %s" % [var.name, val.textize]
-              end
-            end
-
-            advanced_user_params = @package.params.advanced
-            unless advanced_user_params.empty?
-              puts "Advanced Paramters:"
-              advanced_user_params.data.each do |var, val|
-                puts "  %s := %s" % [var.name, val.textize]
-              end
-            end
-          else
-            puts "  there are no user parameters in %s" % ARGF.path
-          end
+          Util::PackageParametersList.print(@env, @package_id)
           exit
         end
       end
@@ -218,9 +217,6 @@ module Pione
 
         # check result
         check_rehearsal_result if option[:rehearse]
-
-        @child_process_infos.each {|info| info.kill}
-        @child_process_infos.each {|info| info.wait}
       end
 
       terminate do
@@ -308,6 +304,8 @@ module Pione
 
         # read package
         @package = Component::PackageReader.read(Location[@argv.first])
+        @package_id = @package.eval(@env)
+        @env = @env.set(current_package_id: @package_id)
         @package.upload(option[:output_location] + "package")
 
         # check rehearse scenario
@@ -320,8 +318,8 @@ module Pione
         end
       rescue Pione::Parser::ParserError => e
         abort("Pione syntax error: " + e.message)
-      rescue Pione::Model::PioneModelTypeError, Pione::Model::VariableBindingError => e
-        abort("Pione model error: " + e.message)
+      rescue Pione::Lang::LangError => e
+        abort("Pione language error: %s(%s)" % [e.message, e.class.name])
       end
 
       # Start agent activities.
@@ -329,47 +327,34 @@ module Pione
       # @return [void]
       def start_precedent_agents
         # messenger
-        @messenger = Agent[:messenger].start(@tuple_space_server)
+        @messenger = Agent[:messenger].start(@tuple_space)
 
         # logger
-        @logger = Agent[:logger].start(@tuple_space_server, option[:output_location])
+        @logger = Agent[:logger].start(@tuple_space, option[:output_location])
 
-        # rule provider
-        @rule_loader = Agent[:rule_provider].start(@tuple_space_server)
-        @rule_loader.read_rules(@package)
-        @rule_loader.wait_till(:request_waiting)
+        # input generator
+        Agent::InputGenerator.start(@tuple_space, :dir, option[:input_location], option[:stream])
 
-        # input generators
-        generator_method = option[:stream] ? :start_by_stream : :start_by_dir
-        gen = Agent[:input_generator].send(
-          generator_method, @tuple_space_server, option[:input_location]
-        )
-
-        # command listener
-        @command_listener = Agent[:command_listener].start(@tuple_space_server, self)
-
-        # start tuple space provider and connect tuple space server
+        # tuple space provider
         unless option[:without_tuple_space_provider]
-          @start_tuple_space_provider_thread = Thread.new do
-            @tuple_space_provider = Pione::TupleSpaceProvider.instance(@child_process_infos)
-            @tuple_space_provider.add_tuple_space_server(@tuple_space_server)
+          begin
+            Command::PioneTupleSpaceProvider.spawn
+          rescue Command::SpawnError => e
+            ErrorReport.abort("failed to run tuple-space-provider", self, e, __FILE__, __LINE__)
           end
         end
       end
 
-      # Start task workers.
+      # Start task workers. Task worker agents are in the process if the client
+      # is stand-alone mode, otherwise they are in new processes.
       def start_task_workers
-        features = DocumentTransformer.new.apply(
-          DocumentParser.new.feature_expr.parse(option[:features])
-        )
         option[:task_worker].times do
-          if option[:stand_alone]
-            Thread.new do
-              Agent[:task_worker].start(@tuple_space_server, features)
-            end
-          else
-            Thread.new do
-              @child_process_infos << Agent[:task_worker].spawn(Global.front, Util::UUID.generate, option[:features])
+          # we don't wait workers start up because of performance
+          Thread.new do
+            if option[:stand_alone]
+              Agent::TaskWorker.start(@tuple_space, @features, @env)
+            else
+              Command::PioneTaskWorker.spawn(option[:features], @tuple_space.uuid)
             end
           end
         end
@@ -377,13 +362,13 @@ module Pione
 
       # Start process manager agent.
       def start_process_manager
-        @agent = Agent[:process_manager].start(@tuple_space_server, @package, option[:params], option[:stream])
-        @agent.running_thread.join
+        @agent = Agent[:process_manager].start(@tuple_space, @env, @package, option[:params], option[:stream])
+        @agent.wait_until_terminated(nil)
       end
 
       # Connect relay server.
       def start_relay_connection
-        Global.relay_tuple_space_server = @tuple_space_server
+        Global.relay_tuple_space_server = @tuple_space
         @relay_ref = DRbObject.new_with_uri(option[:relay])
         @relay_ref.__connect
         if Global.show_communication

@@ -32,30 +32,20 @@ module Pione
       end
 
       prepare do
-        @broker = Pione::Agent[:broker].new(
-          option[:features],
-          task_worker_resource: option[:task_worker]
-        )
-        @tuple_space_receiver = Pione::TupleSpaceReceiver.instance
+        @broker = Agent::Broker.new(option[:features], task_worker_resource: option[:task_worker])
+        @tuple_space_receiver = PioneTupleSpaceReceiver.spawn
       end
 
       start do
-        # start broker agent
+        # start broker agent and wait it will be terminated
         @broker.start
-
-        # start tuple space receiver with the broker agent
-        @tuple_space_receiver.register(@broker)
-
-        # wait
-        begin
-          DRb.thread.join
-        rescue DRb::ReplyReaderThreadError
-          retry
-        end
+        puts "*** start pione-broker ***"
+        @broker.wait_until_terminated(nil)
       end
 
       terminate do
-        @broker.terminate
+        @broker.terminate unless @broker.terminated?
+        puts "*** end pione-broker ***"
       end
     end
   end

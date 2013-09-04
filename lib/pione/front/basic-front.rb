@@ -13,6 +13,7 @@ module Pione
       attr_reader :uri
       attr_reader :attrs
       attr_reader :link
+      attr_reader :child  # child process table
 
       # Creates a front server as druby's service.
       def initialize(command, port)
@@ -20,6 +21,7 @@ module Pione
         # @uri = start_service(port, {:verbose => true})
         @uri = start_service(port, {})
         @attrs = {}
+        @child = {}
       end
 
       # Returns the pid.
@@ -29,6 +31,18 @@ module Pione
 
       def link
         @__link__
+      end
+
+      def [](name)
+        @attrs[name]
+      end
+
+      def []=(name, val)
+        @attrs[name] = val
+      end
+
+      def add_child(pid, front_uri)
+        @child[pid] = front_uri
       end
 
       # Terminates the front.

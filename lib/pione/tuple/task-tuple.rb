@@ -3,38 +3,23 @@ module Pione
     # TaskTuple is a class for rule application job with inputs, outpus and parameters.
     class TaskTuple < BasicTuple
       define_format [:task,
-        # rule location path
-        [:rule_path, String],
+        # digest
+        [:digest, String],
+        # package id
+        [:package_id, String],
+        # rule name
+        [:rule_name, String],
         # input data list
         [:inputs, Array],
         # parameter list
-        [:params, Model::Parameters],
+        [:param_set, Model::ParameterSet],
         # request features
-        [:features, Model::Feature::Expr],
-        # task domain
-        [:domain, String],
-        # call stack(domain list)
-        [:call_stack, Array]
+        [:features, Model::FeatureSequence],
+        # task domain id
+        [:domain_id, String],
+        # domain id of the caller
+        [:caller_id, String]
       ]
-
-      # Returns the digest string of the task.
-      # @return [String]
-      #   task digest string
-      def digest
-        "%s([%s],{%s})" % [
-          rule_path,
-          inputs.map{|i|
-            if i.kind_of?(Array)
-              i.empty? ? "[]" : "[%s, ...]" % i[0].name
-            else
-              i.name
-            end
-          }.join(","),
-          params.data.select{|k,_|
-            not(k.toplevel?)
-          }.map{|k,v| "%s:%s" % [k.name, v.textize]}.join(",")
-        ]
-      end
     end
   end
 end

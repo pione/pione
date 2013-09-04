@@ -11,28 +11,14 @@ module Pione
 
       # Send a hello message to the tuple space server.
       def hello
-        write(to_agent_tuple)
+        write(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
       end
 
       # Send a bye message to the tuple space server.
       def bye
         Util.ignore_exception do
-          write(to_bye_tuple)
+          take!(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
         end
-      end
-
-      # Makes the agent tuple.
-      # @return [Tuple::Agent]
-      #   the agent tuple
-      def to_agent_tuple
-        Tuple[:agent].new(agent_type: agent_type, uuid: uuid)
-      end
-
-      # Makes the bye tuple.
-      # @return [Tuple::Bye]
-      #   the bye tuple
-      def to_bye_tuple
-        Tuple[:bye].new(agent_type: agent_type, uuid: uuid)
       end
 
       # Notify the agent happened a exception.
@@ -88,30 +74,25 @@ module Pione
       def initialize(tuple_space_server)
         super()
         set_tuple_space_server(tuple_space_server)
+
+        # attach a command listner to the client for monitoring tuple space
+        # commands like "terminate"
+        unless self.is_a?(JobTerminator)
+          JobTerminator.start(tuple_space_server, self)
+        end
       end
 
-      def start
-        super()
-        return self
-      end
-
-      # State initialized.
-      def transit_to_initialized
+      def transit_to_init
         hello
       end
 
-      # State terminated
-      def transit_to_terminated
+      def transit_to_terminate
         Util.ignore_exception { bye }
         cancel_current_tuple_entry
       end
 
-      # State error
       def transit_to_error(e)
-        if e
-          $stderr.puts e
-          $stderr.puts e.backtrace
-        end
+        Util::ErrorReport.error("Error happend in transition chain", self, e, __FILE__, __LINE__)
         notify_exception(e)
         terminate
       end
@@ -138,7 +119,7 @@ module Pione
 
       # Override call transition method with logging.
       def call_transition_method(*args)
-        unless [:logger, :command_listener, :messenger].include?(agent_type)
+        unless [:logger, :job_terminator, :messenger].include?(agent_type)
           record = Log::AgentActivityProcessRecord.new.tap do |rec|
             rec.agent_type = agent_type
             rec.agent_uuid = uuid

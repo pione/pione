@@ -2,54 +2,10 @@ module Pione
   module Model
     # KeyedSequence is a sequence that have key and value pairs.
     class KeyedSequence < Sequence
-      set_pione_model_type TypeKeyedSequence
-      set_shortname "KeyedSeq"
+      pione_type TypeKeyedSequence
 
-      class << self
-        def empty(attributes={})
-          new({}, attributes)
-        end
-      end
-
-      # @param elements [Hash{Element => Sequence}]
-      #   sequence elements
-      # @param attribute [Hash]
-      #   sequence attribute
-      def initialize(elements, attribute={})
-        raise ArgumentError.new(elements) unless elements.kind_of?(Hash)
-        @elements = elements
-        @attribute = Hash.new.merge(attribute)
-
-        # fill default value
-        sequence_attribute.each do |name, values|
-          @attribute[name] ||= values.first
-        end
-      end
-
-      def index_type
-        ordinal_sequence_of_element(@elements.keys.first).pione_model_type
-      end
-
-      def element_type
-        ordinal_sequence_of_element(@elements.values.flatten.first).pione_model_type
-      end
-
-      def ordinal_sequence_of_element(elt)
-        case elt
-        when PioneInteger
-          IntegerSequence
-        when PioneString
-          StringSequence
-        when PioneFloat
-          FloatSequence
-        when PioneBoolean
-          BooleanSequence
-        when DataExpr
-          DataExprSequence
-        else
-          raise ArgumentError.new(elt)
-        end
-      end
+      member :pieces, default: {}
+      member :piece_type
 
       # Concatenate the sequence and another one.
       #
@@ -58,59 +14,48 @@ module Pione
       # @return [Sequence]
       #   a new sequence that have members of self and other
       def concat(other)
-        raise SequenceAttributeError.new(other) unless @attribute == other.attribute
-        new_elements = (@elements.to_a + other.elements.to_a).inject({}) do |elts, list|
-          key, vals = list
-          elts[key] = (elts[key] ||= []) + vals
-          elts
-        end
-        self.class.new(new_elements, @attribute)
+        set(pieces: pieces.merge(other.pieces))
       end
+      alias :+ :concat
 
       # Get the element by the key.
-      #
-      # @param key [Element]
-      #   index key
-      # @return [BasicModel]
-      #   element
       def get(key)
-        @elements[key] || []
+        pieces[key] || (raise Lang::IndexError.new(key))
       end
 
       # Put the element to the sequecence.
-      #
-      # @param key [Element]
-      #   the key
-      # @param element [Element]
-      #   the element
-      # @return [Sequence]
-      #   a new sequence that have member self and the element.
-      def put(key, element)
-        raise ArgumentError.new(element) unless element.kind_of?(Element)
-        self.class.new(@elements.merge({key => get(key) + [element]}), @attribute)
+      def put(key, val)
+        raise ArgumentError.new(key) unless key.kind_of?(Model::Sequence)
+        raise ArgumentError.new(val) unless val.kind_of?(Model::Sequence)
+        begin
+          set(pieces: pieces.merge({key => get(key) + val}))
+        rescue Lang::IndexError
+          set(pieces: pieces.merge({key => val}))
+        end
       end
 
       # Iterate each elements.
-      #
-      # @return [Enumerator]
-      #   return an enumerator if the block is not given
       def each
         if block_given?
-          @elements.each {|key, val| yield self.class.new({key => val}, @attribute)}
+          pieces.each {|key, val| yield set(pieces: {key => val})}
         else
           Enumerator.new(self, :each)
         end
       end
 
-      def eval(vtable)
-        new_elements = @elements.inject({}) do |elts, key, val|
-          elts[key.eval(vtable)] = val.eval(vtable)
-        end
-        self.class.new(new_elements, @attribute)
+      def index_type
+        pieces.keys.first.pione_type
       end
 
-      def include_variable?
-        @elements.any?{|key, value| key.include_variable? or val.include_variable?}
+      def element_type
+        pieces.values.first.pione_type
+      end
+
+      def eval(env)
+        _pieces = pieces.inject({}) do |_pieces, (key, val)|
+          _pieces.update({key => val.map{|v| v.eval(env)}})
+        end
+        set(pieces: _pieces)
       end
 
       def textize
@@ -118,32 +63,30 @@ module Pione
       end
 
       def inspect
-        "#<%s [%s] %s>" % [shortname, @elements.map{|key, vals| "%s:(%s)" % [key.textize, vals.map{|val| val.textize}.join("|")]}.join(","), @attribute]
+        name = "KeyedSequence"
+        content = pieces.map {|key, val| "%s:(%s)" % [key.pieces.first.value, val.textize]}.join(",")
+        "#<%s [%s]>" % [name, content]
       end
     end
 
     TypeKeyedSequence.instance_eval do
-      # keys : index_type
-      define_pione_method("keys", [], :index_type) do |vtable, rec|
-        keys = rec.elements.keys
-        rec.ordinal_sequence_of_element(keys.first).new(keys)
+      define_pione_method("keys", [], :index_type) do |env, rec|
+        rec.pieces.keys.inject{|s1, s2| s1 + s2}
       end
 
-      # values : element_type
-      define_pione_method("values", [], :element_type) do |vtable, rec|
-        vals = rec.elements.values.flatten
-        rec.ordinal_sequence_of_element(vals.first).new(vals)
+      define_pione_method("values", [], :element_type) do |env, rec|
+        rec.pieces.values.inject{|s1, s2| s1 + s2}
       end
 
       # [] : index_type -> element_type
-      define_pione_method("[]", [:index_type], :element_type) do |vtable, rec, index|
-        index.elements.map do |index_elt|
-          rec.elements[index_elt]
-        end.flatten.tap{|x| break rec.ordinal_sequence_of_element(x.first).new(x, rec.attribute)}
+      define_pione_method("[]", [:index_type], :element_type) do |env, rec, index|
+        index.pieces.map do |index_elt|
+          rec.pieces[index.set(pieces: [index_elt])] || (raise Lang::IndexError.new(index_elt))
+        end.inject{|res, seq| res + seq}
       end
 
-      define_pione_method("textize", [], TypeString) do |vtable, rec|
-        rec.call_pione_method(vtable, "values").call_pione_method(vtable, "textize")
+      define_pione_method("textize", [], TypeString) do |env, rec|
+        rec.call_pione_method(env, "values", []).call_pione_method(env, "textize", [])
       end
     end
   end

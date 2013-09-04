@@ -33,6 +33,7 @@ module Pione
             ftp.put(path, @path.to_s)
           end
         end
+        return self
       end
 
       def append(data)
@@ -41,6 +42,7 @@ module Pione
         else
           create(data)
         end
+        return self
       end
 
       def read

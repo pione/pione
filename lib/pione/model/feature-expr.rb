@@ -1,875 +1,425 @@
 # -*- coding: utf-8 -*-
 
-module Pione::Model
-  # Feature is selection system between task and task worker.
-  module Feature
-    class << self
-      # Return feature conjunction.
-      #
-      # @param exprs [Array<Expr>]
-      #   feature expression list
-      # @return [Expr]
-      #   conjuncted expression
-      #
-      # @example
-      #   x = RequisiteExpr.new("X")
-      #   y = RequisiteExpr.new("Y")
-      #   Feature.and(x, y) #=> +X & +Y
-      def and(*exprs)
-        AndExpr.new(*exprs)
+module Pione
+  module Model
+    class FeaturePiece < Piece
+      piece_type_name "Feature"
+      member :name
+
+      class << self
+        def feature_type(val = nil)
+          val ? @feature_type = val : @feature_type
+        end
       end
 
-      # Return feature disjunction.
-      #
-      # @param exprs [Array<Expr>]
-      #   feature expression list
-      # @return [Expr]
-      #   disjuncted expression
-      #
-      # @example
-      #   x = RequisiteExpr.new("X")
-      #   y = RequisiteExpr.new("Y")
-      #   Feature.or(x, y) #=> +X | +Y
-      def or(*exprs)
-        OrExpr.new(*exprs)
-      end
-
-      # Return empty feature.
-      #
-      # @return [Expr]
-      #    empty feature
-      def empty
-        empty ||= EmptyFeature.new
-      end
-
-      # Return boundless feature.
-      #
-      # @return [Expr]
-      #   boundless feature
-      def boundless
-        boundless ||= BoundlessFeature.new
-      end
+      forward :class, :feature_type
     end
 
-    # Expr is a super class for all feature expressions.
-    class Expr < Callable
-      set_pione_model_type TypeFeature
-
-      # Return simplified expression.
-      #
-      # @return [Expr]
-      #   simplified expression
-      def simplify
-        return self
-      end
-
-      # Return true if the feature is empty.
-      #
-      # @return [Boolean]
-      #   true if the feature is empty
-      def empty?
-        return false
-      end
-
-      # Return true if the other matches the feature.
-      #
-      # @return [Boolean]
-      #   true if the other matches the feature
-      def match(other)
-        raise ArgumentError.new(other) unless other.kind_of?(Expr)
-        Sentence.new(self, other).decide
-      end
-      alias :=== :match
-    end
+    #
+    # special features
+    #
 
     # SpecialFeature is a class for empty feature and boundless feature.
-    class SpecialFeature < Expr
-      # @api private
+    class SpecialFeature < FeaturePiece
+      class << self
+        def symbol(sym=nil)
+          sym ? @symbol = sym : sym
+        end
+      end
+
+      feature_type :both
+      forward :class, :symbol
+
       def textize
         symbol
       end
 
-      # @api private
       def ==(other)
-        other.kind_of?(self.class)
+        other.kind_of?(self.class) and symbol == other.symbol
        end
       alias :eql? :==
-
-      # @api private
-      def hash
-        true.hash
-      end
     end
 
-    # EmptyFeature is a class for empty feature that is one of special
-    # features. This is written as '*', that means the worker has no specific
-    # ability in provider expression and the task has no specific request in
-    # request expression.
+    # EmptyFeature is a special feature that represents there are no features.
+    # This means workers have no specific abilities in provider expression and
+    # tasks have no specific requests in request expression.
     class EmptyFeature < SpecialFeature
-      # Return the symbol of empty feature.
-      #
-      # return [String]
-      #   "*"
-      def symbol
-        "*"
-      end
-
-      # Return true because empty feature is empty.
-      #
-      # @return [Boolean]
-      #   true
-      def empty?
-        true
-      end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(Expr)
-        other.empty?
-      end
+      symbol "*"
     end
 
-    # BoundlessFeature is a class for whole feature that is one of special
-    # features. This is written as '@', that means the worker has boundless
-    # ability in provider expression and the task has boundless ability request
-    # in request expression.
-    class BoundlessFeature < SpecialFeature
-      # Return the symbol of bundless feature.
-      #
-      # return [String]
-      #   "@"
-      def symbol
-        "@"
-      end
-
-      # @api private
-      def ==(other)
-        other.kind_of?(BoundlessFeature)
-      end
+    # AlmightyFeature is a special feature that represents whole features. This
+    # means that workers have almighty ability in provider expression and tasks
+    # have almighty ability request in request expression.
+    class AlmightyFeature < SpecialFeature
+      symbol "**"
     end
 
-    # Operator is superclass of all operator classes.
-    class Operator < Expr; end
+    #
+    # simple features
+    #
 
-    # UnaryOperator is a class for provider opeators and request operator.
-    class UnaryOperator < Operator
-      attr_reader :symbol
-
-      # Return the operator symbol.
-      #
-      # @return [String]
-      #   operator symbol
-      # @example
-      #   # requisite feature
-      #   +
-      # @example
-      #   # blocking feature
-      #   -
-      # @example
-      #   # preferred feature
-      #   ?
-      # @example
-      #   # possible operator
-      #   ^
-      # @example
-      #   # restrictive opeator
-      #   !
-      def self.operator
-        @operator
+    # SimpleFeature is a feature that consists prefix and name.
+    class SimpleFeature < FeaturePiece
+      class << self
+        # Return the operator symbol.
+        def prefix(val = nil)
+          val ? @prefix = val : @prefix
+        end
       end
 
-      # Create a new operator.
-      #
-      # @param [Symbol] symbol
-      #   feature symbol
-      def initialize(symbol)
-        @symbol = symbol
-        super()
-      end
+      forward :class, :prefix
 
-      # @api private
       def textize
-        "%s%s" % [self.operator, @symbol]
-      end
-
-      # @api private
-      def as_string
-        self.class.operator + @symbol.to_s
-      end
-
-      # @api private
-      def ==(other)
-        other.kind_of?(self.class) and @symbol == other.symbol
-      end
-      alias :eql? :==
-
-      # @api private
-      def hash
-        @symbol.hash
+        "%s%s" % [prefix, name]
       end
     end
 
-    # ProviderOperator is a class for provider operators.
-    class ProviderExpr < UnaryOperator; end
-
-    # PossibleOperator is a class for possible feature expressions. Possible
-    # feature are written like as "^X", these represent feature's possible
+    # PossibleFeature is a provider feature that represents workers' possible
     # ability.
-    class PossibleExpr < ProviderExpr
-      @operator = "^"
+    class PossibleFeature < SimpleFeature
+      prefix "^"
+      feature_type :provider
     end
 
-    # RestrictiveExpr is a class for restrictive feature expression.
+    # RestrictiveFeature is a provider feature that represents workers'
+    # restrictive ability.
+    class RestrictiveFeature < SimpleFeature
+      prefix "!"
+      feature_type :provider
+    end
+
+    # RequisiteFeature is a request feature that represents tasks' requisite
+    # of ability.
+    class RequisiteFeature < SimpleFeature
+      prefix "+"
+      feature_type :request
+    end
+
+    # BlockingFeature is a request feature that represents tasks' nature
+    # of blocking workers have the feature name execute the task.
+    class BlockingFeature < SimpleFeature
+      prefix "-"
+      feature_type :request
+    end
+
+    # PreferredFeature is a request feature that represents the task is
+    # processed by workers prior to other tasks.
+    class PreferredFeature < SimpleFeature
+      prefix "?"
+      feature_type :request
+    end
+
     #
-    # @example
-    #   !X
-    class RestrictiveExpr < ProviderExpr
-      @operator = "!"
-    end
-
-    # RequestOperator is a class for task's feature expression operators.
-    class RequestExpr < UnaryOperator; end
-
-    # Requisite Operator is a class for requisite feature expressions. Requisite
-    # Feature are written like as "+X", these represent feature's requiste
-    # ability.
+    # complex feature
     #
-    # @example
-    #   +X
-    class RequisiteExpr < RequestExpr
-      @operator = "+"
+
+    # ComplexFeatureMethod
+    module ComplexFeatureMethod
+      def feature_type
+        pieces.inject(:both) {|t, piece| t == :both ? piece.feature_type : t}
+      end
     end
 
-    # BlockingExpr is a class for blocking feature expressions. Blocking Feature
-    # are written like as "-X", these represent the ability that block to
-    # execute the task.
     #
-    # @example
-    #   BlockingExpr.new("X") #=> -X
-    class BlockingExpr < RequestExpr
-      @operator = "-"
-    end
-
-    # PreferredExpr is a class for preferred feature expressions. Preferred
-    # Feature are written like as "?X", these represent that task workers what
-    # the feature have take the task.
+    # compound feature
     #
-    # @example
-    #   PreferredExpr.new("X") #=> ?X
-    class PreferredExpr < RequestExpr
-      @operator = "?"
-    end
 
-    # Connective is a superclass of AndExpr and OrExpr. This represents
-    # connection of feature expressions.
-    class Connective < Expr
-      # @return [Set]
-      #   feature expressions included in the connective
-      attr_reader :elements
+    # CompoundFeature represents conjunction of feature pieces.
+    class CompoundFeature < FeaturePiece
+      class << self
+        def build(piece1, piece2)
+          # unify features if they are same
+          return piece1 if piece1 == piece2
 
-      # Create a new connective.
-      #
-      # @param elements [Array<Expr>]
-      #   feature expressions
-      def initialize(*elements)
-        @elements = Set.new
-        elements.each {|elt| add(elt) }
-        super()
+          # append if either feature is compound
+          return piece1.add(piece2) if piece1.is_a?(CompoundFeature)
+          return piece2.add(piece1) if piece2.is_a?(CompoundFeature)
+
+          # create new compound feature
+          new(pieces: Set.new([piece1, piece2]))
+        end
       end
 
-      # Add the feature expression as elements of the connective and unify it.
-      #
-      # @param expr [Expr]
-      #   feature element
-      # @return [void]
-      #
-      # @example AND expression
-      #   x = RequisiteExpr.new("X")
-      #   y = RequisiteExpr.new("Y")
-      #   AndExpr.new(x).add(y) #=> +X & +Y
-      # @example OR expression
-      #   x = RequisiteExpr.new("X")
-      #   y = RequisiteExpr.new("Y")
-      #   OrExpr.new(x, y).add(x) #=> +X | +Y
-      def add(expr)
-        if expr.kind_of?(self.class)
-          expr.elements.each {|e| unify(e) }
+      member :pieces, :default => Set.new
+
+      def add(piece)
+        if piece.is_a?(CompoundFeature)
+          set(pieces: pieces + piece.pieces)
         else
-          unify(expr)
+          set(pieces: pieces + Set.new([piece]))
         end
-      end
-
-      # Delete the element from the connective set.
-      #
-      # @param elt [Expr]
-      #   feature element
-      # @return [void]
-      def delete(elt)
-        @elements.delete(elt)
-        if @elements.empty?
-          @elements.add(EmptyFeature.new)
-        end
-      end
-
-      # Unify connective set by the element.
-      #
-      # @param [Expr] elt
-      #   feature element
-      # @return [void]
-      def unify(elt)
-        unless self.class::UNIFICATIONS.any?{|name| __send__(name, elt)}
-          @elements.add(elt)
-        end
-      end
-
-      # Simplify the connective by unifing and up-rising single element.
-      #
-      # @return [Expr]
-      #   simplified feature
-      #
-      # @example
-      #   AndExpr.new(RequisiteExpr.new("X")).simplify #=> +X
-      def simplify
-        if @elements.size == 1
-          return @elements.first.simplify
-        else
-          elements = @elements.map{|e| e.simplify}
-          @elements.clear
-          elements.each {|e| add(e)}
-          return self
-        end
-      end
-
-      # Return true if the connective set is empty.
-      #
-      # @return [Boolean]
-      #   true if the connective set is empty
-      def empty?
-        return true if @elements.empty?
-        return true if @elements == Set.new([Feature.empty])
-        return false unless @elements.size == 1
-        return @elements.first.empty?
-      end
-
-      # @api private
-      def textize
-        "#{self.class.name}(%s)" % @elements.map{|elt| elt.textize}.join(",")
-      end
-
-      # @api private
-      def ==(other)
-        return true if empty? and other.kind_of?(Expr) and other.empty?
-        other.kind_of?(self.class) and @elements == other.elements
-      end
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @elements.hash
-      end
-
-      # Clone with cloning the elements set.
-      #
-      # @api private
-      def clone
-        obj = super
-        elements = @elements.clone
-        obj.instance_eval { @elements = elements }
-        return obj
       end
     end
 
-    # AndExpr represents conjunction of feature expressions.
     #
-    # @example
-    #   AndExpr.new(RequisiteExpr.new("X"), RequisiteExpr.new("Y")) #=> +X & +Y
-    class AndExpr < Connective
-      UNIFICATIONS =
-        [ :unify_redundant_feature,
-          :summarize_or,
-          :background_preferred_feature,
-          :unify_by_restrictive_feature
-        ]
+    # sequence
+    #
 
-      module UnificationMethod
-        # Unify redundant feature. This unification rule is described as
-        # follows:
-        #
-        # - Γ & Γ -> Γ
-        # - Δ & Δ -> Δ
-        #
-        # @param expr [Expr]
-        #   feature expression
-        #
-        # @example
-        #   x = RequisiteExpr.new("X")
-        #   y = RequisiteExpr.new("Y")
-        #   AndExpr.new(x,y).unify_redundant_feature(x) #=> true
-        def unify_redundant_feature(expr)
-          return @elements.include?(expr)
-        end
+    # FeatureSequence represents disjunction of feature pieces.
+    class FeatureSequence < OrdinalSequence
+      pione_type TypeFeature
+      piece_class EmptyFeature
+      piece_class AlmightyFeature
+      piece_class PossibleFeature
+      piece_class RestrictiveFeature
+      piece_class RequisiteFeature
+      piece_class BlockingFeature
+      piece_class PreferredFeature
 
-        def summarize_or(elt)
-          if elt.kind_of?(OrExpr)
-            if target = @elements.find {|e|
-                if e.kind_of?(OrExpr)
-                  not((e.elements & elt.elements).empty?)
-                end
-              }
-              # (Γ1 | Γ2) & (Γ1 | Γ3) -> Γ1 | (Γ2 & Γ3)
-              @elements.delete(target)
-              union = target.elements & elt.elements
-              union_expr = if union.length > 1
-                             OrExpr.new(*union.to_a)
-                           else
-                             union.to_a.first
-                           end
-              add(
-                OrExpr.new(
-                  union_expr,
-                  AndExpr.new(
-                    OrExpr.new(*(target.elements - union).to_a),
-                    OrExpr.new(*(elt.elements - union).to_a)
-                  )
-                )
-              )
-              return true
-            else
-              # Γ1 & (Γ1 | Γ3) -> Γ1
-              return not((@elements & elt.elements).empty?)
-            end
-          else
-            # (Γ1 | Γ2) & Γ1 -> Γ1
-            if @elements.reject!{|e| e == elt }
-              add(elt)
-              return true
-            end
-          end
-          return false
-        end
-
-        def background_preferred_feature(elt)
-          case elt
-          when PreferredExpr
-            # !X & ?X -> !X
-            # ^X & ?X -> ^X
-            return @elements.any? {|e|
-              e.symbol == elt.symbol &&
-              (e.kind_of?(RequisiteExpr) || e.kind_of?(BlockingExpr))
-            }
-          when RequisiteExpr, BlockingExpr
-            # ?X & !X -> !X
-            # ?X & ^X -> ^X
-            if @elements.reject! {|e|
-                if e.kind_of?(PreferredExpr)
-                  e.symbol == elt.symbol
-                end
-              }
-              add(elt)
-              return true
-            end
-          end
-          return false
-        end
-
-        def unify_by_restrictive_feature(elt)
-          case elt
-          when RestrictiveExpr
-            # ^X & !X -> !X
-            if @elements.reject! {|e|
-                if e.kind_of?(PossibleExpr)
-                  e.symbol == elt.symbol
-                end
-              }
-              add(elt)
-              return true
-            end
-          when PossibleExpr
-            # !X & ^X -> !X
-            return @elements.any? {|e|
-              if e.kind_of?(RestrictiveExpr)
-                e.symbol == elt.symbol
-              end
-            }
-          end
-          return false
+      class << self
+        def of(*args)
+          args.each {|arg| raise ArgumentError(arg) unless arg.is_a?(FeaturePiece)}
+          args.size > 0 ? new(args) : new([EmptyFeature.new])
         end
       end
 
-      include UnificationMethod
+      include ComplexFeatureMethod
 
-      # Make an expander for response test.
-      def expander
-        # convert or-clause into expander
-        elements = @elements.map do |elt|
-          elt.kind_of?(OrExpr) ?  elt.expander : elt
+      def concat(other)
+        acceptable = feature_type.nil? or feature_type == :both
+        other_acceptable = other.feature_type.nil? or other.feature_type == :both
+        if feature_type == other.feature_type or acceptable or other_acceptable
+          super(other)
+        else
+          raise SequenceAttributeError.new(other)
         end
-        # return an enumerator
-        return Enumerator.new {|y| choose_concrete_expr(y, elements, [], nil, 0) }
+      end
+
+      # Return true if the feature accepts other feature.
+      def match(other)
+        provider_pieces = pieces
+        request_pieces = other.pieces
+
+        if feature_type == :request or other.feature_type == :provider
+          provider_pieces = other.pieces
+          request_pieces = pieces
+        end
+
+        provider_pieces = [EmptyFeature.new] if provider_pieces.empty?
+        request_pieces = [EmptyFeature.new] if request_pieces.empty?
+
+        provider_pieces.any? do |provider_piece|
+          request_pieces.any? do |request_piece|
+            _match(provider_piece, request_piece)
+          end
+        end
+      end
+
+      # This alias is for RINDA's template matcher.
+      alias :"===" :match
+
+      def _match(provider_piece, request_piece)
+        # apply eliminations
+        _provider_piece, _request_piece = Eliminator.new(provider_piece, request_piece).eliminate
+
+        # features are matched if both pieces are empty
+        return true if _provider_piece.is_a?(EmptyFeature) and _request_piece.is_a?(EmptyFeature)
+
+        # feature are unmatched if peaces are not elminated
+        return false if provider_piece == _provider_piece and request_piece == _request_piece
+
+        # next
+        return _match(_provider_piece, _request_piece)
+      end
+    end
+
+    #
+    # feature operations
+    #
+
+    class Eliminator
+      OPERATIONS = [
+        :eliminate_requisite_feature,
+        :eliminate_requisite_feature_by_almighty_feature,
+        :eliminate_blocking_feature,
+        :eliminate_preferred_feature,
+        :eliminate_possible_feature,
+        :eliminate_almighty_feature
+      ]
+
+      def initialize(provider_piece, request_piece)
+        @provider_piece = provider_piece
+        @request_piece = request_piece
+      end
+
+      def eliminate
+        OPERATIONS.inject([@provider_piece, @request_piece]) do |(ppiece, rpiece), elim|
+          result, _ppiece, _rpiece = __send__(elim, ppiece, rpiece)
+          result ? [_ppiece, _rpiece] : [ppiece, rpiece]
+        end
+      end
+
+      # Eliminate a requisite feature from the request pieces. This is for the
+      # case that requisite feature is satisfied by possible feature or
+      # restrictive feature.
+      #
+      # Rule:
+      # - (^X & Γ <- +X & Δ) -> Γ & Δ
+      # - (!X & Γ <- +X & Δ) -> Γ & Δ
+      def eliminate_requisite_feature(provider_piece, request_piece)
+        ppieces = provider_piece.is_a?(CompoundFeature) ? provider_piece.pieces : [provider_piece]
+        rpieces = request_piece.is_a?(CompoundFeature) ? request_piece.pieces : [request_piece]
+
+        rpieces.each do |rpiece|
+          # requisite feature is target
+          next unless rpiece.kind_of?(RequisiteFeature)
+
+          ppieces.each do |ppiece|
+            next unless ppiece.kind_of?(PossibleFeature) || ppiece.kind_of?(RestrictiveFeature)
+            next unless ppiece.name == rpiece.name
+
+            # eliminate only if Γ dosen't include same symbol feature
+            next if ppieces.any? {|piece| ppiece.name == piece.name && not(piece.kind_of?(ppiece.class))}
+
+            # eliminate only if Δ dosen't include same symbol feature
+            next if rpieces.any? {|piece| rpiece.name == piece.name && not(piece.kind_of?(rpiece.class))}
+
+            # eliminate
+            return true, rebuild_feature(ppieces - [ppiece]), rebuild_feature(rpieces - [rpiece])
+          end
+        end
+
+        return false
+      end
+
+      # Eliminate request features by almighty feature.
+      #
+      # Rule:
+      # - (** <- +X & Δ) -> (** <- Δ)
+      def eliminate_requisite_feature_by_almighty_feature(provider_piece, request_piece)
+        ppieces = provider_piece.is_a?(CompoundFeature) ? provider_piece.pieces : [provider_piece]
+        rpieces = request_piece.is_a?(CompoundFeature) ? request_piece.pieces : [request_piece]
+
+        rpieces.each do |rpiece|
+          # requisite feature is target
+          next unless rpiece.kind_of?(RequisiteFeature)
+
+          ppieces.each do |ppiece|
+            next unless ppiece.kind_of?(AlmightyFeature)
+
+            # eliminate
+            return true, provider_piece, rebuild_feature(rpieces - [rpiece])
+          end
+        end
+
+        return false
+      end
+
+      # Elimiate a blocking feature.
+      #
+      # Rule:
+      # - (Γ <- -X & Δ) -> Γ & Δ
+      def eliminate_blocking_feature(provider_piece, request_piece)
+        ppieces = provider_piece.is_a?(CompoundFeature) ? provider_piece.pieces : [provider_piece]
+        rpieces = request_piece.is_a?(CompoundFeature) ? request_piece.pieces : [request_piece]
+
+        rpieces.each do |rpiece|
+          next unless rpiece.kind_of?(BlockingFeature)
+
+          # eliminate only if Γ dosen't include almighty features
+          next if ppieces.any? {|ppiece| ppiece.is_a?(AlmightyFeature)}
+
+          # eliminate only if Γ dosen't include same name features
+          next if ppieces.any? {|ppiece| ppiece.name == rpiece.name && not(ppiece.kind_of?(rpiece.class))}
+
+          # eliminate only if Δ dosen't include same name features
+          next if rpieces.any? {|piece| rpiece.name == piece.name && not(piece.kind_of?(rpiece.class))}
+
+          # eliminate
+          return true, provider_piece, rebuild_feature(rpieces - [rpiece])
+        end
+
+        return false
+      end
+
+      # Eliminate a preferred feature.
+      #
+      # Rule:
+      # - (Γ <- ?X & Δ) -> (Γ <- Δ)
+      def eliminate_preferred_feature(provider_piece, request_piece)
+        ppieces = provider_piece.is_a?(CompoundFeature) ? provider_piece.pieces : [provider_piece]
+        rpieces = request_piece.is_a?(CompoundFeature) ? request_piece.pieces : [request_piece]
+
+        if rpieces.any? {|e| e.kind_of?(PreferredFeature)}
+          _request = rebuild_feature(rpieces.reject {|rpiece| rpiece.kind_of?(PreferredFeature)})
+          return true, provider_piece, _request
+        end
+
+        return false
+      end
+
+      # Eliminate a possible feature.
+      #
+      # Rule:
+      # - (^X & Γ <- Δ) -> (Γ <- Δ)
+      def eliminate_possible_feature(provider_piece, request_piece)
+        ppieces = provider_piece.is_a?(CompoundFeature) ? provider_piece.pieces : [provider_piece]
+        rpieces = request_piece.is_a?(CompoundFeature) ? request_piece.pieces : [request_piece]
+
+        ppieces.each do |ppiece|
+          next unless ppiece.kind_of?(PossibleFeature)
+
+          # eliminate only if Γ dosen't include same symbol feature
+          next if ppieces.any? {|piece| ppiece.name == piece.name && not(piece.kind_of?(ppiece.class))}
+
+          # eliminate only if Δ dosen't include same symbol feature
+          next if rpieces.any? {|rpiece| ppiece.name == rpiece.name && not(rpiece.kind_of?(ppiece.class))}
+
+          # eliminate
+          return true, rebuild_feature(ppieces - [ppiece]), request_piece
+        end
+
+        return false
+      end
+
+      # Eliminate almighty feature.
+      #
+      # Rule:
+      # - (** <- *) -> (* <- *)
+      # - (** <- **) -> (* <- *)
+      def eliminate_almighty_feature(provider_piece, request_piece)
+        pclass = provider_piece.class
+        rclass = request_piece.class
+
+        if pclass == AlmightyFeature and (rclass == AlmightyFeature or rclass == EmptyFeature)
+          return true, EmptyFeature.new, EmptyFeature.new
+        end
+
+        return false
       end
 
       private
 
-      require 'fiber'
-
-      # Choose a concrete expression that expand or-clause.
-      def choose_concrete_expr(y, orig, list, fiber, i)
-        if orig.size == i
-          # when reach the terminateion of elements, yield a concrete expression
-          y << AndExpr.new(*convert_cons_list_into_array(list))
+      def rebuild_feature(pieces)
+        case pieces.size
+        when 0
+          EmptyFeature.new
+        when 1
+          pieces.first
         else
-          # or-clause
-          if orig[i].kind_of?(Enumerator)
-            # create a new fiber
-            _fiber = Fiber.new do
-              loop do
-                # rewind unreached enumerators
-                orig.each_with_index do |e, ii|
-                  e.rewind if ii > i && e.kind_of?(Enumerator)
-                end
-                # choose next
-                choose_concrete_expr(y, orig, [orig[i].next, list], _fiber, i+1)
-                # retrun fiber loop
-                Fiber.yield
-              end
-            end
-            # fiber loop
-            begin
-              _fiber.transfer while true
-            rescue FiberError => e
-              fiber.transfer if fiber
-            end
-          else
-            # other elements
-            choose_concrete_expr(y, orig, [orig[i], list], fiber, i+1)
-          end
-        end
-      end
-
-      # Returns an array by converting from cons list.
-      def convert_cons_list_into_array(input)
-        input == [] ? [] : convert_cons_list_into_array(input[1]) << input.first
-      end
-    end
-
-    # OrExpr represents disjunction of feature expressions.
-    #
-    # @example
-    #   OrExpr.new(RequisiteExpr.new("X"), RequisiteExpr.new("Y")) #=> +X | +Y
-    class OrExpr < Connective
-      # unification list
-      UNIFICATIONS =
-        [ :unify_redundant_feature,
-          :summarize_and,
-          :foreground_preferred_feature,
-          :unify_by_possible_feature,
-          :neutralize
-        ]
-
-      # OrExpr's unification methods.
-      module UnificationMethod
-        # Return true if elements include the feature. This unification rule is
-        # described as follows:
-        #
-        # - Γ | Γ -> Γ
-        # - Δ | Δ -> Δ
-        #
-        # @param expr [Expr]
-        #   feature expression
-        #
-        # @example
-        #   x = RequisiteExpr.new("X")
-        #   y = RequisiteExpr.new("Y")
-        #   OrExpr.new(x, y).unify_redundant_feature(x) #=> true
-        def unify_redundant_feature(expr)
-          return @elements.include?(expr)
-        end
-
-        # Return true if the expression is summarized by AND connective. This
-        # rule is described as follows:
-        #
-        # - (Γ1 & Γ2) | (Γ1 & Γ3) -> Γ1 & (Γ2 | Γ3)
-        # - Γ1 | (Γ1 & Γ3) -> Γ1
-        # - (Γ1 & Γ2) | Γ1 -> Γ1
-        def summarize_and(elt)
-          if elt.kind_of?(AndExpr)
-            # (Γ1 & Γ2) | (Γ1 & Γ3) -> Γ1 & (Γ2 | Γ3)
-            if target = @elements.find {|e|
-                e.kind_of?(AndExpr) && not((e.elements & elt.elements).empty?)
-              }
-              @elements.delete(target)
-              union = target.elements & elt.elements
-              union_expr = if union.length > 1
-                             AndExpr.new(*union.to_a)
-                           else
-                             union.to_a.first
-                           end
-              add(AndExpr.new(union_expr,
-                              OrExpr.new(AndExpr.new(*(target.elements - union).to_a),
-                                         AndExpr.new(*(elt.elements - union).to_a))))
-              return true
-            else
-              # Γ1 | (Γ1 & Γ3) -> Γ1
-              # return not((@elements & elt.elements).empty?)
-            end
-          else
-            # (Γ1 & Γ2) | Γ1 -> Γ1
-            # if @elements.reject!{|e| e == elt }
-            #   add(elt)
-            #   return true
-            # end
-          end
-          return false
-        end
-
-        def foreground_preferred_feature(elt)
-          case elt
-          when PreferredExpr
-            # !X | ?X -> ?X
-            # ^X | ?X -> ?X
-            if @elements.reject! {|e|
-                e.symbol == elt.symbol &&
-                (e.kind_of?(RequisiteExpr) || e.kind_of?(BlockingExpr))
-              }
-              add(elt)
-              return true
-            end
-          when RequisiteExpr, BlockingExpr
-            # ?X | !X -> ?X
-            # ?X | ^X -> ?X
-            return @elements.any? {|e|
-              e.symbol == elt.symbol && e.kind_of?(PreferredExpr)
-            }
-          end
-          return false
-        end
-
-        def unify_by_possible_feature(elt)
-          case elt
-          when PossibleExpr
-            # !X | ^X -> ^X
-            if @elements.reject! {|e|
-                e.symbol == elt.symbol && e.kind_of?(RestrictiveExpr)
-              }
-              add(elt)
-              return true
-            end
-          when RestrictiveExpr
-            # ^X | !X -> ^X
-            return @elements.any? {|e|
-              e.symbol == elt.symbol && e.kind_of?(PossibleExpr)
-            }
-          end
-          return false
-        end
-
-        def neutralize(elt)
-          case elt
-          when BlockingExpr
-            # +X | -X -> *
-            if @elements.reject!{|e|
-                e.symbol == elt.symbol && e.kind_of?(RequisiteExpr)
-              }
-              add(EmptyFeature.new)
-              return true
-            end
-          when RequisiteExpr
-            # -X | +X -> *
-            if @elements.reject!{|e|
-                e.symbol == elt.symbol && e.kind_of?(BlockingExpr)
-              }
-              add(EmptyFeature.new)
-              return true
-            end
-          end
-          return false
-        end
-      end
-
-      include UnificationMethod
-
-      # Make an expander for response test.
-      def expander
-        Enumerator.new do |y|
-          @elements.each do |elt|
-            elt.kind_of?(AndExpr) ? elt.expander.each {|e| y << e } : y << elt
-          end
+          CompoundFeature.new(pieces: pieces)
         end
       end
     end
 
-    class Sentence < Expr
-      ELIMINATIONS =
-        [ :eliminate_requisite_feature,
-          :eliminate_blocking_feature,
-          :eliminate_preferred_feature,
-          :eliminate_or_clause_including_empty_feature,
-          :eliminate_possible_feature
-        ]
-
-      module EliminationMethod
-        def eliminate_requisite_feature(provider, request)
-          # (^X & Γ <- +X & Δ) -> Γ & Δ
-          # (!X & Γ <- +X & Δ) -> Γ & Δ
-          request.elements.each do |r|
-            next unless r.kind_of?(RequisiteExpr)
-            provider.elements.each do |p|
-              next unless p.symbol == r.symbol
-              next unless p.kind_of?(PossibleExpr) || p.kind_of?(RestrictiveExpr)
-              # eliminate only if Γ dosen't include same symbol feature
-              next if provider.elements.any? {|e|
-                p.symbol == e.symbol && not(e.kind_of?(p.class))
-              }
-              # eliminate only if Δ dosen't include same symbol feature
-              next if request.elements.any? {|e|
-                r.symbol == e.symbol && not(e.kind_of?(r.class))
-              }
-              # eliminate
-              _provider = provider.clone.tap{|x| x.delete(p)}
-              _request = request.clone.tap{|x| x.delete(r)}
-              return true, _provider, _request
-            end
-          end
-          return false
-        end
-        module_function :eliminate_requisite_feature
-
-        def eliminate_blocking_feature(provider, request)
-          # (Γ <- -X & Δ) -> Γ & Δ
-          request.elements.each do |r|
-            next unless r.kind_of?(BlockingExpr)
-            # eliminate only if Γ dosen't include same symbol feature
-            next if request.elements.any? {|e|
-              r.symbol == e.symbol && not(e.kind_of?(r.class))
-            }
-            # eliminate only if Δ dosen't include same symbol feature
-            next if provider.elements.any? {|e|
-              r.symbol == e.symbol && not(e.kind_of?(p.class))
-            }
-            # eliminate
-            _request = request.clone.tap{|x| x.delete(r)}
-            return true, provider, _request
-          end
-          return false
-        end
-        module_function :eliminate_blocking_feature
-
-        def eliminate_preferred_feature(provider, request)
-          # (Γ <- ?X & Δ) -> (Γ <- Δ)
-          if request.elements.any? {|e| e.kind_of?(PreferredExpr)}
-            _request = request.clone.tap do |x|
-              x.elements.reject! {|e| e.kind_of?(PreferredExpr)}
-            end
-            return true, provider, _request
-          end
-          return false
-        end
-        module_function :eliminate_preferred_feature
-
-        def eliminate_or_clause_including_empty_feature(provider, request)
-          # ((* | Γ1) & Γ2 <- *) -> (Γ2 <- *)
-          return false unless request.empty?
-          provider.elements.each do |elt|
-            next unless elt.kind_of?(OrExpr)
-            next unless elt.elements.include?(EmptyFeature.new)
-            _provider = provider.clone.tap{|x| x.delete(elt)}
-            return true, _provider, request
-          end
-          return false
-        end
-        module_function :eliminate_or_clause_including_empty_feature
-
-        def eliminate_possible_feature(provider, request)
-          # (^X & Γ <- Δ) -> (Γ <- Δ)
-          provider.elements.each do |p|
-            next unless p.kind_of?(PossibleExpr)
-            # eliminate only if Γ dosen't include same symbol feature
-            next if provider.elements.any? {|e|
-              p.symbol == e.symbol && not(e.kind_of?(p.class))
-            }
-            # eliminate only if Δ dosen't include same symbol feature
-            next if request.elements.any? {|e|
-              p.symbol == e.symbol && not(e.kind_of?(p.class))
-            }
-            # eliminate
-            _provider = provider.clone.tap{|x| x.delete(p)}
-            return true, _provider, request
-          end
-          return false
-        end
-        module_function :eliminate_possible_feature
-      end
-
-      include EliminationMethod
-
-      def initialize(provider, request)
-        @provider = AndExpr.new(provider.simplify)
-        @request = AndExpr.new(request.simplify)
-        super()
-      end
-
-      # Return true if the provider expression can respond to the request.
-      def decide
-        result = false
-        begin
-          @provider.expander.each do |provider|
-            @request.expander.each do |request|
-              if match(provider, request)
-                result = true
-                raise StopIteration
-              end
-            end
-          end
-        rescue StopIteration
-        end
-        return result
-      end
-
-      private
-
-      def match(provider, request)
-        _provider, _request = provider, request
-        ELIMINATIONS.each do |elim|
-          result, new_provider, new_request = __send__(elim, provider, request)
-          if result
-            _provider = new_provider
-            _request = new_request
-            break
-          end
-        end
-        if _provider.simplify.empty? && _request.simplify.empty?
-          return true
-        else
-          if provider == _provider and request == _request
-            return false
-          else
-            return match(_provider, _request)
-          end
+    TypeFeature.instance_eval do
+      # Build a compound feature.
+      define_pione_method("&", [TypeFeature], TypeFeature) do |env, rec, other|
+        rec.map2(other) do |rec_piece, other_piece|
+          CompoundFeature.build(rec_piece, other_piece)
         end
       end
-    end
 
-  #   class FeatureSequence < Sequence
-  #     set_pione_model_type TypeFeature
-  #     set_element_class Feature::Expr
-  #   end
-  end
+      # Return true if the request feature accepts the provider feature.
+      define_pione_method("match", [TypeFeature], TypeBoolean) do |env, rec, other|
+        raise ArgumentError.new(rec) if rec.feature_type == :request
+        BooleanSequence.of(rec.match(other))
+      end
 
-  TypeFeature.instance_eval do
-    define_pione_method("==", [TypeFeature], TypeBoolean) do |vtable, rec, other|
-      PioneBoolean.new(rec == other).to_seq
-    end
-
-    define_pione_method("!=", [TypeFeature], TypeBoolean) do |vtable, rec, other|
-      PioneBoolean.not(rec.call_pione_method(vtable, "==", other)).to_seq
-    end
-
-    define_pione_method("as_string", [], TypeString) do |vtable, rec|
-      PioneString.new(rec.as_string).to_seq
-    end
-
-    define_pione_method("str", [], TypeString) do |vtable, rec|
-      rec.call_pione_method(vtable, "as_string")
+      # Return string format of the feature.
+      define_pione_method("as_string", [], TypeString) do |env, rec|
+        PioneString.of(rec.textize)
+      end
     end
   end
 end

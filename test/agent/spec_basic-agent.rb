@@ -1,66 +1,117 @@
 require_relative '../test-util'
 
 class TestAgentType < Agent::BasicAgent
-  set_agent_type :test_agent_type
+  set_agent_type :test_agent_type, self
 end
 
 class TestStateTransition < Agent::BasicAgent
-  define_state :test1
-  define_state :test2
-  define_state :test3
+  define_transition :test1
+  define_transition :test2
+  define_transition :test3
 
-  define_state_transition :initialized => :test1
-  define_state_transition :test1 => :test2
-  define_state_transition :test2 => :test3
-  define_state_transition :test3 => :terminated
+  chain :init => :test1
+  chain :test1 => :test2
+  chain :test2 => :test3
+  chain :test3 => :terminate
+
+  attr_reader :history
+
+  def initialize
+    super()
+    @history = []
+  end
+
+  def transit_to_init
+    @history << :init
+  end
+
+  def transit_to_test1
+    @history << :test1
+  end
+
+  def transit_to_test2
+    @history << :test2
+  end
+
+  def transit_to_test3
+    @history << :test3
+  end
+
+  def transit_to_terminate
+    @history << :terminate
+  end
 end
 
 class TestLoopStateTransition < Agent::BasicAgent
-  define_state :test
+  define_transition :test
 
-  define_state_transition :initialized => :test
-  define_state_transition :test => :test
+  chain :init => :test
+  chain :test => :test
 end
 
 class TestConditionalStateTransition < Agent::BasicAgent
-  define_state :test
-  define_state :testA
-  define_state :testB
+  define_transition :test
+  define_transition :testA
+  define_transition :testB
 
-  define_state_transition :initialized => :test
-  define_state_transition :test => lambda{|agent,result| agent.next_state }
-  define_state_transition :testA => :test
-  define_state_transition :testB => :test
+  chain :init => :test
+  chain :test => lambda{|agent,result| agent.next_transition }
+  chain :testA => :test
+  chain :testB => :test
 
-  attr_reader :next_state
+  attr_reader :next_transition
+  attr_reader :a
+  attr_reader :b
+
+  def initialize
+    super()
+    @a = 0
+    @b = 0
+  end
 
   def transit_to_test
-    case @next_state
+    case @next_transition
     when nil
-      @next_state = :testA
+      @next_transition = :testA
     when :testA
-      @next_state = :testB
+      @next_transition = :testB
     when :testB
-      @next_state = :terminated
+      @next_transition = :terminate
     end
+  end
+
+  def transit_to_testA
+    @a += 1
+  end
+
+  def transit_to_testB
+    @b += 1
   end
 end
 
 class TestExceptionTransition < Agent::BasicAgent
-  define_state :test
-  define_state :ehandler
+  define_transition :test
+  define_transition :ehandler
 
-  define_state_transition :initialized => :test
-  define_state_transition :test => :terminated
-  define_state_transition :ehandler => :terminated
+  chain :init => :test
+  chain :test => :terminate
+  chain :ehandler => :terminate
 
   define_exception_handler RuntimeError => :ehandler
+
+  attr_reader :ehandled
+
+  def initialize
+    super()
+    @ehandled = 0
+  end
 
   def transit_to_test
     raise RuntimeError.new(:test_exception)
   end
 
   def transit_to_ehandler(e)
+    @ehandled +=1
   end
 end
 
@@ -73,98 +124,64 @@ describe 'Pione::Agent::BasicAgent' do
   end
 
   describe 'simple transition' do
-    it 'should return states' do
-      states = TestStateTransition.states
-      states.should.include :initialized
-      states.should.include :test1
-      states.should.include :test2
-      states.should.include :test3
-      states.should.include :terminated
-      states.should.include :error
-    end
-
     it 'should transit' do
-      ts = TestStateTransition.new
-      ts.current_state.should == nil
-      ts.transit
-      ts.should.initialized
-      ts.transit
-      ts.should.test1
-      ts.transit
-      ts.should.test2
-      ts.transit
-      ts.should.test3
-      ts.transit
-      ts.should.terminated
-      should.raise(Agent::TransitionError) { ts.transit }
+      agent = TestStateTransition.start
+      agent.wait_until_terminated
+      agent.should.terminated
+      agent.history.should == [:init, :test1, :test2, :test3, :terminate]
     end
 
     it 'should run' do
-      ts = TestStateTransition.start
-      ts.wait_till(:terminated)
-      ts.should.terminated
-      should.raise(Agent::TransitionError) { ts.start }
+      agent = TestStateTransition.start
+      agent.wait_until_terminated
+      agent.should.terminated
     end
 
     it 'should terminate' do
-      ts = TestStateTransition.new
-      ts.transit # to initialized
-      ts.transit # to test1
-      ts.terminate
-      ts.should.terminated
-      should.raise(Agent::TransitionError) { ts.transit }
+      agent = TestStateTransition.start
+      agent.terminate
+      agent.wait_until_terminated
+      agent.should.terminated
     end
   end
 
   describe 'loop transition' do
     it 'should loop' do
-      ts = TestLoopStateTransition.new
-      100.times { ts.transit }
-      ts.should.test
+      agent = TestLoopStateTransition.new
+      should.raise(Timeout::Error) do
+        timeout(3) do
+          agent.start
+          agent.chain_threads.list.each {|th| th.join}
+        end
+      end
+      agent.terminate
+      agent.should.terminated
     end
 
     it 'should terminate' do
-      ts = TestLoopStateTransition.start
-      sleep 0.1
-      ts.terminate
-      ts.should.terminated
-      should.raise(Agent::TransitionError) { ts.transit }
+      agent = TestLoopStateTransition.start
+      sleep 1
+      agent.terminate
+      agent.should.terminated
     end
   end
 
   describe 'conditional transition' do
     it 'should transit' do
-      ts = TestConditionalStateTransition.new
-      ts.current_state.should.nil
-      ts.transit
-      ts.should.initialized
-      ts.transit
-      ts.should.test
-      ts.transit
-      ts.should.testA
-      ts.transit
-      ts.should.test
-      ts.transit
-      ts.should.testB
-      ts.transit
-      ts.should.test
-      ts.transit
-      ts.should.terminated
-      should.raise(Agent::TransitionError) { ts.transit }
+      agent = TestConditionalStateTransition.start
+      agent.wait_until_terminated
+      agent.should.terminated
+      agent.a.should == 1
+      agent.b.should == 1
     end
   end
 
   describe 'exception handling transition' do
     it 'should handle an exception' do
-      ts = TestExceptionTransition.new
-      ts.current_state.should.nil
-      ts.transit
-      ts.should.initialized
-      ts.transit
-      ts.should.ehandler
-      ts.transit
-      ts.should.terminated
-      should.raise(Agent::TransitionError) { ts.transit }
+      agent = TestExceptionTransition.start
+      agent.wait_until_terminated
+      agent.should.terminated
+      agent.ehandled.should == 1
     end
   end
 end

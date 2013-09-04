@@ -32,7 +32,7 @@ module Pione
           # evaluate it and print the result
           $stdout.puts Pione.val(str, domain_info)
           exit
-        rescue Model::UnboundVariableError => e
+        rescue Lang::UnboundError => e
           if option[:domain_info].exist?
             raise
           else

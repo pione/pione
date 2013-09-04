@@ -193,6 +193,7 @@ module Pione
     class TaskProcessRecord < ProcessRecord
       set_type :task_process
       field :name
+      field :package_id
       field :rule_name
       field :rule_type
       field :inputs

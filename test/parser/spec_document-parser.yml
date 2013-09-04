@@ -1,77 +1,29 @@
-toplevel_element:
+package_context:
   valid:
-    # parameter line
-    - "param $X := 1"
-    # parameter block
-    - |
-      Param
-        $X := 1
-        $Y := 2
-        $Z := 3
-      End
-    # rule definition
-    - |
+    - | # param, variable binding, and rule block
+      param $X := 1
+      $Y := true
+      
       Rule Test
         input '*.txt'
         output '{$*}.result'
       Action
         rev {$I[1]} > {$O[1]}
       End
-    # assignment
-    - "$X := 1"
-param_block:
-  valid:
-    # empty block
-    - |
-      Param
-      End
-    # one line block
-    - |
-      Param
-        $X := 1
-      End
-    # multi line block
-    - |
+    - | # param block, rule block, and rule binding
       Param
         $X := 1
         $Y := 2
         $Z := 3
       End
-    # multi line with empty line
-    - |
-      Param
-        $X := 1
-        
-        $Y := 2
+
+      Rule Test
+        input '*.txt'
+        output '{$*}.result'
+        param $A := 1
+      Action
+        rev {$I[1]} > {$O[1]}
       End
-    # one line with comment
-    - |
-      Param
-        # param $X := 1
-        $X := 1
-      End
-    # multi line with comments
-    - |
-      Param
-        # param $X := 1
-        $X := 1
-        # param $Y := 2
-        $Y := 2
-        # param $Z := 3
-        $Z := 3
-      End
-    # basic param block
-    - |
-      Basic Param
-        $X := 1
-        $Y := 2
-        $Z := 3
-      End
-    # advanced param block
-    - |
-      Advanced Param
-        $X := 1
-        $Y := 2
-        $Z := 3
-      End
+
+      rule Test2 := Test
 

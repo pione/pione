@@ -253,7 +253,7 @@ describe 'Pione::Parser::CommonParser' do
     end
   end
 
-  TestUtil::Parser.spec(Pione::Parser::CommonParser, __FILE__, self)
+  TestUtil::Parser.spec(__FILE__, self)
 end
 
 

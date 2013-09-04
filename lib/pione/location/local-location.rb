@@ -22,6 +22,7 @@ module Pione
           @path.dirname.mkpath unless @path.dirname.exist?
           @path.open("w"){|f| f.write(data)}
         end
+        return self
       end
 
       def append(data)
@@ -30,6 +31,7 @@ module Pione
         else
           create(data)
         end
+        return self
       end
 
       def read

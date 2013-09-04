@@ -143,7 +143,10 @@ module Pione
       def print_result(parser, str)
         begin
           stree = parser.parse(str)
-          model = DocumentTransformer.new.apply(stree)
+          transformer_option = {}
+          transformer_option[:package_name] = option[:package_name] || "PioneSyntaxChecker"
+          transformer_option[:filename] = option[:filename] || "NoFile"
+          model = DocumentTransformer.new.apply(stree, transformer_option)
           if option[:syntax]
             puts "syntax:".color(:green)
             pp stree
@@ -155,7 +158,7 @@ module Pione
           if model.kind_of?(Array)
             model.each {|m| p m}
           else
-            p model.eval(VariableTable.new)
+            p model.eval(Lang::Environment.new)
           end
         rescue Pione::Parser::ParserError, Parslet::ParseFailed => e
           msg = "Pione syntax error: %s (%s)" % [e.message, e.class.name]

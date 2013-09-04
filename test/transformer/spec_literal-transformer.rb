@@ -60,20 +60,52 @@ describe 'Pione::Transformer::LiteralTransformer' do
     test("'a\\\"'", DataExprSequence.of("a\""))
 
     # null
-    test("null", DataExprSequence.of(DataExprNull.instance))
+    test("null", DataExprSequence.of(DataExprNull.new))
   end
 
-  transformer_spec('package_name', :package_name) do
-    test("&abc", PackageExpr.new('abc'))
-    test("&ABC", PackageExpr.new('ABC'))
+  transformer_spec('package_expr', :package_expr) do
+    test("&abc", PackageExprSequence.of('abc'))
+    test("&ABC", PackageExprSequence.of('ABC'))
   end
 
-  transformer_spec('rule_name', :rule_name) do
-    test("abc", RuleExpr.new(PackageExpr.new("Main"), "abc"))
+  transformer_spec('rule_expr', :rule_expr) do
+    test("abc", RuleExprSequence.of("abc"))
   end
 
-  transformer_spec('ticket', :ticket) do
-    test("<T>", TicketExpr.new("T").to_seq)
-    test("<t>", TicketExpr.new("t").to_seq)
+  transformer_spec('ticket_expr', :ticket_expr) do
+    test("<T>", TicketExprSequence.of("T"))
+    test("<t>", TicketExprSequence.of("t"))
+  end
+
+  transformer_spec("parameters", :expr) do
+    test("{}", ParameterSetSequence.new)
+
+    test "{X: 1}" do |params|
+      params.should.kind_of Model::ParameterSetSequence
+      params.pieces.first.table["X"].should == IntegerSequence.of(1)
+    end
+
+    test "{X: 1, Y: 2}" do |params|
+      params.should.kind_of Model::ParameterSetSequence
+      params.pieces.first.table["X"].should == IntegerSequence.of(1)
+      params.pieces.first.table["Y"].should == IntegerSequence.of(2)
+    end
+
+    test "{X: \"a\", Y: \"b\", Z: \"c\"}" do |params|
+      params.should.kind_of Model::ParameterSetSequence
+      params.pieces.first.table["X"].should == StringSequence.of("a")
+      params.pieces.first.table["Y"].should == StringSequence.of("b")
+      params.pieces.first.table["Z"].should == StringSequence.of("c")
+    end
+  end
+
+  transformer_spec("feature", :feature) do
+    test('+A', Model::FeatureSequence.of(Model::RequisiteFeature.new("A")))
+    test('-A', Model::FeatureSequence.of(Model::BlockingFeature.new("A")))
+    test('?A', Model::FeatureSequence.of(Model::PreferredFeature.new("A")))
+    test('^A', Model::FeatureSequence.of(Model::PossibleFeature.new("A")))
+    test('!A', Model::FeatureSequence.of(Model::RestrictiveFeature.new("A")))
+    test('*', Model::FeatureSequence.of(EmptyFeature.new))
+    test('**', Model::FeatureSequence.of(AlmightyFeature.new))
   end
 end

@@ -26,10 +26,9 @@ module Pione
           :system_machine => Uname.machine,
           :system_version => Uname.version,
           :system_release => Uname.release,
-          :params => handler.params.textize,
-          :original_params => handler.original_params.textize,
+          :params => handler.param_set.textize,
           :inputs => inputs_string(handler.inputs),
-          :domain => handler.domain,
+          :domain => handler.domain_id,
           :domain_location => @domain_location.uri.to_s,
           :dry_run => handler.dry_run.to_s
         }

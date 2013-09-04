@@ -1,12 +1,11 @@
 require_relative '../test-util'
 
-class FakeHandler < RuleHandler::BasicHandler
+class FakeHandler < RuleEngine::BasicHandler
   DOMAIN_LOCATION = Location[Temppath.create]
 
   def initialize
-    @params = Parameters.new(Variable.new("X") => PioneString.new("a").to_seq)
-    @original_params = @params
-    @inputs = [Tuple::DataTuple.new(name: "A", domain: DOMAIN_LOCATION.to_s, location: DOMAIN_LOCATION + "A", time: Time.now)]
+    @param_set = ParameterSet.new(Variable.new("X") => StringSequence.of("a"))
+    @inputs = [[Tuple::DataTuple.new(name: "A", domain: DOMAIN_LOCATION.to_s, location: DOMAIN_LOCATION + "A", time: Time.now)]]
   end
 
   def domain_location

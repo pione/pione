@@ -1,3 +1,5 @@
+Thread.abort_on_exception = true
+
 #
 # load libraries
 #
@@ -31,6 +33,7 @@ require 'logger'
 require 'ostruct'
 require 'net/ftp'
 require 'net/http'
+require 'fiber'
 
 # gems
 require 'uuidtools'
@@ -52,39 +55,40 @@ require 'syslog-logger'
 require 'zipruby'
 require 'retriable'
 require 'childprocess'
+require 'lettercase/core_ext'
 
+# configuration for childprcess
 ChildProcess.posix_spawn = true
 
 #
 # load pione
 #
 
-require 'pione/version'
-require 'pione/util'
-require 'pione/patch'
-require 'pione/uri-scheme'
-require 'pione/location'
-require 'pione/log'
-require 'pione/system'
-
-Pione.module_exec {const_set(:PioneObject, Pione::System::PioneObject)}
-Pione.module_exec {const_set(:Global, Pione::System::Global)}
-
-require 'pione/relay'
-require 'pione/tuple-space'
-require 'pione/rule-handler.rb'
-require 'pione/model'
-require 'pione/component'
-require 'pione/tuple'
-require 'pione/parser'
-require 'pione/transformer'
-require 'pione/agent'
-require 'pione/front'
-require 'pione/command'
+require 'pione/version'     # PIONE version information
+require 'pione/util'        # various helper functions
+require 'pione/patch'       # patches for libraries
+require 'pione/uri-scheme'  # PIONE's special URI schemes
+require 'pione/location'    # location system for data and package
+require 'pione/log'         # log and format
+require 'pione/global'      # global variable manager
+require 'pione/system'      # PIONE system functions
+require 'pione/relay'       # relay connection
+require 'pione/tuple-space' # tuple space functions
+require 'pione/rule-engine' # rule processing behaviors
+require 'pione/model'       # models for rule
+require 'pione/component'   # rule engine component
+require 'pione/lang'        # PIONE languge
+require 'pione/tuple'       # tuple definitions
+require 'pione/parser'      # syntax tree builder
+require 'pione/transformer' # model conversion
+require 'pione/agent'       # agent system
+require 'pione/front'       # command front interface
+require 'pione/command'     # command definitions
 
 #
 # other settings
 #
+
 module Pione
   include System
   include Relay
@@ -102,6 +106,10 @@ module Pione
   module_function :debug_mode?
 end
 
+# omit toplevel namespace
 include Pione
-Thread.abort_on_exception = true
+
+# initialize PIONE system
 Pione::System::Init.new.init
+
+# now, we are enable to start processing!

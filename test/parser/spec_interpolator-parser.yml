@@ -1,0 +1,61 @@
+embeded_variable:
+  valid:
+    - "{$a}"
+    - "{$abc}"
+    - "{$abc }"
+    - "{$abc.as_string}"
+    - "{$abc.m(true)}"
+    - "{$a + $b}"
+  invalid:
+    - "{ $a}"
+    - "{$a"
+
+embeded_expr:
+  valid:
+    - "<? 1 ?>"
+    - "<?1?>"
+    - "<? 1?>"
+    - "<?1 ?>"
+    - "<? 1 + 1 ?>"
+    - "<? $a ?>"
+    - "<? 1.m ?>"
+    - "<? 1.m(true) ?>"
+  invalid:
+    - "< ? 1 ? >"
+    - "<? 1 ? >"
+    - "< ? 1 ?>"
+    - "<? 1"
+    - "<? .. ?>"
+
+narrative:
+  valid:
+    - "a"
+    - "abc"
+    - " abc "
+    - " abc \n abc "
+    - "${abc}"
+    # match "{$" in the case of invalid variable name
+    - "a {$ bc }"
+  invalid:
+    # embeded variable
+    - "{$abc}"
+    # broken embeded variable
+    - "a {$abc"
+    # embeded expression
+    - "<? 1 ?>"
+    # broken embeded expression
+    - "<? 1"
+    # empty string
+    - ""
+
+interpolators:
+  valid:
+    # narrative and expressions
+    - "abc {$a} def"
+    - "abc <? 1 ?> def"
+    # as narrative
+    - "{ $a"
+    - "< ? 1"
+  invalid:
+    - "{$a"
+    - "<? 1"

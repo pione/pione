@@ -5,12 +5,12 @@ module Pione
       # @yield []
       #   target block
       # @return [void]
-      def ignore_exception(&b)
-        begin
-          b.call
-        rescue Exception => e
-          ErrorReport.warn("the error ignored", nil, e, __FILE__, __LINE__)
-        end
+      def ignore_exception(*exceptions, &b)
+        exceptions = [Exception] if exceptions.empty?
+        b.call
+      rescue *exceptions => e
+        ErrorReport.warn("the error ignored", nil, e, __FILE__, __LINE__)
+        return false
       end
 
       # Returns the hostname of the machine.

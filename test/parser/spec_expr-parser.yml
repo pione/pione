@@ -21,22 +21,14 @@ message:
     - ".abc(1, \"s\", '*.txt')"
     - ".abc(1.0.abc(3.def))"
 
-data_expr:
-  valid:
-    - "'test.a'"
-    - "null"
-
 rule_expr:
   valid:
-    - "&package:rule_name"
-    - ":rule_name"
-    - "rule_name"
+    - "A"
   invalid:
-    - "$var:rule_name"
-    - "&package:$var"
-    - "$var:$var"
+    # rule in package referred by generic expression
+    - "&P.rule(A)"
 
-parameters:
+parameter_set:
   valid:
     - "{}"
     - "{var: 1}"

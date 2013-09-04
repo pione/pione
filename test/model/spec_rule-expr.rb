@@ -14,15 +14,5 @@ describe 'Model::RuleExpr' do
     @a.should.not == @b
   end
 
-  it 'should set/get input ticket expression' do
-    ticket = TicketExpr.new("A").to_seq
-    @a.add_input_ticket_expr(ticket).input_ticket_expr.should == ticket
-  end
-
-  it 'should set/get output ticket expression' do
-    ticket = TicketExpr.new("A").to_seq
-    @a.add_output_ticket_expr(ticket).output_ticket_expr.should == ticket
-  end
-
   test_pione_method("rule-expr")
 end

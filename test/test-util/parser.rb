@@ -10,9 +10,7 @@ module TestUtil
     end
     module_function :make_test_parser
 
-    def spec(mod, rb, context)
-      #parser = make_test_parser(mod)
-      parser = Pione::Parser::DocumentParser
+    def spec(rb, context, parser=Pione::Parser::DocumentParser)
       basename = File.basename(rb, ".rb")
       path = File.join(File.dirname(rb), basename + ".yml")
       YAML.load(File.read(path)).each do |name, testcase|

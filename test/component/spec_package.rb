@@ -2,8 +2,9 @@ require_relative '../test-util'
 
 describe "Pione::Component::Package" do
   before do
+    @env = TestUtil::Lang.env
     @location = TestUtil::Package.get("TestPackage1")
-    @package = Component::PackageReader.new(@location).read
+    @package = Component::PackageReader.read(@location)
     @case1 = @package.scenarios[0]
     @case2 = @package.scenarios[1]
     @case3 = @package.scenarios[2]
@@ -34,19 +35,15 @@ describe "Pione::Component::Package" do
     names.should.include "Case3"
   end
 
-  it "should get docuemtns" do
-    @package.documents.size.should == 1
+  it "should get the context" do
+    @package.context.should.kind_of(Lang::PackageContext)
+    @package.context.elements.size.should > 0
   end
 
   it "should get rules" do
-    @package.rules.map{|rule| rule.path}.tap do |x|
-      x.should.include("&TestPackage1:Main")
-      x.should.include("&TestPackage1:Count")
-    end
-  end
-
-  it "should get a main rule" do
-    @package.find_rule("Main").path.should == "&TestPackage1:Main"
+    package_id = @package.eval(@env)
+    @env.rule_get(RuleExpr.new(package_id: package_id, name: "Main")).should.kind_of(Lang::RuleDefinition)
+    @env.rule_get(RuleExpr.new(package_id: package_id, name: "Count")).should.kind_of(Lang::RuleDefinition)
   end
 
   it "should upload package files" do

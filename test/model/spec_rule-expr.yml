@@ -1,11 +1,27 @@
-"#==":
-  - "true" : "&Test:Main == &Test:Main"
-  - "false" : "&Test:Main == &Test:Count"
+"==":
+  - "true" : "Main == Main"
+  - "false" : "Main == Count"
 
-"#!=":
-  - "true" : "&Test:Main != &Test:Count"
-  - "false" : "&Test:Main != &Test:Main"
+"!=":
+  - "true" : "Main != Count"
+  - "false" : "Main != Main"
 
-"#params":
-  - "Main {N: 1}" : "Main.params({N: 1})"
+"param":
+  - "Main {N: 1}" : "Main.param({N: 1})"
+  - "Main {N: 2}" : "Main.param({N: 1}).param({N: 2})"
+  - "Main {B: 1}" : "Main.param({A: 1}).param({B: 1})"
 
+"==>":
+  - "<T>" : "(A ==> <T>).output_tickets"
+  - "<T1> | <T2>" : "(A ==> (<T1> | <T2>)).output_tickets"
+  - "<T>" : "((A | B) ==> <T>)[1].output_tickets"
+  - "<T>" : "((A | B) ==> <T>)[2].output_tickets"
+
+">>>":
+  - "2" : "(A >>> B).length"
+  - "0" : "(A >>> B)[1].input_tickets.length"
+  - "1" : "(A >>> B)[1].output_tickets.length"
+  - "1" : "(A >>> B)[2].input_tickets.length"
+  - "0" : "(A >>> B)[2].output_tickets.length"
+  # generate each ticket for each pairs
+  - "false" : "(A >>> B)[1].output_tickets == (A >>> B)[2].input_tickets"

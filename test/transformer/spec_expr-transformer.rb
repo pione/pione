@@ -45,9 +45,9 @@ describe 'Pione::Transformer::ExprTransformer' do
     test "($X == \"a\") && ($Y == \"b\")" do |msg|
       msg.should.kind_of Model::Message
       msg.name.should == "&&"
-      msg.receiver.should == Message.new("==", $var_x, StringSequence.new([$a]))
+      msg.receiver.should == Message.new("==", $var_x, [StringSequence.new([$a])])
       msg.arguments.size.should == 1
-      msg.arguments[0].should == Message.new("==", $var_y, StringSequence.new([$b]))
+      msg.arguments[0].should == Message.new("==", $var_y, [StringSequence.new([$b])])
     end
   end
 
@@ -96,28 +96,28 @@ describe 'Pione::Transformer::ExprTransformer' do
     test "Test.as_string" do |msg|
       msg.should.kind_of Model::Message
       msg.name.should == "as_string"
-      msg.receiver.should == RuleExpr.new(PackageExpr.new("Main"), "Test")
+      msg.receiver.should == RuleExprSequence.of("Test")
       msg.arguments.should.empty
     end
 
     test "'*.txt'.all" do |msg|
       msg.should.kind_of Model::Message
       msg.name.should == "all"
-      msg.receiver.should == DataExpr.new("*.txt").to_seq
+      msg.receiver.should == DataExprSequence.of("*.txt")
       msg.arguments.should.empty
     end
 
     test "'*.txt'.all()" do |msg|
       msg.should.kind_of Model::Message
       msg.name.should == "all"
-      msg.receiver.should == DataExpr.new("*.txt").to_seq
+      msg.receiver.should == DataExprSequence.of("*.txt")
       msg.arguments.should.empty
     end
 
     test "'*.txt'.all(true)" do |msg|
       msg.should.kind_of Model::Message
       msg.name.should == "all"
-      msg.receiver.should == DataExpr.new("*.txt").to_seq
+      msg.receiver.should == DataExprSequence.of("*.txt")
       msg.arguments.size.should == 1
       msg.arguments[0].should == BooleanSequence.of(true)
     end
@@ -144,28 +144,6 @@ describe 'Pione::Transformer::ExprTransformer' do
       msg.name.should == "not"
       msg.receiver.should == BooleanSequence.of(true)
       msg.arguments.should.empty
-    end
-  end
-
-  transformer_spec("parameters", :expr) do
-    test("{}", Parameters.new({}))
-
-    test "{X: 1}" do |params|
-      params.should.kind_of Model::Parameters
-      params.get($var_x).should == IntegerSequence.of(1)
-    end
-
-    test "{X: 1, Y: 2}" do |params|
-      params.should.kind_of Model::Parameters
-      params.get($var_x).should == IntegerSequence.of(1)
-      params.get($var_y).should == IntegerSequence.of(2)
-    end
-
-    test "{X: \"a\", Y: \"b\", Z: \"c\"}" do |params|
-      params.should.kind_of Model::Parameters
-      params.get($var_x).should == StringSequence.new([$a])
-      params.get($var_y).should == StringSequence.new([$b])
-      params.get($var_z).should == StringSequence.new([$c])
     end
   end
 end

@@ -2,16 +2,19 @@ module Pione
   module Util
     module PackageParametersList
       class << self
-        # Print parameters list of the package.
+        # Print parameter list of the package.
         #
         # @param package [Component::Package]
         #   package
-        def print(package)
-          unless package.params.empty?
-            print_params_by_block("Basic Parameters", package.params.basic)
-            print_params_by_block("Advanced Parameters", package.params.advanced)
+        def print(env, package_id)
+          definition = env.package_get(PackageExpr.new(package_id: package_id))
+          params = definition.param_definition.values
+          if params.size > 0
+            group = params.group_by {|param| param.type}
+            print_params_by_block("Basic Parameters", group[:basic]) if group[:basic]
+            print_params_by_block("Advanced Parameters", group[:advanced]) if group[:advanced]
           else
-            puts "there are no user parameters in %s" % package.name
+            puts "there are no user parameters in %s" % env.current_package_id
           end
         end
 
@@ -21,8 +24,8 @@ module Pione
         def print_params_by_block(header, target_params)
           unless target_params.empty?
             puts "%s:" % header
-            target_params.data.each do |var, val|
-              puts "  %s := %s" % [var.name, val.textize]
+            target_params.each do |param|
+              puts "  %s := %s" % [param.name, param.value.textize]
             end
           end
         end

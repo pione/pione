@@ -4,61 +4,46 @@ document_location = Location[File.dirname(__FILE__)] + "spec_document.pione"
 
 describe 'Pione::Component::Document' do
   before do
-    @document = Component::Document.load(document_location)
+    @env = TestUtil::Lang.env
+    @opt = {package_name: "Test", filename: "spec_document.pione"}
   end
 
   it 'should load a document from a file' do
-    @document.rules.map{|rule| rule.name}.tap do |x|
-      x.should.include "Main"
-      x.should.include "RuleA"
-      x.should.include "RuleB"
-      x.should.include "RuleC"
-    end
+    Component::Document.load(document_location, @opt).eval(@env)
+    @env.rule_get(RuleExpr.new("Main")).should.kind_of Lang::RuleDefinition
+    @env.rule_get(RuleExpr.new("RuleA")).should.kind_of Lang::RuleDefinition
+    @env.rule_get(RuleExpr.new("RuleB")).should.kind_of Lang::RuleDefinition
+    @env.rule_get(RuleExpr.new("RuleC")).should.kind_of Lang::RuleDefinition
   end
 
   it 'should load a document from a string' do
-    Component::Document.parse(document_location.read).should == @document
-  end
-
-  it 'should load a document with package name' do
-    document = Component::Document.load(document_location, "Test")
-    document.package_name.should == "Test"
-    document.find("Main").package_name == "Test"
-  end
-
-  it 'should get rule by name' do
-    @document.find("Main").should.kind_of(Component::FlowRule)
-    @document.find("RuleA").should.kind_of(Component::ActionRule)
-    @document.find("RuleB").should.kind_of(Component::ActionRule)
-    @document.find("RuleC").should.kind_of(Component::ActionRule)
+    Component::Document.parse(document_location.read, @opt).eval(@env)
+    @env.rule_get(RuleExpr.new("Main")).should.kind_of Lang::RuleDefinition
+    @env.rule_get(RuleExpr.new("RuleA")).should.kind_of Lang::RuleDefinition
+    @env.rule_get(RuleExpr.new("RuleB")).should.kind_of Lang::RuleDefinition
+    @env.rule_get(RuleExpr.new("RuleC")).should.kind_of Lang::RuleDefinition
   end
 
   it 'should have document parameters' do
-    @document.params["P1"].should == PioneString.new("a").to_seq
-    @document.params["P2"].should == PioneString.new("b").to_seq
-    @document.params["P3"].should == PioneString.new("c").to_seq
-    @document.params["P4"].should == PioneString.new("d").to_seq
-    @document.params["P5"].should == PioneString.new("e").to_seq
-    @document.params["P6"].should == PioneString.new("f").to_seq
-    user_params = @document.params.data.select{|var, val| var.user_param}.map{|var, val| var.name}
-    user_params.sort.should == ["P1", "P2", "P3", "P4", "P5"]
+    Component::Document.load(document_location, @opt).eval(@env)
+    definition = @env.package_get(PackageExpr.new(package_id: "Test"))
+    definition.param_definition["P1"].value.should == StringSequence.of("a")
+    definition.param_definition["P2"].value.should == StringSequence.of("b")
+    definition.param_definition["P3"].value.should == StringSequence.of("c")
+    definition.param_definition["P4"].value.should == StringSequence.of("d")
+    definition.param_definition["P5"].value.should == StringSequence.of("e")
+    definition.param_definition.should.not.has_key("P6")
+    definition.param_definition.should.not.has_key("X")
   end
 
   it 'should have document variable bindings' do
-    @document.find("Main").condition.params["X"].should == 1.to_pione.to_seq
-    @document.find("RuleA").condition.params["X"].should == 1.to_pione.to_seq
-    @document.find("RuleB").condition.params["X"].should == 1.to_pione.to_seq
-    @document.find("RuleC").condition.params["X"].should == 1.to_pione.to_seq
-  end
-
-  it 'should create root rule' do
-    root = @document.create_root_rule(@document.find("Main"), Model::Parameters.empty)
-    root.should.kind_of(Component::RootRule)
+    Component::Document.load(document_location, @opt).eval(@env)
+    @env.variable_get(Variable.new("X")).should == TestUtil::Lang.expr("1")
   end
 
   it 'should raise variable binding error' do
-    should.raise(VariableBindingError) do
-      Component::Document.parse <<-PIONE
+    should.raise(Lang::RebindError) do
+      Component::Document.parse(<<-PIONE, @opt).eval(@env)
         $X := 1
         $X := 2
       PIONE

@@ -5,22 +5,15 @@ require 'webrick'
 describe "Pione::Location::HTTPLocation" do
   before do
     @path = File.join(File.dirname(__FILE__), "spec_http-location")
-    logger = WEBrick::Log.new(StringIO.new("", "w"))
-    @server = WEBrick::HTTPServer.new(DocumentRoot: @path, Port: 54673, Logger: logger, AccessLog: logger)
-    @thread = Thread.new do
-      retriable(on: WEBrick::ServerError, tries: 10, interval: 2) do
-        @server.start
-      end
-    end
+    @server = TestUtil::WebServer.start(@path)
   end
 
   after do
-    @server.shutdown
-    @thread.kill
+    @server.terminate
   end
 
   def location(path)
-    Location["http://127.0.0.1:%s%s" % [@server.config[:Port], path]]
+    Location["http://127.0.0.1:%s%s" % [@server.port, path]]
   end
 
   behaves_like "http"

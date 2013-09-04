@@ -1,6 +1,6 @@
 shared "location" do
   it 'should create a file' do
-    @file.create("A")
+    @file.create("A").should == @file
     @file.read.should == "A"
   end
 

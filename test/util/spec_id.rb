@@ -6,17 +6,17 @@ describe "Pione::Util::TaskID" do
   before do
     @t1 = Tuple[:data].new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
     @t2 = Tuple[:data].new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
-    @p1 = Parameters.new({Variable.new("X") => PioneString.new("A").to_seq})
-    @p2 = Parameters.new({Variable.new("X") => PioneString.new("B").to_seq})
+    @p1 = ParameterSet.new(table: {"X" => StringSequence.of("A")})
+    @p2 = ParameterSet.new(table: {"X" => StringSequence.of("B")})
   end
 
   it "should generate task id" do
-    Util::TaskID.generate([], Parameters.empty).size.should > 0
+    Util::TaskID.generate([], ParameterSet.new).size.should > 0
   end
 
   it "should genereate different ids from different inputs" do
-    Util::TaskID.generate([@t1], Parameters.empty).should !=
-      Util::TaskID.generate([@t2], Parameters.empty)
+    Util::TaskID.generate([@t1], ParameterSet.new).should !=
+      Util::TaskID.generate([@t2], ParameterSet.new)
   end
 
   it "should generate differnt ids from different parameters" do
@@ -27,51 +27,68 @@ end
 
 describe "Pione::Util::DomainID" do
   before do
-    document1 = Component::Document.load(location, "ID1")
-    document2 = Component::Document.load(location, "ID2")
-    @r1 = document1.find("R1")
-    @r2 = document1.find("R2")
-    @r3 = document2.find("R1")
-    @r4 = document2.find("R2")
+    @env = TestUtil::Lang.env
+    @pid1 = Util::PackageID.generate(@env, "A")
+    @pid2 = Util::PackageID.generate(@env, "B")
+    @name1 = "R1"
+    @name2 = "R2"
     @t1 = Tuple[:data].new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
     @t2 = Tuple[:data].new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
-    @p1 = Parameters.new({Variable.new("X") => PioneString.new("A").to_seq})
-    @p2 = Parameters.new({Variable.new("X") => PioneString.new("B").to_seq})
+    @p0 = ParameterSet.new
+    @p1 = ParameterSet.new(table: {"X" => StringSequence.of("A")})
+    @p2 = ParameterSet.new(table: {"X" => StringSequence.of("B")})
   end
 
   it "should generate domain id" do
-    Util::DomainID.generate(@r1, [], Parameters.empty).size.should > 0
-    Util::DomainID.generate(@r2, [], Parameters.empty).size.should > 0
-    Util::DomainID.generate(@r3, [], Parameters.empty).size.should > 0
-    Util::DomainID.generate(@r4, [], Parameters.empty).size.should > 0
+    Util::DomainID.generate(@pid1, @name1, [], @p0).size.should > 0
+    Util::DomainID.generate(@pid1, @name2, [], @p0).size.should > 0
+    Util::DomainID.generate(@pid2, @name1, [], @p0).size.should > 0
+    Util::DomainID.generate(@pid2, @name2, [], @p0).size.should > 0
   end
 
   it "should generate same id from same rule, inputs, and parameters" do
-    Util::DomainID.generate(@r1, [], Parameters.empty).should ==
-      Util::DomainID.generate(@r1, [], Parameters.empty)
+    Util::DomainID.generate(@pid1, @name1, [], @p0).should ==
+      Util::DomainID.generate(@pid1, @name1, [], @p0)
   end
 
   it "should generate differnet ids from different packages" do
-    Util::DomainID.generate(@r1, [], Parameters.empty).should !=
-      Util::DomainID.generate(@r3, [], Parameters.empty)
-    Util::DomainID.generate(@r2, [], Parameters.empty).should !=
-      Util::DomainID.generate(@r4, [], Parameters.empty)
+    Util::DomainID.generate(@pid1, @name1, [], @p0).should !=
+      Util::DomainID.generate(@pid2, @name1, [], @p0)
+    Util::DomainID.generate(@pid1, @name2, [], @p0).should !=
+      Util::DomainID.generate(@pid2, @name2, [], @p0)
   end
 
   it "should generate differnet ids from different rules" do
-    Util::DomainID.generate(@r1, [], Parameters.empty).should !=
-      Util::DomainID.generate(@r2, [], Parameters.empty)
-    Util::DomainID.generate(@r3, [], Parameters.empty).should !=
-      Util::DomainID.generate(@r4, [], Parameters.empty)
+    Util::DomainID.generate(@pid1, @name1, [], @p0).should !=
+      Util::DomainID.generate(@pid1, @name2, [], @p0)
+    Util::DomainID.generate(@pid2, @name1, [], @p0).should !=
+      Util::DomainID.generate(@pid2, @name2, [], @p0)
   end
 
   it "should generate different ids from different inputs" do
-    Util::DomainID.generate(@r1, [@t1], Parameters.empty).should !=
-      Util::DomainID.generate(@r1, [@t2], Parameters.empty)
+    Util::DomainID.generate(@pid1, @name1, [@t1], @p0).should !=
+      Util::DomainID.generate(@pid1, @name1, [@t2], @p0)
   end
 
   it "should generate different ids from different parameters" do
-    Util::DomainID.generate(@r1, [], @p1).should !=
-      Util::DomainID.generate(@r1, [], @p2)
+    Util::DomainID.generate(@pid1, @name1, [], @p1).should !=
+      Util::DomainID.generate(@pid1, @name1, [], @p2)
   end
 end
+
+describe "Pione::Util::PackageID" do
+  it "should generate package id based on package name" do
+    env = TestUtil::Lang.env
+    id = Util::PackageID.generate(env, "Test")
+    id.should != "Test"
+    id.should.include "Test"
+  end
+
+  it "should generate different ids from same package name" do
+    env = TestUtil::Lang.env
+    id1 = Util::PackageID.generate(env, "Test")
+    id2 = Util::PackageID.generate(env, "Test")
+    id1.should != id2
+  end
+end
+

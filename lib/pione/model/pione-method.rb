@@ -30,37 +30,23 @@ module Pione
     end
 
     # PioneMethod is a class represents method in PIONE system.
-    class PioneMethod < Pione::PioneObject
-      attr_reader :name
-      attr_reader :inputs
-      attr_reader :output
-      attr_reader :body
-
-      # @param name [String]
-      #   method name
-      # @param inputs [Array<Type>]
-      #   input types
-      # @param output [Type]
-      #   ouutput types
-      def initialize(name, inputs, output, body)
-        @name = name
-        @inputs = inputs
-        @output = output
-        @body = body
-      end
+    class PioneMethod < StructX
+      member :method_type
+      member :name
+      member :inputs
+      member :output
+      member :body
 
       # Call the method with recevier and arguemnts.
-      #
-      # @param receiver [BasicModel]
-      #   receiver object
-      # @param args [Array<BasicModel>]
-      #   arguments
-      # @return [BasicModel]
-      #   the result
-      def call(vtable, receiver, *args)
-        output = receiver.pione_model_type.instance_exec(vtable, receiver, *args, &@body)
-        validate_output(receiver, output)
-        return output
+      def call(env, receiver, args)
+        _output = receiver.pione_type.instance_exec(env, receiver, *args, &body)
+        if _output.nil?
+          p self
+          p receiver
+          p args
+        end
+        validate_output(receiver, _output)
+        return _output
       end
 
       # Validate inputs data types for the method.
@@ -71,13 +57,13 @@ module Pione
       #   arguments
       # @return [Boolean]
       #   true if input data are valid
-      def validate_inputs(receiver, *args)
+      def validate_inputs(rec, args)
         # check size
-        return false unless @inputs.size == args.size
+        return false unless inputs.size == args.size
 
         # check type
-        @inputs.each_with_index do |input, i|
-          input = get_type(input, receiver)
+        inputs.each_with_index do |input, i|
+          input = get_type(input, rec)
           unless input.match(args[i])
             return false
           end
@@ -86,49 +72,26 @@ module Pione
       end
 
       # Validate output data type for the method.
-      #
-      # @param receiver_type [Type]
-      #   recevier type
-      # @param value [BasicModel]
-      #   output value
-      # @return [void]
       def validate_output(receiver, value)
-        output = get_type(@output, receiver)
-        unless output.match(value)
-          raise MethodInterfaceError.new(:output, @name, [output], [value])
+        _output = get_type(output, receiver)
+        unless _output.match(value)
+          raise MethodInterfaceError.new(:output, name, [_output], [value])
         end
       end
 
       # Get the input types of receiver.
-      #
-      # @param receiver [Callable]
-      #   receiver
-      # @return [Type]
-      #   input types
       def get_input_types(receiver)
-        @inputs.map{|input| get_type(input, receiver)}
+        inputs.map{|input| get_type(input, receiver)}
       end
 
       # Get the output type of receiver.
-      #
-      # @param receiver [Callable]
-      #   receiver
-      # @return [Type]
-      #   output type
       def get_output_type(receiver)
-        get_type(@output, receiver)
+        get_type(output, receiver)
       end
 
       private
 
       # Get a type object.
-      #
-      # @param type [Type, Symbol]
-      #   type object or special type symbol
-      # @param receiver [BasicModel]
-      #   receiver
-      # @return [Type]
-      #   type
       def get_type(type, receiver)
         case type
         when :index_type
@@ -136,7 +99,7 @@ module Pione
         when :element_type
           receiver.element_type
         when :receiver_type
-          receiver.pione_model_type
+          receiver.pione_type
         else
           type
         end

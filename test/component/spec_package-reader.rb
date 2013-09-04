@@ -45,6 +45,7 @@ describe "Pione::Component::PackageReader" do
 
   describe "directory package at local location" do
     before do
+      @env = TestUtil::Lang.env
       @location = TestUtil::Package.get("HelloWorld")
     end
 
@@ -54,6 +55,7 @@ describe "Pione::Component::PackageReader" do
 
   describe "directory package at HTTP location" do
     before do
+      @env = TestUtil::Lang.env
       @server = TestUtil::WebServer.start(TestUtil::TEST_PACKAGE_DIR)
       @location = @server.root + "HelloWorld/"
     end
@@ -68,6 +70,7 @@ describe "Pione::Component::PackageReader" do
 
   describe "archive package at local location" do
     before do
+      @env = TestUtil::Lang.env
       @location = TestUtil::TEST_PACKAGE_DIR + "HelloWorld+v0.1.0.ppg"
     end
 
@@ -76,6 +79,7 @@ describe "Pione::Component::PackageReader" do
 
   describe "archive package at HTTP location" do
     before do
+      @env = TestUtil::Lang.env
       @server = TestUtil::WebServer.start(TestUtil::TEST_PACKAGE_DIR)
       @location = @server.root + "HelloWorld+v0.1.0.ppg"
     end
@@ -89,6 +93,7 @@ describe "Pione::Component::PackageReader" do
 
   describe "git package at local location" do
     before do
+      @env = TestUtil::Lang.env
       path = Temppath.mkdir
       Util::Zip.uncompress(TestUtil::TEST_PACKAGE_DIR + "HelloWorld-gitrepos.zip", Location[path])
       @location = Location[git: path]

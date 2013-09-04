@@ -1,94 +1,40 @@
 module Pione
   module Model
-    # Message represents method callers for PIONE model objects.
-    #
-    # @example
-    #   1.as_string()
-    # @example
-    #   '*.txt'.except('a*')
-    class Message < BasicModel
-      attr_reader :name
-      attr_reader :receiver
-      attr_reader :arguments
-
-      # Create a message.
-      #
-      # @param name [String]
-      #   message name
-      # @param receiver [BasicModel]
-      #   message receiver
-      # @param arguments [BasicModel]
-      #   message arguments
-      def initialize(name, receiver, *arguments)
-        @name = name
-        @receiver = receiver
-        @arguments = arguments
-        super()
-      end
-
-      # Return false because Message is a complex form.
-      #
-      # @return [Boolean]
-      #   false
-      def atomic?
-        false
-      end
+    # Message represents method callers in PIONE language.
+    class Message < Expr
+      member :name
+      member :receiver
+      member :arguments
 
       # Return PIONE model type of the message result according to type interface.
-      #
-     # @return [Symbol]
-      #   PIONE model type
-      def pione_model_type
-        if pione_method = @receiver.pione_model_type.find_method(@name, @receiver, *@arguments)
-          pione_method.get_output_type(@receiver)
+      def pione_type(env)
+        if pione_method = receiver.pione_type.find_method(env, name, receiver, arguments)
+          pione_method.get_output_type(receiver)
         else
-          raise MethodNotFound.new(@name.to_s, @receiver, *@arguments)
+          raise MethodNotFound.new(name.to_s, receiver, arguments)
         end
       end
 
       # Evaluate the application expression and returns application result.
-      #
-      # @param vtable [VariableTable]
-      #   variable table for the evaluation
-      # @return [BasicModel]
-      #   evaluation result
-      def eval(vtable)
-        receiver = @receiver.eval(vtable)
-        arguments = @arguments.map{|arg| arg.eval(vtable)}
-        receiver.call_pione_method(vtable, @name, *arguments)
+      def eval(env)
+        # evaluate the receiver in the environment
+        _receiver = receiver.eval(env)
+        if _receiver.is_a?(Variable)
+          _receiver = _receiver.eval(env)
+        end
+
+        # send a message to it
+        _receiver.call_pione_method(env, name, arguments)
       end
 
-      # Return true if the receiver or arguments include variables.
-      #
-      # @return [Boolean]
-      #   true if the receiver or arguments include variables
-      def include_variable?
-        @receiver.include_variable? or @arguments.any?{|arg| arg.include_variable?}
+      def eval!(env)
+        eval(env).eval!(env)
       end
 
-      # @api private
+      # Convert to text string.
       def textize
-        args = [@name, @receiver.textize, @arguments.map{|arg| arg.textize}.join(",")]
-        "message(\"%s\",%s,[%s])" % args
-      end
-
-      def inspect
-        '#<Message "%s" %s %s>' % [@name, @receiver.inspect, @arguments.inspect]
-      end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        return false unless @name == other.name
-        return false unless @receiver == other.receiver
-        return false unless @arguments == other.arguments
-        return true
-      end
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @name.hash + @receiver.hash + @arguments.hash
+        args = arguments.map {|arg| arg.textize}
+        "#%s{name: %s, receiver: %s, arguments: %s}" % [Message, name, receiver.textize, args]
       end
     end
   end

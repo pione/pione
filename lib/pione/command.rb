@@ -3,11 +3,12 @@ module Pione
   module Command; end
 end
 
+require 'pione/command/command-exception'
+require 'pione/command/spawner'
 require 'pione/command/option'
 require 'pione/command/basic-command'
 require 'pione/command/front-owner-command'
 require 'pione/command/daemon-process'
-require 'pione/command/child-process'
 require 'pione/command/pione-client'
 require 'pione/command/pione-task-worker'
 require 'pione/command/pione-broker'

@@ -2,9 +2,7 @@ module Pione
   module Front
     # BrokerFront is a front class for pione-broker command.
     class BrokerFront < BasicFront
-      include TaskWorkerOwner
-
-      def_delegator :@command, :broker
+      forward :@command, :broker
 
       # Create a new front.
       def initialize(command)
@@ -12,14 +10,8 @@ module Pione
         initialize_task_worker_owner
       end
 
-      def get_tuple_space_server(connection_id)
-        broker.get_tuple_space_server(connection_id)
-      end
-
-      # Override the method with adding task worker agent to broker.
-      def add_task_worker_front(task_worker_front, connection_id)
-        super
-        broker.task_workers << task_worker_front.agent
+      def get_tuple_space(tuple_space_id)
+        @command.broker.get_tuple_space(tuple_space_id)
       end
 
       def set_tuple_space_receiver(uri)

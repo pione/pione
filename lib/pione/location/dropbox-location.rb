@@ -74,6 +74,7 @@ module Pione
 
       def create(data)
         @client.put_file(@path, StringIO.new(data))
+        return self
       end
 
       def read
@@ -82,6 +83,7 @@ module Pione
 
       def update(data)
         @client.put_file(@path, StringIO.new(data), true)
+        return self
       end
 
       def delete

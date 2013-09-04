@@ -19,11 +19,8 @@ module Pione
       # @api private
       def message
         line, column = @source.line_and_column
-        expected = @expected.join(", ")
-        left = @source.consume(@source.chars_left)
-        "%s(expected: %s, line: %s, column: %s):\n%s" % [
-          @str, expected, line, column, left
-        ]
+        left = @source.consume(@source.chars_left).str.split("\n").first
+        "%s(line: %s, column: %s): %s" % [@str, line, column, left]
       end
     end
 

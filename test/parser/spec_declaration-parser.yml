@@ -1,0 +1,279 @@
+variable_binding_sentence:
+  valid:
+    # simple binding
+    - "$X := true"
+    # bind declarator
+    - "bind $X := true"
+    # variable binding variable
+    - "$X := $Y"
+    # with operator
+    - "$X := 1 + 1"
+    # message with no arguments
+    - "$X := 'a.txt'.str"
+    # message with arguments
+    - "$X := 'a.txt'.suffix(\".res\")"
+    # variable name permits any expressions(but raises model error maybe)
+    - "1 := 1"
+    # split lines
+    - "$V \n := \n 1"
+  invalid:
+    # just variable
+    - "$X"
+    # binding of variable binding
+    - "$X := ($Y := 1)"
+
+package_binding_sentence:
+  valid:
+    # simple
+    - "package $P <- &Package"
+    # with parameter
+    - "package $P <- &Package{X: 1, Y:2}"
+    # with messages
+    - 'package $P <- &Package.edition("A").tag("v1.2.3")'
+    # split lines
+    - "package \n $P \n <- \n &Package"
+  invalid:
+    # no binding values
+    - "package $P"
+    # no variables
+    - "package <- &P"
+
+param_sentence:
+  valid:
+    # simple
+    - "param $X"
+    # simple with default value
+    - "param $X := 1"
+    # implicit basic parameter
+    - "basic param $X"
+    # implicit basic parameter with default value
+    - "basic param $X := 1"
+    # advanced parameter
+    - "advanced param $X"
+    # adevanced parameter with default value
+    - "advanced param $X := 1"
+    # parameter name permits any expressions(but raises model error maybe)
+    - "param 1"
+  invalid:
+    # with invalid variable
+    - "param $"
+    # with block basic modifier
+    - "Basic param $X"
+    # invalid keyword
+    - "basicparam $X"
+    # with block advanced modifier
+    - "Advanced param $X"
+    # invalid keyword
+    - "advancedparam $X"
+
+rule_binding_sentence:
+  valid:
+    # simple alias
+    - "rule A := B"
+    # alias of other package
+    - "rule A := $P.rule(B)"
+    # overload rule in other package
+    - "rule $P.rule(A) := B"
+    # rule name permits any expressions(but raises model error maybe)
+    - "rule 1 := A"
+    # rule value permits any expressions(but raises model error maybe)
+    - "rule A := 1"
+  invalid:
+    # no rule value
+    - "rule A"
+
+constituent_rule_sentence:
+  valid:
+    # simple
+    - "rule X"
+    # variable
+    - "rule $X"
+    # rule expression of other package
+    - "rule $P.rule(A)"
+    # permit any expressions (but raises model error maybe)
+    - "rule 1"
+  invalid:
+    # no rule exprs
+    - "rule"
+    # rule binding
+    - "rule A := B"
+
+input_sentence:
+  valid:
+    # literal
+    - "input 'a.txt'"
+    # wildcard
+    - "input '*.txt'"
+    # with method
+    - "input \"*.txt\".as_data_expr"
+    # with sequence
+    - "input 'a' | 'b' | 'c'"
+    # with variable
+    - "input $X"
+    # with embedded variable
+    - "input '{$I[1][1]}.a'"
+
+output_sentence:
+  valid:
+    # literal
+    - "output 'a.txt'"
+    # wildcard
+    - "output '*.txt'"
+    # with method
+    - "output \"*.txt\".as_data_expr"
+    # with sequence
+    - "output 'a' | 'b' | 'c'"
+    # with variable
+    - "output $X"
+    # with embedded variable
+    - "output '{$I[1][1]}.a'"
+
+feature_sentence:
+  valid:
+    # feature expressions
+    - "feature +A"
+    - "feature -A"
+    - "feature ?A"
+    # with message
+    - "feature \"A\".as_requisite_feature"
+    # permits any expression, but raises model error maybe
+    - "feature 1"
+  invalid:
+    # no feature expressions
+    - "feature"
+    # invalid expressions
+    - "feature +"
+
+constraint_sentence:
+  valid:
+    # with conditions
+    - "constraint $X.odd?"
+    # permits any expressions, but raises model error maybe
+    - "constraint 1"
+  invalid:
+    # with no expressions
+    - "constraint"
+
+annotation_sentence:
+  valid:
+    # with annotation expression
+    - "@. author :: \"Keita Yamaguchi\""
+    # permits any expressions, but raises model error maybe
+    - "@. 1"
+  invalid:
+    # with no expressions
+    - "@."
+
+expr_sentence:
+  valid:
+    # with declarator
+    - "? 1"
+    # with no declarator
+    - "1"
+
+param_block:
+  valid:
+    - | # empty block
+      Param
+      End
+    - | # one line block
+      Param
+        $X := 1
+      End
+    - | # multi line block
+      Param
+        $X := 1
+        $Y := 2
+        $Z := 3
+      End
+    - | # multi line with empty line
+      Param
+        $X := 1
+        
+        $Y := 2
+      End
+    - | # one line with comment
+      Param
+        # param $X := 1
+        $X := 1
+      End
+    - | # multi line with comments
+      Param
+        # param $X := 1
+        $X := 1
+        # param $Y := 2
+        $Y := 2
+        # param $Z := 3
+        $Z := 3
+      End
+    - | # basic param block
+      Basic Param
+        $X := 1
+        $Y := 2
+        $Z := 3
+      End
+    - | # advanced param block
+      Advanced Param
+        $X := 1
+        $Y := 2
+        $Z := 3
+      End
+
+flow_rule_block:
+  valid:
+    - | # simple flow rule
+      Rule Test
+        input '*.a'
+        output '*.b'
+      Flow
+        rule Test1
+      End
+    - |
+      Rule Test
+        input '*.a'
+        output '{$I[1][1]}.b'
+      Flow
+        rule TestA
+        rule TestB
+      End
+    - |
+      Rule Test
+        output 'test.txt'
+        param $N := 1
+      Flow
+        rule TestA
+      End
+
+action_rule_block:
+  valid:
+    - | # simple action rule
+      Rule Test
+        input '*.a'
+        output '*.b'
+      Action
+        echo "a"
+      End
+    - |
+      Rule Test
+        input  '*.a'
+        output '{$I[1][1]}.b'
+      Action
+        echo "test" > {$O[1].NAME}
+      End
+
+empty_rule_block:
+  valid:
+    - | # simple empty rule
+      Rule Test
+        input '*.a'
+        output '*.a'.update
+      End
+    - | # empty rule with parameters
+      Rule Test
+        input '*.a'
+        output '*.a'.update
+        param $X := 1
+        basic param $Y := 2
+        advanced param $Z := 3
+      End
+

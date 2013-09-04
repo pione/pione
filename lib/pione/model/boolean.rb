@@ -1,138 +1,17 @@
 module Pione
   module Model
     # PioneBoolean representes truth value in PIONE system.
-    class PioneBoolean < Value
-      # Returns the value in ruby.
-      attr_reader :value
-
-      class << self
-        # Return true value in PIONE system.
-        #
-        # @return [PioneBoolean]
-        #   true value
-        def true
-          new(true)
-        end
-
-        # Return false value in PIONE system.
-        #
-        # @return [PioneBoolean]
-        #   false value
-        def false
-          new(false)
-        end
-
-        # Return inverse value of it.
-        #
-        # @param boolean [Boolean]
-        #   target value
-        # @return [PioneBoolean]
-        #   true if the param is false, or false
-        def not(boolean)
-          new(not(boolean.value))
-        end
-
-        # Return true value if arguments include true value.
-        #
-        # @param args [Array<PioneBoolean>]
-        # @return [PioneBoolean]
-        #   true value if arguments include true value
-        def or(*args)
-          new(args.any?{|arg| arg.true?})
-        end
-
-        # Return true value if all arguments has true value.
-        #
-        # @param args [Array<PioneBoolean>]
-        # @return [PioneBoolean]
-        #   true value if all arguments has true value
-        def and(*args)
-          new(args.all?{|arg| arg.true?})
-        end
-
-        # Build PioneBoolean object from the ruby value.
-        #
-        # @param obj [Boolean]
-        #   the ruby value
-        # @return [PioneBoolean]
-        #   the pione object of +obj+
-        def of(obj)
-          case obj
-          when true
-            self.true
-          when false
-            self.false
-          else
-            raise ArgumentError.new(obj)
-          end
-        end
-      end
-
-      # Create a value.
-      #
-      # @param value [Boolean]
-      #   true or false
-      def initialize(value)
-        raise ArgumentError.new(value) unless value == true or value == false
-        @value = value
-      end
-
-      # @api private
-      def textize
-        @value.to_s
-      end
-
-      # Return true if the value is true.
-      #
-      # @return [Boolean]
-      #   true if the value is true
-      def true?
-        @value == true
-      end
-
-      # Return true if the value is false.
-      #
-      # @return [Boolean]
-      #   true if the value is false
-      def false?
-        @value == false
-      end
-
-      def to_seq
-        BooleanSequence.new([self])
-      end
-
-      # @api private
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        @value == other.value
-      end
-
-      alias :eql? :"=="
-
-      # @api private
-      def hash
-        @value.hash
-      end
-
-      def inspect
-        "#<PioneBoolean %s>" % @value
-      end
+    class PioneBoolean < SimplePiece
+      piece_type_name "Boolean"
     end
 
+    # BooleanSequence is a class for sequences of boolean.
     class BooleanSequence < OrdinalSequence
-      set_pione_model_type TypeBoolean
-      set_element_class PioneBoolean
-      set_shortname "BSeq"
-
-      class << self
-        def of(*elts)
-          BooleanSequence.new(elts.map{|elt| PioneBoolean.of(elt)})
-        end
-      end
+      pione_type TypeBoolean
+      piece_class PioneBoolean
 
       def value
-        @value ||= @elements.inject(true){|b, elt| b and elt.value}
+        @__value__ ||= pieces.inject(true){|b, piece| b and piece.value}
       end
     end
 
@@ -141,50 +20,66 @@ module Pione
     #
 
     TypeBoolean.instance_eval do
-      define_pione_method("and", [TypeBoolean], TypeBoolean) do |vtable, rec, other|
-        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
-          rec_elt.value && other_elt.value
+      define_pione_method("and", [TypeBoolean], TypeBoolean) do |env, rec, other|
+        rec.map2(other) do |rec_piece, other_piece|
+          rec_piece.value && other_piece.value
         end
       end
 
-      define_pione_method("or", [TypeBoolean], TypeBoolean) do |vtable, rec, other|
-        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
-          rec_elt.value || other_elt.value
+      define_pione_method("or", [TypeBoolean], TypeBoolean) do |env, rec, other|
+        rec.map2(other) do |rec_piece, other_piece|
+          rec_piece.value || other_piece.value
         end
       end
 
-      define_pione_method("as_integer", [], TypeInteger) do |vtable, rec|
-        sequential_map1(TypeInteger, rec) {|rec| rec.value ? 1 : 0}
+      # Return the receiver as is.
+      define_pione_method("as_boolean", [], TypeBoolean) do |env, rec|
+        rec
       end
 
-      define_pione_method("as_float", [], TypeFloat) do |vtable, rec|
-        sequential_map1(TypeFloat, rec) {|rec| rec.value ? 1.0 : 0.0}
+      # Convert to integer.
+      define_pione_method("as_integer", [], TypeInteger) do |env, rec|
+        IntegerSequence.map(rec) {|rec| rec.value ? 1 : 0}
       end
 
-      define_pione_method("as_string", [], TypeString) do |vtable, rec|
-        sequential_map1(TypeString, rec) {|rec| rec.value.to_s}
+      # Convert to float.
+      define_pione_method("as_float", [], TypeFloat) do |env, rec|
+        FloatSequence.map(rec) {|rec| rec.value ? 1.0 : 0.0}
       end
 
-      define_pione_method("as_data_expr", [], TypeDataExpr) do |vtable, rec|
-        sequential_map1(TypeDataExpr, rec) {|rec| rec.value.to_s}
+      # Convert to string.
+      define_pione_method("as_string", [], TypeString) do |env, rec|
+        StringSequence.map(rec) {|piece| piece.value.to_s}
       end
 
-      define_pione_method("not", [], TypeBoolean) do |vtable, rec|
-        sequential_map1(TypeBoolean, rec) do |elt|
-          not(elt.value)
-        end
+      # Convert to data expression.
+      define_pione_method("as_data_expr", [], TypeDataExpr) do |env, rec|
+        DataExprSequence.map(rec) {|piece| rec.value.to_s}
       end
 
-      define_pione_method("every?", [], TypeBoolean) do |vtable, rec|
-        PioneBoolean.new(not(rec.elements.include?(PioneBoolean.false))).to_seq
+      # Reverse the truth.
+      define_pione_method("not", [], TypeBoolean) do |env, rec|
+        rec.map {|piece| not(piece.value)}
       end
 
-      define_pione_method("any?", [], TypeBoolean) do |vtable, rec|
-        PioneBoolean.new(rec.elements.include?(PioneBoolean.true)).to_seq
+      # Return true if every piece is true.
+      define_pione_method("every?", [], TypeBoolean) do |env, rec|
+        BooleanSequence.of(rec.pieces.all?{|piece| piece.value})
       end
 
-      define_pione_method("one?", [], TypeBoolean) do |vtable, rec|
-        PioneBoolean.new(rec.elements.select{|elt| elt == PioneBoolean.true}.size == 1).to_seq
+      # Return true if some piece are true.
+      define_pione_method("any?", [], TypeBoolean) do |env, rec|
+        BooleanSequence.of(rec.pieces.any?{|piece| piece.value})
+      end
+
+      # Return true if just one piece is true.
+      define_pione_method("one?", [], TypeBoolean) do |env, rec|
+        BooleanSequence.of(rec.pieces.one?{|piece| piece.value})
+      end
+
+      # Return true if every piece is false.
+      define_pione_method("none?", [], TypeBoolean) do |env, rec|
+        BooleanSequence.of(rec.pieces.none?{|piece| piece.value})
       end
     end
   end

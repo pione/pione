@@ -1,21 +1,16 @@
 module Pione
   module Front
-    # TupleSpaceProviderFront is a front class for pione-tuple-space-provider
-    # command.
+    # TupleSpaceProviderFront is a front interface for
+    # pione-tuple-space-provider command.
     class TupleSpaceProviderFront < BasicFront
-      def_delegator :@command, :tuple_space_provider
-      def_delegator :@command, :presence_port
+      attr_reader :tuple_space
 
-      def initialize(command)
+      forward :@command, :agent
+      forward :@command, :presence_port
+
+      def initialize(command, tuple_space)
         super(command, Global.tuple_space_provider_front_port_range)
-      end
-
-      def presence_notifier
-        tuple_space_provider
-      end
-
-      def tuple_space_servers
-        tuple_space_provider.tuple_space_servers
+        @tuple_space = tuple_space
       end
     end
   end

@@ -9,7 +9,7 @@ module Pione
         # target domain
         [:domain, String],
         # data name
-        [:name, Type.or(String, Model::DataExpr)],
+        [:name, Type.or(String, Model::DataExprSequence)],
         # data location
         [:location, Location::BasicLocation],
         # data created time

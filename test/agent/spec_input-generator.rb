@@ -3,45 +3,41 @@ require_relative '../test-util'
 describe "Pione::Agent::InputGenerator" do
   before do
     @orig = Global.input_generator_stream_check_timespan
-    DRb.start_service
-    create_remote_tuple_space_server
+    @space = create_tuple_space_server
     Global.input_generator_stream_check_timespan = 0.1
+    @base_location = read!(Pione::Tuple[:base_location].new).location
   end
 
   after do
-    DRb.stop_service
+    @space.terminate
     Global.input_generator_stream_check_timespan = @orig
   end
 
   describe 'dir generator' do
     it 'should generate inputs from files in the directory' do
       Dir.mktmpdir do |dir|
-        # make local uri
-        uri = URI.parse("local:%s" % dir).as_directory
+        # make local location
+        dir = Location["local:%s" % dir]
 
         # create input files
-        Resource[uri + "1.a"].create("11")
-        Resource[uri + "2.b"].create("22")
-        Resource[uri + "3.c"].create("33")
+        (dir + "1.a").create("11")
+        (dir + "2.b").create("22")
+        (dir + "3.c").create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start_by_dir(tuple_space_server, uri)
-        generator.wait_till(:terminated)
+        generator = Agent[:input_generator].start(@space, :dir, dir, false)
+        generator.wait_until_terminated
 
         # check exceptions
         check_exceptions
 
+        generator.terminate
+
         # check data
         count_tuple(Tuple[:data].any).should == 3
-        should.not.raise(Rinda::RequestExpiredError) do
-          (1..3).each do |i|
-            tuple = Tuple[:data].new(name: "#{i}.#{(i+96).chr}", domain: "input")
-            data = read(tuple, 0)
-            should.not.raise(Resource::NotFound) do
-              Resource[URI(data.uri)].read.should == "#{i}#{i}"
-            end
-          end
-        end
+        read!(Tuple[:data].new(name: "1.a", location: @base_location + "input" + "1.a", domain: "root")).location.read.should == "11"
+        read!(Tuple[:data].new(name: "2.b", location: @base_location + "input" + "2.b", domain: "root")).location.read.should == "22"
+        read!(Tuple[:data].new(name: "3.c", location: @base_location + "input" + "3.c", domain: "root")).location.read.should == "33"
       end
     end
   end
@@ -49,16 +45,16 @@ describe "Pione::Agent::InputGenerator" do
   describe 'with stream generator' do
     it 'should stream' do
       Dir.mktmpdir do |dir|
-        # make local uri
-        uri = URI.parse("local:%s" % dir).as_directory
+        # make local location
+        dir = Location["local:%s" % dir]
 
         # create input files
-        Resource[uri + "1.a"].create("11")
-        Resource[uri + "2.b"].create("22")
-        Resource[uri + "3.c"].create("33")
+        (dir + "1.a").create("11")
+        (dir + "2.b").create("22")
+        (dir + "3.c").create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start_by_stream(tuple_space_server, uri)
+        generator = Agent[:input_generator].start(tuple_space_server, :dir, dir, true)
         generator.should.stream
         generator.terminate
       end
@@ -67,17 +63,17 @@ describe "Pione::Agent::InputGenerator" do
     it 'should provide files in a directory by stream generator' do
       Dir.mktmpdir do |dir|
         ## initial inputs
-        # make local uri
-        uri = URI.parse("local:%s" % dir).as_directory
+        # make local location
+        dir = Location["local:%s" % dir]
 
         # create input files
-        Resource[uri + "1.a"].create("11")
-        Resource[uri + "2.b"].create("22")
-        Resource[uri + "3.c"].create("33")
+        (dir + "1.a").create("11")
+        (dir + "2.b").create("22")
+        (dir + "3.c").create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start_by_stream(tuple_space_server, uri)
-        generator.wait_till(:sleeping)
+        generator = Agent[:input_generator].start(tuple_space_server, :dir, dir, true)
+        generator.wait_until_before(:sleep)
 
         # check exceptions
         check_exceptions
@@ -87,9 +83,9 @@ describe "Pione::Agent::InputGenerator" do
 
         ## an addtional input
         # create additional files
-        Resource[uri + "4.d"].create("44")
-        sleep 0.2
-        generator.wait_till(:sleeping)
+        (dir + "4.d").create("44")
+        generator.wait_until_after(:stop_iteration)
+        generator.wait_until_before(:sleep)
 
         # check exceptions
         check_exceptions
@@ -98,25 +94,22 @@ describe "Pione::Agent::InputGenerator" do
         count_tuple(Tuple[:data].any).should == 4
 
         # create additional files
-        Resource[uri + "5.e"].create("55")
-        sleep 0.2
-        generator.wait_till(:sleeping)
+        (dir + "5.e").create("55")
+        generator.wait_until_after(:stop_iteration)
+        generator.wait_until_before(:sleep)
 
         # check exceptions
         check_exceptions
 
+        generator.terminate
+
         # check data
         count_tuple(Tuple[:data].any).should == 5
-
-        should.not.raise(Rinda::RequestExpiredError) do
-          (1..3).each do |i|
-            tuple = Tuple[:data].new(name: "#{i}.#{(i+96).chr}", domain: "input")
-            data = read(tuple, 0)
-            should.not.raise(Resource::NotFound) do
-              Resource[URI(data.uri)].read.should == "#{i}#{i}"
-            end
-          end
-        end
+        read!(Tuple[:data].new(name: "1.a", location: @base_location + "input" + "1.a", domain: "root")).location.read.should == "11"
+        read!(Tuple[:data].new(name: "2.b", location: @base_location + "input" + "2.b", domain: "root")).location.read.should == "22"
+        read!(Tuple[:data].new(name: "3.c", location: @base_location + "input" + "3.c", domain: "root")).location.read.should == "33"
+        read!(Tuple[:data].new(name: "4.d", location: @base_location + "input" + "4.d", domain: "root")).location.read.should == "44"
+        read!(Tuple[:data].new(name: "5.e", location: @base_location + "input" + "5.e", domain: "root")).location.read.should == "55"
       end
     end
   end

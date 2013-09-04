@@ -1,74 +1,8 @@
 require_relative '../test-util'
 
 describe 'Model::DataExpr' do
-  it 'should get expression informations' do
-    exp = DataExpr.new('test.a').to_seq
-    exp.should.be.each
-    exp.should.be.not.all
-    exp.should.be.not.stdout
-    exp.should.be.not.stderr
-  end
-
-  it 'should be each modifier' do
-    exp = DataExpr.new('test.a').to_seq.set_each
-    exp.should.be.each
-    exp.should.be.not.all
-    exp.should.be.file
-  end
-
-  it 'should be all modifier' do
-    exp = DataExpr.new('test.a').to_seq.set_all
-    exp.should.be.not.each
-    exp.should.be.all
-    exp.should.be.file
-  end
-
-  it 'should be stdout mode' do
-    exp = DataExpr.new('test.a').to_seq.set_stdout
-    exp.should.be.stdout
-    exp.should.be.not.stderr
-  end
-
-  it 'should be stderr mode' do
-    exp = DataExpr.new('test.a').to_seq.set_stderr
-    exp.should.be.not.stdout
-    exp.should.be.stderr
-  end
-
-  it 'should neglect update criteria' do
-    exp = DataExpr.new('test.a').to_seq.set_neglect
-    exp.should.neglect
-    exp.should.not.care
-  end
-
-  it 'should care update criteria' do
-    exp = DataExpr.new('test.a').to_seq.set_care
-    exp.should.not.neglect
-    exp.should.care
-  end
-
-  it 'should have write operation' do
-    expr = DataExpr.new('A').to_seq.set_write
-    expr.should.write
-    expr.should.not.remove
-    expr.should.not.touch
-    expr.operation.should == :write
-  end
-
-  it 'should have remove operation' do
-    expr = DataExpr.new('A').to_seq.set_remove
-    expr.should.not.write
-    expr.should.remove
-    expr.should.not.touch
-    expr.operation.should == :remove
-  end
-
-  it 'should have touch operation' do
-    expr = DataExpr.new('A').to_seq.set_touch
-    expr.should.not.write
-    expr.should.not.remove
-    expr.should.touch
-    expr.operation.should == :touch
+  before do
+    @env = TestUtil::Lang.env
   end
 
   it 'should match the same name' do
@@ -203,96 +137,32 @@ describe 'Model::DataExpr' do
   end
 
   it 'should handle exceptions (Case 1)' do
-    exp = DataExpr.new('test-*.a').except('test-2.a')
+    exp = TestUtil::Lang.expr!(@env, "'test-*.a'.except('test-2.a')")
     exp.should.match 'test-1.a'
     exp.should.not.match 'test-2.a'
     exp.should.match 'test-22.a'
   end
 
   it 'should handle exceptions (Case 2)' do
-    exp = DataExpr.new('*').except('test-1.a').except('test-2.a')
+    exp = TestUtil::Lang.expr!(@env, "'*'.except('test-1.a' | 'test-2.a')")
     exp.should.not.match 'test-1.a'
     exp.should.not.match 'test-2.a'
     exp.should.match 'test-3.a'
   end
 
   it 'should handle exceptions (Case 3)' do
-    exp = DataExpr.new('test-1.a').except('*')
+    exp = TestUtil::Lang.expr!(@env, "'test-1.a'.except('*')")
     exp.should.not.match 'test-1.a'
-  end
-
-  it 'should expand variables' do
-    vtable1 = VariableTable.new(Variable.new('VAR') => PioneString.new('1').to_seq)
-    exp1 = DataExpr.new('{$VAR}.a').eval(vtable1)
-    exp1.match('1.a')
-    exp1.should.not.match '1.b'
-    vtable2 = VariableTable.new(Variable.new('VAR') => PioneString.new('*').to_seq)
-    exp2 = DataExpr.new('{$VAR}.a').eval(vtable2)
-    exp2.should.match '1.a'
-    exp2.should.match '2.a'
-    exp2.should.match 'abc.a'
-    exp2.should.not.match '1.b'
-  end
-
-  it 'should expand an expression' do
-    vtable = VariableTable.new
-    vtable.set(Variable.new("X"), PioneInteger.new(1).to_seq)
-    DataExpr.new('<? $X + 1 ?>.a').eval(vtable).name.should == "2.a"
-  end
-
-  it 'should generate a name (Case 1)' do
-    exp = DataExpr.new('test-*.a')
-    exp.generate(1).should == 'test-1.a'
-    exp.generate(123).should == 'test-123.a'
-    exp.generate(1,2,3).should == 'test-1.a'
-  end
-
-  it 'should generate a name (Case 2)' do
-    exp = DataExpr.new('test-*-*.a')
-    exp.generate(1,2).should == 'test-1-2.a'
-    exp.generate(123, 456).should == 'test-123-456.a'
-    exp.generate(1).should == 'test-1-*.a'
-  end
-
-  it 'should generate a name (Case 3)' do
-    exp = DataExpr.new('test-?.a')
-    exp.generate(1).should == 'test-1.a'
-    exp.generate(2).should == 'test-2.a'
-    exp.generate(123).should == 'test-1.a'
-  end
-
-  it 'should select names matched with the expression' do
-    exp = DataExpr.new('test-?.a')
-    exp.select('test-.a','test-1.a','test-a.a','test-a.b').should == ['test-1.a', 'test-a.a']
-    exp.select.should.empty
   end
 end
 
 describe "Model::DataExprNull" do
   before do
-    @null = Model::DataExprNull.instance
-  end
-
-  it "should not initialize" do
-    should.raise(NoMethodError) do
-      Model::DataExprNull.new
-    end
+    @null = Model::DataExprNull.new
   end
 
   it "should not match any data" do
     @null.should.not.match('test.a')
-  end
-
-  it "should return itselt" do
-    @null.all.should == @null
-    @null.each.should == @null
-    @null.stdout.should == @null
-    @null.stderr.should == @null
-    @null.neglect.should == @null
-    @null.care.should == @null
-    @null.write.should == @null
-    @null.remove.should == @null
-    @null.touch.should == @null
   end
 end
 
@@ -302,25 +172,23 @@ end
 yamlname = 'spec_data-expr_match.yml'
 ymlpath = File.join(File.dirname(__FILE__), yamlname)
 testcases = YAML.load_file(ymlpath)
+env = TestUtil::Lang.env
 
 describe "Model::DataExprSequence" do
   testcases.each do |title, cases|
     describe title do
       cases.each do |expr, testcase|
-
-        data_expr = DocumentTransformer.new.apply(
-          DocumentParser.new.expr.parse(expr)
-        )
+        data_expr = TestUtil::Lang.expr!(env, expr)
 
         testcase['match'].map do |name|
           it "#{expr} should match #{name}" do
-            data_expr.eval(VariableTable.new).should.match(name)
+            data_expr.eval(env).should.match(name)
           end
         end if testcase['match']
 
         testcase['unmatch'].map do |name|
           it "#{expr} should unmatch #{name}" do
-            data_expr.eval(VariableTable.new).should.not.match(name)
+            data_expr.eval(env).should.not.match(name)
           end
         end if testcase['unmatch']
       end

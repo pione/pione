@@ -1,0 +1,142 @@
+if_branch_header:
+  valid:
+    - "if $Var"
+    - "if 1"
+    - 'if "abc"'
+    - "if 1.0"
+    - "if A"
+    - if true
+    - if false
+    - "if +A"
+    - "if -A"
+    - "if ?A"
+  invalid:
+    - "if $$"
+
+if_branch:
+  valid:
+    - |
+      if $Var
+        rule Test
+      end
+    - |
+      if $Var
+        rule Test1
+        rule Test2
+        rule Test3
+      end
+    - |
+      if $Var
+        if $Var
+          rule Test
+        end
+      end
+    - |
+      if $Var
+        rule Test1
+      else
+        rule Test2
+      end
+    - |
+      if $Var
+        rule Test
+      else
+      end
+    - |
+      if $a
+        if $b
+          rule A
+        else
+          rule B
+        end
+      else
+        rule C
+      end
+  invalid:
+    - |
+      if $Var
+        rule Test
+    - |
+      else
+        rule Test
+      end
+
+case_branch_header:
+  valid:
+    - case $Var
+    - case 1
+    - case 1.0
+    - case 'data.txt'
+    - case "string"
+    - case +A
+    - case -A
+    - case ?A
+
+when_context_header:
+  valid:
+    - when $Var
+    - when 1
+    - when 1.0
+    - when 'data.txt'
+    - when "string"
+    - when +A
+    - when -A
+    - when ?A
+    - when **
+    - when *
+    - "when !A"
+    - when ^A
+
+when_context:
+  valid:
+    - when $Var
+    - |
+      when $Var
+        rule Test
+    - |
+      when $Var
+        rule Test1
+        rule Test2
+        rule Test3
+
+case_branch:
+  valid:
+    - |
+      case $Var
+      end
+    - |
+      case $Var
+      when 1
+        rule Test
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+        rule Test2
+        rule Test3
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+      when 2
+        rule Test2
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+      when 2
+        rule Test2
+      else
+        rule Test3
+      end
+    - |
+      case $Var
+      when 1
+        rule Test1
+      when 2
+        rule Test2
+      else
+      end

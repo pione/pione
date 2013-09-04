@@ -1,160 +1,139 @@
 module Pione
   module Model
     # PioneInteger represents integer value in PIONE system.
-    class PioneInteger < Value
-      class << self
-        # Build PioneInteger object from the ruby value.
-        #
-        # @param obj [Boolean]
-        #   the ruby value
-        # @return [PioneBoolean]
-        #   the pione object of +obj+
-        def of(obj)
-          new(obj)
-        end
-      end
-
-      # @api private
-      def textize
-        @value.to_s
-      end
-
-      def to_seq
-        IntegerSequence.new([self])
-      end
+    class PioneInteger < SimplePiece
+      piece_type_name "Integer"
     end
 
+    # IntegerSequence is a sequence of PIONE integer.
     class IntegerSequence < OrdinalSequence
-      set_pione_model_type TypeInteger
-      set_element_class PioneInteger
-      set_shortname "ISeq"
-
-      class << self
-        def of(*elts)
-          IntegerSequence.new(elts.map {|elt| PioneInteger.of(elt)})
-        end
-      end
+      pione_type TypeInteger
+      piece_class PioneInteger
     end
 
     TypeInteger.instance_eval do
-      define_pione_method(">", [TypeInteger], TypeBoolean) do |vtable, rec, other|
-        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
-          rec_elt.value > other_elt.value
+      define_pione_method(">", [TypeInteger], TypeBoolean) do |env, rec, other|
+        BooleanSequence.map2(rec, other) do |rec_piece, other_piece|
+          rec_piece.value > other_piece.value
         end
       end
 
-      define_pione_method(">=", [TypeInteger], TypeBoolean) do |vtable, rec, other|
-        BooleanSequence.new(
-          [PioneBoolean.new(rec.call_pione_method(vtable, ">", other).value || rec.call_pione_method(vtable, "==", other).value)]
-        )
-      end
-
-      define_pione_method("<", [TypeInteger], TypeBoolean) do |vtable, rec, other|
-        sequential_map2(TypeBoolean, rec, other) do |rec_elt, other_elt|
-          rec_elt.value < other_elt.value
+      define_pione_method(">=", [TypeInteger], TypeBoolean) do |env, rec, other|
+        BooleanSequence.map2(rec, other) do |rec_piece, other_piece|
+          rec_piece.value >= other_piece.value
         end
       end
 
-      define_pione_method("<=", [TypeInteger], TypeBoolean) do |vtable, rec, other|
-        BooleanSequence.new(
-          [PioneBoolean.new(
-              rec.call_pione_method(vtable, "<", other).value ||
-              rec.call_pione_method(vtable, "==", other).value
-          )]
-        )
-      end
-
-      define_pione_method("+", [TypeInteger], TypeInteger) do |vtable, rec, other|
-        sequential_map2(TypeInteger, rec, other) do |rec_elt, other_elt|
-          rec_elt.value + other_elt.value
+      define_pione_method("<", [TypeInteger], TypeBoolean) do |env, rec, other|
+        BooleanSequence.map2(rec, other) do |rec_piece, other_piece|
+          rec_piece.value < other_piece.value
         end
       end
 
-      define_pione_method("-", [TypeInteger], TypeInteger) do |vtable, rec, other|
-        sequential_map2(TypeInteger, rec, other) do |rec_elt, other_elt|
-          rec_elt.value - other_elt.value
+      define_pione_method("<=", [TypeInteger], TypeBoolean) do |env, rec, other|
+        BooleanSequence.map2(rec, other) do |rec_piece, other_piece|
+          rec_piece.value <= other_piece.value
         end
       end
 
-      define_pione_method("*", [TypeInteger], TypeInteger) do |vtable, rec, other|
-        sequential_map2(TypeInteger, rec, other) do |rec_elt, other_elt|
-          rec_elt.value * other_elt.value
+      define_pione_method("+", [TypeInteger], TypeInteger) do |env, rec, other|
+        rec.map2(other) do |rec_piece, other_piece|
+          rec_piece.value + other_piece.value
         end
       end
 
-      define_pione_method("%", [TypeInteger], TypeInteger) do |vtable, rec, other|
+      define_pione_method("-", [TypeInteger], TypeInteger) do |env, rec, other|
+        rec.map2(other) do |rec_piece, other_piece|
+          rec_piece.value - other_piece.value
+        end
+      end
+
+      define_pione_method("*", [TypeInteger], TypeInteger) do |env, rec, other|
+        rec.map2(other) do |rec_piece, other_piece|
+          rec_piece.value * other_piece.value
+        end
+      end
+
+      define_pione_method("%", [TypeInteger], TypeInteger) do |env, rec, other|
         # TODO: zero division error
-        sequential_map2(TypeInteger, rec, other) do |rec_elt, other_elt|
-          rec_elt.value % other_elt.value
+        rec.map2(other) do |rec_piece, other_piece|
+          rec_piece.value % other_piece.value
         end
       end
 
-      define_pione_method("/", [TypeInteger], TypeInteger) do |vtable, rec, other|
+      define_pione_method("/", [TypeInteger], TypeInteger) do |env, rec, other|
         # TODO: zero division error
-        sequential_map2(TypeInteger, rec, other) do |rec_elt, other_elt|
-          rec_elt.value / other_elt.value
+        rec.map2(other) do |rec_piece, other_piece|
+          rec_piece.value / other_piece.value
         end
       end
 
-      define_pione_method("as_string", [], TypeString) do |vtable, rec|
-        sequential_map1(TypeString, rec) {|elt| elt.value.to_s}
+      # Convert to integer.
+      define_pione_method("as_string", [], TypeString) do |env, rec|
+        StringSequence.map(rec) {|piece| piece.value.to_s}
       end
 
-      define_pione_method("as_integer", [], TypeInteger) do |vtable, rec|
+      # Return itself.
+      define_pione_method("as_integer", [], TypeInteger) do |env, rec|
         rec
       end
 
-      define_pione_method("as_float", [], TypeFloat) do |vtable, rec|
-        sequential_map1(TypeFloat, rec) {|elt| elt.value.to_f}
+      # Convert to float.
+      define_pione_method("as_float", [], TypeFloat) do |env, rec|
+        FloatSequence.map(rec) {|piece| piece.value.to_f}
       end
 
-      define_pione_method("next", [], TypeInteger) do |vtable, rec|
-        sequential_map1(TypeInteger, rec) {|elt| elt.value.next}
+      # Return the next number.
+      define_pione_method("next", [], TypeInteger) do |env, rec|
+        rec.map {|piece| piece.value.next}
       end
 
-      define_pione_method("prev", [], TypeInteger) do |vtable, rec|
-        sequential_map1(TypeInteger, rec) {|elt| elt.value.pred}
+      # Return the previous number.
+      define_pione_method("prev", [], TypeInteger) do |env, rec|
+        rec.map {|piece| piece.value.pred}
       end
 
-      define_pione_method("even?", [], TypeBoolean) do |vtable, rec|
-        sequential_pred1(rec) {|elt| elt.value.even?}
+      # Return true if it is even.
+      define_pione_method("even?", [], TypeBoolean) do |env, rec|
+        BooleanSequence.map(rec) {|piece| piece.value.even?}
       end
 
-      define_pione_method("odd?", [], TypeBoolean) do |vtable, rec|
-        sequential_pred1(rec) {|elt| elt.value.odd?}
+      # Return true if it is odd.
+      define_pione_method("odd?", [], TypeBoolean) do |env, rec|
+        BooleanSequence.map(rec) {|piece| piece.value.odd?}
       end
 
       # upto : *integer -> *integer
-      define_pione_method("upto", [TypeInteger], TypeInteger) do |vtable, rec, max|
-        sequential_fold2(TypeInteger, rec, max) do |seq, rec_elt, max_elt|
-          if rec_elt.value < max_elt.value
-            rec_elt.value.upto(max_elt.value).inject(seq) do |_seq, i|
-              _seq.push(PioneInteger.new(i))
+      define_pione_method("upto", [TypeInteger], TypeInteger) do |env, rec, max|
+        rec.fold2(IntegerSequence.new, max) do |seq, rec_piece, max_piece|
+          if rec_piece.value <= max_piece.value
+            rec_piece.value.upto(max_piece.value).inject(seq) do |_seq, i|
+              _seq.push(PioneInteger.new(value: i))
             end
           else
-            seq.push(rec_elt)
+            seq
           end
         end
       end
 
       # downto : integer -> integer
-      define_pione_method("downto", [TypeInteger], TypeInteger) do |vtable, rec, min|
-        sequential_fold2(TypeInteger, rec, min) do |seq, rec_elt, min_elt|
-          if rec_elt.value > min_elt.value
-            rec_elt.value.downto(min_elt.value).inject(seq) do |_seq, i|
-              _seq.push(PioneInteger.new(i))
+      define_pione_method("downto", [TypeInteger], TypeInteger) do |env, rec, min|
+        rec.fold2(IntegerSequence.new, min) do |seq, rec_piece, min_piece|
+          if rec_piece.value >= min_piece.value
+            rec_piece.value.downto(min_piece .value).inject(seq) do |_seq, i|
+              _seq.push(PioneInteger.new(value: i))
             end
           else
-            seq.push(rec_elt)
+            seq
           end
         end
       end
 
       # max : integer
-      define_pione_method("max", [], TypeInteger) do |vtable, rec|
-        fold1(IntegerSequence.empty, rec) do |seq, elt|
-          if seq.elements.size == 0 or seq.elements.first.value < elt.value
-            elt.to_seq
+      define_pione_method("max", [], TypeInteger) do |env, rec|
+        rec.fold(rec.empty) do |seq, piece|
+          if seq.pieces.size == 0 or seq.pieces.first.value < piece.value
+            seq.set(pieces: [piece])
           else
             seq
           end
@@ -162,23 +141,15 @@ module Pione
       end
 
       # min : integer
-      define_pione_method("min", [], TypeInteger) do |vtable, rec|
-        fold1(IntegerSequence.empty, rec) do |seq, elt|
-          if seq.elements.size == 0 or seq.elements.first.value > elt.value
-            elt.to_seq
+      define_pione_method("min", [], TypeInteger) do |env, rec|
+        rec.fold(rec.empty) do |seq, piece|
+          if seq.pieces.size == 0 or seq.pieces.first.value > piece.value
+            seq.set(pieces: [piece])
           else
             seq
           end
         end
       end
     end
-  end
-end
-
-# Integer extention for PIONE.
-class Integer
-  # Returns the PIONE's value.
-  def to_pione
-    PioneInteger.new(self)
   end
 end

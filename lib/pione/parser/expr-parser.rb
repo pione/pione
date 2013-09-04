@@ -3,10 +3,6 @@ module Pione
     # ExprParser is a set of parser atoms for PIONE expressions.
     module ExprParser
       include Parslet
-      include SyntaxError
-      include CommonParser
-      include LiteralParser
-      include FeatureExprParser
 
       # +expr+ matches all expressions in PIONE document.
       #
@@ -25,11 +21,11 @@ module Pione
       # @example
       #   '*.txt'.as_string
       rule(:expr) {
-        (expr_operator_application | assignment | reverse_message_sending | expr_element).as(:expr)
+        (expr_operator_application | reverse_message_sending | expr_element).as(:expr)
       }
 
       def expr!(msg=nil)
-        expr.or_error(msg || "it should be PIONE expression")
+        expr.or_error(msg || "it should be an expression")
       end
 
       # +reverse_message_sending+ matches reverse message sending.
@@ -42,7 +38,7 @@ module Pione
 
       # +expr_messages+ matches postpositional messages.
       rule(:expr_postpositional_messages) {
-        (pad? >> (index | message | parameters.as(:postpositional_parameters))).repeat(1)
+        (pad? >> (index | message | parameter_set.as(:postpositional_parameter_set))).repeat(1)
       }
 
       # +expr_element+ matches simple expressions.
@@ -69,51 +65,13 @@ module Pione
       rule(:expr_basic_element) { atomic_expr | enclosed_expr }
 
       # +atomic_expr+ matches atomic expressions.
-      #
-      # @example
-      #   true
-      # @example
-      #   false
-      # @example
-      #   0.1
-      # @example
-      #   1
-      # @example
-      #   "abc"
-      # @example
-      #   $var
-      # @example
-      #   '*.txt'
-      # @example
-      #   null
-      # @example
-      #   {var: 1}
-      # @example
-      #   $abc:test
-      # @example
-      #   abc
       rule(:atomic_expr) {
-        boolean | float | integer | string | ticket | data_expr | rule_expr |
-        feature_expr | parameters | variable
+        boolean | float | integer | string | ticket_expr | data_expr | package_expr | rule_expr |
+        feature | parameter_set | variable
       }
 
       # +enlosed_expr+ matches expressions enclosed by parens.
       rule(:enclosed_expr) { lparen >> expr >> rparen! }
-
-      # +rule_expr+ matches rule expressions.
-      #
-      # @example
-      #   &abc:test
-      # @example
-      #   :test
-      # @example
-      #   test
-      rule(:rule_expr) {
-        ( package_name.as(:package) >> colon >> rule_name.as(:expr) |
-          colon >> rule_name |
-          rule_name
-        ).as(:rule_expr)
-      }
 
       # +expr_operator+ matches expression operators.
       #
@@ -147,7 +105,7 @@ module Pione
         asterisk |
         slash |
         percent |
-        atmark |
+        (atmark >> dot).absent? >> atmark |
         (vbar >> vbar).absent? >> vbar |
         keyword_or |
         keyword_and |
@@ -157,14 +115,16 @@ module Pione
       rule(:expr_operator_2) {
         equals >> equals >> equals |
         exclamation >> equals >> equals |
+        equals >> equals >> asterisk |
         equals >> equals >> greater_than |
         equals >> equals |
         exclamation >> equals |
-        less_than >> equals |
-        less_than |
+        (less_than >> minus).absent? >> less_than >> equals |
+        (less_than >> minus).absent? >> less_than |
         greater_than >> greater_than >> greater_than |
         greater_than >> equals |
         greater_than |
+        (ampersand >> ampersand).absent? >> ampersand |
         ampersand >> ampersand |
         vbar >> vbar
       }
@@ -193,14 +153,6 @@ module Pione
         ).as(:expr_operator_application)
       }
 
-      # +assignment+ matches variable assignment.
-      #
-      # @example
-      #   $X := 1
-      rule(:assignment) {
-        (variable.as(:symbol) >> space? >> colon_eq >> pad? >> expr!.as(:value)).as(:assignment)
-      }
-
       # +message+ matches message sending.
       #
       # @example message with no arguments
@@ -208,7 +160,15 @@ module Pione
       # @example message with arguments
       #   .params("-w")
       rule(:message) {
-        (dot >> identifier.as(:message_name) >> message_parameters.maybe).as(:message)
+        small_message
+      }
+
+      #rule(:capital_message) {
+      #  (padded?(dot) >> capital_identifier.as(:message_name) >> message_parameters.maybe).as(:message)
+      #}
+
+      rule(:small_message) {
+        (padded?(dot) >> small_identifier.as(:message_name) >> message_parameters.maybe).as(:message)
       }
 
       # +message+ matches reverse message sending.
@@ -218,7 +178,7 @@ module Pione
       # @example message with arguments
       #   params("-w") ::
       rule(:reverse_message) {
-        (identifier.as(:message_name) >> message_parameters.maybe >> pad? >> colon_colon).as(:message)
+        (identifier.as(:message_name) >> message_parameters.maybe >> pad? >> reverse_message_operator).as(:message)
       }
 
       # +message_parameters+ matches message parameters.

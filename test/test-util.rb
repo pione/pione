@@ -26,7 +26,7 @@ module TestUtil
   end
 
   def check_exceptions
-    exceptions = tuple_space_server.read_all(Tuple[:exception].any)
+    exceptions = tuple_space_server.read_all(Pione::Tuple[:exception].any)
     exceptions.each do |tuple|
       e = tuple.value
       Bacon::ErrorLog << "#{e.class}: #{e.message}\n"
@@ -52,7 +52,7 @@ module TestUtil
     tuple_space_server = Pione::TupleSpace::TupleSpaceServer.new({}, false)
     # base location
     base_location = Location[Temppath.create]
-    tuple_space_server.write(Tuple[:base_location].new(base_location))
+    tuple_space_server.write(Pione::Tuple[:base_location].new(base_location))
     # set default tuple space server
     set_tuple_space_server tuple_space_server
     # return the connection
@@ -84,16 +84,6 @@ class Hash
     each_with_object({}) do |(key, val), hash|
       hash[key.to_sym] = (val.kind_of?(Hash) ? val.symbolize_keys : val)
     end
-  end
-end
-
-# Bacon::Context extension.
-class Bacon::Context
-  # Install utilities.
-  include TestUtil
-
-  def transformer_spec(name, parser_name, &b)
-    TestUtil::Transformer.spec(name, parser_name, self, &b)
   end
 end
 
@@ -145,47 +135,28 @@ module Pione::TupleSpace
   end
 end
 
-module Pione::Agent
-  class BasicAgent
-    include TestUtil
-
-    # Fake set_current_state for counting state changes.
-    alias :set_current_state_orig :set_current_state
-    def set_current_state(state)
-      @__counter__ ||= nil
-      set_current_state_orig(state)
-      if @__counter__
-        @__counter__.has_key?(state) ? @__counter__[state] += 1 : @__counter__[state] = 1
-      end
-    end
-
-    # Wait until state counter is reached at the number.
-    def wait_until_count(number, state, sec=5, &b)
-      timeout(sec) do
-        @__counter__ = {}
-        first_time = true
-        while @__counter__[state].nil? or @__counter__[state] < number do
-          b.call if first_time
-          first_time = false
-          check_exceptions
-          sleep 0.2
-        end
-        @__counter__ = nil
-      end
-    end
-  end
-end
-
+#
+# load test utilities
+#
 require_relative "test-util/command"
 require_relative "test-util/parser"
 require_relative "test-util/transformer"
+require_relative "test-util/lang"
 require_relative "test-util/package"
 require_relative "test-util/webserver"
 require_relative "test-util/pione-method"
+require_relative "test-util/tuple"
 
-def setup_for_test
-  include Pione
-  Thread.abort_on_exception = true
+#
+# extend bacon's context
+#
+class Bacon::Context
+  include TestUtil::Transformer::Interface
+  include TestUtil
 end
 
-setup_for_test
+#
+# setup_for_test
+#
+include Pione
+Thread.abort_on_exception = true

@@ -38,11 +38,6 @@ module Pione
     class PackageReader
       class << self
         # Read a pacakge from the location.
-        #
-        # @param location [Location::BasicLocation]
-        #   location of package
-        # @return [Package]
-        #   the package
         def read(location)
           new(location).read
         end
@@ -88,7 +83,8 @@ module Pione
           location: @location,
           info: info,
           bin: @location + "bin",
-          documents: find_documents(info["PackageName"], info["Documents"]),
+          context: create_context(info["PackageName"], info["Documents"]),
+          document_paths: info["Documents"],
           scenario_paths: find_scenario_paths(info["Scenarios"])
         )
       end
@@ -111,9 +107,9 @@ module Pione
       # @return [Package]
       #   the package
       def read_document
-        info = {"PackageName" => "Main"}
-        document = Component::Document.load(@location, "Main")
-        Package.new(info: info, documents: [document])
+        opt = {package_name: "Anonymous", filename: @location.basename}
+        context = Component::Document.load(@location, opt)
+        Package.new(info: {"PackageName" => "Anonymous"}, context: context)
       end
 
       # Read the informations from the package location.
@@ -138,12 +134,10 @@ module Pione
       end
 
       # Find documents from the packcage location.
-      #
-      # @return [Array<Document>]
-      #   documents
-      def find_documents(package_name, document_names)
-        document_names.map do |name|
-          Document.load(@location + name, package_name, name)
+      def create_context(package_name, document_names)
+        document_names.inject(Lang::PackageContext.new) do |context, name|
+          opt = {package_name: package_name, filename: name}
+          context + Component::Document.load(@location + name, opt)
         end
       end
     end

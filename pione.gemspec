@@ -38,12 +38,12 @@ Gem::Specification.new do |gem|
   gem.add_dependency "simple-identity", "~> 0.1.1"
   gem.add_dependency "rainbow", "~> 1.1.4"
   gem.add_dependency "sys-cpu", "~> 0.7.1"
-  gem.add_dependency "structx", "~> 0.1.0"
+  gem.add_dependency "structx", "~> 0.1.3"
   gem.add_dependency "syslog-logger", "~> 1.6.8"
   gem.add_dependency "zipruby", "~> 0.3.6"
   gem.add_dependency "retriable", "~> 1.3.3"
   gem.add_dependency "childprocess", "~> 0.3.9"
-  gem.add_dependency "git", "~> 1.2.5"
+  gem.add_dependency "lettercase", "~> 0.0.3"
 
   # for locations
   gem.add_dependency "dropbox-sdk", "~> 1.5.1"

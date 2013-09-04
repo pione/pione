@@ -3,6 +3,7 @@ require_relative '../test-util'
 describe "Pione::Util::PackageParametersList" do
   before do
     @dir = Location[File.dirname(__FILE__)]
+    @env = TestUtil::Lang.env.setup_new_package("SpecPackageParametersList")
   end
 
   after do
@@ -10,10 +11,10 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print parameters list of the package: 1" do
-    pkg = Component::PackageReader.read(@dir + "spec_package-parameters-list_1.pione")
+    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_1.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
-    Util::PackageParametersList.print(pkg)
+    Util::PackageParametersList.print(@env, package_id)
     $stdout = STDOUT
     stdout.string.should.include("Basic Parameters")
     stdout.string.should.include("Advanced Parameters")
@@ -24,10 +25,10 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print parameters list of the package: 2" do
-    pkg = Component::PackageReader.read(@dir + "spec_package-parameters-list_2.pione")
+    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_2.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
-    Util::PackageParametersList.print(pkg)
+    Util::PackageParametersList.print(@env, package_id)
     $stdout = STDOUT
     stdout.string.should.include("Basic Parameters")
     stdout.string.should.not.include("Advanced Parameters")
@@ -36,10 +37,10 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print parameters list of the package: 3" do
-    pkg = Component::PackageReader.read(@dir + "spec_package-parameters-list_3.pione")
+    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_3.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
-    Util::PackageParametersList.print(pkg)
+    Util::PackageParametersList.print(@env, package_id)
     $stdout = STDOUT
     stdout.string.should.not.include("Basic Parameters")
     stdout.string.should.include("Advanced Parameters")
@@ -48,10 +49,10 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print no parameters message" do
-    pkg = Component::PackageReader.read(@dir + "spec_package-parameters-list_4.pione")
+    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_4.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
-    Util::PackageParametersList.print(pkg)
+    Util::PackageParametersList.print(@env, package_id)
     $stdout = STDOUT
     stdout.string.should.not.include("Basic Parameters")
     stdout.string.should.not.include("Advanced Parameters")

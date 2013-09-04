@@ -1,30 +1,34 @@
 require_relative '../test-util'
 
 class TestTupleSpaceClient < Agent::TupleSpaceClient
-  define_state :test1
-  define_state :test2
-  define_state :test3
+  set_agent_type :test_tuple_space_client, self
 
-  define_state_transition :initialized => :test1
-  define_state_transition :test1 => :test2
-  define_state_transition :test2 => :test3
-  define_state_transition :test3 => :terminated
+  define_transition :sleep
+
+  chain :init => :sleep
+
+  def transit_to_sleep
+    Thread.stop
+  end
 end
 
 describe 'Pione::Agent::TupleSpaceClient' do
   before do
-    DRb.start_service
-    create_remote_tuple_space_server
+    @space = create_tuple_space_server
   end
 
   after do
-    DRb.stop_service
+    @space.terminate
   end
 
   it 'should say "hello"' do
-    ts = TestTupleSpaceClient.new(tuple_space_server)
-    ts.current_state.should == nil
-    ts.transit
-    ts.should.initialized
+    agent = TestTupleSpaceClient.start(@space)
+    agent.wait_until(:sleep)
+    t1 = read!(Tuple[:agent].new(agent_type: :test_tuple_space_client))
+    t1.should.not.nil
+    t1.uuid.should == agent.uuid
+    agent.terminate
+    t2 = read!(Tuple[:agent].new(agent_type: :test_tuple_space_client))
+    t2.should.nil
   end
 end

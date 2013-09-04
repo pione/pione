@@ -13,13 +13,7 @@ module Pione
       end
 
       # Set progaram name.
-      #
-      # @param name [String]
-      #   process name
-      # @param b [Proc]
-      #   process tail block
-      # @return [void]
-      def set_name(name, &b)
+      def set_name(name)
         @name = name
       end
 
@@ -51,7 +45,7 @@ module Pione
     # BasicCommand is a base class for PIONE commands.
     class BasicCommand < PioneObject
       @info = CommandInfo.new
-      @option = Option.new(@info.name, @info.banner)
+      @option = Option.new(@info)
       @pre_preparations = []
       @preparations = []
       @post_preparations = []
@@ -80,7 +74,7 @@ module Pione
           parent_option = self.option
           subclass.instance_eval do
             @info = CommandInfo.new
-            @option = Option.new(@info.name, @info.banner)
+            @option = Option.new(@info)
           end
           setter = lambda{|name, data| subclass.instance_variable_set(name, data.clone)}
           setter.call(:@pre_preparations, self.pre_preparations)
@@ -95,44 +89,16 @@ module Pione
         end
 
         # Define command informations.
-        #
-        # @param b [Proc]
-        #   evaluation content in the context of option definition
-        # @return [void]
-        #
-        # @example
-        #   class Cmd < BasicCommand
-        #     define_info do
-        #       set_name   "test"   # set process name
-        #       set_banner "sample" # set banner message
-        #     end
-        #   end
         def define_info(&b)
           @info.instance_eval(&b)
         end
 
         # Define command option.
-        #
-        # @param b [Proc]
-        #    context of the option definition
-        #
-        # @example
-        #   class Cmd < BasicCommand
-        #     define_option do
-        #       option("-t", "--test", "test option") do |data, arg1|
-        #         data[:test] = true
-        #       end
-        #     end
-        #   end
         def define_option(&b)
           @option.instance_eval(&b)
         end
 
         # Define a preparation process.
-        #
-        # @param type [Symbol]
-        #   preparation type
-        # @return [void]
         def prepare(type=nil, &b)
           case type
           when :pre
@@ -145,10 +111,6 @@ module Pione
         end
 
         # Define a start process.
-        #
-        # @param type [Symbol]
-        #   start type
-        # @return [void]
         def start(type=nil, &b)
           case type
           when :pre
@@ -161,10 +123,6 @@ module Pione
         end
 
         # Define a termination process.
-        #
-        # @param type [Symbol]
-        #   termination type
-        # @return [void]
         def terminate(type=nil, &b)
           case type
           when :pre
@@ -177,8 +135,6 @@ module Pione
         end
 
         # Run the command.
-        #
-        # @return [void]
         def run(argv)
           self.new(argv).run
         end
@@ -191,8 +147,6 @@ module Pione
       end
 
       # Run the command.
-      #
-      # @return [void]
       def run
         receiver = self
         caller = lambda {|name| self.class.__send__(name).each{|proc| receiver.instance_eval(&proc)}}

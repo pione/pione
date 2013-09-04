@@ -4,8 +4,9 @@ module MonitorMixin
     begin
       mon_check_owner
     rescue ThreadError => e
-      $stderr.puts "Thread owner check error reported but we ignore it."
+      $stderr.puts "Thread owner raise an error:"
       ErrorReport.print(e)
+      raise
     end
     @mon_count -=1
     if @mon_count == 0

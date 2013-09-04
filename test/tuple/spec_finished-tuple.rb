@@ -6,14 +6,13 @@ describe 'Pione::Tuple::FinishedTuple' do
     @domain = "A"
     @status = :success
 
-    name = Model::DataExpr.new("a.txt")
+    name = Model::DataExprSequence.of("a.txt")
     location = Location["local:/home/keita/"]
     time = Time.now
     data = Tuple::DataTuple.new(@domain, name, location, time)
 
     @outputs = [data]
-    @digest = "A"
-    @tuple = Tuple::FinishedTuple.new(@domain, @status, @outputs, @digest)
+    @tuple = Tuple::FinishedTuple.new(@domain, @status, @outputs)
   end
 
   behaves_like "tuple"

@@ -8,9 +8,7 @@ module Pione
         # status of the task processing
         [:status, Symbol],
         # outputs
-        [:outputs, Array],
-        # rule handler digest
-        [:digest, String]
+        [:outputs, Array]
       ]
     end
   end

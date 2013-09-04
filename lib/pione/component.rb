@@ -3,7 +3,6 @@ module Pione
   end
 end
 
-require 'pione/component/rule'
 require 'pione/component/document'
 require 'pione/component/package'
 require 'pione/component/package-filename'

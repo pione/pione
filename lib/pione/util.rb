@@ -5,6 +5,7 @@ module Pione
 end
 
 require 'pione/util/id'
+require 'pione/util/digest'
 require 'pione/util/misc'
 require 'pione/util/waiter-table'
 require 'pione/util/error-report'
@@ -18,4 +19,8 @@ require 'pione/util/evaluatable'
 require 'pione/util/process-info'
 require 'pione/util/package-parameters-list'
 require 'pione/util/zip'
+require 'pione/util/backslash-notation'
+require 'pione/util/positionable'
+require 'pione/util/embeded-expr-expander'
+require 'pione/util/free-thread-generator'
 

@@ -6,14 +6,16 @@ describe 'Pione::Tuple::TaskTuple' do
     domain = "A"
     data = Tuple[:data].new(domain, "a.txt", Location["local:/home/keita/"], Time.now)
 
-    @rule_path = "main_Main"
+    @digest = "digest"
+    @package_id = "Main"
+    @rule_name = "Main"
     @inputs = [data]
-    @params = Parameters.new(Model::Variable.new("X") => Model::PioneInteger.new(1))
-    @features = Feature.empty
+    @params = ParameterSet.new(Model::Variable.new("X") => Model::IntegerSequence.of(1))
+    @features = FeatureSequence.new
     @domain = domain
-    @call_stack = []
+    @caller_id = "caller"
 
-    args = [@rule_path, @inputs, @params, @features, @domain, @call_stack]
+    args = [@digest, @package_id, @rule_name, @inputs, @params, @features, @domain, @caller_id]
     @tuple = Tuple::TaskTuple.new(*args)
   end
 

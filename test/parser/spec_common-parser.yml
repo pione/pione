@@ -44,6 +44,8 @@ identifier:
     # spaceial tail "?"
     - "a?"
     - "abc?"
+    # UTF-8 characters
+    - '日本語'
   invalid:
     # digit only
     - "1"
@@ -53,6 +55,8 @@ identifier:
     - " a"
     # tail space
     - "a "
+    # with header
+    - '$a'
 
 digit:
   valid:

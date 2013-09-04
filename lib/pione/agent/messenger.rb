@@ -2,23 +2,20 @@ module Pione
   module Agent
     # Messenger is an agent for receiveing message logs.
     class Messenger < TupleSpaceClient
-      set_agent_type :messenger
+      set_agent_type :messenger, self
 
-      # Create a messenger agent.
       #
-      # @param tuple_space_server [TupleSpaceServer]
-      #   tuple space server
-      def initialize(tuple_space_server)
-        super(tuple_space_server)
-        @buffer = []
-      end
+      # agent activities
+      #
 
-      define_state :initialized
-      define_state :print
-      define_state :terminated
+      define_transition :print
 
-      define_state_transition :initialized => :print
-      define_state_transition :print => :print
+      chain :init => :print
+      chain :print => :print
+
+      #
+      # transitions
+      #
 
       # Transits to the state +print+.
       def transit_to_print
@@ -32,7 +29,5 @@ module Pione
         end
       end
     end
-
-    set_agent Messenger
   end
 end

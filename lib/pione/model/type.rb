@@ -1,34 +1,21 @@
 module Pione
   module Model
     # Type is a class for type expression of PIONE model objects.
-    class Type < System::PioneObject
-      @table = Hamster.hash
+    class Type < StructX
+      @table = Hash.new
 
       class << self
-        def put(name, value)
-          @table = @table.put(name, value)
-        end
-
-        def get(name)
-          @table.get(name)
-        end
+        attr_reader :table
       end
 
-      attr_reader :name
-      attr_reader :parent_type
-      attr_reader :pione_method
+      member :name
+      member :parent_type
+      member :pione_method, default: lambda { Hash.new }
 
       # Create a type for PIONE model object.
-      #
-      # @param name [Symbol]
-      #   type name
-      # @param parent_type [Type]
-      #   parent type
-      def initialize(name, parent_type=nil)
-        @name = name
-        @parent_type = parent_type
-        @pione_method = Hamster.hash
-        Type.put(name, self)
+      def initialize(*args)
+        super(*args)
+        Type.table[name] = {parent: parent_type}
       end
 
       # Return true if the type or the pione model object matches.
@@ -38,7 +25,7 @@ module Pione
       # @return [Boolean]
       #   true if it matches, or false
       def match(target)
-        target_type = target.pione_model_type
+        target_type = target.pione_type
         while target_type do
           return true if self == target_type
           target_type = target_type.parent_type
@@ -47,42 +34,37 @@ module Pione
       end
 
       # Find named method.
-      #
-      # @param name [String]
-      #   method name
-      # @param rec [Callable]
-      #   receiver
-      # @param args [Array<BasicModel>]
-      #   arguments
-      # @return [void]
-      def find_method(name, rec, *args)
-        name = name.to_s
-        if @pione_method.has_key?(name)
-          @pione_method[name].each do |pione_method|
-            if pione_method.validate_inputs(rec, *args)
-              return pione_method
+      def find_method(env, name, rec, args)
+        # find a suitable method
+        if pione_method.has_key?(name)
+          group = pione_method[name].group_by{|m| m.method_type}
+
+          # exist deferred methods
+          if group.has_key?(:deferred)
+            if m = group[:deferred].find {|m| m.validate_inputs(rec, args)}
+              return m
             end
           end
-        else
-          return @parent_type ? @parent_type.find_method(name, rec, *args) : nil
+
+          # try immediate methods
+          _args = args.map {|arg| arg.eval(env)} # FIXME : should be replaced by type inference
+          return group[:immediate].find {|m| m.validate_inputs(rec, _args)}
+        end
+
+        # find from parent type
+        if parent_type
+          return parent_type.find_method(env, name, rec, args)
         end
       end
 
-      # Define PIONE model object methods.
-      #
-      # @param name [Symbol]
-      #   method name
-      # @param inputs [Array<Type>]
-      #   input types of the method
-      # @param output [Type]
-      #   output type of the method
-      # @param [Proc] b
-      # @return [void]
+      # Define PIONE methods. Arguments are evaluated immediately.
       def define_pione_method(name, inputs, output, &b)
-        name = name.to_s
-        method = PioneMethod.new(name, inputs, output, b)
-        list = @pione_method.fetch(name, Hamster.list)
-        @pione_method = @pione_method.put(name, list.cons(method))
+        (pione_method[name] ||= []) << PioneMethod.new(:immediate, name, inputs, output, b)
+      end
+
+      # Define PIONE methods. Arguments are non-evaluated.
+      def define_deferred_pione_method(name, inputs, output, &b)
+        (pione_method[name] ||= []) << PioneMethod.new(:deferred, name, inputs, output, b)
       end
 
       # Return true if the data has the type.
@@ -94,81 +76,66 @@ module Pione
         end
       end
 
-      def type_to_class(type)
-        case type
-        when TypeString
-          StringSequence
-        when TypeInteger
-          IntegerSequence
-        when TypeFloat
-          FloatSequence
-        when TypeBoolean
-          BooleanSequence
-        when TypeDataExpr
-          DataExprSequence
-        when TypeTicketExpr
-          TicketExprSequence
-        end
+      def sequence_class
+        Type.table[self.name][:sequence_class]
       end
 
       def map1(seq, &b)
-        seq_class = type_to_class(self)
-        seq_class.new(seq.elements.map{|elt| b.call(elt)}, seq.attribute)
+        sequence_class.of(seq.pieces.map{|elt| b.call(elt)}, seq.attribute)
       end
 
       def map2(seq1, seq2, &b)
-        seq_class = type_to_class(self)
-        seq1.elements.map do |elt1|
-          seq2.elements.map do |elt2|
+        seq1.pieces.map do |elt1|
+          seq2.pieces.map do |elt2|
             b.call(elt1, elt2)
           end
-        end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
+        end.flatten.tap {|x| break sequence_class.new(x, seq1.attribute)}
       end
 
       def sequential_map1(type, seq1, &b)
         seq_class = type_to_class(type)
-        seq1.elements.map do |elt1|
-          seq_class.element_class.new(b.call(elt1))
+        seq1.pieces.map do |elt1|
+          seq_class.piece_class.new(b.call(elt1))
         end.tap {|x| break seq_class.new(x, seq1.attribute)}
       end
 
       def sequential_map2(type, seq1, seq2, &b)
         seq_class = type_to_class(type)
-        seq1.elements.map do |elt1|
-          seq2.elements.map do |elt2|
-            seq_class.element_class.new(b.call(elt1, elt2))
+        seq1.pieces.map do |elt1|
+          seq2.pieces.map do |elt2|
+            seq_class.piece_class.new(b.call(elt1, elt2))
           end
-        end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
+        end.flatten.tap {|x| break seq1.set(x, seq1.attribute)}
       end
 
       def sequential_map3(type, seq1, seq2, seq3, &b)
         seq_class = type_to_class(type)
-        seq1.elements.map do |elt1|
-          seq2.elements.map do |elt2|
-            seq3.elements.map do |elt3|
-              seq_class.element_class.new(b.call(elt1, elt2, elt3))
+        seq1.pieces.map do |elt1|
+          seq2.pieces.map do |elt2|
+            seq3.pieces.map do |elt3|
+              seq_class.piece_class.new(b.call(elt1, elt2, elt3))
             end
           end
         end.flatten.tap {|x| break seq_class.new(x, seq1.attribute)}
       end
 
       def fold1(val, seq1, &b)
-        seq1.elements.inject(val) do |obj, elt1|
+        seq1.pieces.inject(val) do |obj, elt1|
           b.call(obj, elt1)
         end
       end
 
       def sequential_fold1(type, seq1, &b)
         seq_class = type_to_class(type)
-        seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj, elt1|
+        seq1.pieces.inject(seq_class.new([], seq1.attribute)) do |obj, elt1|
           b.call(elt1, obj)
         end
       end
 
       def sequential_fold2(type, seq1, seq2, &b)
         seq_class = type_to_class(type)
-        seq1.elements.inject(seq_class.new([], seq1.attribute)) do |obj1, elt1|
-          seq2.elements.inject(obj1) do |obj2, elt2|
+        seq1.pieces.inject(seq_class.new([], seq1.attribute)) do |obj1, elt1|
+          seq2.pieces.inject(obj1) do |obj2, elt2|
             b.call(obj2, elt1, elt2)
           end
         end
@@ -176,7 +143,7 @@ module Pione
 
       def sequential_pred1(seq1, &b)
         method1 = seq1.every? ? :all? : :any?
-        seq1.elements.send(method1) do |elt1|
+        seq1.pieces.send(method1) do |elt1|
           PioneBoolean.new(b.call(elt1))
         end.tap {|x| break BooleanSequence.new(x)}
       end
@@ -184,17 +151,24 @@ module Pione
       def sequential_pred2(seq1, seq2, &b)
         method1 = seq1.every? ? :all? : :any?
         method2 = seq2.every? ? :all? : :any?
-        seq1.elements.send(method1) do |elt1|
-          seq2.elements.send(method2) do |elt2|
+        seq1.pieces.send(method1) do |elt1|
+          seq2.pieces.send(method2) do |elt2|
             b.call(elt1, elt2)
           end
         end.tap {|x| break BooleanSequence.new([PioneBoolean.new(x)])}
       end
 
       def to_s
-        "#<Type %s>" % @name
+        "#<Type %s>" % name
+      end
+
+      def inspect
+        "#<Type %s>" % name
       end
     end
+
+    # TypeVariable is a type for variable names.
+    TypeVariable = Type.new("variable")
 
     # TypeSequence is a type for sequence of something.
     TypeSequence = Type.new("sequence")
@@ -226,14 +200,11 @@ module Pione
     # rule expression type for PIONE system
     TypeRuleExpr = Type.new("rule-expr", TypeOrdinalSequence)
 
-    # parameters type for PIONE system
-    TypeParameters = Type.new("parameters", TypeOrdinalSequence)
+    # parameter set type for PIONE system
+    TypeParameterSet = Type.new("parameter-set", TypeOrdinalSequence)
 
     # assignment type for PIONE system
     TypeAssignment = Type.new("assignment", TypeOrdinalSequence)
-
-    # variable table type for PIONE system
-    TypeVariableTable = Type.new("variable-table", TypeOrdinalSequence)
 
     # package type for PIONE system
     TypePackageExpr = Type.new("package-expr", TypeOrdinalSequence)

@@ -14,69 +14,16 @@ describe 'Model::Variable' do
     @a.should.not == @b
   end
 
-  describe 'pione method ==' do
-    it 'should true' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      vtable.set(@b, PioneInteger.new(1).to_seq)
-      Message.new("==", @a, @b).eval(vtable).should == PioneBoolean.new(true).to_seq
-    end
-
-    it 'should false' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      vtable.set(@b, PioneInteger.new(2).to_seq)
-      Message.new("==", @a, @b).eval(vtable).should == PioneBoolean.new(false).to_seq
-    end
-
-    it 'should raise unbound variable error' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      should.raise(UnboundVariableError) do
-        Message.new("==", @a, @b).eval(vtable)
-      end
-    end
-
-    it 'should raise type error' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      vtable.set(@b, PioneFloat.new(1.0).to_seq)
-      should.raise(MethodNotFound) do
-        Message.new("==", @a, @b).eval(vtable)
-      end
-    end
+  it 'should get the value of variable' do
+    env = TestUtil::Lang.env
+    Lang::VariableBindingDeclaration.new(@a, IntegerSequence.of(1)).eval(env)
+    @a.eval(env).should == IntegerSequence.of(1)
   end
 
-  describe 'pione method !=' do
-    it 'should true' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      vtable.set(@b, PioneInteger.new(2).to_seq)
-      Message.new("!=", @a, @b).eval(vtable).should == PioneBoolean.new(true).to_seq
-    end
-
-    it 'should false' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      vtable.set(@b, PioneInteger.new(1).to_seq)
-      Message.new("!=", @a, @b).eval(vtable).should == PioneBoolean.new(false).to_seq
-    end
-
-    it 'should raise unbound variable error' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      should.raise(UnboundVariableError) do
-        Message.new("!=", @a, @b).eval(vtable)
-      end
-    end
-
-    it 'should raise type error' do
-      vtable = VariableTable.new
-      vtable.set(@a, PioneInteger.new(1).to_seq)
-      vtable.set(@b, PioneFloat.new(1.0).to_seq)
-      should.raise(MethodNotFound) do
-        Message.new("!=", @a, @b).eval(vtable)
-      end
-    end
+  it 'should get the value of nested variable' do
+    env = TestUtil::Lang.env
+    Lang::VariableBindingDeclaration.new(@a, IntegerSequence.of(1)).eval(env)
+    Lang::VariableBindingDeclaration.new(@b, @a).eval(env)
+    @a.eval(env).should == IntegerSequence.of(1)
   end
 end

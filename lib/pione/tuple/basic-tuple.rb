@@ -136,7 +136,7 @@ module Pione
       #   position number of domain field, or nil
       # @api private
       def domain_position
-        position_of(:domain)
+        position_of(:domain) || position_of(:domain_id)
       end
 
       # Return location position of the format.
@@ -280,6 +280,10 @@ module Pione
           @data.has_key?(symbol)
         end.unique == [true]
       end
+
+      def set(data)
+        self.class.new(@data.merge(data))
+      end
     end
 
     class << self
@@ -310,8 +314,5 @@ module Pione
         TABLE[identifier].new(*args)
       end
     end
-
-    # parent_agent: agent tree information
-    # define_format [:parent_agent, :parent_id, :child_id]
   end
 end

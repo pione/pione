@@ -11,6 +11,7 @@ module Pione
       member :values
       member :action
       member :validator
+      member :requisite # requisite option flag
     end
 
     # OptionInterface provides basic methods for option modules. All option
@@ -53,13 +54,9 @@ module Pione
       forward! :@option, :"[]", :"[]="
 
       # Creata a command option context.
-      #
-      # @param command_info [CommandInfo]
-      #   command informations
-      def initialize(program_name, banner)
+      def initialize(info)
         extend OptionInterface
-        @program_name = program_name
-        @banner = banner
+        @command_info = info
         @option = {}
         @items = []
         @validators = []
@@ -75,11 +72,11 @@ module Pione
       def parse(argv)
         OptionParser.new do |opt|
           # set banner
-          opt.banner = "Usage: %s [options]" % @program_name
-          opt.banner << "\n" + @banner if @banner
+          opt.banner = "Usage: %s [options]" % @command_info.name
+          opt.banner << "\n\n" + @command_info.banner + "\n" if @command_info.banner
 
           # set version
-          opt.program_name = @program_name
+          opt.program_name = @command_info.name
           opt.version = Pione::VERSION
 
           # default values
@@ -104,9 +101,15 @@ module Pione
       end
 
       # Check validness of the command options.
-      #
-      # @return [void]
       def check
+        # check requisite options
+        @items.each do |item|
+          if item.requisite and not(@option[item.name])
+            abort("%s\noption error: %s is requisite" % [opt.help, item.long])
+          end
+        end
+
+        # apply validators
         @validators.each do |validator|
           validator.call(@option)
         end
@@ -190,15 +193,10 @@ module Pione
         item.action = proc {|_, address| Global.my_ip_address = address}
       end
 
-      define(:no_parent) do |item|
-        item.long = '--no-parent'
-        item.desc = 'turn on no parent mode'
-        item.action = proc {|option| option[:no_parent_mode] = true}
-      end
-
       define(:parent_front) do |item|
         item.long = '--parent-front=URI'
         item.desc = 'set parent front URI'
+        item.requisite = true
         item.action = proc do |option, uri|
           option[:parent_front] = DRbObject.new_with_uri(uri)
         end
@@ -238,7 +236,7 @@ module Pione
         item.short = '-t N'
         item.long = '--task-worker=N'
         item.desc = 'set task worker number that this process creates'
-        item.default = Agent::TaskWorker.default_number
+        item.default = [Util::CPU.core_number - 1, 1].max
         item.value = proc {|n| n.to_i}
       end
     end

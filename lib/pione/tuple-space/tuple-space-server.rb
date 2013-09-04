@@ -68,9 +68,6 @@ module Pione
         write(Tuple[:task_worker_resource].new(number: resource))
 
         @terminated = false
-
-        # start agents
-        @client_life_checker = Agent::TupleSpaceServerClientLifeChecker.start(self)
       end
 
       # Set base location.
@@ -120,9 +117,7 @@ module Pione
 
       # Return the current worker size of the server.
       def current_task_worker_size
-        tuple = Tuple[:agent].any
-        tuple.agent_type = :task_worker
-        read_all(tuple).size
+        read_all(Tuple[:agent].new(agent_type: :task_worker)).size
       end
 
       # Return all tuples of the tuple space.
@@ -150,8 +145,6 @@ module Pione
       def finalize
         @terminated = true
         write(Tuple[:command].new("terminate", nil))
-        @client_life_checker.terminate
-        @client_life_checker.running_thread.kill
         sleep 1
       end
 

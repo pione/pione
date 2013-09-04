@@ -1,0 +1,148 @@
+structural_context_element:
+  valid:
+    # variable binding sentence
+    - "$X := 1"
+    # param sentence
+    - "param $X := 1"
+    # rule binding sentence
+    - "rule A := B"
+    # constituent_rule_sentence
+    - "rule A"
+    # input sentence
+    - "input 'a.txt'"
+    # output sentence
+    - "output 'b.txt'"
+    # feature sentence
+    - "feature +A"
+    # constraint sentence
+    - "constraint $X.odd?"
+    # param block
+    - |
+      Param
+        $X := 1
+      End
+    # flow rule block
+    - |
+      Rule A
+        input 'a.txt'
+        output 'b.txt'
+      Flow
+        rule B
+      End
+    # action rule block
+    - |
+      Rule A
+        input 'a.txt'
+        output 'b.txt'
+      Action
+        echo {$I[1]} > {$O[1]}
+      End
+    # empty rule block
+    - |
+      Rule A
+        input 'a.txt'
+        output 'b.txt'.touch
+      End
+    # annotation sentence
+    - "@. author :: \"Keita Yamaguchi\""
+    # expr sentence
+    - "? 1 + 1"
+    # if branch
+    - |
+      if $X
+        rule A
+      end
+    # case branch
+    - |
+      case $X
+      when 1
+        rule A
+      when 2
+        rule B
+      end
+
+structural_context:
+  valid:
+    - | # full elements
+      $X := 1
+      param $X := 1
+      rule A
+      rule A := B
+      input 'a.txt'
+      output 'b.txt'
+      feature +A
+      constraint $X.odd?
+      Param
+        $X := 1
+      End
+      Rule A
+        input 'a.txt'
+        output 'b.txt'
+      Flow
+        rule B
+      End
+      Rule A
+        input 'a.txt'
+        output 'b.txt'
+      Action
+        echo {$I[1]} > {$O[1]}
+      End
+      Rule A
+        input 'a.txt'
+        output 'b.txt'.touch
+      End
+      @. author :: "Keita Yamaguchi"
+      ? 1 + 1
+      if $X
+        rule A
+      end
+      case $X
+      when 1
+        rule A
+      when 2
+        rule B
+      end
+    - | # heading empty line
+      
+      rule Test1
+      rule Test2
+    - | # tail empty line
+      rule Test1
+      rule Test2
+      
+    - | # middle empty line
+      rule Test1
+      
+      rule Test2
+    - | # heading commment line
+      # comment
+      rule Test1
+      rule Test2
+    - | # tail comment line
+      rule Test1
+      rule Test2
+      # comment
+    - | # middle comment line
+      rule Test1
+      # comment
+      rule Test2
+
+rule_condition_context:
+  valid:
+    - | # parameters without default values
+      param $X
+      basic param $Y
+      advanced param $Z
+    - | # parameters with default values
+      param $X := 1
+      basic param $Y := 2
+      advanced param $Z := 3
+
+literal_context:
+  valid:
+    - | # shell script
+      echo "abc" > A.txt
+    - | # Any literals are OK.
+      This is a line.
+      This is a line, too.
+

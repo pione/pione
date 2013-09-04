@@ -32,7 +32,11 @@ module TestUtil
     end
 
     def start
-      @thread = Thread.new { @server.start }
+      @thread = Thread.new do
+        retriable(on: WEBrick::ServerError, tries: 10, interval: 2) do
+          @server.start
+        end
+      end
     end
 
     def terminate

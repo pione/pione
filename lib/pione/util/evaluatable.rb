@@ -13,8 +13,9 @@ module Pione
       #   the result of evaluation
       def val!(str, domain_info=nil)
         domain_info = load_domain_info unless domain_info
-        vtable = domain_info.variable_table
-        DocumentTransformer.new.apply(DocumentParser.new.expr.parse(str)).eval(vtable)
+        env = domain_info.env
+        option = {package_name: env.current_package_id, filename: "pione-eval"}
+        DocumentTransformer.new.apply(DocumentParser.new.expr.parse(str), option).eval(env)
       end
 
       # Evaluate the string as a PIONE expression and get the result value as a textized string.
@@ -27,8 +28,8 @@ module Pione
       #   the result of evaluation as an embeddable string
       def val(str, domain_info=nil)
         domain_info = load_domain_info unless domain_info
-        vtable = domain_info.variable_table
-        val!(str, domain_info).call_pione_method(vtable, "textize").first.value
+        env = domain_info.env
+        val!(str, domain_info).call_pione_method(env, "textize", []).first.value
       end
 
       private
@@ -39,7 +40,7 @@ module Pione
         if location.exist?
           DomainInfo.read(location)
         else
-          DomainInfo.new(VariableTable.new)
+          DomainInfo.new(Lang::Environment.new)
         end
       end
     end

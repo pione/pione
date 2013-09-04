@@ -11,60 +11,37 @@ module Pione
     #     rule A ==> <T>
     #     <T> ==> rule B
     #   End
-    class TicketExpr < Element
-      # ticket name
-      attr_reader :name
+    class TicketExpr < Piece
+      piece_type_name "TicketExpr"
+      member :name
 
-      # @param name [String]
-      #   ticket name
-      def initialize(name)
-        @name = name
-      end
-
-      def eval(vtable)
-        self
-      end
-
-      def include_variable?
-        false
-      end
-
+      # Convert to text string.
       def textize
-        "<%s>" % [@names]
-      end
-
-      def ==(other)
-        return false unless other.kind_of?(self.class)
-        @name == other.name
-      end
-      alias :eql? :"=="
-
-      def hash
-        @name.hash
+        "<%s>" % name
       end
     end
 
+    # TicketExprSequence is a ordinal sequence of ticket expressions.
     class TicketExprSequence < OrdinalSequence
-      set_pione_model_type TypeTicketExpr
-      set_element_class TicketExpr
-      set_shortname "TSeq"
+      pione_type TypeTicketExpr
+      piece_class TicketExpr
 
-      # Get ticket names of all elements in the sequence.
-      #
-      # @return [Array<String>]
-      #   ticket names
+      # Return ticket names of all elements in the sequence.
       def names
-        @elements.map {|elt| elt.name}
+        pieces.map {|piece| piece.name}
       end
     end
 
     TypeTicketExpr.instance_eval do
-      define_pione_method("==>", [TypeRuleExpr], TypeRuleExpr) do |vtable, rec, other|
-        other.add_input_ticket_expr(rec)
+      # Update ticket condition of the other by adding receiver tickets
+      define_pione_method("==>", [TypeRuleExpr], TypeRuleExpr) do |env, rec, other|
+        other.map do |piece|
+          piece.set(input_tickets: piece.input_tcikets + rec)
+        end
       end
 
-      define_pione_method("as_string", [], TypeString) do |vtable, rec|
-        rec.textize
+      define_pione_method("as_string", [], TypeString) do |env, rec|
+        StringSequence.map(rec) {|piece| piece.textize}
       end
     end
   end

@@ -28,8 +28,10 @@ describe "Pione::Log::MessageLog" do
 
   it "should send user message" do
     @sender.user_message("test message", 0, "test head")
-    @messenger.transit
-    @messenger.transit
+    @messenger.start
+    sleep 1
+    @messenger.terminate
+    @messenger.wait_until_terminated
     @messenger.msgs.size.should == 1
   end
 
@@ -37,8 +39,10 @@ describe "Pione::Log::MessageLog" do
     Log::MessageLog.debug_mode do
       @sender.debug_message("test message", 0, "test head")
     end
-    @messenger.transit
-    @messenger.transit
+    @messenger.start
+    sleep 1
+    @messenger.terminate
+    @messenger.wait_until_terminated
     @messenger.msgs.size.should == 1
   end
 end

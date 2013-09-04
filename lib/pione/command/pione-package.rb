@@ -79,9 +79,6 @@ module Pione
           begin
             # make archiver
             archiver_option = {tag: option[:tag], branch: option[:branch], hash_id: option[:hash_id]}
-            if location.location_type == :data
-              archiver_option[:tag] = Time.now.strftime("%Y%m%d%H%M")
-            end
             archiver = Component::PackageArchiver.new(location, archiver_option)
 
             # archive

@@ -22,8 +22,6 @@ module Pione
       @__tuple_space_server__
     end
 
-    private
-
     # Read a tuple with no waiting time. If there are no matched tuples, return
     # +nil+.
     #
