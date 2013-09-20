@@ -1,12 +1,14 @@
 require_relative '../test-util'
 
-class TestRecord < Pione::Log::ProcessRecord
-  set_type :test
-  field :uuid
-end
+module SpecLogger
+  class TestRecord < Pione::Log::ProcessRecord
+    set_type :test
+    field :uuid
+  end
 
-class TestLog < Pione::Log::ProcessLog
-  set_filter {|record| record.type == :test}
+  class TestLog < Pione::Log::ProcessLog
+    set_filter {|record| record.type == :test}
+  end
 end
 
 describe "Pione::Agent::Logger" do
@@ -14,8 +16,8 @@ describe "Pione::Agent::Logger" do
     @space = create_tuple_space_server
     @location = Location[Temppath.create] + "pione-process.log"
     @logger = Agent[:logger].start(@space, @location)
-    @msg1 = TestRecord.new(uuid: "e07860f6-18f0-4c1a-8a5a-7d9f3353c83f")
-    @msg2 = TestRecord.new(uuid: "c8fa705d-fc30-42fa-a05f-a2493717dc39")
+    @msg1 = SpecLogger::TestRecord.new(uuid: "e07860f6-18f0-4c1a-8a5a-7d9f3353c83f")
+    @msg2 = SpecLogger::TestRecord.new(uuid: "c8fa705d-fc30-42fa-a05f-a2493717dc39")
   end
 
   after do
@@ -34,7 +36,7 @@ describe "Pione::Agent::Logger" do
     sleep 1 # wait to write out tuples
     @logger.terminate
     @logger.wait_until_terminated
-    TestLog.read(@location).values.first.records.map{|record| record.uuid}.tap do |records|
+    SpecLogger::TestLog.read(@location).values.first.records.map{|record| record.uuid}.tap do |records|
       records.should.include(@msg1.uuid)
       records.should.include(@msg2.uuid)
     end
@@ -48,7 +50,7 @@ describe "Pione::Agent::Logger" do
     @logger.wait_until_terminated
     # write a message after logger was terminated
     write(Tuple[:process_log].new(@msg2))
-    TestLog.read(@location).values.first.records.map{|record| record.uuid}.tap do |records|
+    SpecLogger::TestLog.read(@location).values.first.records.map{|record| record.uuid}.tap do |records|
       records.should.include(@msg1.uuid)
     end
   end
@@ -58,6 +60,6 @@ describe "Pione::Agent::Logger" do
     sleep 2
     @logger.terminate
     @logger.wait_until_terminated
-    TestLog.read(@location).values.first.records.size.should == 1000
+    SpecLogger::TestLog.read(@location).values.first.records.size.should == 1000
   end
 end

@@ -1,10 +1,12 @@
 require_relative '../test-util'
 
-class TestRecord < Pione::Log::ProcessRecord
-  set_type :test
-  field :a
-  field :b
-  field :c
+module SpecProcessRecord
+  class TestRecord < Pione::Log::ProcessRecord
+    set_type :test
+    field :a
+    field :b
+    field :c
+  end
 end
 
 describe "Pione::Log::ProcessRecord" do
@@ -13,15 +15,15 @@ describe "Pione::Log::ProcessRecord" do
   end
 
   it "should build a typed record" do
-    @record.should.kind_of(TestRecord)
+    @record.should.kind_of(SpecProcessRecord::TestRecord)
   end
 
   it "should get the type" do
-    TestRecord.type.should == :test
+    SpecProcessRecord::TestRecord.type.should == :test
   end
 
   it "should get fields" do
-    TestRecord.fields.sort.should == [:a, :b, :c, :transition, :timestamp, :log_id].sort
+    SpecProcessRecord::TestRecord.fields.sort.should == [:a, :b, :c, :transition, :timestamp, :log_id].sort
   end
 
   it "should merge" do
