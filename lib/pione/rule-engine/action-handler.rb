@@ -60,7 +60,7 @@ module Pione
           # get file path in working directory
           wd_location = @working_directory + input.name
           # create a link to cache
-          cache_location = FileCache.get(input.location)
+          cache_location = System::FileCache.get(input.location)
           wd_location.path.make_symlink(cache_location.path)
           unless wd_location.exist?
             raise RuleExecutionError.new(self)

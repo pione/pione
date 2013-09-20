@@ -90,7 +90,6 @@ require 'pione/command'     # command definitions
 
 module Pione
   # expand name spaces
-  include System
   include Relay
   include Log::MessageLog
   include TupleSpace

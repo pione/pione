@@ -54,7 +54,7 @@ module Pione
               # move data from old to new
               old_location.move(new_location)
               # sync cache if the old is cached in this machine
-              FileCache.sync(old_location, new_location)
+              System::FileCache.sync(old_location, new_location)
               # write lift tuple
               write(Tuple[:lift].new(old_location, new_location))
               # push history
