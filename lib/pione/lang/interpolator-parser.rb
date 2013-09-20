@@ -1,8 +1,8 @@
 module Pione
-  module Parser
+  module Lang
     # InterpolatorParser is a parser for handling embeded expression in strings.
     class InterpolatorParser < Parslet::Parser
-      include SyntaxError
+      include Util::ParsletParserExtension
       include CommonParser
       include LiteralParser
       include ExprParser

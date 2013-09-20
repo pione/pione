@@ -1,8 +1,8 @@
 module Pione
-  module Parser
+  module Lang
     # DocumentParser is a parser for PIONE document.
     class DocumentParser < Parslet::Parser
-      include SyntaxError
+      include Util::ParsletParserExtension
       include CommonParser
       include LiteralParser
       include ExprParser

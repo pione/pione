@@ -78,8 +78,6 @@ require 'pione/rule-engine' # rule processing behaviors
 require 'pione/component'   # rule engine component
 require 'pione/lang'        # PIONE languge
 require 'pione/tuple'       # tuple definitions
-require 'pione/parser'      # syntax tree builder
-require 'pione/transformer' # model conversion
 require 'pione/agent'       # agent system
 require 'pione/front'       # command front interface
 require 'pione/command'     # command definitions
@@ -93,8 +91,6 @@ module Pione
   include Relay
   include Log::MessageLog
   include TupleSpace
-  include Parser
-  include Transformer
 
   extend Util::Evaluatable
 end

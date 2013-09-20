@@ -10,9 +10,9 @@ module TestUtil
     end
     module_function :make_test_parser
 
-    def spec(rb, context, parser=Pione::Parser::DocumentParser)
+    def spec(rb, context, parser=Pione::Lang::DocumentParser)
       basename = File.basename(rb, ".rb")
-      path = File.join(File.dirname(rb), basename + ".yml")
+      path = File.join(File.dirname(rb), "data", basename[5..-1] + ".yml")
       YAML.load(File.read(path)).each do |name, testcase|
         context.describe name do
           if strings = testcase["valid"]

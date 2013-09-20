@@ -2,8 +2,8 @@ require_relative '../test-util'
 
 describe 'Pione::Transformer::InterpolatorTransformer' do
   opts = {
-    parser_class: Parser::InterpolatorParser,
-    transformer_class: Transformer::InterpolatorTransformer
+    parser_class: Lang::InterpolatorParser,
+    transformer_class: Lang::InterpolatorTransformer
   }
 
   transformer_spec("embeded_variable", :embeded_variable, opts) do

@@ -1,8 +1,8 @@
 module Pione
-  module Transformer
+  module Lang
     # ConditionalBranchTransformer is a transformer for all branches.
     module ContextTransformer
-      include TransformerModule
+      include Util::ParsletTransformerModule
 
       # Transform +conditional_branch_context+ into Lang::ConditionalBranchContext.
       rule(:conditional_branch_context => sequence(:elements)) {

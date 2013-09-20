@@ -1,8 +1,8 @@
 module Pione
-  module Transformer
+  module Lang
     # DeclarationTransformer is a transformer for all declarations.
     module DeclarationTransformer
-      include TransformerModule
+      include Util::ParsletTransformerModule
 
       #
       # sentences

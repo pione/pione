@@ -3,13 +3,13 @@ module Pione
   module Lang; end
 end
 
-# meta system for PIONE language
-require 'pione/lang/lang-exception'
-require 'pione/lang/environment'
-require 'pione/lang/definition'
-require 'pione/lang/declaration'
-require 'pione/lang/conditional-branch'
-require 'pione/lang/context'
+# PIONE language core
+require 'pione/lang/lang-exception'     # exceptions
+require 'pione/lang/environment'        # interpretation environment
+require 'pione/lang/definition'         # definitions
+require 'pione/lang/declaration'        # declarations
+require 'pione/lang/conditional-branch' # conditional branch
+require 'pione/lang/context'            # context
 
 # semantics
 require 'pione/lang/basic-model'      # model
@@ -35,3 +35,21 @@ require 'pione/lang/package-expr' # package expression
 require 'pione/lang/ticket-expr'  # ticket expression
 require 'pione/lang/rule-expr'    # rule expression
 
+# language parser
+require 'pione/lang/common-parser'             # common parser
+require 'pione/lang/literal-parser'            # literal parser
+require 'pione/lang/expr-parser'               # expression parser
+require 'pione/lang/context-parser'            # context parser
+require 'pione/lang/conditional-branch-parser' # conditional branch parser
+require 'pione/lang/declaration-parser'        # declaration parser
+require 'pione/lang/document-parser'           # document parser
+require 'pione/lang/interpolator-parser'       # interpolator parser
+
+# inner model transformer
+require 'pione/lang/literal-transformer'            # literal transformer
+require 'pione/lang/expr-transformer'               # expression transformer
+require 'pione/lang/context-transformer'            # context transformer
+require 'pione/lang/declaration-transformer'        # declaration transformer
+require 'pione/lang/conditional-branch-transformer' # conditional branch transformer
+require 'pione/lang/document-transformer'           # document transformer
+require 'pione/lang/interpolator-transformer'       # interpolator transformer

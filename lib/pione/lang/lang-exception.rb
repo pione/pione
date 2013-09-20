@@ -197,6 +197,28 @@ module Pione
         "PIONE method \"%s\" is not found: %s. %s" % [@name, rec_type, arg_types]
       end
     end
+
+    #
+    # parser
+    #
+
+    # ParserError is raised when the parser finds syntax error.
+    class ParserError < Parslet::ParseFailed
+      # Creates an error.
+      def initialize(str, expected, source)
+        @str = str
+        @expected = expected
+        @source = source
+        super(str)
+      end
+
+      def message
+        line, column = @source.line_and_column
+        left = @source.consume(@source.chars_left).str.split("\n").first
+        "%s(line: %s, column: %s): %s" % [@str, line, column, left]
+      end
+    end
+
   end
 end
 

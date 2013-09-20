@@ -1,5 +1,5 @@
 module Pione
-  module Parser
+  module Lang
     # LiteralParser is a set of parser atom for literal descriptions.
     module LiteralParser
       include Parslet

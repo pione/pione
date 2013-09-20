@@ -15,8 +15,8 @@ module Pione
         domain_info = load_domain_info unless domain_info
         env = domain_info.env
         option = {package_name: env.current_package_id, filename: "pione-eval"}
-        Transformer::DocumentTransformer.new.apply(
-          Parser::DocumentParser.new.expr.parse(str), option
+        Lang::DocumentTransformer.new.apply(
+          Lang::DocumentParser.new.expr.parse(str), option
         ).eval(env)
       end
 

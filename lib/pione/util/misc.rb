@@ -33,9 +33,9 @@ module Pione
       end
 
       def parse_features(textual_features)
-        stree = Parser::DocumentParser.new.expr.parse(textual_features)
+        stree = Lang::DocumentParser.new.expr.parse(textual_features)
         opt = {package_name: "*feature*", filename: "*feature*"}
-        Transformer::DocumentTransformer.new.apply(stree, opt)
+        Lang::DocumentTransformer.new.apply(stree, opt)
       end
     end
 

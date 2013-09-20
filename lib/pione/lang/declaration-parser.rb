@@ -1,5 +1,5 @@
 module Pione
-  module Parser
+  module Lang
     # DeclarationParser is a set of parsers for PIONE declaration setences and
     # blocks.
     module DeclarationParser

@@ -1,5 +1,5 @@
 module Pione
-  module Parser
+  module Lang
     # ConditionalBranchParser is a set of parsers for conditional branch "if" and "case".
     module ConditionalBranchParser
       include Parslet

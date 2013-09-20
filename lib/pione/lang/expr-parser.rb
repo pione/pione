@@ -1,5 +1,5 @@
 module Pione
-  module Parser
+  module Lang
     # ExprParser is a set of parser atoms for PIONE expressions.
     module ExprParser
       include Parslet

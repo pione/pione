@@ -41,7 +41,7 @@ module TestUtil
 
     def terminate
       @server.shutdown
-      @thread.kill
+      @thread.kill.join
     end
   end
 end

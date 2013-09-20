@@ -1,5 +1,5 @@
 module Pione
-  module Transformer
+  module Lang
     # DocumentTransformer is a transformer for PIONE document.
     class DocumentTransformer < Parslet::Transform
       include LiteralTransformer

@@ -1,8 +1,8 @@
 module Pione
-  module Transformer
+  module Lang
     # ExprTransformer is a transformer for syntax tree of expressions.
     module ExprTransformer
-      include TransformerModule
+      include Util::ParsletTransformerModule
 
       # Transform +expr_operator_application+ into +Lang::Message+.
       rule(:expr_operator_application =>

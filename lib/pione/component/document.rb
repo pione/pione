@@ -10,10 +10,10 @@ module Pione
         # Parse a PIONE rule document as string.
         def parse(src, opt)
           # parse the document
-          stree = Parser::DocumentParser.new.parse(src)
+          stree = Lang::DocumentParser.new.parse(src)
 
           # model transformation
-          transformer = Transformer::DocumentTransformer.new
+          transformer = Lang::DocumentTransformer.new
           return transformer.apply(stree, opt)
         end
       end

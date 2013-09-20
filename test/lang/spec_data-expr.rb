@@ -169,8 +169,7 @@ end
 #
 # test cases
 #
-yamlname = 'spec_data-expr_match.yml'
-ymlpath = File.join(File.dirname(__FILE__), yamlname)
+ymlpath = File.join(File.dirname(__FILE__), "data", "data-expr_match.yml")
 testcases = YAML.load_file(ymlpath)
 env = TestUtil::Lang.env
 

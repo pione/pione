@@ -52,8 +52,8 @@ module TestUtil
         @name = name
         @parser_name = parser_name
         @option = Hash.new
-        @option[:parser_class] = option[:parser_class] || Pione::Parser::DocumentParser
-        @option[:transformer_class] = option[:transformer_class] || Pione::Transformer::DocumentTransformer
+        @option[:parser_class] = option[:parser_class] || Pione::Lang::DocumentParser
+        @option[:transformer_class] = option[:transformer_class] || Pione::Lang::DocumentTransformer
         @option[:package_name] = option[:package_name] || "Test"
         @option[:filename] = option[:filename] || "Test"
         @context = context

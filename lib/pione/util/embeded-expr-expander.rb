@@ -4,8 +4,8 @@ module Pione
       # Expand embeded expressions in the string.
       def self.expand(env, str)
         # parse and transform
-        tree = Parser::InterpolatorParser.new.parse(str)
-        list = Transformer::InterpolatorTransformer.new.apply(tree, {package_name: nil, filename: nil})
+        tree = Lang::InterpolatorParser.new.parse(str)
+        list = Lang::InterpolatorTransformer.new.apply(tree, {package_name: nil, filename: nil})
 
         # evaluate and join
         list.map do |elt|

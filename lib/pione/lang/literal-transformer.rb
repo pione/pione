@@ -1,8 +1,8 @@
 module Pione
-  module Transformer
+  module Lang
     # LiteralTransformer is a transformer for syntax tree of literals.
     module LiteralTransformer
-      include TransformerModule
+      include Util::ParsletTransformerModule
 
       # Tranform +boolean+ into Lang::BooleanSequence.
       rule(:boolean => simple(:b)) do

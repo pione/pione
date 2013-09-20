@@ -19,8 +19,8 @@ module TestUtil
             env = TestUtil::Lang.env
 
             it '%s should be %s' % [expr, expect] do
-              expect = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expect), transformer_option)
-              expr = DocumentTransformer.new.apply(DocumentParser.new.expr.parse(expr), transformer_option)
+              expect = Pione::Lang::DocumentTransformer.new.apply(Pione::Lang::DocumentParser.new.expr.parse(expect), transformer_option)
+              expr = Pione::Lang::DocumentTransformer.new.apply(Pione::Lang::DocumentParser.new.expr.parse(expr), transformer_option)
               expr.eval(env).should == expect.eval(env)
             end
           end

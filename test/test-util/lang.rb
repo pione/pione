@@ -6,11 +6,11 @@ module TestUtil
       # cache for parser and transformer
       class << self
         def parser(name)
-          @parser[name] ||= Pione::Parser::DocumentParser.new.send(name)
+          @parser[name] ||= Pione::Lang::DocumentParser.new.send(name)
         end
 
         def transformer
-          @transformer ||= Pione::Transformer::DocumentTransformer.new
+          @transformer ||= Pione::Lang::DocumentTransformer.new
         end
       end
 

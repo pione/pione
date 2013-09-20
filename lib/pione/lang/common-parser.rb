@@ -1,5 +1,5 @@
 module Pione
-  module Parser
+  module Lang
     # CommonParser provides a set of symbols, keywords, and utility parsers.
     module CommonParser
       include Parslet

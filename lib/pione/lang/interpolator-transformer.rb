@@ -1,5 +1,5 @@
 module Pione
-  module Transformer
+  module Lang
     # InterpolatorTransformer is a transformer for PIONE embeded expressions.
     class InterpolatorTransformer < Parslet::Transform
       include LiteralTransformer

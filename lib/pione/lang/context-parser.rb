@@ -1,5 +1,5 @@
 module Pione
-  module Parser
+  module Lang
     # ContextParser is a set of parsers for PIONE contexts.
     module ContextParser
       include Parslet
