@@ -58,7 +58,7 @@ module Pione
         end
       }
 
-      # Transform +output_sentence+ into +Model::OutputDeclaration+.
+      # Transform +output_sentence+ into +Lang::OutputDeclaration+.
       rule(:output_sentence => subtree(:tree)) {
         Lang::OutputDeclaration.new(tree[:expr]).tap do |declaration|
           line, col = tree[:declarator].line_and_column

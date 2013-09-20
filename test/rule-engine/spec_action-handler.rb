@@ -17,15 +17,15 @@ describe 'Pione::RuleHandler::ActionHandler' do
     location_a.create("1")
     location_b.create("2")
 
-    param_set = ParameterSet.new(table: {
-        "*" => StringSequence.of("1"),
-        "INPUT" => Variable.new("I"),
-        "I" => KeyedSequence.new
-          .put(IntegerSequence.of(1), DataExprSequence.of("1.a"))
-          .put(IntegerSequence.of(2), DataExprSequence.of("1.b")),
-        "OUTPUT" => Variable.new("O"),
-        "O" => KeyedSequence.new
-          .put(IntegerSequence.of(1), DataExprSequence.of("1.c"))
+    param_set = Lang::ParameterSet.new(table: {
+        "*" => Lang::StringSequence.of("1"),
+        "INPUT" => Lang::Variable.new("I"),
+        "I" => Lang::KeyedSequence.new
+          .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.a"))
+          .put(Lang::IntegerSequence.of(2), Lang::DataExprSequence.of("1.b")),
+        "OUTPUT" => Lang::Variable.new("O"),
+        "O" => Lang::KeyedSequence.new
+          .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.c"))
       })
 
     tuple_a = Tuple[:data].new(name: '1.a', location: location_a, time: Time.now)

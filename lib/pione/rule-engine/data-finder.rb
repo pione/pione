@@ -65,8 +65,8 @@ module Pione
         asterisk = []
 
         # variable and value
-        var = Model::Variable.new(type == :input ? "I" : "O")
-        val = env.variable_get!(var) || Model::KeyedSequence.new
+        var = Lang::Variable.new(type == :input ? "I" : "O")
+        val = env.variable_get!(var) || Lang::KeyedSequence.new
 
         # update value
         _val = tuples.inject(val) do |_val, tuple|
@@ -75,19 +75,19 @@ module Pione
           asterisk << md[1]
 
           # make a date expression
-          data = Model::DataExpr.new(pattern: tuple.name, location: tuple.location, matched_data: md)
+          data = Lang::DataExpr.new(pattern: tuple.name, location: tuple.location, matched_data: md)
 
           # update value
-          _val.put(Model::IntegerSequence.of(index), Model::DataExprSequence.of(data))
+          _val.put(Lang::IntegerSequence.of(index), Lang::DataExprSequence.of(data))
         end
         _env.variable_set!(var, _val)
 
         # set special variable if index equals 1
         if type == :input && index == 1
-          strs = asterisk.map{|str| Model::PioneString.new(str)}
+          strs = asterisk.map{|str| Lang::PioneString.new(str)}
           _env.variable_set(
-            Model::Variable.new("*"),
-            Model::StringSequence.new(strs).set(distribution: distribution)
+            Lang::Variable.new("*"),
+            Lang::StringSequence.new(strs).set(distribution: distribution)
           )
         end
 

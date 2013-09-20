@@ -72,7 +72,7 @@ module Pione
       define_option(:params) do |item|
         item.long = '--params="{Var:1,...}"'
         item.desc = "set user parameters"
-        item.default = Model::ParameterSetSequence.new
+        item.default = Lang::ParameterSetSequence.new
         item.action = proc do |command_name, option, str|
           begin
             stree = DocumentParser.new.parameter_set.parse(str)

@@ -12,7 +12,7 @@ module Pione
 
     # ConstituentRuleSet is a storage of constituent rules in flow rule.
     class ConstituentRuleSet < StructX
-      member :rules, default: lambda { Model::RuleExprSequence.new }
+      member :rules, default: lambda { RuleExprSequence.new }
     end
 
     # ActionContext is a storage of shell scripts in action rule.
@@ -28,7 +28,7 @@ module Pione
       # rule condtions
       member :rule_condition_context
       # parameter sets
-      member :param_sets, default: Model::ParameterSetSequence.new
+      member :param_sets, default: lambda {ParameterSetSequence.new}
 
       def rule_type
         case self
@@ -79,7 +79,7 @@ module Pione
       # definition table of package parameter
       member :param_definition, default: lambda {|_| Hash.new }
       # parameter set
-      member :param, default: lambda {|_| Model::ParameterSetSequence.new }
+      member :param, default: lambda {|_| ParameterSetSequence.new }
     end
   end
 end

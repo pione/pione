@@ -12,8 +12,8 @@ module Pione
         super(*args)
         @working_directory = Location[make_working_directory]
         @env.variable_set(
-          Model::Variable.new("__WORKING_DIRECTORY__"),
-          Model::StringSequence.of(@working_directory.path.to_s)
+          Lang::Variable.new("__WORKING_DIRECTORY__"),
+          Lang::StringSequence.of(@working_directory.path.to_s)
         )
       end
 

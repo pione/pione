@@ -27,7 +27,7 @@ describe 'Pione::Agent::TaskWorker' do
 
     it 'should take a task' do
       # make a task with no features
-      task = TestUtil::Tuple.task(@env.current_package_id, 'R1', [], nil, FeatureSequence.new)
+      task = TestUtil::Tuple.task(@env.current_package_id, 'R1', [], nil, Lang::FeatureSequence.new)
 
       # publish the task
       write(task)
@@ -98,13 +98,13 @@ describe 'Pione::Agent::TaskWorker' do
       @task = TestUtil::Tuple.task(@env.current_package_id, "R", [[data]])
 
       # write the data
-      domain_id = Util::DomainID.generate(@env.current_package_id, "R", [["a"]], ParameterSet.new)
+      domain_id = Util::DomainID.generate(@env.current_package_id, "R", [["a"]], Lang::ParameterSet.new)
       write(data.set(domain: domain_id))
 
       # setup workers
-      @worker1 = Agent::TaskWorker.start(@tuple_space, FeatureSequence.new, @env)
-      @worker2 = Agent::TaskWorker.start(@tuple_space, FeatureSequence.new, @env)
-      @worker3 = Agent::TaskWorker.start(@tuple_space, FeatureSequence.new, @env)
+      @worker1 = Agent::TaskWorker.start(@tuple_space, Lang::FeatureSequence.new, @env)
+      @worker2 = Agent::TaskWorker.start(@tuple_space, Lang::FeatureSequence.new, @env)
+      @worker3 = Agent::TaskWorker.start(@tuple_space, Lang::FeatureSequence.new, @env)
 
       # workers are waiting tasks
       @worker1.wait_until(:take_task)

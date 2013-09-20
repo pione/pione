@@ -7,7 +7,7 @@ module Pione
         # @param package [Component::Package]
         #   package
         def print(env, package_id)
-          definition = env.package_get(Model::PackageExpr.new(package_id: package_id))
+          definition = env.package_get(Lang::PackageExpr.new(package_id: package_id))
           params = definition.param_definition.values
           if params.size > 0
             group = params.group_by {|param| param.type}

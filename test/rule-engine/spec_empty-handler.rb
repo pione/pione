@@ -27,14 +27,14 @@ describe 'Pione::RuleHandler::EmptyHandler' do
       location_b.create("2")
 
       # setup param set
-      param_set = ParameterSet.new(table: {
-          "*" => StringSequence.of("1"),
-          "INPUT" => Variable.new("I"),
-          "I" => KeyedSequence.new
-            .put(IntegerSequence.of(1), DataExprSequence.of("1.a")),
-          "OUTPUT" => Variable.new("O"),
-          "O" => KeyedSequence.new
-            .put(IntegerSequence.of(1), DataExprSequence.of("1.b"))
+      param_set = Lang::ParameterSet.new(table: {
+          "*" => Lang::StringSequence.of("1"),
+          "INPUT" => Lang::Variable.new("I"),
+          "I" => Lang::KeyedSequence.new
+            .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.a")),
+          "OUTPUT" => Lang::Variable.new("O"),
+          "O" => Lang::KeyedSequence.new
+            .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.b"))
         })
 
       domain_id = Util::DomainID.generate(package_id, 'TestTouch', [['1.a']], param_set)
@@ -78,14 +78,14 @@ describe 'Pione::RuleHandler::EmptyHandler' do
       location_a.create("1")
       location_b.create("2")
 
-      param_set = ParameterSet.new(table: {
-          "*" => StringSequence.of("1"),
-          "INPUT" => Variable.new("I"),
-          "I" => KeyedSequence.new
-            .put(IntegerSequence.of(1), DataExprSequence.of("1.a")),
-          "OUTPUT" => Variable.new("O"),
-          "O" => KeyedSequence.new
-            .put(IntegerSequence.of(1), DataExprSequence.of("1.b"))
+      param_set = Lang::ParameterSet.new(table: {
+          "*" => Lang::StringSequence.of("1"),
+          "INPUT" => Lang::Variable.new("I"),
+          "I" => Lang::KeyedSequence.new
+            .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.a")),
+          "OUTPUT" => Lang::Variable.new("O"),
+          "O" => Lang::KeyedSequence.new
+            .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.b"))
         })
 
       domain_id = Util::DomainID.generate(package_id, 'TestTouch', [['1.a']], param_set)
@@ -130,14 +130,14 @@ describe 'Pione::RuleHandler::EmptyHandler' do
       location_a.create("1")
       location_b.create("2")
 
-      param_set = ParameterSet.new(table: {
-          "*" => StringSequence.of("1"),
-          "INPUT" => Variable.new("I"),
-          "I" => KeyedSequence.new
-            .put(IntegerSequence.of(1), DataExprSequence.of("1.a")),
-          "OUTPUT" => Variable.new("O"),
-          "O" => KeyedSequence.new
-            .put(IntegerSequence.of(1), DataExprSequence.of("1.b"))
+      param_set = Lang::ParameterSet.new(table: {
+          "*" => Lang::StringSequence.of("1"),
+          "INPUT" => Lang::Variable.new("I"),
+          "I" => Lang::KeyedSequence.new
+            .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.a")),
+          "OUTPUT" => Lang::Variable.new("O"),
+          "O" => Lang::KeyedSequence.new
+            .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.b"))
         })
 
       domain_id = Util::DomainID.generate(package_id, 'TestRemove', [['1.a']], param_set)

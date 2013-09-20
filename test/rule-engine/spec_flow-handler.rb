@@ -21,7 +21,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       # rule
       @package_id = "SpecFlowHandler"
       @rule_name = "Test"
-      param_set = ParameterSet.new(table: {"*" => StringSequence.of("1")})
+      param_set = Lang::ParameterSet.new(table: {"*" => Lang::StringSequence.of("1")})
 
       tuple_a = Tuple[:data].new(name: '1.a', location: location_a, time: Time.now)
       tuple_b = Tuple[:data].new(name: '1.b', location: location_b, time: Time.now)
@@ -64,7 +64,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       task.param_set.keys.should.include "INPUT"
 
       # make task worker and wait
-      task_worker = Agent[:task_worker].start(@ts, Model::FeatureSequence.new, env)
+      task_worker = Agent[:task_worker].start(@ts, Lang::FeatureSequence.new, env)
       thread.join
 
       outputs = thread[:outputs]
@@ -103,7 +103,7 @@ describe 'Pione::RuleHandler::FlowRule' do
     end
 
     it "should unify redundant tasks" do
-      param_set = ParameterSet.new
+      param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate('Unification', 'R1', [], param_set)
       handler = RuleEngine.make(@space, @env, 'Unification', 'R1', [], param_set, domain_id, 'root')
 
@@ -116,7 +116,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       tasks.size.should == 1
 
       # make task worker and wait
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
+      task_worker = Agent[:task_worker].start(@space, Lang::FeatureSequence.new, @env)
       thread.join
 
       outputs = thread[:outputs]
@@ -164,13 +164,13 @@ describe 'Pione::RuleHandler::FlowRule' do
     end
 
     it "should exist rules" do
-      @env.rule_get(RuleExpr.new("Main")).should.kind_of Lang::RuleDefinition
-      @env.rule_get(RuleExpr.new("A")).should.kind_of Lang::RuleDefinition
-      @env.rule_get(RuleExpr.new("B")).should.kind_of Lang::RuleDefinition
+      @env.rule_get(Lang::RuleExpr.new("Main")).should.kind_of Lang::RuleDefinition
+      @env.rule_get(Lang::RuleExpr.new("A")).should.kind_of Lang::RuleDefinition
+      @env.rule_get(Lang::RuleExpr.new("B")).should.kind_of Lang::RuleDefinition
     end
 
     it "should execute a flow" do
-      param_set = ParameterSet.new(table: {"F" => BooleanSequence.of("true")})
+      param_set = Lang::ParameterSet.new(table: {"F" => Lang::BooleanSequence.of("true")})
       domain_id = Util::DomainID.generate(@env.current_package_id, 'Main', [], param_set)
       handler = RuleEngine.make(@space, @env, @env.current_package_id, 'Main', [], param_set, domain_id, 'root')
 
@@ -184,7 +184,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       task.inputs.should == []
 
       # make task worker and wait
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
+      task_worker = Agent[:task_worker].start(@space, Lang::FeatureSequence.new, @env)
       thread.join
 
       outputs = thread[:outputs]
@@ -232,7 +232,7 @@ describe 'Pione::RuleHandler::FlowRule' do
     end
 
     it "should override parent rule by child" do
-      param_set = ParameterSet.new
+      param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate('Child', 'R1', [], param_set)
       handler = RuleEngine.make(@space, @env, 'Child', 'R1', [], param_set, domain_id, 'root')
 
@@ -246,7 +246,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       task.inputs.should == []
 
       # make task worker and wait
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
+      task_worker = Agent[:task_worker].start(@space, Lang::FeatureSequence.new, @env)
       thread.join
 
       outputs = thread[:outputs]
@@ -289,7 +289,7 @@ describe 'Pione::RuleHandler::FlowRule' do
     end
 
     it "should get concrete rule" do
-      param_set = ParameterSet.new
+      param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate('Concrete', 'R1', [], param_set)
       handler = RuleEngine.make(@space, @env, 'Concrete', 'R1', [], param_set, domain_id, 'root')
 
@@ -303,7 +303,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       task.inputs.should == []
 
       # make task worker and wait
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
       thread.join
 
       outputs = thread[:outputs]
@@ -340,7 +340,7 @@ describe 'Pione::RuleHandler::FlowRule' do
     end
 
     it "should distribute tasks by parameter" do
-      param_set = ParameterSet.new
+      param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate(@env.current_package_id, 'R1', [], param_set)
       handler = RuleEngine.make(@space, @env, @env.current_package_id, 'R1', [], param_set, domain_id, 'root')
 
@@ -353,7 +353,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       tasks = read_all(Tuple[:task].new)
 
       # make task worker and wait
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
       thread.join
 
       outputs = thread[:outputs]
@@ -395,7 +395,7 @@ describe 'Pione::RuleHandler::FlowRule' do
     end
 
     it "should make recursion by using parameter" do
-      param_set = ParameterSet.new
+      param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate(@env.current_package_id, 'R1', [], param_set)
       handler = RuleEngine.make(@space, @env, @env.current_package_id, 'R1', [], param_set, domain_id, 'root')
 
@@ -406,12 +406,12 @@ describe 'Pione::RuleHandler::FlowRule' do
       read(Tuple[:task].new)
 
       # make task worker and wait
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
-      task_worker = Agent[:task_worker].start(@space, Model::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
+      task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
       thread.join
 
       outputs = thread[:outputs]

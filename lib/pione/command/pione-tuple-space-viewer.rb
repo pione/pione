@@ -182,7 +182,7 @@ module Pione
           # name
           if option[:data_name]
             if t.kind_of?(Tuple::Data) and t.respond_to?(:name)
-              next unless Model::DataExpr.new(@data_name).match(t.name)
+              next unless Lang::DataExpr.new(@data_name).match(t.name)
             else
               next
             end

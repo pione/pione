@@ -20,10 +20,10 @@ describe "Pione::System::DomainInfo" do
 
   it "should read a domain info file" do
     env = System::DomainInfo.read(@location).env
-    env.variable_get(Model::Variable.new("A")).should == TestUtil::Lang.expr("1")
-    env.variable_get(Model::Variable.new("B")).should == TestUtil::Lang.expr("1.23")
-    env.variable_get(Model::Variable.new("C")).should == TestUtil::Lang.expr("1")
-    env.variable_get(Model::Variable.new("D")).should == TestUtil::Lang.expr("true")
+    env.variable_get(Lang::Variable.new("A")).should == TestUtil::Lang.expr("1")
+    env.variable_get(Lang::Variable.new("B")).should == TestUtil::Lang.expr("1.23")
+    env.variable_get(Lang::Variable.new("C")).should == TestUtil::Lang.expr("1")
+    env.variable_get(Lang::Variable.new("D")).should == TestUtil::Lang.expr("true")
   end
 end
 

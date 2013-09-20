@@ -6,17 +6,17 @@ describe "Pione::Util::TaskID" do
   before do
     @t1 = Tuple[:data].new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
     @t2 = Tuple[:data].new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
-    @p1 = ParameterSet.new(table: {"X" => StringSequence.of("A")})
-    @p2 = ParameterSet.new(table: {"X" => StringSequence.of("B")})
+    @p1 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("A")})
+    @p2 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("B")})
   end
 
   it "should generate task id" do
-    Util::TaskID.generate([], ParameterSet.new).size.should > 0
+    Util::TaskID.generate([], Lang::ParameterSet.new).size.should > 0
   end
 
   it "should genereate different ids from different inputs" do
-    Util::TaskID.generate([@t1], ParameterSet.new).should !=
-      Util::TaskID.generate([@t2], ParameterSet.new)
+    Util::TaskID.generate([@t1], Lang::ParameterSet.new).should !=
+      Util::TaskID.generate([@t2], Lang::ParameterSet.new)
   end
 
   it "should generate differnt ids from different parameters" do
@@ -34,9 +34,9 @@ describe "Pione::Util::DomainID" do
     @name2 = "R2"
     @t1 = Tuple[:data].new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
     @t2 = Tuple[:data].new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
-    @p0 = ParameterSet.new
-    @p1 = ParameterSet.new(table: {"X" => StringSequence.of("A")})
-    @p2 = ParameterSet.new(table: {"X" => StringSequence.of("B")})
+    @p0 = Lang::ParameterSet.new
+    @p1 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("A")})
+    @p2 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("B")})
   end
 
   it "should generate domain id" do

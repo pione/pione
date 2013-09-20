@@ -2,7 +2,7 @@ module Pione
   # RuleEngine is a namespace for rule engine classes.
   module RuleEngine
     def self.make(space, env, package_id, rule_name, inputs, param_set, domain_id, caller_id)
-      rule_definition = env.rule_get(Model::RuleExpr.new(rule_name, package_id))
+      rule_definition = env.rule_get(Lang::RuleExpr.new(rule_name, package_id))
       handler =
         case rule_definition
         when Lang::FlowRuleDefinition  ; FlowHandler

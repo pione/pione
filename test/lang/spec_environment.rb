@@ -14,8 +14,8 @@ describe 'Pione::Lang::Environment' do
     TestUtil::Lang.declaration!(@env, "$p.var($y) := 2")
 
     # test
-    TestUtil::Lang.expr!(@env, "$x").should == IntegerSequence.of(1)
-    TestUtil::Lang.expr!(@env, "$p.var($y)").should  == IntegerSequence.of(2)
+    TestUtil::Lang.expr!(@env, "$x").should == Lang::IntegerSequence.of(1)
+    TestUtil::Lang.expr!(@env, "$p.var($y)").should  == Lang::IntegerSequence.of(2)
   end
 
   it 'should append new package' do
@@ -23,8 +23,8 @@ describe 'Pione::Lang::Environment' do
     TestUtil::Lang.declaration!(@env, "package $p <- &Test")
 
     # test
-    child_id = @env.variable_get(Variable.new("p")).pieces.first.package_id
-    definition = @env.package_get(PackageExpr.new(package_id: child_id))
+    child_id = @env.variable_get(Lang::Variable.new("p")).pieces.first.package_id
+    definition = @env.package_get(Lang::PackageExpr.new(package_id: child_id))
     definition.parent_id.should == @env.current_package_id
   end
 
@@ -36,8 +36,8 @@ describe 'Pione::Lang::Environment' do
     TestUtil::Lang.declaration!(@env, "$x := 1")
 
     # test
-    TestUtil::Lang.expr!(@env, "$x").should == IntegerSequence.of(1)
-    TestUtil::Lang.expr!(@env, "$p.var($x)").should == IntegerSequence.of(1)
+    TestUtil::Lang.expr!(@env, "$x").should == Lang::IntegerSequence.of(1)
+    TestUtil::Lang.expr!(@env, "$p.var($x)").should == Lang::IntegerSequence.of(1)
   end
 
   it 'should override parent variable by the child' do
@@ -49,8 +49,8 @@ describe 'Pione::Lang::Environment' do
     TestUtil::Lang.declaration!(@env, "$p.var($x) := 2")
 
     # test
-    TestUtil::Lang.expr!(@env, "$x").should == IntegerSequence.of(1)
-    TestUtil::Lang.expr!(@env, "$p.var($x)").should == IntegerSequence.of(2)
+    TestUtil::Lang.expr!(@env, "$x").should == Lang::IntegerSequence.of(1)
+    TestUtil::Lang.expr!(@env, "$p.var($x)").should == Lang::IntegerSequence.of(2)
   end
 
   it "should get rule" do
@@ -65,8 +65,8 @@ describe 'Pione::Lang::Environment' do
     CONTEXT
 
     # test
-    r1 = @env.rule_get(Model::RuleExpr.new("R1"))
-    r2 = @env.rule_get(Model::RuleExpr.new("R2"))
+    r1 = @env.rule_get(Lang::RuleExpr.new("R1"))
+    r2 = @env.rule_get(Lang::RuleExpr.new("R2"))
     r1.rule_condition_context.should == r2.rule_condition_context
     r1.param_sets.should == TestUtil::Lang.expr!(@env, "{}")
     r2.param_sets.should == TestUtil::Lang.expr!(@env, "{X: 2}")
@@ -86,7 +86,7 @@ describe 'Pione::Lang::Environment' do
     CONTEXT
 
     # test
-    r1 = @env.rule_get(Model::RuleExpr.new("R1"))
+    r1 = @env.rule_get(Lang::RuleExpr.new("R1"))
     pr1 = @env.rule_get(TestUtil::Lang.expr!(@env, "$p.rule(R1)").pieces.first)
     pr2 = @env.rule_get(TestUtil::Lang.expr!(@env, "$p.rule(R2)").pieces.first)
     pr1.rule_condition_context.should == r1.rule_condition_context
@@ -117,7 +117,7 @@ describe 'Pione::Lang::Environment' do
     CONTEXT
 
     # test
-    r = @env.rule_get(Model::RuleExpr.new("R"))
+    r = @env.rule_get(Lang::RuleExpr.new("R"))
     pr = @env.rule_get(TestUtil::Lang.expr!(@env, "$p.rule(R)").pieces.first)
     pr1 = @env.rule_get(TestUtil::Lang.expr!(@env, "$p.rule(R1)").pieces.first)
     pr.rule_condition_context.should != r.rule_condition_context

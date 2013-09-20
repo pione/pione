@@ -6,16 +6,16 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::VariableBindingDeclaration
-      declaration.expr1.should == Model::Variable.new("X")
-      declaration.expr2.should == Model::BooleanSequence.of(true)
+      declaration.expr1.should == Lang::Variable.new("X")
+      declaration.expr2.should == Lang::BooleanSequence.of(true)
     end
 
     test "bind $X := true" do |declaration|
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::VariableBindingDeclaration
-      declaration.expr1.should == Model::Variable.new("X")
-      declaration.expr2.should == Model::BooleanSequence.of(true)
+      declaration.expr1.should == Lang::Variable.new("X")
+      declaration.expr2.should == Lang::BooleanSequence.of(true)
     end
   end
 
@@ -24,8 +24,8 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::PackageBindingDeclaration
-      declaration.expr1.should == Model::Variable.new("P")
-      declaration.expr2.should == Model::PackageExprSequence.of("Package")
+      declaration.expr1.should == Lang::Variable.new("P")
+      declaration.expr2.should == Lang::PackageExprSequence.of("Package")
     end
   end
 
@@ -36,7 +36,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ParamDeclaration
       declaration.type.should == :basic
-      declaration.expr1.should == Model::Variable.new("X")
+      declaration.expr1.should == Lang::Variable.new("X")
       declaration.expr2.should.nil
     end
 
@@ -46,8 +46,8 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ParamDeclaration
       declaration.type.should == :basic
-      declaration.expr1.should == Model::Variable.new("X")
-      declaration.expr2.should == Model::IntegerSequence.of(1)
+      declaration.expr1.should == Lang::Variable.new("X")
+      declaration.expr2.should == Lang::IntegerSequence.of(1)
     end
 
     # basic type without default value
@@ -56,7 +56,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ParamDeclaration
       declaration.type.should == :basic
-      declaration.expr1.should == Model::Variable.new("X")
+      declaration.expr1.should == Lang::Variable.new("X")
       declaration.expr2.should.nil
     end
 
@@ -66,8 +66,8 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ParamDeclaration
       declaration.type.should == :basic
-      declaration.expr1.should == Model::Variable.new("X")
-      declaration.expr2.should == Model::IntegerSequence.of(1)
+      declaration.expr1.should == Lang::Variable.new("X")
+      declaration.expr2.should == Lang::IntegerSequence.of(1)
     end
 
     # advanced type without default value
@@ -76,7 +76,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ParamDeclaration
       declaration.type.should == :advanced
-      declaration.expr1.should == Model::Variable.new("X")
+      declaration.expr1.should == Lang::Variable.new("X")
       declaration.expr2.should.nil
     end
 
@@ -86,8 +86,8 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ParamDeclaration
       declaration.type.should == :advanced
-      declaration.expr1.should == Model::Variable.new("X")
-      declaration.expr2.should == Model::IntegerSequence.of(1)
+      declaration.expr1.should == Lang::Variable.new("X")
+      declaration.expr2.should == Lang::IntegerSequence.of(1)
     end
   end
 
@@ -96,8 +96,8 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::RuleBindingDeclaration
-      declaration.expr1.should == Model::RuleExprSequence.of("A")
-      declaration.expr2.should == Model::RuleExprSequence.of("B")
+      declaration.expr1.should == Lang::RuleExprSequence.of("A")
+      declaration.expr2.should == Lang::RuleExprSequence.of("B")
     end
   end
 
@@ -106,7 +106,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::InputDeclaration
-      declaration.expr.should == Model::DataExprSequence.of("*.txt")
+      declaration.expr.should == Lang::DataExprSequence.of("*.txt")
     end
   end
 
@@ -115,7 +115,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::OutputDeclaration
-      declaration.expr.should == Model::DataExprSequence.of("*.txt")
+      declaration.expr.should == Lang::DataExprSequence.of("*.txt")
     end
   end
 
@@ -124,7 +124,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::FeatureDeclaration
-      declaration.expr.should == Model::FeatureSequence.of(RequisiteFeature.new("A"))
+      declaration.expr.should == Lang::FeatureSequence.of(Lang::RequisiteFeature.new("A"))
     end
   end
 
@@ -133,7 +133,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ConstituentRuleDeclaration
-      declaration.expr.should == Model::RuleExprSequence.of("A")
+      declaration.expr.should == Lang::RuleExprSequence.of("A")
     end
   end
 
@@ -224,7 +224,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       End
     STRING
       declaration.should.kind_of Lang::FlowRuleDeclaration
-      declaration.expr.should == RuleExprSequence.of("R")
+      declaration.expr.should == Lang::RuleExprSequence.of("R")
       declaration.rule_condition_context.should.kind_of Lang::RuleConditionContext
       declaration.rule_condition_context.elements.size.should == 2
       declaration.rule_condition_context.elements[0] == TestUtil::Lang.declaration("input '*.a'")
@@ -245,7 +245,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       End
     STRING
       declaration.should.kind_of Lang::ActionRuleDeclaration
-      declaration.expr.should == RuleExprSequence.of("R")
+      declaration.expr.should == Lang::RuleExprSequence.of("R")
       declaration.condition_context.should.kind_of Lang::RuleConditionContext
       declaration.condition_context.elements.size.should == 2
       declaration.condition_context.elements[0] == TestUtil::Lang.declaration("input '*.a'")
@@ -262,7 +262,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       End
     STRING
       declaration.should.kind_of Lang::EmptyRuleDeclaration
-      declaration.expr.should == RuleExprSequence.of("R")
+      declaration.expr.should == Lang::RuleExprSequence.of("R")
       declaration.condition_context.should.kind_of Lang::RuleConditionContext
       declaration.condition_context.elements.size.should == 2
       declaration.condition_context.elements[0] == TestUtil::Lang.declaration("input '*.a'")

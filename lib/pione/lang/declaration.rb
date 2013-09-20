@@ -33,7 +33,7 @@ module Pione
         end
 
         # set current package id if it has no package id
-        if name.is_a?(Model::Sequence)
+        if name.is_a?(Sequence)
           name.map {|piece| piece.package_id ? piece : piece.set(package_id: env.current_package_id)}
         else
           name.package_id ? name : name.set(package_id: env.current_package_id)
@@ -61,7 +61,7 @@ module Pione
       # expression. We expect +expr1+ is a variable or variable generating
       # expression.
       def eval(env)
-        var = get_reference(env, expr1, Model::Variable)
+        var = get_reference(env, expr1, Variable)
         val = expr2
 
         # update variable table
@@ -77,7 +77,7 @@ module Pione
       # Update variable table and package table.
       def eval(env)
         # variable name
-        var = get_reference(env, expr1, Model::Variable)
+        var = get_reference(env, expr1, Variable)
 
         # check the parent package
         parent_package = expr2.eval(env)
@@ -110,7 +110,7 @@ module Pione
           # result
           child_piece
         end
-        child_package = Model::PackageExprSequence.of(*child_pieces)
+        child_package = PackageExprSequence.of(*child_pieces)
 
         # update variable table with the result
         VariableBindingDeclaration.new(var, child_package).eval(env)
@@ -130,7 +130,7 @@ module Pione
       # Add the parameter in current rule definition.
       def eval(env)
         # get variable
-        var = get_reference(env, expr1, Model::Variable)
+        var = get_reference(env, expr1, Variable)
 
         # we don't permit to declare parameters of other packages
         if not(var.package_id.nil?) and var.package_id != env.current_package_id
@@ -176,7 +176,7 @@ module Pione
       # e.g. "rule A := B"
       def eval(env)
         # rule name
-        refs = get_reference(env, expr1, Model::RuleExprSequence)
+        refs = get_reference(env, expr1, RuleExprSequence)
 
         refs.pieces.each do |ref|
           referents = expr2.eval!(env)
@@ -271,7 +271,7 @@ module Pione
       member :flow_context      # flow context
 
       def eval(env)
-        rules = get_reference(env, expr, Model::RuleExprSequence)
+        rules = get_reference(env, expr, RuleExprSequence)
         rules.pieces.each do |piece|
           ref = piece.set(package_id: get_package_id(env, piece))
 
@@ -291,7 +291,7 @@ module Pione
       member :action_context    # action context
 
       def eval(env)
-        rules = get_reference(env, expr, Model::RuleExprSequence)
+        rules = get_reference(env, expr, RuleExprSequence)
         rules.pieces.each do |piece|
           ref = piece.set(package_id: get_package_id(env, piece))
 
@@ -310,7 +310,7 @@ module Pione
       member :condition_context # rule condition context
 
       def eval(env)
-        rules = get_reference(env, expr, Model::RuleExprSequence)
+        rules = get_reference(env, expr, RuleExprSequence)
         rules.pieces.each do |piece|
           ref = piece.set(package_id: get_package_id(env, piece))
           definition = EmptyRuleDefinition.new(condition_context)

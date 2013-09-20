@@ -2,7 +2,7 @@ module TestUtil
   # Test pione method.
   def test_pione_method(name, option={})
     yamlname = 'spec_%s.yml' % name
-    ymlpath = File.join(File.dirname(__FILE__), "..", 'model', yamlname)
+    ymlpath = File.join(File.dirname(__FILE__), "..", 'lang', yamlname)
     testcases = YAML.load_file(ymlpath)
 
     transformer_option = {}

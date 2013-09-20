@@ -10,8 +10,8 @@ describe 'Pione::Tuple::TaskTuple' do
     @package_id = "Main"
     @rule_name = "Main"
     @inputs = [data]
-    @params = ParameterSet.new(Model::Variable.new("X") => Model::IntegerSequence.of(1))
-    @features = FeatureSequence.new
+    @params = Lang::ParameterSet.new(Lang::Variable.new("X") => Lang::IntegerSequence.of(1))
+    @features = Lang::FeatureSequence.new
     @domain = domain
     @caller_id = "caller"
 

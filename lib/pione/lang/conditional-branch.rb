@@ -24,8 +24,8 @@ module Pione
         res = expr.eval!(env)
 
         # check type of the result
-        unless res.is_a?(Model::BooleanSequence)
-          raise StructuralError.new(Model::BooleanSequence, expr.pos)
+        unless res.is_a?(BooleanSequence)
+          raise StructuralError.new(BooleanSequence, expr.pos)
         end
 
         # return true_context when it is true

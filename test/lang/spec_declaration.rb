@@ -123,7 +123,7 @@ describe "Pione::Lang::PackageBindingDeclaration" do
       package $p3 <- $p2 {Y: 20}
       package $p4 <- $p3 {Z: 30}
     CONTEXT
-    TestUtil::Lang.expr!(@env, "$p1.param").should == ParameterSetSequence.new
+    TestUtil::Lang.expr!(@env, "$p1.param").should == Lang::ParameterSetSequence.new
     TestUtil::Lang.expr!(@env, "$p2.param").should == TestUtil::Lang.expr!(@env, "{X: 10}")
     TestUtil::Lang.expr!(@env, "$p3.param").should == TestUtil::Lang.expr!(@env, "{X: 10, Y: 20}")
     TestUtil::Lang.expr!(@env, "$p4.param").should == TestUtil::Lang.expr!(@env, "{X: 10, Y: 20, Z: 30}")
@@ -155,7 +155,7 @@ describe "Pione::Lang::ParamDeclaration" do
       @x.eval(@env)
       @y.eval(@env)
       @z.eval(@env)
-      definition = @env.package_table.get(PackageExpr.new(package_id: @env.current_package_id))
+      definition = @env.package_table.get(Lang::PackageExpr.new(package_id: @env.current_package_id))
       definition.param_definition["X"].type.should == :basic
       definition.param_definition["X"].value.should == TestUtil::Lang.expr("1")
       definition.param_definition["Y"].type.should == :basic
@@ -187,9 +187,9 @@ describe "Pione::Lang::ParamDeclaration" do
       @x.eval(@env)
       @y.eval(@env)
       @z.eval(@env)
-      TestUtil::Lang.expr!(@env, "$X").should == IntegerSequence.of(1)
-      TestUtil::Lang.expr!(@env, "$Y").should == IntegerSequence.of(2)
-      TestUtil::Lang.expr!(@env, "$Z").should == IntegerSequence.of(3)
+      TestUtil::Lang.expr!(@env, "$X").should == Lang::IntegerSequence.of(1)
+      TestUtil::Lang.expr!(@env, "$Y").should == Lang::IntegerSequence.of(2)
+      TestUtil::Lang.expr!(@env, "$Z").should == Lang::IntegerSequence.of(3)
     end
   end
 
@@ -208,14 +208,14 @@ describe "Pione::Lang::ParamDeclaration" do
     end
 
     it "should get params" do
-      condition = @env.rule_get(RuleExpr.new("R")).rule_condition_context.eval(@env)
+      condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
       condition.param_definition.size.should == 3
       condition.param_definition["X"].type.should == :basic
-      condition.param_definition["X"].value.should == IntegerSequence.of(1)
+      condition.param_definition["X"].value.should == Lang::IntegerSequence.of(1)
       condition.param_definition["Y"].type.should == :basic
-      condition.param_definition["Y"].value.should == IntegerSequence.of(2)
+      condition.param_definition["Y"].value.should == Lang::IntegerSequence.of(2)
       condition.param_definition["Z"].type.should == :advanced
-      condition.param_definition["Z"].value.should == IntegerSequence.of(3)
+      condition.param_definition["Z"].value.should == Lang::IntegerSequence.of(3)
     end
   end
 end
@@ -249,9 +249,9 @@ describe "Pione::Lang::RuleBindingDeclaration" do
     @r1.eval(@env)
     @r2.eval(@env)
     @r3.eval(@env)
-    @env.rule_get(RuleExpr.new("R1")).param_sets.should == TestUtil::Lang.expr!(@env, "{X: 10}")
-    @env.rule_get(RuleExpr.new("R2")).param_sets.should == TestUtil::Lang.expr!(@env, "{X: 10, Y: 20}")
-    @env.rule_get(RuleExpr.new("R3")).param_sets.should == TestUtil::Lang.expr!(@env, "{X: 10, Y: 20, Z: 30}")
+    @env.rule_get(Lang::RuleExpr.new("R1")).param_sets.should == TestUtil::Lang.expr!(@env, "{X: 10}")
+    @env.rule_get(Lang::RuleExpr.new("R2")).param_sets.should == TestUtil::Lang.expr!(@env, "{X: 10, Y: 20}")
+    @env.rule_get(Lang::RuleExpr.new("R3")).param_sets.should == TestUtil::Lang.expr!(@env, "{X: 10, Y: 20, Z: 30}")
   end
 
   it "should permit to be in arbitrary order" do
@@ -281,7 +281,7 @@ describe "Pione::Lang::ConstituentRuleDeclaration" do
   end
 
   it "should get constituent rules" do
-    definition = @env.rule_get(RuleExpr.new("R"))
+    definition = @env.rule_get(Lang::RuleExpr.new("R"))
     rule_set = definition.flow_context.eval(@env)
     rule_set.rules.size.should == 3
     rule_set.rules.should == TestUtil::Lang.expr!(@env, "A | (B {X: 1}) | (C {X: 1, Y: 2})")
@@ -302,7 +302,7 @@ describe "Pione::Lang::InnputDeclaration" do
   end
 
   it "should get inputs" do
-    condition = @env.rule_get(RuleExpr.new("R")).rule_condition_context.eval(@env)
+    condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
     condition.inputs.size.should == 3
     condition.inputs.should.include TestUtil::Lang.expr("'*.i1'")
     condition.inputs.should.include TestUtil::Lang.expr("'{$*}.i2'")
@@ -324,7 +324,7 @@ describe "Pione::Lang::OutputDeclaration" do
   end
 
   it "should get outputs" do
-    condition = @env.rule_get(RuleExpr.new("R")).rule_condition_context.eval(@env)
+    condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
     condition.outputs.size.should == 3
     condition.outputs.should.include TestUtil::Lang.expr("'{$*}.o1'")
     condition.outputs.should.include TestUtil::Lang.expr("'{$*}.o2'")
@@ -347,7 +347,7 @@ describe "Pione::Lang::FeatureDeclaration" do
   end
 
   it "should get features" do
-    condition = @env.rule_get(RuleExpr.new("R")).rule_condition_context.eval(@env)
+    condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
     condition.features.size.should == 3
     condition.features.should.include TestUtil::Lang.expr("+F1")
     condition.features.should.include TestUtil::Lang.expr("-F2")
@@ -370,7 +370,7 @@ describe "Pione::Lang::ConstraintDeclaration" do
   end
 
   it "should get constraints" do
-    condition = @env.rule_get(RuleExpr.new("R")).rule_condition_context.eval(@env)
+    condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
     condition.constraints.size.should == 3
     condition.constraints.should.include TestUtil::Lang.expr("1 > 0")
     condition.constraints.should.include TestUtil::Lang.expr("1 < 0")
@@ -393,7 +393,7 @@ describe "Pione::Lang::AnnotationDeclaration" do
   end
 
   it "should get constraints" do
-    condition = @env.rule_get(RuleExpr.new("R")).rule_condition_context.eval(@env)
+    condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
     condition.annotations.size.should == 3
     condition.annotations.should.include TestUtil::Lang.expr('"annotation1"')
     condition.annotations.should.include TestUtil::Lang.expr('"annotation2"')
@@ -407,7 +407,7 @@ describe "Pione::Lang::ExprDeclaration" do
   end
 
   it "should get the result" do
-    TestUtil::Lang.declaration!(@env, "? 1 + 2").should == IntegerSequence.of(3)
+    TestUtil::Lang.declaration!(@env, "? 1 + 2").should == Lang::IntegerSequence.of(3)
   end
 end
 
@@ -436,7 +436,7 @@ describe "Pione::Lang::ParamBlockDeclaration" do
   end
 
   it "should get parameters" do
-    definition = @env.package_table.get(PackageExpr.new(package_id: @env.current_package_id))
+    definition = @env.package_table.get(Lang::PackageExpr.new(package_id: @env.current_package_id))
     definition.param_definition["X1"].type.should == :basic
     definition.param_definition["X1"].value.should == TestUtil::Lang.expr("1")
     definition.param_definition["X2"].type.should == :basic
@@ -475,7 +475,7 @@ describe "Pione::Lang::FlowRuleDeclaration" do
   end
 
   it "should get flow rule" do
-    definition = @env.rule_get(RuleExpr.new("R"))
+    definition = @env.rule_get(Lang::RuleExpr.new("R"))
     condition = definition.rule_condition_context.eval(@env)
     condition.inputs.size.should == 1
     condition.inputs[0].should == TestUtil::Lang.expr("'*.i'")
@@ -484,7 +484,7 @@ describe "Pione::Lang::FlowRuleDeclaration" do
     rule_set = definition.flow_context.eval(@env)
     rule_set.rules.size.should == 3
     rule_set.rules.should == TestUtil::Lang.expr!(@env, "A | (B {X: $X}) | C {Y: 20}")
-    TestUtil::Lang.expr!(@env, "$X").should == IntegerSequence.of(10)
+    TestUtil::Lang.expr!(@env, "$X").should == Lang::IntegerSequence.of(10)
   end
 end
 
@@ -502,7 +502,7 @@ describe "Pione::Lang::ActionRuleDeclaration" do
   end
 
   it "should get action rule" do
-    definition = @env.rule_get(RuleExpr.new("R"))
+    definition = @env.rule_get(Lang::RuleExpr.new("R"))
     condition = definition.rule_condition_context.eval(@env)
     condition.inputs.size.should == 1
     condition.inputs[0].should == TestUtil::Lang.expr("'*.i'")

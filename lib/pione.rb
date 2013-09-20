@@ -75,7 +75,6 @@ require 'pione/system'      # PIONE system functions
 require 'pione/relay'       # relay connection
 require 'pione/tuple-space' # tuple space functions
 require 'pione/rule-engine' # rule processing behaviors
-require 'pione/model'       # models for rule
 require 'pione/component'   # rule engine component
 require 'pione/lang'        # PIONE languge
 require 'pione/tuple'       # tuple definitions
@@ -95,7 +94,6 @@ module Pione
   include Relay
   include Util
   include Log::MessageLog
-  include Model
   include TupleSpace
   include Parser
   include Transformer

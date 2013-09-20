@@ -11,7 +11,7 @@ module Pione
       attr_reader :package
 
       def initialize(space, env, package, param_sets, stream)
-        raise ArgumentError unless env.rule_get!(Model::RuleExpr.new("Main"))
+        raise ArgumentError unless env.rule_get!(Lang::RuleExpr.new("Main"))
         super(space)
         @space = space
         @env = env
@@ -57,7 +57,7 @@ module Pione
         else
           list.each do |env, inputs|
             package_id = @env.current_package_id
-            param_set = Model::ParameterSet.new
+            param_set = Lang::ParameterSet.new
             handler = RuleEngine.make(@space, @env, package_id, "Root", inputs, param_set, 'root', nil)
             handler.handle
           end

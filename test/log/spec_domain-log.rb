@@ -4,7 +4,7 @@ class FakeHandler < RuleEngine::BasicHandler
   DOMAIN_LOCATION = Location[Temppath.create]
 
   def initialize
-    @param_set = ParameterSet.new(Variable.new("X") => StringSequence.of("a"))
+    @param_set = Lang::ParameterSet.new(Lang::Variable.new("X") => Lang::StringSequence.of("a"))
     @inputs = [[Tuple::DataTuple.new(name: "A", domain: DOMAIN_LOCATION.to_s, location: DOMAIN_LOCATION + "A", time: Time.now)]]
   end
 

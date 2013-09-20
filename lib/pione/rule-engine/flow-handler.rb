@@ -128,7 +128,7 @@ module Pione
 
       # Make a task tuple from the application.
       def make_tuple(caller_id)
-        features = rule_condition.features.inject(Model::FeatureSequence.new) do |f, expr|
+        features = rule_condition.features.inject(Lang::FeatureSequence.new) do |f, expr|
           f + f.eval(env)
         end
         Tuple[:task].new(
@@ -252,7 +252,7 @@ module Pione
             _env = plain_env.layer
             # get task's condition
             rule_condition = rule_definition.rule_condition_context.eval(_env)
-            find_tasks_by_rule_condition(_env, rule, rule_definition, rule_condition, Model::ParameterSet.new).uniq
+            find_tasks_by_rule_condition(_env, rule, rule_definition, rule_condition, Lang::ParameterSet.new).uniq
           end
         end
       end
@@ -267,12 +267,12 @@ module Pione
           # make parameter set for the task
           table = Hash.new
 
-          if val_i = task_env.variable_get!(Model::Variable.new("I"))
-            table["INPUT"] = Model::Variable.new(name: "I", package_id: rule.package_id)
+          if val_i = task_env.variable_get!(Lang::Variable.new("I"))
+            table["INPUT"] = Lang::Variable.new(name: "I", package_id: rule.package_id)
             table["I"] = val_i
           end
 
-          if val_star = task_env.variable_get!(Model::Variable.new("*"))
+          if val_star = task_env.variable_get!(Lang::Variable.new("*"))
             table["*"] = val_star
           end
 
@@ -281,10 +281,10 @@ module Pione
           # check constraint conditions
           next unless rule_condition.constraints.all? do |constraint|
             res = constraint.eval(task_env)
-            if res.is_a?(Model::BooleanSequence)
+            if res.is_a?(Lang::BooleanSequence)
               res.value
             else
-              raise Lang::StructuralError.new(Model::BooleanSequence, constraint.pos)
+              raise Lang::StructuralError.new(Lang::BooleanSequence, constraint.pos)
             end
           end
 
@@ -312,8 +312,8 @@ module Pione
           # make parameter set for the task
           table = Hash.new
 
-          if val_i = task_env.variable_get!(Model::Variable.new("O"))
-            table["OUTPUT"] = Model::Variable.new("O")
+          if val_i = task_env.variable_get!(Lang::Variable.new("O"))
+            table["OUTPUT"] = Lang::Variable.new("O")
             table["O"] = val_i
           end
 
@@ -334,9 +334,9 @@ module Pione
           order, env, param_set = f.first
 
           # setup output variables
-          var_o = Model::Variable.new("O")
-          task.env.variable_set(Model::Variable.new("OUTPUT"), var_o)
-          o = find_output_variables(task, inputs, Model::KeyedSequence.new)
+          var_o = Lang::Variable.new("O")
+          task.env.variable_set(Lang::Variable.new("OUTPUT"), var_o)
+          o = find_output_variables(task, inputs, Lang::KeyedSequence.new)
           task.env.variable_set(var_o, o)
           param_set = param_set.set(table: param_set.table.merge({"O" => o}))
 
@@ -351,7 +351,7 @@ module Pione
         task.rule_condition.outputs.each_with_index do |condition, i|
           begin
             data = condition.eval(task.env)
-            _o = o.put(Model::IntegerSequence.of(i+1), data)
+            _o = o.put(Lang::IntegerSequence.of(i+1), data)
           rescue Lang::UnboundError
             next
           end

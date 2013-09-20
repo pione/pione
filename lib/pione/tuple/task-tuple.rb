@@ -12,9 +12,9 @@ module Pione
         # input data list
         [:inputs, Array],
         # parameter list
-        [:param_set, Model::ParameterSet],
+        [:param_set, Lang::ParameterSet],
         # request features
-        [:features, Model::FeatureSequence],
+        [:features, Lang::FeatureSequence],
         # task domain id
         [:domain_id, String],
         # domain id of the caller

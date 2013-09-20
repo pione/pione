@@ -30,7 +30,7 @@ testcases = YAML.load_file(ymlpath)
 
 describe 'RuleHandler::UpdateCriteria' do
   testcases.each do |rule_name, cases|
-    rule_condition = env.rule_get(Model::RuleExpr.new(rule_name)).rule_condition_context.eval(env)
+    rule_condition = env.rule_get(Lang::RuleExpr.new(rule_name)).rule_condition_context.eval(env)
     describe rule_name do
       cases.each do |case_name, testcase|
         describe case_name do

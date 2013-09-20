@@ -36,7 +36,7 @@ describe 'Pione::RuleEngine::DataFinder' do
     ]
     tuples.each {|t| write(t) }
     finder = RuleEngine::DataFinder.new(tuple_space_server, 'test')
-    res = finder.send(:find_tuples_by_condition, DataExprSequence.of('*.a'))
+    res = finder.send(:find_tuples_by_condition, Lang::DataExprSequence.of('*.a'))
     tuples.each {|t| res.should.include t }
   end
 

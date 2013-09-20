@@ -42,8 +42,8 @@ describe "Pione::Component::Package" do
 
   it "should get rules" do
     package_id = @package.eval(@env)
-    @env.rule_get(RuleExpr.new(package_id: package_id, name: "Main")).should.kind_of(Lang::RuleDefinition)
-    @env.rule_get(RuleExpr.new(package_id: package_id, name: "Count")).should.kind_of(Lang::RuleDefinition)
+    @env.rule_get(Lang::RuleExpr.new(package_id: package_id, name: "Main")).should.kind_of(Lang::RuleDefinition)
+    @env.rule_get(Lang::RuleExpr.new(package_id: package_id, name: "Count")).should.kind_of(Lang::RuleDefinition)
   end
 
   it "should upload package files" do

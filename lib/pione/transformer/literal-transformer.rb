@@ -4,74 +4,74 @@ module Pione
     module LiteralTransformer
       include TransformerModule
 
-      # Tranform +boolean+ into Model::BooleanSequence.
+      # Tranform +boolean+ into Lang::BooleanSequence.
       rule(:boolean => simple(:b)) do
-        Model::BooleanSequence.of(b == "true") do |expr|
+        Lang::BooleanSequence.of(b == "true") do |expr|
           line, col = b.line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       end
 
-      # Transform +string+ into Model::StringSequence.
+      # Transform +string+ into Lang::StringSequence.
       rule(:string => subtree(:tree)) do
         # empty string if content is an empty list
         content = tree[:content] == [] ? "" : tree[:content]
         # make string sequence
-        Model::StringSequence.of(Util::BackslashNotation.apply(content)).tap do |expr|
+        Lang::StringSequence.of(Util::BackslashNotation.apply(content)).tap do |expr|
           line, col = tree[:header].line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       end
 
-      # Transform +integer+ as Model::IntegerSequence.
+      # Transform +integer+ as Lang::IntegerSequence.
       rule(:integer => simple(:i)) do
-        Model::IntegerSequence.of(i.to_i).tap do |expr|
+        Lang::IntegerSequence.of(i.to_i).tap do |expr|
           line, col = i.line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       end
 
-      # Transform +float+ as Model::FloatSequence.
+      # Transform +float+ as Lang::FloatSequence.
       rule(:float => simple(:f)) do
-        Model::FloatSequence.of(f.to_f).tap do |expr|
+        Lang::FloatSequence.of(f.to_f).tap do |expr|
           line, col = f.line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       end
 
-      # Transform +variable+ as Model::VariableSequence.
+      # Transform +variable+ as Lang::VariableSequence.
       rule(:variable => subtree(:tree)) {
-        Model::Variable.new(tree[:name].str).tap do |expr|
+        Lang::Variable.new(tree[:name].str).tap do |expr|
           line, col = tree[:header].line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       }
 
-      # Transform +data_expr+ as Model::DataExprSequence.
+      # Transform +data_expr+ as Lang::DataExprSequence.
       rule(:data_expr => subtree(:tree)) {
         if tree[:null]
-          val = Model::DataExprNull.new
+          val = Lang::DataExprNull.new
         else
-          val = Model::DataExpr.new(Util::BackslashNotation.apply(tree[:pattern].str))
+          val = Lang::DataExpr.new(Util::BackslashNotation.apply(tree[:pattern].str))
         end
 
-        Model::DataExprSequence.of(val).tap do |expr|
+        Lang::DataExprSequence.of(val).tap do |expr|
           line, col = (tree[:header] || tree[:null]).line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       }
 
-      # Transform +:package_expr+ into Model::PackageExprSequence.
+      # Transform +:package_expr+ into Lang::PackageExprSequence.
       rule(:package_expr => subtree(:tree)) {
-        PackageExprSequence.of(tree[:identifier].str).tap do |expr|
+        Lang::PackageExprSequence.of(tree[:identifier].str).tap do |expr|
           line, col = tree[:header].line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       }
 
-      # Transform +rule_expr+ into Model::RuleExprSequence.
+      # Transform +rule_expr+ into Lang::RuleExprSequence.
       rule(:rule_expr => simple(:name)) do
-        Model::RuleExprSequence.of(name.str).tap do |expr|
+        Lang::RuleExprSequence.of(name.str).tap do |expr|
           line, col = name.line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
@@ -79,22 +79,22 @@ module Pione
 
       # Transform +ticket_expr+ into TicketExprSequence.
       rule(:ticket_expr => subtree(:tree)) {
-        Model::TicketExprSequence.of(tree[:name].str).tap do |expr|
+        Lang::TicketExprSequence.of(tree[:name].str).tap do |expr|
           line, col = tree[:header].line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
       }
 
-      # Transform +:parameters+ as Model::Paramters.
+      # Transform +:parameters+ as Lang::Paramters.
       rule(:parameter_set => subtree(:tree)) {
         elts = tree[:elements]
         case elts
         when nil
-          Model::ParameterSetSequence.new
+          Lang::ParameterSetSequence.new
         when Array
-          Model::ParameterSetSequence.of(Hash[*elts.map{|e| [e.key, e.value]}.flatten(1)])
+          Lang::ParameterSetSequence.of(Hash[*elts.map{|e| [e.key, e.value]}.flatten(1)])
         else
-          Model::ParameterSetSequence.of({elts.key => elts.value})
+          Lang::ParameterSetSequence.of({elts.key => elts.value})
         end.tap do |params|
           line, col = tree[:header].line_and_column
           params.set_source_position(package_name, filename, line, col)
@@ -108,12 +108,12 @@ module Pione
 
       # Transform +feature+ into FeatureSequence.
       rule(:feature => simple(:piece)) do
-        Model::FeatureSequence.of(piece)
+        Lang::FeatureSequence.of(piece)
       end
 
       # Transform +requisite_feature+ into RequisiteFeature.
       rule(:requisite_feature => subtree(:tree)) do
-        Model::RequisiteFeature.new(tree[:name].str).tap do |feature|
+        Lang::RequisiteFeature.new(tree[:name].str).tap do |feature|
           line, col = tree[:prefix].line_and_column
           feature.set_source_position(package_name, filename, line, col)
         end
@@ -121,7 +121,7 @@ module Pione
 
       # Transform +blocking_feature+ into BlockingFeature.
       rule(:blocking_feature => subtree(:tree)) do
-        Model::BlockingFeature.new(tree[:name].str).tap do |feature|
+        Lang::BlockingFeature.new(tree[:name].str).tap do |feature|
           line, col = tree[:prefix].line_and_column
           feature.set_source_position(package_name, filename, line, col)
         end
@@ -129,7 +129,7 @@ module Pione
 
       # Transform +preferred_feature+ into PreferredFeature.
       rule(:preferred_feature => subtree(:tree)) do
-        Model::PreferredFeature.new(tree[:name].str).tap do |feature|
+        Lang::PreferredFeature.new(tree[:name].str).tap do |feature|
           line, col = tree[:prefix].line_and_column
           feature.set_source_position(package_name, filename, line, col)
         end
@@ -137,7 +137,7 @@ module Pione
 
       # Transform +possible_feature+ into PossibleFeature.
       rule(:possible_feature => subtree(:tree)) do
-        Model::PossibleFeature.new(tree[:name].str).tap do |feature|
+        Lang::PossibleFeature.new(tree[:name].str).tap do |feature|
           line, col = tree[:prefix].line_and_column
           feature.set_source_position(package_name, filename, line, col)
         end
@@ -145,7 +145,7 @@ module Pione
 
       # Transform +restrictive_feature+ into RestrictiveFeature.
       rule(:restrictive_feature => subtree(:tree)) do
-        Model::RestrictiveFeature.new(tree[:name].str).tap do |feature|
+        Lang::RestrictiveFeature.new(tree[:name].str).tap do |feature|
           line, col = tree[:prefix].line_and_column
           feature.set_source_position(package_name, filename, line, col)
         end
@@ -153,7 +153,7 @@ module Pione
 
       # Transform +empty_feature+ into EmptyFeature.
       rule(:empty_feature => subtree(:tree)) do
-        Model::EmptyFeature.new.tap do |feature|
+        Lang::EmptyFeature.new.tap do |feature|
           line, col = tree[:symbol].line_and_column
           feature.set_source_position(package_name, filename, line, col)
         end
@@ -161,7 +161,7 @@ module Pione
 
       # Transform +almighty_feature+ into AlmightyFeature.
       rule(:almighty_feature => subtree(:tree)) do
-        Model::AlmightyFeature.new.tap do |feature|
+        Lang::AlmightyFeature.new.tap do |feature|
           line, col = tree[:symbol].line_and_column
           feature.set_source_position(package_name, filename, line, col)
         end
