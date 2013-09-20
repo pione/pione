@@ -1,43 +1,27 @@
 require_relative '../test-util'
 
-class TestAgent < Pione::Agent::BasicAgent
-  def initialize(space)
-    super()
-    @job_terminator = Pione::Agent::JobTerminator.start(space, self)
-  end
-
-  define_transition :test
-
-  chain :init => :test
-  chain :test => :test
-
-  def transit_to_test
-    sleep 0.1
-  end
-end
-
 describe 'Pione::Agent::JobTerminator' do
   before do
-    @space = create_tuple_space_server
+    @tuple_space = create_tuple_space_server
   end
 
   after do
-    @space.terminate
+    @tuple_space.terminate
   end
 
-  it 'should terminate' do
-    agent = TestAgent.start(@space)
+  it 'should fire the termination action' do
+    fired = false
 
-    # wait to start agent activity
-    agent.wait_until_after(:test)
+    # create an agent
+    job_terminator = Agent::JobTerminator.start(@tuple_space) {fired = true}
 
     # write terminate command
     write(Tuple[:command].new(name: "terminate", args: []))
 
-    # wait terminate process
-    agent.wait_until_terminated
+    # wait termination
+    job_terminator.wait_until_terminated
 
     # test
-    agent.should.be.terminated
+    fired.should.be.true
   end
 end

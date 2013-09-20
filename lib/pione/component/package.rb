@@ -36,7 +36,7 @@ module Pione
       # Evaluate the package context in the environment. This method will
       # introduce a new package id, and the context is evaluated under it.
       def eval(env)
-        package_id = env.add_package(name)
+        package_id = env.add_package(info["PackageName"])
         env.temp(current_package_id: package_id) {|_env| context.eval(_env) }
         return package_id
       end

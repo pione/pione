@@ -2,15 +2,17 @@ require_relative '../test-util'
 
 describe "Pione::Agent::TupleSpaceReceiver" do
   before do
-    @space = create_tuple_space_server
-    @broker = Agent::Broker.start("*", task_worker_resource: 5, spawn_task_worker: false)
-    @provider_front = Front::TupleSpaceProviderFront.new(StructX.new(:tuple_space_server).new(@space), @space)
+    @tuple_space = create_tuple_space_server
+    Global.expressional_features = Util.parse_features("*")
+    @broker = Agent::Broker.start(task_worker_resource: 5, spawn_task_worker: false)
+    @provider_front = Front::TupleSpaceProviderFront.new(@tuple_space)
   end
 
   after do
     @broker.terminate
-    @space.terminate
+    @tuple_space.terminate
     @provider_front.terminate
+    Global.expressional_features = nil
   end
 
   it "should run and terminate receiver" do
@@ -25,12 +27,16 @@ describe "Pione::Agent::TupleSpaceReceiver" do
     provider = Agent::TupleSpaceProvider.start(@provider_front)
     receiver = Agent::TupleSpaceReceiver.start(@broker)
 
-    # wait the receiver to receive a packet
+    # wait receiver to handle notification
     receiver.wait_until_after(:receive_packet, 10)
+    receiver.notification_handlers.list.each {|thread| thread.join}
 
-    servers = receiver.tuple_space_servers
-    servers.size.should == 1
-    servers.first.should == @space
+    # test tuple spaces
+    spaces = receiver.tuple_spaces
+    spaces.size.should == 1
+    spaces.first.should == @tuple_space
+
+    # terminate agents
     provider.terminate
     receiver.terminate
     provider.wait_until_terminated

@@ -15,60 +15,78 @@ end
 
 describe "Pione::Log::SystemLogger" do
   it "should log the fatal message" do
-    TestLogger.new.tap{|x| x.fatal "A"}.should.include("A")
+    TestLogger.new.tap{|x| x.fatal "XYZ"}.should.include("XYZ")
   end
 
   it "should log the error message" do
-    TestLogger.new.tap{|x| x.error "A"}.should.include("A")
+    TestLogger.new.tap{|x| x.error "XYZ"}.should.include("XYZ")
   end
 
   it "should log the warn message" do
-    TestLogger.new.tap{|x| x.warn "A"}.should.include("A")
+    TestLogger.new.tap{|x| x.warn "XYZ"}.should.include("XYZ")
   end
 
   it "should log the info message" do
-    TestLogger.new.tap{|x| x.info "A"}.should.include("A")
+    TestLogger.new.tap{|x| x.info "XYZ"}.should.include("XYZ")
   end
 
   it "should log the debug message" do
-    TestLogger.new.tap{|x| x.debug "A"}.should.include("A")
+    TestLogger.new.tap{|x| x.debug "XYZ"}.should.include("XYZ")
   end
 end
 
-shared "standard system logger" do
+shared "system logger" do
   it "should log the fatal message" do
     @logger.fatal "fatal message"
+    sleep 0.1 while @logger.queued?
     @out.string.should.include("fatal message")
   end
 
   it "should log the error message" do
     @logger.error "error message"
+    sleep 0.1 while @logger.queued?
     @out.string.should.include("error message")
   end
 
   it "should log the warn message" do
     @logger.warn "warn message"
+    sleep 0.1 while @logger.queued?
     @out.string.should.include("warn message")
   end
 
   it "should log the info message" do
     @logger.info "info message"
+    sleep 0.1 while @logger.queued?
     @out.string.should.include("info message")
   end
 
   it "should log the debug message" do
     @logger.debug "debug message"
+    sleep 0.1 while @logger.queued?
     @out.string.should.include("debug message")
   end
 end
 
-describe "Pione::Log::StandardSystemLogger" do
+describe "Pione::Log::PioneSystemLogger" do
   before do
     @out = StringIO.new
-    @logger = Log::StandardSystemLogger.new(@out)
+    @logger = Log::PioneSystemLogger.new(@out)
   end
 
-  behaves_like "standard system logger"
+  after do
+    @logger.terminate
+  end
+
+  behaves_like "system logger"
+end
+
+describe "Pione::Log::RubyStandardSystemLogger" do
+  before do
+    @out = StringIO.new
+    @logger = Log::RubyStandardSystemLogger.new(@out)
+  end
+
+  behaves_like "system logger"
 end
 
 module MockSyslog
@@ -101,7 +119,7 @@ describe "Pione::Log::SyslogSystemLogger" do
     MockSyslog.reset
   end
 
-  behaves_like "standard system logger"
+  behaves_like "system logger"
 end
 
 describe "Pione::Log::SystemLog" do

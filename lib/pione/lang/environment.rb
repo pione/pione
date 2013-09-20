@@ -121,7 +121,7 @@ module Pione
       # Evaluate table value, but we get the referent recuirsively if the value
       # is a referential rule expression.
       def evaluate_value(env, expr)
-        if expr.is_a?(RuleExpr)
+        if expr.is_a?(Model::RuleExpr)
           definition = get(env, env.setup_package_id(expr))
           definition.set(param_sets: definition.param_sets.merge(expr.param_sets))
         else
@@ -251,7 +251,7 @@ module Pione
       end
 
       def find_parent_id(package_id)
-        if package = package_get(PackageExpr.new(package_id: package_id))
+        if package = package_get(Model::PackageExpr.new(package_id: package_id))
           package.parent_id
         end
       end
@@ -270,7 +270,7 @@ module Pione
 
       def merge(param_set)
         param_set.keys.each do |key|
-          var = Variable.new(name: key, package_id: current_package_id)
+          var = Model::Variable.new(name: key, package_id: current_package_id)
           val = param_set[key]
           variable_set(var, val)
         end
@@ -283,7 +283,7 @@ module Pione
         # add package id table
         package_id_table[package_name] = package_id
         # make reference and definition
-        ref = PackageExpr.new(name: package_name, package_id: package_id)
+        ref = Model::PackageExpr.new(name: package_name, package_id: package_id)
         definition = Lang::PackageDefinition.new(package_id: package_id, parent_id: parent_id)
         # set it to package table
         package_set(ref, definition)
@@ -300,7 +300,7 @@ module Pione
 
       def make_root_rule(param_set)
         # set $ROOT_PRARAM_SET
-        variable_set(Variable.new("ROOT_PARAM_SET"), param_set)
+        variable_set(Model::Variable.new("ROOT_PARAM_SET"), param_set)
         # make root rule
         opt = {package_name: current_package_id, filename: "*system*"}
         Component::Document.parse(<<-PIONE, opt).eval(self)
@@ -311,7 +311,7 @@ module Pione
              rule Main.param($ROOT_PARAM_SET)
            End
         PIONE
-        rule_get(RuleExpr.new("Root"))
+        rule_get(Model::RuleExpr.new("Root"))
       end
 
       # Set current package id to the reference if the package id is unknown.

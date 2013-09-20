@@ -11,7 +11,10 @@ module Pione
       def initialize(*args)
         super(*args)
         @working_directory = Location[make_working_directory]
-        @env.variable_set(Variable.new("__WORKING_DIRECTORY__"), StringSequence.of(@working_directory.path.to_s))
+        @env.variable_set(
+          Model::Variable.new("__WORKING_DIRECTORY__"),
+          Model::StringSequence.of(@working_directory.path.to_s)
+        )
       end
 
       # Execute the action.
@@ -171,7 +174,7 @@ module Pione
         outputs.flatten.compact.each do |output|
           src = @working_directory + output.name
           dest = output.location
-          FileCache.put(src, dest)
+          System::FileCache.put(src, dest)
         end
       end
 
@@ -190,8 +193,7 @@ module Pione
           begin
             entry.move(location)
           rescue => e
-            msg = "cannot move %s to %s" % [entry.path, location]
-            Util::ErrorReport.warn(msg, self, e, __FILE__, __LINE__)
+            Log::SystemLog.warn("cannot move %s to %s: %s" % [entry.path, location, e.message])
           end
         end
       end

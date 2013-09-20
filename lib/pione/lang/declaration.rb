@@ -33,7 +33,7 @@ module Pione
         end
 
         # set current package id if it has no package id
-        if name.is_a?(Sequence)
+        if name.is_a?(Model::Sequence)
           name.map {|piece| piece.package_id ? piece : piece.set(package_id: env.current_package_id)}
         else
           name.package_id ? name : name.set(package_id: env.current_package_id)

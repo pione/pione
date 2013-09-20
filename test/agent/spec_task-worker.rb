@@ -3,7 +3,7 @@ require_relative '../test-util'
 describe 'Pione::Agent::TaskWorker' do
   describe 'task acquisition' do
     before do
-      @space = create_tuple_space_server
+      @tuple_space = create_tuple_space_server
 
       @env = Lang::Environment.new.setup_new_package("TaskWorker")
       TestUtil::Lang.package_context!(@env, <<-PIONE)
@@ -18,11 +18,11 @@ describe 'Pione::Agent::TaskWorker' do
       PIONE
 
       features = TestUtil::Lang.expr!(@env, "^A & ^B & ^C")
-      @worker = Agent::TaskWorker.new(@space, features, @env)
+      @worker = Agent::TaskWorker.new(@tuple_space, features, @env)
     end
 
     after do
-      @space.terminate
+      @tuple_space.terminate
     end
 
     it 'should take a task' do
@@ -78,7 +78,7 @@ describe 'Pione::Agent::TaskWorker' do
 
   describe 'task execution' do
     before do
-      @space = create_tuple_space_server
+      @tuple_space = create_tuple_space_server
 
       # make a data
       data = Tuple[:data].new(name: "a", location: Location[Temppath.create].create("abc"))
@@ -102,9 +102,9 @@ describe 'Pione::Agent::TaskWorker' do
       write(data.set(domain: domain_id))
 
       # setup workers
-      @worker1 = Agent[:task_worker].start(@space, FeatureSequence.new, @env)
-      @worker2 = Agent[:task_worker].start(@space, FeatureSequence.new, @env)
-      @worker3 = Agent[:task_worker].start(@space, FeatureSequence.new, @env)
+      @worker1 = Agent::TaskWorker.start(@tuple_space, FeatureSequence.new, @env)
+      @worker2 = Agent::TaskWorker.start(@tuple_space, FeatureSequence.new, @env)
+      @worker3 = Agent::TaskWorker.start(@tuple_space, FeatureSequence.new, @env)
 
       # workers are waiting tasks
       @worker1.wait_until(:take_task)
@@ -116,7 +116,7 @@ describe 'Pione::Agent::TaskWorker' do
       @worker1.terminate unless @worker1.terminated?
       @worker2.terminate unless @worker2.terminated?
       @worker3.terminate unless @worker3.terminated?
-      @space.terminate
+      @tuple_space.terminate
     end
 
     it "should wait tasks" do

@@ -1,13 +1,13 @@
 module Pione
   module Global
     # broker-front port range begin
-    define_item(:broker_front_port_range_begin, true, 41000)
+    define_external_item(:broker_front_port_range_begin, 41000)
 
     # broker-front port range end
-    define_item(:broker_front_port_range_end, true, 41999)
+    define_external_item(:broker_front_port_range_end, 41999)
 
     # broker-front port range
-    define_item(:broker_front_port_range, false) do
+    define_internal_item(:broker_front_port_range) do
       Range.new(
         Global.broker_front_port_range_begin,
         Global.broker_front_port_range_end
@@ -15,6 +15,6 @@ module Pione
     end
 
     # balancer method
-    define_item(:broker_task_worker_balancer, true) {Agent::EasyTaskWorkerBalancer}
+    define_external_item(:broker_task_worker_balancer) {Agent::EasyTaskWorkerBalancer}
   end
 end

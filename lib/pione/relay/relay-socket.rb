@@ -171,10 +171,7 @@ module Pione
           end
         rescue OpenSSL::SSL::SSLError, AuthError, BadMessage => e
           soc.close
-          if Global.show_communication
-            puts "closed relay socket"
-            Util::ErrorReport.print(e)
-          end
+          Log::Debug.communication("relay socket was closed: %s" % e.message)
           retry
         end
       end

@@ -24,7 +24,7 @@ module Pione
       # Generate package id from the package name in the environment.
       def generate(env, package_name)
         begin
-          env.package_get(PackageExpr.new(name: package_name, package_id: package_name))
+          env.package_get(Model::PackageExpr.new(name: package_name, package_id: package_name))
           i = 0
           loop do
             i += 1

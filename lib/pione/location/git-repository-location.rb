@@ -118,14 +118,14 @@ module Pione
         process.start
         process.wait
 
-        # show debug message
-        out.rewind
-        ErrorReport.debug("git clone: %s" % out.read, self, __FILE__, __LINE__)
-
         # check the process result
         if process.crashed?
           raise GitError.new(self, message: "'git clone' failed")
         end
+
+        # show debug message
+        out.rewind
+        Log::Debug.system("git clone: %s" % out.read)
       end
 
       # Return short hash id.

@@ -25,9 +25,13 @@ module Pione
       end
 
       def message
-        "%s timeouted(%s sec) at state [%s]" % [@agent, @sec, @states.map{|s| s.to_s}.join(", ")]
+        sec = @sec ? "(%s sec)" % @sec : ""
+        "%s timeouted %s at state [%s]" % [@agent, sec, @states.map{|s| s.to_s}.join(", ")]
       end
     end
+
+    # ConnectionError is raised when agent is disconnected from other process unexpectedly.
+    class ConnectionError < StandardError; end
 
     # TupleSpaceError is raised when tuple space is something bad.
     class TupleSpaceError < StandardError; end

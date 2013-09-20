@@ -1,5 +1,7 @@
 module Pione
   module Global
-    define_item(:input_generator_stream_check_timespan, true, 3)
+    # This is a timespan(sec) that input generator agent checks new inputs in
+    # stream mode.
+    define_external_item(:input_generator_stream_check_timespan, 3)
   end
 end

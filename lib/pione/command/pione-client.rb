@@ -1,148 +1,136 @@
 module Pione
   module Command
     # PioneClient is a command to request processing.
-    class PioneClient < FrontOwnerCommand
+    class PioneClient < BasicCommand
       include TupleSpaceServerInterface
 
       #
-      # command info
+      # basic informations
       #
 
-      define_info do
-        set_name "pione-client"
-        set_tail {|cmd| Global.front.uri}
-        set_banner "Requests to process PIONE document."
-      end
+      command_name("pione-client") {|cmd| "front: %s" % Global.front.uri}
+      command_banner "Process PIONE document."
+      command_front Front::ClientFront
 
       #
       # options
       #
 
-      define_option do
-        use :debug
-        use :color
-        use :show_communication
-        use :my_ip_address
-        use :presence_notification_address
-        use :show_presence_notifier
-        use :task_worker
-        use :features
+      use_option :debug
+      use_option :color
+      use_option :my_ip_address
+      use_option :presence_notification_address
+      use_option :task_worker
+      use_option :features
 
-        define(:input_location) do |item|
-          item.short = '-i LOCATION'
-          item.long = '--input=LOCATION'
-          item.desc = 'set input directory'
-          item.value = proc do |uri|
-            begin
-              Location[uri]
-            rescue ArgumentError
-              abort("ERROR: bad location '%s'" % uri)
+      option_default(:action_mode, :process_job)
+
+      define_option(:input_location) do |item|
+        item.short = '-i LOCATION'
+        item.long = '--input=LOCATION'
+        item.desc = 'set input directory'
+        item.value = proc do |uri|
+          begin
+            Location[uri]
+          rescue ArgumentError
+            raise OptionError.new("input location '%s' is bad" % uri)
+          end
+        end
+      end
+
+      define_option(:output_location) do |item|
+        item.short = '-o LOCATION'
+        item.long = '--output=LOCATION'
+        item.desc = 'set output directory'
+        item.default = Location["local:./output/"]
+        item.action = proc do |command_name, option, uri|
+          begin
+            option[:output_location] = Location[uri]
+            if URI.parse(uri).scheme == "myftp"
+              option[:myftp] = URI.parse(uri).normalize
             end
+          rescue ArgumentError
+            raise OptionError.new("output location '%s' is bad in %s" % [uri, command_name])
           end
         end
+      end
 
-        define(:output_location) do |item|
-          item.short = '-o LOCATION'
-          item.long = '--output=LOCATION'
-          item.desc = 'set output directory'
-          item.default = Location["local:./output/"]
-          item.action = proc do |option, uri|
-            begin
-              option[:output_location] = Location[uri]
-              if URI.parse(uri).scheme == "myftp"
-                option[:myftp] = URI.parse(uri).normalize
-              end
-            rescue ArgumentError
-              abort("ERROR: bad location '%s'" % uri)
-            end
+      define_option(:stream) do |item|
+        item.long = '--stream'
+        item.desc = 'turn on stream mode'
+        item.default = false
+        item.value = true
+      end
+
+      define_option(:request_task_worker) do |item|
+        item.long = '--request-task-worker=N'
+        item.desc = 'set request number of task workers'
+        item.default = 1
+        item.value = proc {|n| n.to_i}
+      end
+
+      define_option(:params) do |item|
+        item.long = '--params="{Var:1,...}"'
+        item.desc = "set user parameters"
+        item.default = Model::ParameterSetSequence.new
+        item.action = proc do |command_name, option, str|
+          begin
+            stree = DocumentParser.new.parameter_set.parse(str)
+            opt = {package_name: "-", filename: "-"}
+            params = DocumentTransformer.new.apply(stree, opt)
+            option[:params].merge!(params)
+          rescue Parslet::ParseFailed => e
+            raise OptionError.new("invalid parameters \"%s\" in %s" % [str, command_name])
           end
         end
+      end
 
-        define(:stream) do |item|
-          item.long = '--stream'
-          item.desc = 'turn on stream mode'
-          item.default = false
-          item.value = true
+      define_option(:stand_alone) do |item|
+        item.long = '--stand-alone'
+        item.desc = 'turn on stand alone mode'
+        item.default = false
+        item.action = proc do |_, option|
+          option[:stand_alone] = true
+          option[:without_tuple_space_provider] = true
+        end
+      end
+
+      define_option(:dry_run) do |item|
+        item.long = '--dry-run'
+        item.desc = 'turn on dry run mode'
+        item.default = false
+        item.value = true
+      end
+
+      option_item(:features).default = Global.features + "& ^Interactive"
+
+      define_option(:relay) do |item|
+        item.long = '--relay=URI'
+        item.desc = 'turn on relay mode and set relay address'
+        item.default = nil
+        item.value = proc {|uri| uri}
+      end
+
+      define_option(:list_params) do |item|
+        item.long = '--list-params'
+        item.desc = 'show user parameter list in the document'
+        item.action = proc {|_, option| option[:action_mode] = :list_params}
+      end
+
+      define_option(:rehearse) do |item|
+        item.long = '--rehearse[=SCENARIO]'
+        item.desc = 'rehearse the scenario'
+        item.value = proc {|scenario_name| scenario_name || :anything}
+      end
+
+      validate_option do |option|
+        unless option[:task_worker] > 0 or
+            (not(option[:stand_alone]) and option[:task_worker] == 0)
+          raise OptionError.new("option error: invalid resource size '%s'" % option[:task_worker])
         end
 
-        define(:request_task_worker) do |item|
-          item.long = '--request-task-worker=N'
-          item.desc = 'set request number of task workers'
-          item.default = 1
-          item.value = proc {|n| n.to_i}
-        end
-
-        define(:params) do |item|
-          item.long = '--params="{Var:1,...}"'
-          item.desc = "set user parameters"
-          item.default = Model::ParameterSetSequence.new
-          item.action = proc do |option, str|
-            begin
-              stree = DocumentParser.new.parameter_set.parse(str)
-              opt = {package_name: "-", filename: "-"}
-              params = DocumentTransformer.new.apply(stree, opt)
-              option[:params].merge!(params)
-            rescue Parslet::ParseFailed => e
-              $stderr.puts "invalid parameters: " + str
-              Util::ErrorReport.print(e)
-              abort
-            end
-          end
-        end
-
-        define(:stand_alone) do |item|
-          item.long = '--stand-alone'
-          item.desc = 'turn on stand alone mode'
-          item.default = false
-          item.action = proc do |option|
-            option[:stand_alone] = true
-            option[:without_tuple_space_provider] = true
-          end
-        end
-
-        define(:dry_run) do |item|
-          item.long = '--dry-run'
-          item.desc = 'turn on dry run mode'
-          item.default = false
-          item.value = true
-        end
-
-        item(:features).default = "^Interactive"
-
-        define(:relay) do |item|
-          item.long = '--relay=URI'
-          item.desc = 'turn on relay mode and set relay address'
-          item.default = nil
-          item.value = proc {|uri| uri}
-        end
-
-        define(:list_params) do |item|
-          item.long = '--list-params'
-          item.desc = 'show user parameter list in the document'
-          item.value = true
-        end
-
-        define(:rehearse) do |item|
-          item.long = '--rehearse[=SCENARIO]'
-          item.desc = 'rehearse the scenario'
-          item.value = proc {|scenario_name| scenario_name || :anything}
-        end
-
-        define(:without_tuple_space_provider) do |item|
-          item.long = '--without-tuple-space-provider'
-          item.desc = 'process without tuple space provider'
-          item.value = true
-        end
-
-        validate do |option|
-          unless option[:task_worker] > 0 or
-              (not(option[:stand_alone]) and option[:task_worker] == 0)
-            abort("option error: invalid resource size '%s'" % option[:task_worker])
-          end
-
-          if option[:stream] and option[:input_location].nil?
-            abort("option error: no input URI on stream mode")
-          end
+        if option[:stream] and option[:input_location].nil?
+          raise OptionError.new("option error: no input URI on stream mode")
         end
       end
 
@@ -151,108 +139,37 @@ module Pione
       #
 
       attr_reader :task_worker
-      attr_reader :features
       attr_reader :tuple_space # client's tuple space
 
-      def initialize(*options)
-        super(*options)
-        @worker_threads = []
-        @space = nil
+      #
+      # command lifecycle: setup phase
+      #
+
+      setup_phase :timeout => 20
+      setup :variable
+      setup :ftp_server
+      setup :tuple_space
+      setup :output_location
+      setup :lang_environment
+      setup :package
+
+      def setup_variable
+        @spawner_threads = ThreadGroup.new
       end
-
-      private
-
-      def create_front
-        Front::ClientFront.new(self)
-      end
-
-      prepare do
-        # FTP server
-        setup_ftp_server(myftp) if myftp = option[:myftp]
-
-        # run tuple space server
-        @tuple_space = TupleSpaceServer.new(task_worker_resource: option[:request_task_worker])
-        set_tuple_space_server(@tuple_space)
-
-        # setup output location
-        case option[:output_location]
-        when Location::LocalLocation
-          option[:output_location] = Location[option[:output_location].path.expand_path]
-          option[:output_location].path.mkpath
-        when Location::DropboxLocation
-          setup_dropbox
-        end
-        @tuple_space.set_base_location(option[:output_location])
-
-        # environment
-        @env = Lang::Environment.new
-
-        # feature
-        stree = DocumentParser.new.expr.parse(option[:features])
-        opt = {package_name: "*feature*", filename: "*feature*"}
-        @features = DocumentTransformer.new.apply(stree, opt)
-      end
-
-      start(:pre) {read_package}
-
-      # Print list of user parameters.
-      start do
-        if option[:list_params]
-          Util::PackageParametersList.print(@env, @package_id)
-          exit
-        end
-      end
-
-      # Run processing.
-      start do
-        # write tuples
-        write(Tuple[:process_info].new('standalone', 'Standalone'))
-        write(Tuple[:dry_run].new(option[:dry_run]))
-
-        # start
-        start_relay_connection if option[:relay]
-        start_precedent_agents
-        start_task_workers
-        start_process_manager
-
-        # check result
-        check_rehearsal_result if option[:rehearse]
-      end
-
-      terminate do
-        if @terminated
-          @terminated = true
-          Global.monitor.synchronize do
-            # kill the thread for starting tuple space provider
-            if @start_tuple_space_provider_thread
-              if @start_tuple_space_provider_thread.alive?
-                @start_tuple_space_provider_thread.kill
-              end
-            end
-
-            @logger.terminate
-
-            # terminate tuple space provider
-            if @tuple_space_provider
-              @tuple_space_provider.terminate
-            end
-          end
-        end
-      end
-
-      private
 
       # Setup FTP server with the URI.
-      def setup_ftp_server(uri)
-        location = Location[uri.path]
-        location.path.mkdir unless location.exist?
-        if uri.userinfo
-          Util::FTPServer.auth_info = Util::FTPAuthInfo.new(uri.user, uri.password)
+      def setup_ftp_server
+        if uri = option[:myftp]
+          location = Location[uri.path]
+          location.path.mkdir unless location.exist?
+          if uri.userinfo
+            Util::FTPServer.auth_info = Util::FTPAuthInfo.new(uri.user, uri.password)
+          end
+          if uri.port
+            Util::FTPServer.port = myftp.port
+          end
+          Util::FTPServer.start(Util::FTPLocalFS.new(location))
         end
-        if uri.port
-          Util::FTPServer.port = myftp.port
-        end
-        Util::FTPServer.start(Util::FTPLocalFS.new(location))
       end
 
       # Setup dropbox.
@@ -293,10 +210,34 @@ module Pione
         Location::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
       end
 
+      def setup_output_location
+        case option[:output_location]
+        when Location::LocalLocation
+          option[:output_location] = Location[option[:output_location].path.expand_path]
+          option[:output_location].path.mkpath
+        when Location::DropboxLocation
+          setup_dropbox
+        end
+        @tuple_space.set_base_location(option[:output_location])
+      end
+
+      def setup_tuple_space
+        # run tuple space server
+        @tuple_space = TupleSpace::TupleSpaceServer.new(task_worker_resource: option[:request_task_worker])
+        set_tuple_space_server(@tuple_space)
+        Global.front.set_tuple_space(@tuple_space)
+
+        # write tuples
+        write(Tuple[:process_info].new('standalone', 'Standalone'))
+        write(Tuple[:dry_run].new(option[:dry_run]))
+      end
+
+      def setup_lang_environment
+        @env = Lang::Environment.new
+      end
+
       # Read a package.
-      #
-      # @return [void]
-      def read_package
+      def setup_package
         # package is not found
         if @argv.first.nil?
           abort("There are no PIONE documents or packages.")
@@ -322,50 +263,6 @@ module Pione
         abort("Pione language error: %s(%s)" % [e.message, e.class.name])
       end
 
-      # Start agent activities.
-      #
-      # @return [void]
-      def start_precedent_agents
-        # messenger
-        @messenger = Agent[:messenger].start(@tuple_space)
-
-        # logger
-        @logger = Agent[:logger].start(@tuple_space, option[:output_location])
-
-        # input generator
-        Agent::InputGenerator.start(@tuple_space, :dir, option[:input_location], option[:stream])
-
-        # tuple space provider
-        unless option[:without_tuple_space_provider]
-          begin
-            Command::PioneTupleSpaceProvider.spawn
-          rescue Command::SpawnError => e
-            ErrorReport.abort("failed to run tuple-space-provider", self, e, __FILE__, __LINE__)
-          end
-        end
-      end
-
-      # Start task workers. Task worker agents are in the process if the client
-      # is stand-alone mode, otherwise they are in new processes.
-      def start_task_workers
-        option[:task_worker].times do
-          # we don't wait workers start up because of performance
-          Thread.new do
-            if option[:stand_alone]
-              Agent::TaskWorker.start(@tuple_space, @features, @env)
-            else
-              Command::PioneTaskWorker.spawn(option[:features], @tuple_space.uuid)
-            end
-          end
-        end
-      end
-
-      # Start process manager agent.
-      def start_process_manager
-        @agent = Agent[:process_manager].start(@tuple_space, @env, @package, option[:params], option[:stream])
-        @agent.wait_until_terminated(nil)
-      end
-
       # Connect relay server.
       def start_relay_connection
         Global.relay_tuple_space_server = @tuple_space
@@ -388,19 +285,165 @@ module Pione
         abort("You failed authentication to connect the relay server: %s" % @relay_ref.__drburi)
       end
 
+      #
+      # command lifecycle: execution phase
+      #
+
+      # mode "list params"
+      execute :list_params => :list_params
+
+      # mode "process_job"
+      execute :process_job => :job_terminator
+      execute :process_job => :messenger
+      execute :process_job => :logger
+      execute :process_job => :input_generator
+      execute :process_job => :tuple_space_provider
+      execute :process_job => :task_worker
+      execute :process_job => :process_manager
+      execute :process_job => :check_rehearsal_result
+
+      # Print list of user parameters.
+      def execute_list_params
+        Util::PackageParametersList.print(@env, @package_id)
+      end
+
+      def execute_job_terminator
+        @job_terminator = Agent::JobTerminator.start(@tuple_space) do
+          terminate
+        end
+      end
+
+      # Start a messenger agent.
+      def execute_messenger
+        @messenger = Agent::Messenger.start(@tuple_space)
+      end
+
+      # Start a logger agent.
+      def execute_logger
+        @logger = Agent::Logger.start(@tuple_space, option[:output_location])
+      end
+
+      # Start an input generator agent.
+      def execute_input_generator
+        @input_generator =
+          Agent::InputGenerator.start(@tuple_space, :dir, option[:input_location], option[:stream])
+      end
+
+      # Spawn a tuple space provider.
+      def execute_tuple_space_provider
+        unless option[:without_tuple_space_provider]
+          thread = Thread.new do
+            begin
+              spawner = Command::PioneTupleSpaceProvider.spawn
+              spawner.when_terminated do
+                unless termination?
+                  abort("%s is terminated because child tuple space provider is maybe dead." % command_name)
+                end
+              end
+              @tuple_space_provider = spawner.child_front
+            rescue SpawnError => e
+              abort(e.message)
+            end
+          end
+          @spawner_threads.add(thread)
+        end
+      end
+
+      # Start task workers. Task worker agents are in the process if the client
+      # is stand-alone mode, otherwise they are in new processes.
+      def execute_task_worker
+        @task_workers = [] # this is available in stand alone mode
+        option[:task_worker].times do
+          # we don't wait workers start up because of performance
+          thread = Thread.new do
+            if option[:stand_alone]
+              @task_workers << Agent::TaskWorker.start(@tuple_space, Global.expressional_features, @env)
+            else
+              begin
+                Command::PioneTaskWorker.spawn(Global.features, @tuple_space.uuid)
+              rescue SpawnError => e
+                abort(e.message)
+              end
+            end
+          end
+          @spawner_threads.add(thread)
+        end
+      end
+
+      # Start process manager agent.
+      def execute_process_manager
+        @process_manager =
+          Agent::ProcessManager.start(@tuple_space, @env, @package, option[:params], option[:stream])
+        @process_manager.wait_until_terminated(nil)
+      end
+
       # Check rehearsal result.
-      def check_rehearsal_result
+      def execute_check_rehearsal_result
         return unless option[:rehearse] and not(@package.scenarios.empty?)
         return unless scenario = @package.find_scenario(option[:rehearse])
 
         errors = scenario.validate(option[:output_location])
         if errors.empty?
-          puts "Rehearsal Result: Succeeded"
+          System.show "Rehearsal Result: Succeeded"
         else
           puts "Rehearsal Result: Failed"
           errors.each {|error| puts "- %s" % error.to_s}
           Global.exit_status = false
         end
+      end
+
+      #
+      # command lifecycle: termination phase
+      #
+
+      termination_phase :timeout => 10
+      # kill task worker bootstrap threads before terminate child processes
+      terminate :process_job => :spawner_thread
+      terminate :child_process, :module => CommonCommandAction
+      terminate :process_job => :process_manager
+      terminate :process_job => :task_worker
+      terminate :process_job => :input_generator
+      terminate :process_job => :logger
+      terminate :process_job => :messenger
+      terminate :process_job => :tuple_space
+
+      # Terminate spawner threads. This is needed for like the situation that
+      # requested job reaches end before task worker processes finished to be
+      # spawned.
+      def terminate_spawner_thread
+        @spawner_threads.list.each {|thread| thread.kill}
+      end
+
+      # Terminate process manager
+      def terminate_process_manager
+        @process_manager.terminate if @process_manager
+      end
+
+      # Terminate task worker agents.
+      def terminate_task_worker
+        if option[:stand_alone] and @task_workers
+          @task_workers.each {|task_worker| task_worker.terminate}
+        end
+      end
+
+      # Terminate input generator agent.
+      def terminate_input_generator
+        @input_generator.terminate if @input_generator
+      end
+
+      # Terminate logger agent.
+      def terminate_logger
+        @logger.terminate if @logger
+      end
+
+      # Terminate messenger agent.
+      def terminate_messenger
+        @messenger.terminate if @messenger
+      end
+
+      # Terminate tuple space.
+      def terminate_tuple_space
+        @tuple_space.terminate if @tuple_space
       end
     end
   end

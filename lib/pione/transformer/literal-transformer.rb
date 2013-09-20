@@ -52,7 +52,7 @@ module Pione
         if tree[:null]
           val = Model::DataExprNull.new
         else
-          val = Model::DataExpr.new(BackslashNotation.apply(tree[:pattern].str))
+          val = Model::DataExpr.new(Util::BackslashNotation.apply(tree[:pattern].str))
         end
 
         Model::DataExprSequence.of(val).tap do |expr|
@@ -71,7 +71,7 @@ module Pione
 
       # Transform +rule_expr+ into Model::RuleExprSequence.
       rule(:rule_expr => simple(:name)) do
-        RuleExprSequence.of(name.str).tap do |expr|
+        Model::RuleExprSequence.of(name.str).tap do |expr|
           line, col = name.line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
@@ -79,7 +79,7 @@ module Pione
 
       # Transform +ticket_expr+ into TicketExprSequence.
       rule(:ticket_expr => subtree(:tree)) {
-        TicketExprSequence.of(tree[:name].str).tap do |expr|
+        Model::TicketExprSequence.of(tree[:name].str).tap do |expr|
           line, col = tree[:header].line_and_column
           expr.set_source_position(package_name, filename, line, col)
         end
@@ -90,11 +90,11 @@ module Pione
         elts = tree[:elements]
         case elts
         when nil
-          ParameterSetSequence.new
+          Model::ParameterSetSequence.new
         when Array
-          ParameterSetSequence.of(Hash[*elts.map{|e| [e.key, e.value]}.flatten(1)])
+          Model::ParameterSetSequence.of(Hash[*elts.map{|e| [e.key, e.value]}.flatten(1)])
         else
-          ParameterSetSequence.of({elts.key => elts.value})
+          Model::ParameterSetSequence.of({elts.key => elts.value})
         end.tap do |params|
           line, col = tree[:header].line_and_column
           params.set_source_position(package_name, filename, line, col)

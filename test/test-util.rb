@@ -1,10 +1,11 @@
 require 'bacon'
 require 'pione'
 
-Global.git_package_directory = Location[Temppath.mkdir]
+Pione::Global.git_package_directory = Pione::Location[Temppath.mkdir]
 
 module TestUtil
-  include Pione::TupleSpaceServerInterface
+  include Pione
+  include TupleSpaceServerInterface
 
   DIR = Location[File.dirname(__FILE__)]
   TEST_DATA_DIR = DIR + "test-data"

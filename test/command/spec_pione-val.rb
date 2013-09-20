@@ -12,7 +12,7 @@ describe "Pione::Command::PioneVal" do
   end
 
   it "should get variable from domain info" do
-    domain_info = TestUtil::DIR + "command" + "spec_pione-val.domain.dump"
+    domain_info = TestUtil::DIR + "command" + "data" + "pione-val.domain.dump"
     res = TestUtil::Command.succeed do
       Command::PioneVal.run ["$O[1]", "--domain-info", domain_info.path.to_s]
     end

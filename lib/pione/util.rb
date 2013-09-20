@@ -4,23 +4,22 @@ module Pione
   end
 end
 
-require 'pione/util/id'
-require 'pione/util/digest'
-require 'pione/util/misc'
-require 'pione/util/waiter-table'
-require 'pione/util/error-report'
-require 'pione/util/indentation'
-require 'pione/util/uuid'
-require 'pione/util/ftp-server'
-require 'pione/util/ip-address'
-require 'pione/util/cpu'
+require 'pione/util/id'                      # ID generator
+require 'pione/util/digest'                  # Digest generator
+require 'pione/util/misc'                    # misc helper functions
+require 'pione/util/waiter-table'            # queued hash table
+require 'pione/util/indentation'             # text indentation
+require 'pione/util/uuid'                    # UUID generator
+require 'pione/util/ftp-server'              # embeded FTP server
+require 'pione/util/ip-address'              # pick up IP address
+require 'pione/util/cpu'                     # get logical core number
 require 'pione/util/variable-holdable'
 require 'pione/util/evaluatable'
 require 'pione/util/process-info'
-require 'pione/util/package-parameters-list'
-require 'pione/util/zip'
-require 'pione/util/backslash-notation'
-require 'pione/util/positionable'
-require 'pione/util/embeded-expr-expander'
-require 'pione/util/free-thread-generator'
+require 'pione/util/package-parameters-list' # viewer of package parameter list
+require 'pione/util/zip'                     # zip archiver operations
+require 'pione/util/backslash-notation'      # handle backslash in text
+require 'pione/util/positionable'            # source position handler
+require 'pione/util/embeded-expr-expander'   # expand text embeded PIONE expression
+require 'pione/util/free-thread-generator'   # generate threads free from thread group
 

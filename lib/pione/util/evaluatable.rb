@@ -15,7 +15,9 @@ module Pione
         domain_info = load_domain_info unless domain_info
         env = domain_info.env
         option = {package_name: env.current_package_id, filename: "pione-eval"}
-        DocumentTransformer.new.apply(DocumentParser.new.expr.parse(str), option).eval(env)
+        Transformer::DocumentTransformer.new.apply(
+          Parser::DocumentParser.new.expr.parse(str), option
+        ).eval(env)
       end
 
       # Evaluate the string as a PIONE expression and get the result value as a textized string.
@@ -38,9 +40,9 @@ module Pione
       def load_domain_info
         location = Location["./.domain.dump"]
         if location.exist?
-          DomainInfo.read(location)
+          System::DomainInfo.read(location)
         else
-          DomainInfo.new(Lang::Environment.new)
+          System::DomainInfo.new(Lang::Environment.new)
         end
       end
     end

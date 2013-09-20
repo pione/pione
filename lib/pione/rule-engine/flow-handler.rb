@@ -128,7 +128,7 @@ module Pione
 
       # Make a task tuple from the application.
       def make_tuple(caller_id)
-        features = rule_condition.features.inject(FeatureSequence.new) do |f, expr|
+        features = rule_condition.features.inject(Model::FeatureSequence.new) do |f, expr|
           f + f.eval(env)
         end
         Tuple[:task].new(
@@ -252,7 +252,7 @@ module Pione
             _env = plain_env.layer
             # get task's condition
             rule_condition = rule_definition.rule_condition_context.eval(_env)
-            find_tasks_by_rule_condition(_env, rule, rule_definition, rule_condition, ParameterSet.new).uniq
+            find_tasks_by_rule_condition(_env, rule, rule_definition, rule_condition, Model::ParameterSet.new).uniq
           end
         end
       end
@@ -267,12 +267,12 @@ module Pione
           # make parameter set for the task
           table = Hash.new
 
-          if val_i = task_env.variable_get!(Variable.new("I"))
-            table["INPUT"] = Variable.new(name: "I", package_id: rule.package_id)
+          if val_i = task_env.variable_get!(Model::Variable.new("I"))
+            table["INPUT"] = Model::Variable.new(name: "I", package_id: rule.package_id)
             table["I"] = val_i
           end
 
-          if val_star = task_env.variable_get!(Variable.new("*"))
+          if val_star = task_env.variable_get!(Model::Variable.new("*"))
             table["*"] = val_star
           end
 
@@ -312,8 +312,8 @@ module Pione
           # make parameter set for the task
           table = Hash.new
 
-          if val_i = task_env.variable_get!(Variable.new("O"))
-            table["OUTPUT"] = Variable.new("O")
+          if val_i = task_env.variable_get!(Model::Variable.new("O"))
+            table["OUTPUT"] = Model::Variable.new("O")
             table["O"] = val_i
           end
 
@@ -334,8 +334,8 @@ module Pione
           order, env, param_set = f.first
 
           # setup output variables
-          var_o = Variable.new("O")
-          task.env.variable_set(Variable.new("OUTPUT"), var_o)
+          var_o = Model::Variable.new("O")
+          task.env.variable_set(Model::Variable.new("OUTPUT"), var_o)
           o = find_output_variables(task, inputs, Model::KeyedSequence.new)
           task.env.variable_set(var_o, o)
           param_set = param_set.set(table: param_set.table.merge({"O" => o}))
@@ -351,7 +351,7 @@ module Pione
         task.rule_condition.outputs.each_with_index do |condition, i|
           begin
             data = condition.eval(task.env)
-            _o = o.put(IntegerSequence.of(i+1), data)
+            _o = o.put(Model::IntegerSequence.of(i+1), data)
           rescue Lang::UnboundError
             next
           end

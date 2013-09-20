@@ -9,8 +9,20 @@ module Pione
         exceptions = [Exception] if exceptions.empty?
         b.call
       rescue *exceptions => e
-        ErrorReport.warn("the error ignored", nil, e, __FILE__, __LINE__)
+        Log::Debug.ignored_exception(e)
         return false
+      end
+
+      def error?(option={}, &b)
+        sec = option[:timeout]
+        begin
+          timeout(sec) do
+            b.call
+            false
+          end
+        rescue Object => e
+          true
+        end
       end
 
       # Returns the hostname of the machine.
@@ -18,6 +30,12 @@ module Pione
       #   hostname
       def hostname
         Socket.gethostname
+      end
+
+      def parse_features(textual_features)
+        stree = Parser::DocumentParser.new.expr.parse(textual_features)
+        opt = {package_name: "*feature*", filename: "*feature*"}
+        Transformer::DocumentTransformer.new.apply(stree, opt)
       end
     end
 

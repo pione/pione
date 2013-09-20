@@ -8,7 +8,6 @@ module Pione
       @mutex = Mutex.new                        # generator lock
       @cv_response = ConditionVariable.new      # response cv
       @cv_bye = ConditionVariable.new           # bye client cv
-      @thread = Thread.new {create_free_thread} # a thread under default thread group
       @__generated__ = nil                      # generated thread(temporary variable)
 
       # Generate a thread with the block under default thread group.
@@ -38,6 +37,10 @@ module Pione
           end
         end
       end
+
+      # we should wait interpret +create_free_thread+ method...
+
+      @thread = Thread.new {create_free_thread} # a thread under default thread group
     end
   end
 end

@@ -8,20 +8,19 @@ module Pione
       # instance methods
       #
 
-      attr_reader :task_workers # known task workers(agent or task worker front)
-      attr_reader :task_worker_resource
-      attr_reader :spawnings    # current spawning task worker number
+      attr_reader :task_worker_resource # resource size of task worker
+      attr_reader :tuple_space_lock     # lock for tuple space table
 
-      # @api private
-      def initialize(features, option={})
+      def initialize(option={})
         super()
-        @task_workers = Array.new # known task workers(agent or task worker front)
+
+        @task_workers = Array.new # known task worker fronts
         @tuple_space = Hash.new   # known tuple space table
         @task_worker_resource = option[:task_worker_resource] || 1
         @sleeping_time = option[:sleeping_time] || 1
+        @spawnings = 0            # number of current spawning task worker
         @tuple_space_lock = Monitor.new
-        @spawnings = 0
-        @features = get_features(features) # string form of features
+        @task_worker_lock = Monitor.new # lock for task worker table
 
         @option = option
         @option[:spawn_task_worker] = true unless @option.has_key?(:spawn_task_worker)
@@ -30,12 +29,17 @@ module Pione
         @balancer = Global.broker_task_worker_balancer.new(self)
       end
 
+      # Return number of task workers the broker manages.
+      def quantity
+        @task_worker_lock.synchronize {@task_workers.size}
+      end
+
       # Add the tuple space.
       def add_tuple_space(tuple_space)
+        uuid = tuple_space.uuid
+
         # update tuple space table with the id
-        @tuple_space_lock.synchronize do
-          @tuple_space[tuple_space.uuid] = tuple_space
-        end
+        @tuple_space_lock.synchronize {@tuple_space[uuid] = tuple_space}
 
         # wakeup chain thread if it sleeps
         @chain_threads.list.each do |thread|
@@ -47,9 +51,7 @@ module Pione
 
       # Get the tuple space.
       def get_tuple_space(tuple_space_id)
-        @tuple_space_lock.synchronize do
-          @tuple_space[tuple_space_id]
-        end
+        @tuple_space_lock.synchronize {@tuple_space[tuple_space_id]}
       end
 
       # Return known tuple spaces.
@@ -59,27 +61,59 @@ module Pione
 
       # Return excess number of workers belongs to this broker.
       def excess_task_workers
-        @task_worker_resource - @task_workers.size - @spawnings
-      end
-
-      # Create a task worker for the server.
-      def create_task_worker(tuple_space)
-        begin
-          @spawnings += 1
-          if @option[:spawn_task_worker]
-            # spawn a new process of pione-task-worker command
-            @task_workers << Command::PioneTaskWorker.spawn(@features, tuple_space.uuid)
-          else
-            # start a new task worker in this process
-            @task_workers << Agent::TaskWorker.start(tuple_space, @features_as_sequence)
-          end
-        ensure
-          @spawnings -= 1
+        @task_worker_lock.synchronize do
+          @task_worker_resource - @task_workers.size - @spawnings
         end
       end
 
+      # Create a task worker for the server. This method returns true if we
+      # suceeded to spawn the task worker, or returns false.
+      def create_task_worker(tuple_space)
+        res = true
+
+        @task_worker_lock.synchronize do
+          @spawnings += 1
+
+          # spawn a new process of pione-task-worker command
+          if @option[:spawn_task_worker]
+            begin
+              spawner = Command::PioneTaskWorker.spawn(Global.features, tuple_space.uuid)
+              @task_workers << spawner.child_front
+              spawner.when_terminated {delete_task_worker(spawner.child_front)}
+            rescue Command::SpawnError => e
+              Log::Debug.system("broker agent failed to spawn a task worker.")
+              res = false
+            end
+          else
+            @task_workers << Agent::TaskWorker.start(tuple_space, Global.expressional_features, @env)
+          end
+
+          @spawnings -= 1
+        end
+
+        return res
+      end
+
+      def delete_task_worker(worker)
+        @task_worker_lock.synchronize {@task_workers.delete(worker)}
+      end
+
+      # Terminate first task worker that satisfies the condition. Return true if 
+      def terminate_task_worker_if(&condition)
+        @task_worker_lock.synchronize do
+          @task_workers.each do |worker|
+            if condition.call(worker)
+              worker.terminate
+              @task_workers.delete(worker)
+              return true
+            end
+          end
+        end
+        return false
+      end
+
       # Delete unavilable tuple space servers.
-      def check_tuple_spac
+      def check_tuple_space
         @tuple_space_lock.synchronize do
           @tuple_space.delete_if do |_, space|
             not(Util.ignore_exception {timeout(1) {space.ping}})
@@ -89,17 +123,26 @@ module Pione
 
       # Update tuple space list.
       def update_tuple_space_list(tuple_spaces)
-        @tuple_space_lock.synchronize do
-          @tuple_space = {}
-          tuple_spaces.each {|tuple_space| add_tuple_space(tuple_space)}
+        Thread.new do
+          begin
+            @tuple_space_lock.synchronize do
+              # clear and update tuple space list
+              @tuple_space = {}
+              tuple_spaces.each do |tuple_space|
+                Util.ignore_exception {timeout(1) {add_tuple_space(tuple_space)}}
+              end
 
-          timeout(1) do
-            msg = "broker's tuple space servers: %s" % [@tuple_space.values]
-            ErrorReport.presence_notifier(msg, self, __FILE__, __LINE__)
+              timeout(1) do
+                Log::Debug.presence_notification do
+                  "broker agent updated tuple space table: %s" % [@tuple_space.values.map{|space| space.__drburi}]
+                end
+              end
+            end
+          rescue Exception => e
+            check_tuple_space
           end
         end
-      rescue Exception
-        check_tuple_space
+        return true
       end
 
       #
@@ -107,7 +150,6 @@ module Pione
       #
 
       define_transition :count_tuple_space
-      define_transition :create_task_worker
       define_transition :balance_task_worker
       define_transition :sleep
       define_transition :check_tuple_space
@@ -145,15 +187,20 @@ module Pione
       def transit_to_sleep
         if @tuple_space.size == 0 or excess_task_workers == 0
           sleep 3
+        else
+          sleep 1
         end
       end
 
       def transit_to_check_task_worker_life
-        @task_workers.delete_if do |worker|
-          begin
-            timeout(1) { worker.terminated? }
-          rescue Exception
-            true
+        @task_worker_lock.synchronize do
+          @task_workers.delete_if do |worker|
+            begin
+              timeout(1) { worker.ping }
+              false
+            rescue Exception => e
+              true
+            end
           end
         end
         sleep 1
@@ -163,24 +210,9 @@ module Pione
       def transit_to_terminate
         @tuple_space_lock.synchronize do
           @tuple_space.each do |_, tuple_space|
-            Util.ignore_exception {tuple_space.bye}
+            Util.ignore_exception {timeout(1) {tuple_space.bye}}
           end
         end
-      end
-
-      #
-      # helper methods
-      #
-
-      def get_features(features)
-        stree = DocumentParser.new.expr.parse(features)
-        opt = {package_name: "*feature*", filename: "*feature*"}
-        env = Lang::Environment.new
-        @features_as_sequence = DocumentTransformer.new.apply(stree, opt).eval!(env)
-      rescue Parslet::ParseFailed => e
-        puts "invalid parameters: " + str
-        Util::ErrorReport.print(e)
-        abort
       end
     end
 
@@ -192,7 +224,7 @@ module Pione
       end
 
       # Execute task worker balancing. If this method returned true, broker
-      # executes rebalance chain with no span. If false, broker sleeps.
+      # executes rebalance chain with no span. If false, broker sleeps a little.
       def balance
         raise NotImplementedError
       end
@@ -228,13 +260,13 @@ module Pione
       def calc_resource_ratios(revision={})
         ratio = {}
         # make ratio table
-        @broker.tuple_spaces.each do |tuple_space|
-          Util.ignore_exception do
+        @broker.tuple_space_lock.synchronize do
+          @broker.tuple_spaces.each do |tuple_space|
             rev = revision.has_key?(tuple_space) ? revision[tuple_space] : 0
             current = timeout(1){tuple_space.current_task_worker_size} + rev
             resource = tuple_space.task_worker_resource
             # minimum resource is 1
-            resource = 1.0 unless resource > 0
+            resource = 1 unless resource > 0
             ratio[tuple_space] = current / resource.to_f
           end
         end
@@ -243,11 +275,7 @@ module Pione
 
       # Creates a new task worker.
       def create_task_worker(min_server)
-        @broker.create_task_worker(min_server)
-        return true
-      rescue Command::SpawnError => e
-        msg = "broker failed to run pione-task-worker command"
-        Util::ErrorReport.error(msg, self, e, __FILE__, __LINE__)
+        return @broker.create_task_worker(min_server)
       end
 
       # Adjusts task worker size between tuple space servers.
@@ -255,20 +283,20 @@ module Pione
         revision = {min_server => 1, max_server => -1}
         new_ratios = calc_resource_ratios(revision)
 
+        # failed to calculate tuple space ratio
         return unless new_ratios.has_key?(min_server)
         return unless new_ratios.has_key?(max_server)
 
+        # kill a task worker for moving worker from max server to min server
         if new_ratios[min_server] < new_ratios[max_server]
-          # kill a task worker for moving worker from max server to min server
-          @broker.task_workers.each do |worker|
-            if worker.tuple_space_server == max_server && worker.states.any?{|s| s.current?(:take_task)}
-              worker.terminate
-              @broker.task_workers.delete(worker)
-              return true
-            end
+          if @broker.terminate_task_worker_if do |worker|
+            worker.tuple_space == max_server && worker.states.any?{|s| s.current?(:take_task)}
+          end
+            return true
           end
         end
 
+        # failed to adjust task workers
         return false
       end
     end

@@ -2,8 +2,8 @@ require_relative '../test-util'
 
 describe 'Pione::Agent::TupleSpaceProvider' do
   before do
-    @space = create_tuple_space_server
-    @front = Front::TupleSpaceProviderFront.new(StructX.new(:tuple_space).new(@space), @space)
+    @tuple_space = create_tuple_space_server
+    @front = Front::TupleSpaceProviderFront.new(@tuple_space)
     @orig = Global.presence_notification_addresses
   end
 

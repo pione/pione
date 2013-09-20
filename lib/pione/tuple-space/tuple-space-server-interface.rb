@@ -77,8 +77,6 @@ module Pione
     def process_log(record)
       record = record.merge(transition: "complete") unless record.transition
       write(Tuple[:process_log].new(record))
-    rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
-      ErrorReport.warn("Disconnected in writing process log.", self, e, __FILE__, __LINE__)
     end
 
     # Do the action with loggging.
@@ -93,6 +91,8 @@ module Pione
       result = yield
       process_log(record.merge(transition: "complete"))
       return result
+    rescue DRb::DRbConnError
+      yield
     end
 
     # Send a processing error.

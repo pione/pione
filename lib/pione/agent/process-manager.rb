@@ -1,6 +1,7 @@
 module Pione
   module Agent
     class ProcessManager < TupleSpaceClient
+      include Log::MessageLog
       set_agent_type :process_manager, self
 
       #
@@ -10,7 +11,7 @@ module Pione
       attr_reader :package
 
       def initialize(space, env, package, param_sets, stream)
-        raise ArgumentError unless env.rule_get!(RuleExpr.new("Main"))
+        raise ArgumentError unless env.rule_get!(Model::RuleExpr.new("Main"))
         super(space)
         @space = space
         @env = env
@@ -55,16 +56,14 @@ module Pione
           terminate
         else
           list.each do |env, inputs|
-            handler = RuleEngine.make(@space, @env, @env.current_package_id, "Root", inputs, ParameterSet.new, 'root', nil)
+            package_id = @env.current_package_id
+            param_set = Model::ParameterSet.new
+            handler = RuleEngine.make(@space, @env, package_id, "Root", inputs, param_set, 'root', nil)
             handler.handle
           end
         end
 
         return
-      end
-
-      def transit_to_terminate
-        Global.front.terminate
       end
     end
   end

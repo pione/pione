@@ -3,6 +3,7 @@ module Pione
     # BasicHandler is a base class for rule handlers.
     class BasicHandler
       include TupleSpaceServerInterface
+      include Log::MessageLog
 
       attr_reader :plain_env        # plain environment
       attr_reader :env              # handler's environement

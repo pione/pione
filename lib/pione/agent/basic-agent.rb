@@ -59,8 +59,7 @@ module Pione
 
       # Creates an agent and starts it.
       def start(*args, &b)
-        agent = new(*args)
-        b.call(self) if block_given?
+        agent = new(*args, &b)
         return agent.start
       end
     end
@@ -79,7 +78,7 @@ module Pione
       @exception_handler = Hash.new
 
       #
-      # transition chain
+      # default transitions
       #
 
       define_transition :init
@@ -213,7 +212,7 @@ module Pione
             @__wait_until_after_cv__[transition].wait(@__wait_until_after_mutex__)
           end
         end
-      rescue Timeout::Error
+      rescue Timeout::Error => e
         raise TimeoutError.new(self, @chain_threads.list.map{|th| th[:agent_state]}, sec)
       end
 
@@ -229,22 +228,23 @@ module Pione
       def terminate
         state = nil
 
-        # kill all chain threads
-        @chain_threads.list.each do |thread|
-          state = thread[:agent_state] # save last state
-          unless thread == Thread.current
-            thread.kill
-            thread.join
-          end
-        end
-
         Thread.new {
-          # fire terminate transtion
+
+          # kill all chain threads
+          @chain_threads.list.each do |thread|
+            state = thread[:agent_state] # save last state
+            unless thread == Thread.current
+              thread.kill
+              thread.join
+            end
+          end
+
+          # fire "terminate" transtion
           begin
             Thread.current[:agent_state] = state || AgentState.new
             transit(:terminate, [])
-          rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
-            Util::ErrorReport.warn("raised a connection error when we terminated", self, e, __FILE__, __LINE__)
+          rescue DRb::DRbConnError, DRbPatch::ReplyReaderError => e
+            Log::Debug.warn("raised a connection error when we terminated", self, e)
           end
         }.join
       end
@@ -260,21 +260,30 @@ module Pione
       def start_running(transition, result, state, free)
         thread = free ? Util::FreeThreadGenerator.method(:generate) : Thread.method(:new)
         thread.call do
-          Thread.current[:agent_state] = state
-          while true
-            # fire the transition
-            # NOTE: transition name is maybe changed by the result of firing
-            _transition, result, count = transit(transition, result)
-            state = Thread.current[:agent_state]
+          begin
+            Thread.current[:agent_state] = state
+            while true
+              # fire the transition
+              # NOTE: transition name is maybe changed by the result of firing
+              _transition, result, count = transit(transition, result)
+              state = Thread.current[:agent_state]
 
-            begin
-              # go next transition
-              next_transitions = get_next_transitions(_transition, result)
-              transition, *branches = next_transitions
-              # handle transition branches
-              branches.each {|t| start_running(t, result, state, false)}
-            rescue TerminationError
-              break # end loop after terminate transition
+              begin
+                # go next transition
+                next_transitions = get_next_transitions(_transition, result)
+                transition, *branches = next_transitions
+                # handle transition branches
+                branches.each {|t| start_running(t, result, state, false)}
+              rescue TerminationError
+                break # end loop after terminate transition
+              end
+            end
+          rescue Exception => e
+            # throw the exception to command's runnning thread
+            if Global.command and Global.command.running_thread and Global.command.running_thread.alive?
+              Global.command.running_thread.raise e
+            else
+              raise e
             end
           end
         end

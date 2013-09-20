@@ -79,10 +79,10 @@ module Pione
         write(Tuple[:base_location].new(location.as_directory))
       end
 
-      def drburi
-        @remote_object ||= DRb.start_service(nil, self)
-        @remote_object.__drburi
-      end
+      #def drburi
+      #  @remote_object ||= DRb.start_service(nil, self)
+      #  @remote_object.__drburi
+      #end
 
       def alive?
         not(@terminated)
@@ -142,13 +142,9 @@ module Pione
       end
 
       # Shutdown the server.
-      def finalize
+      def terminate
         @terminated = true
-        write(Tuple[:command].new("terminate", nil))
-        sleep 1
       end
-
-      alias :terminate :finalize
 
       def inspect
         "#<Pione::TupleSpace::TupleSpaceServer:%s>" % object_id

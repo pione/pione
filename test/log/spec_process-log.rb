@@ -53,7 +53,9 @@ end
 
 shared "record type filter" do
   it "should select target type records" do
-    @log.records.should.all{|record| record.type == @type}
+    @log.values.each do |log|
+      log.records.should.all{|record| record.type == @type}
+    end
   end
 end
 

@@ -50,20 +50,16 @@ module Pione
         # send broadcast packets
         Global.presence_notification_addresses.each do |address|
           begin
-            ErrorReport.presence_notifier(build_debug_message(address), self, __FILE__, __LINE__)
+            Log::Debug.presence_notification do
+              "provider sends presence notification packet from %s to %s" % [@front.uri, address, Time.now]
+            end
             socket.send(@reference, 0, address.host, address.port)
           rescue => e
-            msg = "something is bad when tuple space provider sends a packet"
-            Util::ErrorReport.warn(msg, self, e, __FILE__, __LINE__)
+            Log::SystemLog.warn("tuple space provider agent failed to send a packet: %s" % e.message)
           end
         end
       ensure
         socket.close
-      end
-
-      # Build a debug message.
-      def build_debug_message(address)
-        "sent presence notifier from %s to %s at %s" % [@front.uri, address, Time.now]
       end
     end
   end

@@ -23,6 +23,10 @@ module TestUtil
   module Command
     class << self
       def execute(&b)
+        # initialize exit status
+        Global.exit_status = true
+
+        # make result
         res = CommandResult.new(stdout: StringIO.new("", "w"), stderr: StringIO.new("", "w"))
         $stdout = res.stdout
         $stderr = res.stderr

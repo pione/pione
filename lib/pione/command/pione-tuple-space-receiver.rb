@@ -2,15 +2,54 @@ module Pione
   module Command
     # PioneTupleSpaceReceiver is a command that launchs tuple space receiver
     # agent.
-    class PioneTupleSpaceReceiver < FrontOwnerCommand
+    class PioneTupleSpaceReceiver < BasicCommand
+      #
+      # basic informations
+      #
+
+      command_name "pione-tuple-space-receiver" do |cmd|
+        "front: %s, parent: %s" % [Global.front.uri, cmd.option[:parent_front].uri]
+      end
+
+      command_banner(Util::Indentation.cut(<<-TXT))
+        Run tuple space receiver process for receiving tuple space presence
+        notifier. This command is launched by other processes like pione-broker
+        normally, but you can force to start by calling with --no-parent option.
+      TXT
+
+      command_front Front::TupleSpaceReceiverFront
 
       #
-      # process handler
+      # options
+      #
+
+      use_option :color
+      use_option :debug
+      use_option :my_ip_address
+      use_option :parent_front
+
+      define_option(:presence_port) do |item|
+        item.long = "--presence-port=PORT"
+        item.desc = "set presence port number"
+        item.action = lambda do |_, _, port|
+          Global.presence_port = port.to_i
+        end
+      end
+
+      #
+      # class methods
       #
 
       # Create a new process of tuple space provider command.
       def self.spawn
-        spawner = Spawner.new(info.name)
+        spawner = Spawner.new("pione-tuple-space-receiver")
+
+        # debug options
+        spawner.option("--debug=system") if Global.debug_system
+        spawner.option("--debug=ignored_exception") if Global.debug_ignored_exception
+        spawner.option("--debug=rule_engine") if Global.debug_rule_engine
+        spawner.option("--debug=communication") if Global.debug_communication
+        spawner.option("--debug=presence_notification") if Global.debug_presence_notification
 
         # requisite options
         spawner.option("--parent-front", Global.front.uri)
@@ -18,75 +57,54 @@ module Pione
         spawner.option("--presence-port", Global.presence_port.to_s)
 
         # optionals
-        spawner.option("--debug") if Pione.debug_mode?
-        spawner.option("--show-communication") if Global.show_communication
-        spawner.option("--show-presence-notifier") if Global.show_presence_notifier
+        spawner.option("--color") if Global.color_enabled
 
         spawner.spawn
       end
 
       #
-      # option
+      # instance methods
       #
-
-      define_info do
-        set_name "pione-tuple-space-receiver"
-        set_tail {|cmd|
-          front = Global.front.uri
-          parent_front = cmd.option[:parent_front].uri
-          "{Front: %s, ParentFront: %s}" % [front, parent_front]
-        }
-        set_banner(Util::Indentation.cut(<<-TXT))
-          Run tuple space receiver process for receiving tuple space presence
-          notifier. This command is launched by other processes like pione-broker
-          normally, but you can force to start by calling with --no-parent option.
-        TXT
-      end
-
-      define_option do
-        use :debug
-        use :color
-        use :my_ip_address
-        use :parent_front
-        use :show_communication
-        use :show_presence_notifier
-
-        define(:presence_port) do |item|
-          item.long = "--presence-port=PORT"
-          item.desc = "set presence port number"
-          item.action = lambda do |option, port|
-            Global.presence_port = port.to_i
-          end
-        end
-      end
 
       attr_reader :tuple_space_receiver
 
-      def create_front
-        Front::TupleSpaceReceiverFront.new(self)
-      end
+      #
+      # command lifecycle: setup phase
+      #
 
-      prepare do
-        # add child process to the parent
-        option[:parent_front].add_child(Process.pid, Global.front.uri)
+      setup :parent_process_connection, :module => CommonCommandAction
+      setup :broker
 
-        # create a tuple space receiver agent
-        @tuple_space_receiver = Agent::TupleSpaceReceiver.new(option[:parent_front].broker)
-
-        # set my uri to parent front as its provider
+      # set my uri to parent front as its provider
+      def setup_broker
         option[:parent_front].set_tuple_space_receiver(Global.front.uri)
       end
 
-      start do
-        # start provider activity and wait it to be terminated
-        @tuple_space_receiver.start
-        @tuple_space_receiver.wait_until_terminated(nil)
+      #
+      # command lifecycle: execution phase
+      #
+
+      execute :agent
+
+      # create a tuple space receiver agent
+      def execute_agent
+        @agent = Agent::TupleSpaceReceiver.start(option[:parent_front])
+        @agent.wait_until_terminated(nil)
+      rescue Agent::ConnectionError
+        Log::SystemLog.fatal("pione-tuple-space-receiver is terminated because pione-borker may be dead.")
+        terminate
       end
 
-      terminate do
-        Global.monitor.synchronize do
-          @tuple_space_receiver.terminate
-        end
+      #
+      # command lifecycle: termination phase
+      #
+
+      termination_phase :timeout => 5
+      terminate :agent
+      terminate :parent_process_connection, :module => CommonCommandAction
+
+      def terminate_agent
+        @agent.terminate if @agent
       end
     end
   end

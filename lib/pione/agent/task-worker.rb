@@ -5,6 +5,21 @@ module Pione
       set_agent_type :task_worker, self
 
       #
+      # instance methods
+      #
+
+      attr_reader :tuple_space
+      attr_reader :execution_thread
+      attr_accessor :once # the agent will be killed at task completion if true
+
+      def initialize(tuple_space, features, env=nil)
+        super(tuple_space)
+        @tuple_space = tuple_space
+        @features = features
+        @env = env || get_environment
+      end
+
+      #
       # activity definitions
       #
 
@@ -12,43 +27,25 @@ module Pione
       define_transition :init_task
       define_transition :execute_task
       define_transition :finalize_task
+      define_transition :connection_error
 
       chain :init => :take_task
       chain :take_task => :init_task
       chain :init_task => :execute_task
       chain :execute_task => :finalize_task
       chain :finalize_task => lambda {|agent, result| agent.once ? :terminate : :take_task}
+      chain :connection_error => :terminate
 
       define_exception_handler Restart => :take_task
+      define_exception_handler DRb::DRbConnError => :connection_error
 
       #
-      # instance methods
-      #
-
-      attr_reader :execution_thread
-      attr_accessor :once # the agent will be killed at task completion if true
-
-      def initialize(space, features, env=nil)
-        super(space)
-        @space = space
-        @env = env || get_environment
-        @features = features
-      end
-
-      #
-      # actions
+      # transitions
       #
 
       # Take a task and turn it to foreground.
       def transit_to_take_task
         return take(Tuple[:task].new(features: @features))
-      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError => e
-        # FIXME : kind of this errors are happened in any situations, so we need
-        #         to handle it by more general way.
-
-        # tuple space may be closed
-        ErrorReport.warn("Disconnected in task wainting of task worker agent.", self, e, __FILE__, __LINE__)
-        terminate
       end
 
       # Initialize the task.
@@ -97,6 +94,11 @@ module Pione
         take!(Tuple[:foreground].new(task.domain_id, task.digest))
       end
 
+      # Report the connection error.
+      def transit_to_connection_error(e)
+        Log::SystemLog.warn("task worker agent was disconnected from tuple space unexpectedly, goes to termination.")
+      end
+
       #
       # helper methods
       #
@@ -113,7 +115,7 @@ module Pione
       # Make an engine from the task.
       def make_engine(task)
         RuleEngine.make(
-          @space,
+          @tuple_space,
           @env,
           task.package_id,
           task.rule_name,

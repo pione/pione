@@ -142,6 +142,6 @@ class Parslet::Atoms::Base
   include Pione::Parser::Exception
 
   def or_error(msg, *expected_elements)
-    self | SyntaxErrorAtom.new(msg, expected_elements, $ignore_error)
+    self | Pione::Parser::SyntaxErrorAtom.new(msg, expected_elements, $ignore_error)
   end
 end

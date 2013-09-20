@@ -74,13 +74,11 @@ module Pione
       def initialize(tuple_space_server)
         super()
         set_tuple_space_server(tuple_space_server)
-
-        # attach a command listner to the client for monitoring tuple space
-        # commands like "terminate"
-        unless self.is_a?(JobTerminator)
-          JobTerminator.start(tuple_space_server, self)
-        end
       end
+
+      #
+      # transitions
+      #
 
       def transit_to_init
         hello
@@ -91,11 +89,9 @@ module Pione
         cancel_current_tuple_entry
       end
 
-      def transit_to_error(e)
-        Util::ErrorReport.error("Error happend in transition chain", self, e, __FILE__, __LINE__)
-        notify_exception(e)
-        terminate
-      end
+      #
+      # helper methods
+      #
 
       # Redefine hello method with logging.
       def hello

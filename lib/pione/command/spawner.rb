@@ -1,51 +1,73 @@
 module Pione
   module Command
+    # Spawner is a utility class for calling pione commands as different
+    # process. We assume both caller and callee commands have front server.
     class Spawner
-      def initialize(command_name)
-        @command_name = command_name
-        @cmd = [command_name]
+      attr_reader :pid         # PID of spawned child process
+      attr_reader :child_front # front URI of spawned child process
+
+      def initialize(name)
+        @name = name # callee command name
+        @args = []   # callee command arguments
       end
 
-      # Spawn the command.
+      # Spawn the command process.
       def spawn
-        # create provider process
-        pid = Process.spawn(*@cmd)
+        Log::Debug.system("process \"%s\" is spawned with arguments %s" % [@name, @args])
+
+        # create a new process and watch it
+        pid = Process.spawn(@name, *@args)
+
+        # register PID to front server for termination
+        Global.front.child[pid] = nil if Global.front
+
+        # keep to watch child process
         thread = Process.detach(pid)
 
-        # find child front while child process is alive
-        timeout(5) do
-          while thread and thread.alive?
-            if child_front = find_child_front(pid)
-              return child_front
-            else
-              sleep 0.1
+        begin
+          # find child front while child process is alive
+          retriable :on => [SpawnerRetry, Timeout::Error], :tries => 30, :interval => 0.1 do
+            # when process is dead, raise an error
+            if thread.nil? or not(thread.alive?)
+              raise SpawnError.new("%s failed to spawn %s." % [Global.command.command_name, @name])
             end
-          end
-        end
 
-        # failed to run the command
-        raise SpawnError.new("We failed to run %s command." % @command_name)
-      rescue Timeout::Error
-        raise SpawnError.new("We try to run command %s, but it timeouted. (5 sec)" % @command_name)
+            # find front and save its uri and pid
+            @child_front = find_child_front(pid) || (raise SpawnerRetry)
+            @pid = pid
+            @thread = thread
+
+            return self
+          end
+        rescue Exception => e
+          raise SpawnError.new("%s failed to spawn %s: %s" % [Global.command.command_name, @name, e.message])
+        end
       end
 
-      # Add the command option.
+      # Append arguments to the command.
       def option(*args)
-        @cmd += args
+        @args += args
+      end
+
+      # Register the block that is executed when the spawned process is terminated.
+      def when_terminated(&b)
+        Thread.new do
+          @thread.join
+          b.call
+        end
       end
 
       private
 
-      # Find child front. Spawned child process sets URI of the front to my
-      # front, so we get it.
+      # Find child front by PID. Spawned child process sets the front server's
+      # URI to children table of my front, so we get it from my front and create
+      # the reference.
       def find_child_front(pid)
         if child_front_uri = Global.front.child[pid]
-          child_front = DRbObject.new_with_uri(child_front_uri)
-          child_front.uuid # try connection
-          return child_front
+          return DRbObject.new_with_uri(child_front_uri).tap do |front|
+            timeout(1) {front.ping} # test connection
+          end
         end
-      rescue
-        # do nothing
       end
     end
   end

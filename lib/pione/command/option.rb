@@ -2,15 +2,15 @@ module Pione
   module Command
     # OptionItem is an option item for PIONE command.
     class OptionItem < StructX
-      member :name
-      member :short
-      member :long
-      member :desc
-      member :default
-      member :value
-      member :values
-      member :action
-      member :validator
+      member :name      # option name
+      member :short     # short option (same as standard OptionParser)
+      member :long      # long option (same as standard OptionParser)
+      member :desc      # option description (same as standard OpionParser)
+      member :default   # default value
+      member :value     # value
+      member :values    # ???
+      member :action    # option action
+      member :validator # option validator
       member :requisite # requisite option flag
     end
 
@@ -20,12 +20,6 @@ module Pione
       attr_reader :items
 
       # Define a new option for the command.
-      #
-      # @param args [Array]
-      #   OptionParser arguments
-      # @param b [Proc]
-      #   option action
-      # @return [void]
       def define(name, &b)
         item = OptionItem.new.tap do |item|
           item.name = name
@@ -39,27 +33,20 @@ module Pione
         end
       end
 
-      # Install the option module.
-      #
-      # @param mod [Module]
-      #   PIONE's option set modules
-      # @return [void]
-      def use(item_name)
-        @items << CommonOption.send(item_name)
+      # Install the option module with configuration +option+.
+      def use(item_name, option={})
+        @items << CommonOption.send(item_name).set(option)
       end
     end
 
-    # CommandOption is a class for holding option data set.
-    class Option
-      forward! :@option, :"[]", :"[]="
-
+    # OptionDefinition is a class for holding option definitions.
+    class OptionDefinition
       # Creata a command option context.
-      def initialize(info)
+      def initialize
         extend OptionInterface
-        @command_info = info
-        @option = {}
-        @items = []
-        @validators = []
+        @items = []      # option item definitions
+        @default = {}    # default value table
+        @validators = [] # option validators
       end
 
       def item(name)
@@ -67,94 +54,92 @@ module Pione
       end
 
       # Parse the command options.
-      #
-      # @return [void]
-      def parse(argv)
+      def parse(argv, command_name, command_banner)
+        data = Hash.new
+
+        # parse options
         OptionParser.new do |opt|
           # set banner
-          opt.banner = "Usage: %s [options]" % @command_info.name
-          opt.banner << "\n\n" + @command_info.banner + "\n" if @command_info.banner
+          opt.banner = "Usage: %s [options]" % command_name
+          opt.banner << "\n\n" + command_banner + "\n" if command_banner
 
           # set version
-          opt.program_name = @command_info.name
+          opt.program_name = command_name
           opt.version = Pione::VERSION
 
           # default values
-          @items.each {|item| @option[item.name] = item.default if item.default}
+          @items.each {|item| data[item.name] = item.default if item.default}
+          data.merge!(@default)
 
           # setup option parser
-          @items.sort{|a,b| a.long <=> b.long}.each {|item| setup_item(opt, item)}
+          @items.sort{|a,b| a.long <=> b.long}.each {|item| setup_item(command_name, opt, data, item)}
         end.parse!(argv)
-      rescue OptionParser::InvalidOption => e
-        e.args.each {|arg| $stderr.puts "Unknown option: %s" % arg }
-        abort
-      rescue OptionParser::MissingArgument => e
-        abort(e.message)
+
+        # check option's validness
+        check(data)
+
+        return data
       end
 
+      # Define the default value.
       def default(name, value)
-        @option[name] = value
+        @default[name] = value
       end
 
       def validate(&b)
         @validators << b
       end
 
+      private
+
+      # Setup the option item.
+      def setup_item(command_name, opt, data, item)
+        defs = [item.short, item.long, item.desc].compact
+        [ :setup_item_action,
+          :setup_item_values,
+          :setup_item_value,
+          :setup_item_static_value
+        ].find {|method_name| send(method_name, command_name, opt, data, item, defs)}
+      end
+
+      def setup_item_action(command_name, opt, data, item, defs)
+        if item.action
+          opt.on(*defs, Proc.new{|*args| self.instance_exec(command_name, data, *args, &item.action)})
+        end
+      end
+
+      def setup_item_values(command_name, opt, data, item, defs)
+        if item.values.kind_of?(Proc)
+          opt.on(*defs, Proc.new{|*args| data[item.name] << self.instance_exec(*args, &item.values)})
+        end
+      end
+
+      def setup_item_value(command_name, opt, data, item, defs)
+        case item.value
+        when Proc
+          opt.on(*defs, Proc.new{|*args| data[item.name] = self.instance_exec(*args, &item.value)})
+        when :as_is
+          opt.on(*defs, Proc.new{|*args| data[item.name] = args.first})
+        end
+      end
+
+      def setup_item_static_value(command_name, opt, data, item, defs)
+        if item.value
+          opt.on(*defs, Proc.new{ data[item.name] = item.value})
+        end
+      end
+
       # Check validness of the command options.
-      def check
+      def check(data)
         # check requisite options
         @items.each do |item|
-          if item.requisite and not(@option[item.name])
-            abort("%s\noption error: %s is requisite" % [opt.help, item.long])
+          if item.requisite and not(data[item.name])
+            raise OptionError.new("option \"%s\" is requisite" % [item.long])
           end
         end
 
         # apply validators
-        @validators.each do |validator|
-          validator.call(@option)
-        end
-      end
-
-      private
-
-      SETUP_ITEM_LIST = [
-        :setup_item_action,
-        :setup_item_values,
-        :setup_item_value,
-        :setup_item_static_value
-      ]
-
-      # Setup the option item.
-      def setup_item(opt, item)
-        defs = [item.short, item.long, item.desc].compact
-        SETUP_ITEM_LIST.find {|name| send(name, opt, item, defs)}
-      end
-
-      def setup_item_action(opt, item, defs)
-        if item.action
-          opt.on(*defs, Proc.new{|*args| self.instance_exec(@option, *args, &item.action)})
-        end
-      end
-
-      def setup_item_values(opt, item, defs)
-        if item.values.kind_of?(Proc)
-          opt.on(*defs, Proc.new{|*args| @option[item.name] << self.instance_exec(*args, &item.values)})
-        end
-      end
-
-      def setup_item_value(opt, item, defs)
-        case item.value
-        when Proc
-          opt.on(*defs, Proc.new{|*args| @option[item.name] = self.instance_exec(*args, &item.value)})
-        when :as_is
-          opt.on(*defs, Proc.new{|*args| @option[item.name] = args.first})
-        end
-      end
-
-      def setup_item_static_value(opt, item, defs)
-        if item.value
-          opt.on(*defs, Proc.new{ @option[item.name] = item.value})
-        end
+        @validators.each {|validator| validator.call(data)}
       end
     end
 
@@ -165,7 +150,10 @@ module Pione
       define(:color) do |item|
         item.long = '--[no-]color'
         item.desc = 'turn on/off color mode'
-        item.action = proc {|_, bool| Sickill::Rainbow.enabled = bool}
+        item.action = proc {|_, _, bool|
+          Global.color_enabled = bool
+          Sickill::Rainbow.enabled = bool
+        }
       end
 
       define(:daemon) do |item|
@@ -176,41 +164,75 @@ module Pione
       end
 
       define(:debug) do |item|
-        item.long = '--debug'
-        item.desc = "turn on debug mode"
-        item.action = proc {Pione.debug_mode = true}
+        item.long = '--debug[=TYPE]'
+        item.desc = "turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)"
+        item.action = proc {|command_nane, _, type|
+          Global.system_logger.level = :debug
+          case type
+          when "system", nil
+            Global.debug_system = true
+          when "rule_engine"
+            Global.debug_rule_engine = true
+          when "presence_notification"
+            Global.debug_presence_notification = true
+          when "communication"
+            Global.debug_communication = true
+          when "ignored_exception"
+            Global.debug_ignored_exception = true
+          else
+            raise OptionError.new("option error: unknown debug type \"=%s\"" % type)
+          end
+        }
       end
 
       define(:features) do |item|
         item.long = '--features=FEATURES'
         item.desc = 'set features'
-        item.value = proc {|features| features}
+        item.action = proc {|command_name, option, features|
+          begin
+            # store features
+            Global.features = features
+            Global.expressional_features = Util.parse_features(features)
+          rescue Parslet::ParseFailed => e
+            raise OptionError.new(
+              "invalid feature expression \"%s\" is given for %s" % [features, command_name]
+            )
+          end
+        }
       end
 
       define(:my_ip_address) do |item|
         item.long = "--my-ip-address=ADDRESS"
         item.desc = "set my IP address"
-        item.action = proc {|_, address| Global.my_ip_address = address}
+        item.action = proc {|_, _, address| Global.my_ip_address = address}
       end
 
       define(:parent_front) do |item|
         item.long = '--parent-front=URI'
         item.desc = 'set parent front URI'
         item.requisite = true
-        item.action = proc do |option, uri|
-          option[:parent_front] = DRbObject.new_with_uri(uri)
+        item.action = proc do |command_name, option, uri|
+          begin
+            option[:parent_front] = DRbObject.new_with_uri(uri)
+            timeout(1) {option[:parent_front].ping}
+          rescue Exception => e
+            raise HideableOptionError.new(
+              "%s couldn't connect to parent front \"%s\": %s" % [command_name, uri, e.message]
+            )
+          end
         end
       end
 
       define(:presence_notification_address) do |item|
         item.long = "--presence-notification-address=255.255.255.255:%s" % Global.presence_port
         item.desc = "set the address for sending presence notifier"
-        item.action = proc do |_, address|
+        item.action = proc do |_, _, address|
           # clear addresses at first time
           unless @__option_notifier_address__
             @__option_notifier_address__ = true
             Global.presence_notification_addresses = []
           end
+
           # add the address
           address = address =~ /^broadcast/ ? address : "broadcast://%s" % address
           uri = URI.parse(address)
@@ -218,18 +240,6 @@ module Pione
           uri.port = Global.presence_port if uri.port.nil?
           Global.presence_notification_addresses << uri
         end
-      end
-
-      define(:show_communication) do |item|
-        item.long = '--show-communication'
-        item.desc = "show object communication"
-        item.action = proc {Global.show_communication = true}
-      end
-
-      define(:show_presence_notifier) do |item|
-        item.long = "--show-presence-notifier"
-        item.desc = "show presence notifier informations"
-        item.action = proc {Global.show_presence_notifier = true}
       end
 
       define(:task_worker) do |item|

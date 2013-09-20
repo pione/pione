@@ -1,14 +1,15 @@
 require_relative '../test-util'
 
+class TestTuple < Tuple::BasicTuple
+  define_format [:test, :sym]
+end
+
 describe "Pione::TupleSpace::TupleSpaceServer" do
   before do
-    DRb.start_service
-    @server = TupleSpaceServer.new
-    sleep 1
+    @server = TupleSpaceServer.new({}, false)
   end
 
   after do
-    DRb.stop_service
   end
 
   it "should create be alive" do
@@ -16,23 +17,21 @@ describe "Pione::TupleSpace::TupleSpaceServer" do
   end
 
   it "should count tuple size" do
-    Tuple.define_format [:test, :sym]
     @server.write([:test, :a])
     @server.count_tuple([:test, nil]).should == 1
     @server.write([:test, :b])
     @server.count_tuple([:test, nil]).should == 2
-    Tuple.delete_format(:test)
   end
 
   it "should count workers" do
     @server.current_task_worker_size.should == 0
-    t1 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util.generate_uuid)
+    t1 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util::UUID.generate)
     @server.write(t1)
     @server.current_task_worker_size.should == 1
-    t2 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util.generate_uuid)
+    t2 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util::UUID.generate)
     @server.write(t2)
     @server.current_task_worker_size.should == 2
-    t3 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util.generate_uuid)
+    t3 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util::UUID.generate)
     @server.write(t3)
     @server.current_task_worker_size.should == 3
     @server.take(t1)

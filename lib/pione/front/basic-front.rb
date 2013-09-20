@@ -1,36 +1,24 @@
 module Pione
   module Front
-    # FrontError is raised when front server cannnot start.
-    class FrontError < StandardError; end
-
     # This is base class for all PIONE front classes. PIONE fronts exist in each
-    # command and control its process.
+    # command and behave as remote interface.
     class BasicFront < PioneObject
       include DRbUndumped
-      extend Forwardable
 
-      attr_reader :command
-      attr_reader :uri
+      attr_reader :uri   # front server's URI string
       attr_reader :attrs
-      attr_reader :link
-      attr_reader :child  # child process table
+      attr_reader :child # child process table
 
       # Creates a front server as druby's service.
-      def initialize(command, port)
-        @command = command
-        # @uri = start_service(port, {:verbose => true})
-        @uri = start_service(port, {})
+      def initialize(port)
+        @uri = start_service(port, {}) # port is number or range
         @attrs = {}
         @child = {}
       end
 
-      # Returns the pid.
+      # Return PID of the process.
       def pid
         Process.pid
-      end
-
-      def link
-        @__link__
       end
 
       def [](name)
@@ -41,37 +29,57 @@ module Pione
         @attrs[name] = val
       end
 
+      # Add child process.
       def add_child(pid, front_uri)
         @child[pid] = front_uri
       end
 
-      # Terminates the front.
+      # Delete child process.
+      def remove_child(pid)
+        @child.delete(pid)
+      end
+
+      # Terminate the front server. This method assumes to be not called from
+      # other process. Note that front servers have no responsibility of killing
+      # child processes.
       def terminate
         DRb.stop_service
       end
 
+      # Terminate the command. This is a nonblocking method because callee
+      # process cannot tell its termination to caller, so it returns true
+      # immediately.
+      def terminate_command
+        Thread.new {Global.command.terminate}
+        return true
+      end
+
       private
 
-      # Starts drb service and returns the URI.
+      # Start DRb service and return the URI string.
       def start_service(port, config)
         if port.kind_of?(Range)
-          port = port.each
+          enum = port.each
           begin
-            uri = "druby://%s:%s" % [Global.my_ip_address, port.next]
-            @__link__ = DRb.start_service(uri, self, config)
+            DRb.start_service(build_front_server_uri(enum.next), self, config)
           rescue StopIteration => e
-            raise FrontError.new("You couldn't start front server.")
+            raise FrontError.new(self, e)
           rescue
             retry
           end
         else
-          begin
-            DRb.start_service(port ? "druby://%s:%s" % [Global.my_ip_address, port] : nil, self, config)
-          rescue => e
-            raise FrontError.new("You couldn't start front server: %s" % e.message)
-          end
+          DRb.start_service(build_front_server_uri(port), self, config)
         end
+
         return DRb.uri
+      rescue => e
+        raise FrontError.new(self, e)
+      end
+
+      # Build front server URI. Note that the address is configured by
+      # +Global.my_ip_address+.
+      def build_front_server_uri(port)
+        "druby://%s:%s" % [Global.my_ip_address, port]
       end
     end
   end

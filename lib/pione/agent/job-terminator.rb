@@ -5,32 +5,33 @@ module Pione
     class JobTerminator < TupleSpaceClient
       set_agent_type :job_terminator, self
 
-      def initialize(space, target)
-        @target = target
+      def initialize(space, &b)
         super(space)
+        @action = b
       end
 
       #
       # transition definitions
       #
 
-      define_transition :wait_command
-      define_transition :do_command
+      define_transition :wait
+      define_transition :fire
 
-      chain :init => :wait_command
-      chain :wait_command => :do_command
-      chain :do_command => :terminate
+      chain :init => :wait
+      chain :wait => :fire
+      chain :fire => :terminate
 
       #
       # transition methods
       #
 
-      def transit_to_wait_command
+      def transit_to_wait
         read(Tuple[:command].new(name: "terminate"))
       end
 
-      def transit_to_do_command
-        @target.terminate
+      def transit_to_fire
+        Log::Debug.system("job terminator fires the action %s." % @action)
+        @action.call
       end
     end
   end

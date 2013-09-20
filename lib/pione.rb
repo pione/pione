@@ -90,6 +90,7 @@ require 'pione/command'     # command definitions
 #
 
 module Pione
+  # expand name spaces
   include System
   include Relay
   include Util
@@ -100,14 +101,7 @@ module Pione
   include Transformer
 
   extend Util::Evaluatable
-
-  module_function :debug_mode
-  module_function :debug_mode=
-  module_function :debug_mode?
 end
-
-# omit toplevel namespace
-include Pione
 
 # initialize PIONE system
 Pione::System::Init.new.init

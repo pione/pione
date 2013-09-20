@@ -1,78 +1,93 @@
 module Pione
   module Command
     class PionePackage < BasicCommand
-      define_info do
-        set_name "pione-package"
-        set_banner "PIONE package utility."
-      end
+      #
+      # basic informations
+      #
 
-      define_option do
-        use :color
-        use :debug
+      command_name "pione-package"
+      command_banner "PIONE package utility."
 
-        default :output, Location["./"]
+      #
+      # options
+      #
 
-        define(:build) do |item|
-          item.long = '--build'
-          item.desc = 'build PIONE archive file(*.ppg)'
-          item.action = lambda do |option, location|
-            option[:action] = :build
-          end
-        end
+      use_option :color
+      use_option :debug
 
-        define(:output) do |item|
-          item.short = "-o"
-          item.long = "--output=LOCATION"
-          item.desc = "output file or directory location"
-          item.value = lambda {|val| Location[val]}
-        end
+      option_default :output, Location["./"]
 
-        define(:tag) do |item|
-          item.long = "--tag=NAME"
-          item.desc = "specify tag name"
-          item.value = :as_is
-        end
-
-        define(:tag) do |item|
-          item.long = "--branch=NAME"
-          item.desc = "specify branch name"
-          item.value = :as_is
-        end
-
-        define(:hash_id) do |item|
-          item.long = "--hash-id=HASH"
-          item.desc = "specify git hash id"
-          item.value = :as_is
-        end
-
-        validate do |option|
-          unless option[:output].directory?
-            abort("output location should be a directory: %s" % option[:output])
-          end
+      define_option(:build) do |item|
+        item.long = '--build'
+        item.desc = 'build PIONE archive file(*.ppg)'
+        item.action = lambda do |_, option, location|
+          option[:action_mode] = :build
         end
       end
 
-      start do
-        if option[:action] == :build
-          # package is not found
-          if @argv.first.nil?
-            abort("There are no PIONE documents or packages.")
-          end
+      define_option(:output) do |item|
+        item.short = "-o"
+        item.long = "--output=LOCATION"
+        item.desc = "output file or directory location"
+        item.value = lambda {|val| Location[val]}
+      end
 
-          # archive
-          if ppg = try_to_archive(Location[git: @argv.first], Location[data: @argv.first])
-            puts "suceeded: %s" % ppg.address
-          else
-            abort("Faild to archive.")
-          end
+      define_option(:tag) do |item|
+        item.long = "--tag=NAME"
+        item.desc = "specify tag name"
+        item.value = :as_is
+      end
+
+      define_option(:tag) do |item|
+        item.long = "--branch=NAME"
+        item.desc = "specify branch name"
+        item.value = :as_is
+      end
+
+      define_option(:hash_id) do |item|
+        item.long = "--hash-id=HASH"
+        item.desc = "specify git hash id"
+        item.value = :as_is
+      end
+
+      validate_option do |option|
+        unless option[:output].directory?
+          abort("output location should be a directory: %s" % option[:output])
         end
       end
+
+      #
+      # command lifecycle: setup phase
+      #
+
+      setup :target
+
+      # Check archiver target location.
+      def setup_target
+        abort("There are no PIONE documents or packages.")  if @argv.first.nil?
+        @target = @argv.first
+      end
+
+      #
+      # command lifecycle: execution phase
+      #
+
+      execute :build => :build_package
+
+      # Build a PPG package.
+      def execute_build_package
+        if ppg = try_to_archive(Location[git: @target], Location[data: @target])
+          puts "suceeded: %s" % ppg.address
+        else
+          abort("Faild to archive.")
+        end
+      end
+
+      #
+      # helper methods
+      #
 
       private
-
-      def archive_from_directory_package
-        archiver = Component::PackageArchiver.new(Location[@argv.first])
-      end
 
       def try_to_archive(*locations)
         locations.each do |location|
@@ -84,7 +99,7 @@ module Pione
             # archive
             return archiver.archive(option[:output])
           rescue => e
-            Util::ErrorReport.warn("archiver faild: %s" % location, self, e, __FILE__, __LINE__)
+            Log::Debug.system("pione-package failed to archive %s: %s" % [location, e.message])
           end
         end
         return false

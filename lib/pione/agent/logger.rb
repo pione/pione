@@ -35,7 +35,7 @@ module Pione
           write_records(take_all(Tuple[:process_log].any))
         rescue => e
           # logger is terminated at last in termination processes, so tuple space may be closed
-          ErrorReport.warn("Failed to take process logs.", self, e, __FILE__, __LINE__)
+          Log::SystemLog.warn("logger agent failed to take process logs: %s" % e.message)
           terminate
         end
       end
@@ -46,11 +46,12 @@ module Pione
           write_records(take_all!(Tuple[:process_log].any))
         rescue => e
           # logger is terminated at last in termination processes, so tuple space may be closed
-          ErrorReport.warn("Failed to take process logs.", self, e, __FILE__, __LINE__)
+          Log::SystemLog.warn("logger agent failed to take process logs.", self, e)
         end
         if @log_location != @output_location
           @output_location.copy(@log_location)
         end
+        super
       end
 
       private

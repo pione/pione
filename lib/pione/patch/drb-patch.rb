@@ -1,241 +1,300 @@
-# @api private
-module DRb
-  def waiter_table
-    @waiter_table ||= Pione::Util::WaiterTable.new
-  end
-  module_function :waiter_table
+module Pione
+  module DRbPatch
+    #
+    # special protocol
+    #
 
-  class DRbConnError
-    attr_reader :args
-
-    def initialize(*args)
-      super
-      @args = args
-    end
-  end
-
-  class DRbObject
-    # Creates fake connection for relay.
-    def __connect
-      DRbConn.open(@uri) {}
-    end
-  end
-
-  class DRbMessage
-    alias :orig_initialize :initialize
-
-    def initialize(*args)
-      @send_request_lock = Mutex.new
-      @recv_request_lock = Mutex.new
-      @send_reply_lock = Mutex.new
-      @recv_reply_lock = Mutex.new
-      orig_initialize(*args)
+    # Return waiter table for the aim that clients enable to wait to receive the
+    # reply.
+    def self.waiter_table
+      @waiter_table ||= Pione::Util::WaiterTable.new
     end
 
-    def send_request(stream, ref, msg_id, arg, b)
-      req_id = Util::UUID.generate_int
-      if Global.show_communication
-        puts "send_request[%s] %s#%s(%s) on PID %s" % [req_id, ref.__drburi, msg_id, arg, Process.pid]
-      end
-      data = [
-        dump(req_id),
-        dump(ref.__drbref),
-        dump(msg_id.id2name),
-        dump(arg.length),
-        arg.map{|e|dump(e)}.join(''),
-        dump(b)
-      ].join('')
-      @send_request_lock.synchronize {stream.write(data)}
-      return req_id
-    rescue => e
-      if Global.show_communication
-        ErrorReport.print(e)
-      end
-      raise(DRbConnError, $!.message, $!.backtrace)
-    end
+    # ReplyReaderError is raised when reply reader happens something error. See
+    # +ReplyReader+ class.
+    class ReplyReaderError < RuntimeError
+      attr_reader :inner_exception
 
-    def recv_request(stream)
-      if Global.show_communication
-        puts "start recv_request on PID %s" % Process.pid
-      end
-      @recv_request_lock.synchronize do
-        req_id = load(stream)
-        ref = load(stream)
-        msg_id = load(stream)
-        argc = load(stream)
-        # puts "req_id %s, ref %s, msg_id %s, argc %s" % [req_id, ref, msg_id, argc]
-        ro = DRb.to_obj(ref)
-        raise(DRbConnError, "too many arguments") if @argc_limit < argc
-        argv = Array.new(argc, nil)
-        argc.times do |n|
-          argv[n] = load(stream)
-        end
-        block = load(stream)
-        if Global.show_communication
-          # puts "end recv_request[%s] %s#%s(%s) on %s" % [req_id, ref ? ref.__drburi : "", msg_id, argv, Process.pid]
-        end
-        return req_id, ro, msg_id, argv, block
+      def initialize(exception)
+        @inner_exception = exception
       end
     end
 
-    def send_reply(req_id, stream, succ, result)
-      if Global.show_communication
-        puts "start send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
-        unless succ
-          p result
-          result.backtrace.each do |line|
-            puts line
-          end
-          p result.args
-        end
+    class ReplyReader
+      def initialize
+        @watcher_lock = Mutex.new
+        @watchers = Set.new
       end
-      @send_reply_lock.synchronize do
-        stream.write(dump(req_id) + dump(succ) + dump(result, !succ))
-      end
-      if Global.show_communication
-        puts "end send_reply[%s] %s on PID %s" % [req_id, result, Process.pid]
-      end
-    rescue
-      raise(DRbConnError, $!.message, $!.backtrace)
-    end
 
-    def recv_reply(stream)
-      if Global.show_communication
-        puts "start recv_reply on PID %s" % Process.pid
-      end
-      @recv_reply_lock.synchronize do
-        req_id = load(stream)
-        succ = load(stream)
-        result = load(stream)
-        if Global.show_communication
-          puts "end recv_reply[%s] on PID %s" % [req_id, Process.pid]
-        end
-        return req_id, succ, result
-      end
-    end
-  end
-
-  class ReplyReaderThreadError < RuntimeError
-    attr_reader :inner_exception
-
-    def initialize(exception)
-      @inner_exception = exception
-    end
-  end
-
-  class DRbTCPSocket
-    # Makes reader thread for receiving unordered replies.
-    def reader_thread(watcher)
-      @watcher_mutex ||= Mutex.new
-      @watchers ||= Set.new
-      @watchers << watcher
-      @thread ||= Thread.new do
-        begin
-          # loop for receiving reply and waiting the result
-          while true
-            req_id, succ, result = recv_reply
-            DRb.waiter_table.push(req_id, [succ, result])
-          end
-        rescue => e
-          @watcher_mutex.synchronize do
-            @watchers.each do |watcher|
-              if watcher.alive?
-                watcher.raise(ReplyReaderThreadError.new(e))
-              end
+      def start(protocol)
+        @thread ||= Thread.new do
+          begin
+            # loop for receiving reply and waiting the result
+            while true
+              # receive a replay
+              req_id, succ, result = protocol.recv_reply
+              # register it to waiter table
+              DRbPatch.waiter_table.push(req_id, [succ, result])
             end
-            @watchers.delete_if {|watcher| not(watcher.alive?)}
+          rescue => e
+            @watcher_lock.synchronize do
+              # pass the exception to watchers
+              @watchers.each do |watcher|
+                Log::Debug.communication("connection error happened in receiving reply.")
+                Log::Debug.communication(e)
+                watcher.raise(ReplyReaderError.new(e)) if watcher.alive?
+              end
+
+              # remove dead watchers
+              @watchers.delete_if {|watcher| not(watcher.alive?)}
+            end
           end
+        end
+      end
+
+      # Makes reader thread for receiving unordered replies.
+      def add_watcher(watcher)
+        @watcher_lock.synchronize do
+          @watchers << watcher
+        end
+      end
+
+      # Remove the request reader thread watcher.
+      def remove_watcher(watcher)
+        @watcher_lock.synchronize do
+          @watchers.delete_if {|th| th == watcher}
         end
       end
     end
 
-    def remove_reader_thread_watcher(watcher)
-      @watcher_mutex ||= Mutex.new
-      @watcher_mutex.synchronize do
-        @watchers.delete_if {|th| th == watcher}
+    # +PioneTCPSocket+ is a reply reader thread extension for standard
+    # +DRbTCPSocket+.
+    class PioneTCPSocket < DRb::DRbTCPSocket
+      def initialize(uri, soc, config={})
+        super
+        @reply_reader = ReplyReader.new
+      end
+
+      # Send the request from client to server.
+      def send_request(ref, msg_id, arg, b)
+        # set watcher
+        @reply_reader.add_watcher(Thread.current)
+
+        # send the request
+        req_id = @msg.send_request(stream, ref, msg_id, arg, b)
+
+        # start reply reader
+        @reply_reader.start(self)
+
+        # wait the reply by using watier table
+        succ, result = Pione::DRbPatch.waiter_table.take(req_id, msg_id, arg)
+
+        # remove watcher
+        @reply_reader.remove_watcher(Thread.current)
+
+        return succ, result
+      end
+
+      # Send the reply with request id. Note: this overrides original +send_rely+.
+      def send_reply(req_id, succ, result)
+        @msg.send_reply(req_id, stream, succ, result)
+      end
+
+      # Return true if connection socket exists.
+      def alive?
+        return (@socket and not(@socket.closed?))
       end
     end
 
-    # req_id
-    def send_reply(req_id, succ, result)
-      @msg.send_reply(req_id, stream, succ, result)
-    end
-
-    def alive?
-      return @socket ? true : false
-    end
-  end
-
-  class DRbConn
-    @table = {}
-    @retry = {}
-
-    def self.table
-      @table
-    end
-
-    def self.clear_table
-      @table.values do |val|
-        val.close rescue nil
+    # +PioneDRbMessage+ is a special protocol for +PioneTCPSocket+.
+    class PioneDRbMessage < DRb::DRbMessage
+      def initialize(*args)
+        @send_request_lock = Mutex.new
+        @recv_request_lock = Mutex.new
+        @send_reply_lock = Mutex.new
+        @recv_reply_lock = Mutex.new
+        super
       end
-      @table.clear
-    end
 
-    # @api private
-    def self.open(remote_uri)
-      conn = nil
+      # Send a request to the stream. This is different from original at the
+      # point that patched version has request id.
+      def send_request(stream, ref, msg_id, arg, b)
+        # generate a new request id
+        req_id = Util::UUID.generate_int
 
-      @mutex.synchronize do
-        cache = @table[remote_uri]
-        if not(cache.nil?) and cache.alive?
-          conn = cache
-        else
-          if Global.show_communication
-            puts "new connection to %s on %s" % [remote_uri, Process.pid] if remote_uri
-          end
-          conn = self.new(remote_uri) unless conn
+        # show debug message
+        Log::Debug.communication do
+          "client sends a request %s#%s (fd: %s, req_id: %s)" % [ref.__drburi, msg_id, stream.to_i, req_id]
         end
-        @table[remote_uri] = conn
+
+        # make a dumped request sequece(request id, ref, msg_id, argc, argv, b)
+        data = [
+          req_id, ref.__drbref, msg_id.id2name, arg.length, *arg, b
+        ].map{|elt| dump(elt)}.join('')
+
+        @send_request_lock.synchronize {stream.write(data)}
+
+        return req_id
+      rescue => e
+        Log::Debug.communication "following error happened while we send request"
+        Log::Debug.communication e
+        raise DRb::DRbConnError.new, $!.message, $!.backtrace
       end
 
-      succ, result = yield(conn)
-      @retry[remote_uri] = 0
-      return succ, result
-    rescue DRb::DRbConnError, DRb::ReplyReaderThreadError
-      @table.delete(remote_uri)
-      @retry[remote_uri] ||= 0
-      @retry[remote_uri] += 1
-      if @retry[remote_uri] < 5
-        retry
-      else
-        raise
+      # Receive request from the stream. See +ClientReuqest+.
+      def recv_request(stream)
+        Log::Debug.communication "server tries to receive a request... (fd: %s)" % stream.to_i
+
+        @recv_request_lock.synchronize do
+          # read requst id, object id, method name, and arguments size
+          req_id = load(stream)
+          ref = load(stream)
+          msg_id = load(stream)
+          argc = load(stream)
+
+          Log::Debug.communication do
+            "server received a request (fd: %s, req_id: %s, ref: %s, msg_id: %s)" % [stream.to_i, req_id, ref.to_s, msg_id]
+          end
+
+          # check arguement size
+          raise DRb::DRbConnError.new("too many arguments") if @argc_limit < argc
+
+          ro = nil
+          available = true
+
+          # refer to object
+          begin
+            ro = DRb.to_obj(ref)
+          rescue RangeError => e
+            Log::Debug.system("bad object id \"%s\" is referred (msg_id: %s)" % [ref, msg_id])
+            available = false
+          end
+
+          # build arguments
+          argv = Array.new(argc, nil)
+          argc.times {|n| argv[n] = load(stream)}
+
+          # read block
+          block = load(stream)
+
+          return req_id, ro, msg_id, argv, block, available
+        end
+      end
+
+      # Send the reply.
+      def send_reply(req_id, stream, succ, result)
+        Log::Debug.communication {
+          "server sends a reply (fd: %s, req_id: %s, result: %s)" % [stream.to_i, req_id, result]
+        }
+
+        # build a reply data
+        data = dump(req_id) + dump(succ) + dump(result, !succ)
+
+        @send_reply_lock.synchronize {stream.write(data)}
+      rescue
+        raise DRb::DRbConnError, $!.message, $!.backtrace
+      end
+
+      # Receive a reply(request id, succ, and result) from the stream.
+      def recv_reply(stream)
+        Log::Debug.communication do
+          "client tries to receive a reply... (fd: %s)" % stream.to_i
+        end
+
+        @recv_reply_lock.synchronize do
+          req_id = load(stream)
+          succ = load(stream)
+          result = load(stream)
+
+          Log::Debug.communication(
+            "client received a reply (fd: %s, req_id: %s)" % [stream.to_i, req_id]
+          )
+
+          return req_id, succ, result
+        end
       end
     end
 
-    alias :orig_close :close
+    # +PioneDRbConn+ provides connections to +DRb::DRbObject+. This class is
+    # different from original +DRbConn+ at the point of connection reuse.
+    class PioneDRbConn < DRb::DRbConn
+      @cache = {} # connection table
+      @retry = {} # retrial counter
+      @mutex = Mutex.new # same as original's
 
-    def close
-      if Global.show_communication
-        puts "socket closed on %s" % Process.pid
+      class << self
+        attr_reader :cache
+
+        # Clear connection cache table.
+        def clear_cache
+          @cache.values {|connection| connection.close rescue nil}
+          @cache.clear
+        end
+
+        # Open a remote URI. This method reuse connection if the URI is cached.
+        def open(remote_uri)
+          conn = nil
+
+          @mutex.synchronize do
+            cache = @cache[remote_uri]
+
+            # get connection
+            if not(cache.nil?) and cache.alive?
+              conn = cache # use cached connection
+            else
+              conn = self.new(remote_uri) # create a new connection
+              Log::Debug.communication "client created a new connection to %s" % remote_uri.inspect
+            end
+            @cache[remote_uri] = conn
+          end
+
+          succ, result = yield(conn)
+          @retry[remote_uri] = 0
+          return succ, result
+        rescue DRb::DRbConnError, ReplyReaderError, Errno::ECONNREFUSED => e
+          Log::Debug.communication "client failed to open a connection to %s." % remote_uri
+          @mutex.synchronize do
+            if @cache[remote_uri]
+              @cache[remote_uri].close
+              @cache.delete(remote_uri)
+            end
+            @retry[remote_uri] ||= 0
+            @retry[remote_uri] += 1
+          end
+          if @retry[remote_uri] < 6
+            sleep 0.1
+            retry
+          else
+            raise
+          end
+        end
       end
-      unless @closed
-        @closed = true
-        self.class.table.delete(remote_uri)
-        orig_close
+
+      # Close the client-to-server socket.
+      def close
+        Log::Debug.communication("client closed the socket")
+        unless @closed
+          @closed = true
+          self.class.cache.delete(@uri)
+          super
+        end
+      end
+
+      # Send the message from client to server.
+      def send_message(ref, msg_id, arg, block)
+        @protocol.send_request(ref, msg_id, arg, block)
       end
     end
 
-    # Sends a request and takes the result from waiter table.
-    def send_message(ref, msg_id, arg, block)
-      req_id = @protocol.send_request(ref, msg_id, arg, block)
-      @protocol.reader_thread(Thread.current)
-      succ, result = DRb.waiter_table.take(req_id, msg_id, arg)
-      @protocol.remove_reader_thread_watcher(Thread.current)
-      return succ, result
-    end
-  end
+    #
+    # special server
+    #
 
-  class DRbServer
+    # BadRequestError is raised when the object id requested by client is
+    # unknonw in server.
+    class BadRequestError < StandardError
+    end
+
     # ClientRequest represents client's requests.
     class ClientRequest
       def self.receive(client)
@@ -247,17 +306,23 @@ module DRb
       attr_reader :msg_id
       attr_reader :argv
       attr_reader :block
+      attr_reader :available
 
-      def initialize(req_id, obj, msg_id, argv, block)
+      def initialize(req_id, obj, msg_id, argv, block, available)
         @req_id = req_id
         @obj = obj
         @msg_id = msg_id.intern
         @argv = argv
         @block = block
+        @available = available
       end
 
       def eval
-        @block ? eval_with_block : eval_without_block
+        if @available
+          @block ? eval_with_block : eval_without_block
+        else
+          raise BadRequestError
+        end
       end
 
       private
@@ -307,28 +372,31 @@ module DRb
       end
     end
 
-    class Invoker
-      extend Forwardable
-
-      attr_accessor :thread
-      def_delegators :@request, :req_id, :obj, :msg_id, :argv, :block
-
-      def initialize(drb_server, client, request)
-        @drb_server = drb_server
+    class RequestInvoker
+      def initialize(server, client, request)
+        @server = server
         @client = client
         @request = request
         check_insecure_method
       end
 
-      # @api private
-      def inspect
-        "#<Invoker %s#%s(%s)>" % [@request.obj, @request.msg_id, @request.argv]
+      def invoke
+        # evaluate request
+        succ, result = execute_request
+
+        # send_reply with req_id
+        begin
+          @client.send_reply(@request.req_id, succ, result)
+        rescue => e
+          Log::Debug.system("it happened communication failure in sending reply(req_id: %s): %s" % [@request.req_id, e.message])
+        end
       end
-      alias :to_s :inspect
+
+      private
 
       # perform without setup_message
-      def invoke
-        result = safe_invoke
+      def execute_request
+        result = eval_request
         if @request.msg_id == :to_ary && result.class == Array
           result = DRbArray.new(result)
         end
@@ -337,131 +405,142 @@ module DRb
         return false, e
       end
 
-      private
-
       def check_insecure_method
-        @drb_server.check_insecure_method(@request.obj, @request.msg_id)
+        @server.check_insecure_method(@request.obj, @request.msg_id)
       end
 
-      def safe_invoke
-        if $SAFE < @drb_server.safe_level
-          info = Thread.current['DRb']
-          Thread.new do
-            Thread.current['DRb'] = info
-            $SAFE = @drb_server.safe_level
-            @request.eval
-          end.value
-        else
-          @request.eval
-        end
+      def eval_request
+        $SAFE < @server.safe_level ? safe_eval_request : unsafe_eval_request
+      end
+
+      # Execute the request within sandbox.
+      def safe_eval_request
+        info = Thread.current['DRb']
+        Thread.new do
+          # import DRb info to the sandbox
+          Thread.current['DRb'] = info
+
+          # make sandbox
+          $SAFE = @drb_server.safe_level
+
+          # invoke request
+          unsafe_request_invoke
+        end.value
+      end
+
+      # Execute the request.
+      def unsafe_eval_request
+        @request.eval
       end
     end
 
+    # RequestLooper is a receiver of client request. This is different from
+    # standard DRb's +main_loop+ at the point that this method doesn't need to
+    # wait finishing evaluation of request and reply.
     class RequestLooper
-      def self.start(server, client)
-        self.new(server).start(client)
-      end
-
       def initialize(server)
         @server = server
       end
 
       def start(client)
-        Thread.current['DRb'] = {'client' => client, 'server' => @server}
-        @server.add_exported_uri(client.uri)
-
-        loop {handle_request(client)}
+        loop {handle_client_request(client)}
       end
 
       private
 
-      def handle_request(client)
+      def handle_client_request(client)
+        # take request from client
         request = ClientRequest.receive(client)
-        invoker = Invoker.new(@server, client, request)
-        Thread.start(invoker) do |iv|
-          Thread.current['DRb'] = {'client' => client, 'server' => @server}
-          call_invoker(client, iv)
-        end
-      rescue DRbConnError => e
+
+        # run invoker
+        invoker = RequestInvoker.new(@server, client, request)
+        @server.invoker_threads.add(Thread.new{invoker.invoke})
+      rescue DRb::DRbConnError => e
+        Log::Debug.communication("server was disconnected from client because of connection error")
         client.close
-        if Global.show_communication
-          puts "closed socket on server side"
-          ErrorReport.print(e)
-        end
         raise StopIteration
       end
-
-      def call_invoker(client, invoker)
-        # perform invoker with retaining the information
-        invoker.thread = Thread.current
-        @server.invokers_mutex.synchronize {@server.invokers << invoker}
-        succ, result = invoker.invoke
-        @server.invokers_mutex.synchronize {@server.invokers.delete(invoker)}
-        invoker.thread = nil
-
-        # error report
-        if !succ && Global.show_communication
-          result.backtrace.each {|x| puts x}
-        end
-
-        # send_reply with req_id
-        client.send_reply(invoker.req_id, succ, result) rescue nil
-      end
     end
 
-    def main_loop
-      if @protocol.uri =~ /^receiver:/
-        RequestLooper.start(self, @protocol)
-        # stop transceiver
-        @thread.kill.join
-      else
-        Thread.start(@protocol.accept) do |client|
-          # relay socket doesn't need request receiver loop because its aim is
-          # to get connection only
-          unless @protocol.kind_of?(RelaySocket)
-            RequestLooper.start(self, client)
+    class PioneDRbServer < DRb::DRbServer
+      attr_reader :invoker_threads
+
+      def initialize(uri=nil, front=nil, config_or_acl=nil)
+        # current performing invokers
+        @invoker_threads = ThreadGroup.new
+
+        super
+      end
+
+      def main_loop
+        if @protocol.uri =~ /^receiver:/
+          RequestLooper.start(self, @protocol)
+          @thread.kill.join # stop transceiver
+        else
+          Thread.start(@protocol.accept) do |client|
+            # relay socket doesn't need request receiver loop because its aim is
+            # to get connection only
+            unless @protocol.kind_of?(Pione::Relay::RelaySocket)
+              # set DRb info to current thread
+              Thread.current['DRb'] = {'client' => client, 'server' => self}
+
+              # add exported uri
+              DRb.mutex.synchronize do
+                client_uri = client.uri
+                @exported_uri << client_uri unless @exported_uri.include?(client_uri)
+              end
+
+              # start request loop
+              RequestLooper.new(self).start(client)
+            end
           end
         end
-      end
-    end
 
-    attr_reader :invokers
-    attr_reader :invokers_mutex
+        def stop_service
+          # stop invokers
+          @invoker_threads.list.each {|thread| thread.kill.join}
 
-    def initialize(uri=nil, front=nil, config_or_acl=nil)
-      if Hash === config_or_acl
-        config = config_or_acl.dup
-      else
-        acl = config_or_acl || @@acl
-        config = {
-          :tcp_acl => acl
-        }
-      end
-
-      @config = self.class.make_config(config)
-
-      @protocol = DRbProtocol.open_server(uri, @config)
-      @uri = @protocol.uri
-      @exported_uri = [@uri]
-
-      @front = front
-      @idconv = @config[:idconv]
-      @safe_level = @config[:safe_level]
-
-      @grp = ThreadGroup.new
-      @thread = run
-
-      # current performing invokers
-      @invokers = []
-      @invokers_mutex = Mutex.new
-
-      DRb.regist_server(self)
-    end
-
-    def add_exported_uri(uri)
-      DRb.mutex.synchronize do
-        @exported_uri << uri unless @exported_uri.include?(uri)
+          # stop main loop etc.
+          super
+        end
       end
     end
   end
 end
+
+# @api private
+module DRb
+  class DRbConnError
+    attr_reader :args
+
+    def initialize(*args)
+      super
+      @args = args
+    end
+  end
+
+  class DRbObject
+    # Creates fake connection for relay.
+    def __connect
+      DRbConn.open(@uri) {}
+    end
+  end
+
+  # change default protocol
+  module DRbProtocol
+    @protocol.delete(DRbTCPSocket)
+    add_protocol(Pione::DRbPatch::PioneTCPSocket)
+  end
+
+  # replace some classes
+  __verbose__ = $VERBOSE
+  $VERBOSE = nil
+  # patch DRbConn for special protocol
+  const_set :DRbConn, Pione::DRbPatch::PioneDRbConn
+  # patch DRbMessage for special protocol
+  const_set :DRbMessage, Pione::DRbPatch::PioneDRbMessage
+  # patch for threaded request invocations
+  const_set :DRbServer, Pione::DRbPatch::PioneDRbServer
+  $VERBOSE = __verbose__
+end
+

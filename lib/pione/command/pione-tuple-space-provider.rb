@@ -1,15 +1,49 @@
 module Pione
   module Command
     # PioneTupleSpaceProvider is for +pione-tuple-space-provider+ command.
-    class PioneTupleSpaceProvider < FrontOwnerCommand
+    class PioneTupleSpaceProvider < BasicCommand
+      #
+      # command info
+      #
+
+      command_name "pione-tuple-space-provider" do |cmd|
+        "front: %s, parent: %s" % [Global.front.uri, cmd.option[:parent_front].uri]
+      end
+
+      command_banner(Util::Indentation.cut(<<-TXT))
+        Run tuple space provider process for sending tuple space presence
+        notifier. This command assumes to be launched by other processes like
+        pione-client or pione-relay.
+      TXT
+
+      command_front Pione::Front::TupleSpaceProviderFront do |cmd|
+        [cmd.option[:parent_front].get_tuple_space(nil)]
+      end
 
       #
-      # process handler
+      # options
+      #
+
+      use_option :color
+      use_option :debug
+      use_option :my_ip_address
+      use_option :parent_front
+      use_option :presence_notification_address
+
+      #
+      # class methods
       #
 
       # Create a new process of tuple space provider command.
       def self.spawn
-        spawner = Spawner.new(info.name)
+        spawner = Spawner.new(command_name)
+
+        # debug options
+        spawner.option("--debug=system") if Global.debug_system
+        spawner.option("--debug=ignored_exception") if Global.debug_ignored_exception
+        spawner.option("--debug=rule_engine") if Global.debug_rule_engine
+        spawner.option("--debug=communication") if Global.debug_communication
+        spawner.option("--debug=presence_notification") if Global.debug_presence_notification
 
         # requisite options
         spawner.option("--parent-front", Global.front.uri)
@@ -19,63 +53,49 @@ module Pione
         end
 
         # optionals
-        spawner.option("--debug") if Pione.debug_mode?
-        spawner.option("--show-communication") if Global.show_communication
-        spawner.option("--show-presence-notifier") if Global.show_presence_notifier
+        spawner.option("--color") if Global.color_enabled
 
         spawner.spawn
       end
 
       #
-      # command info
+      # instance methods
       #
-
-      define_info do
-        set_name "pione-tuple-space-provider"
-        set_tail {|cmd|
-          "front: %s, parent: %s" % [Global.front.uri, cmd.option[:parent_front].uri]
-        }
-        set_banner(Util::Indentation.cut(<<-TXT))
-           Run tuple space provider process for sending tuple space presence
-           notifier. This command assumes to be launched by other processes like
-           pione-client or pione-relay.
-        TXT
-      end
-
-      #
-      # options
-      #
-
-      define_option do
-        use :debug
-        use :color
-        use :my_ip_address
-        use :parent_front
-        use :presence_notification_address
-        use :show_communication
-        use :show_presence_notifier
-      end
 
       attr_reader :agent
 
-      def create_front
-        Pione::Front::TupleSpaceProviderFront.new(self, option[:parent_front].get_tuple_space(nil))
-      end
+      #
+      # command lifecycle: setup phase
+      #
 
-      start do
-        # start provider activity
+      setup_phase :timeout => 5
+      setup :parent_process_connection, :module => CommonCommandAction
+
+      #
+      # command lifecycle: execution phase
+      #
+
+      execute :agent
+
+      # Start agent activity and wait the termination.
+      def execute_agent
         @agent = Agent::TupleSpaceProvider.start(Global.front)
-
-        # add child process to the parent
-        option[:parent_front].add_child(Process.pid, Global.front.uri)
-
-        # wait agent activity
         @agent.wait_until_terminated(nil)
       end
 
-      terminate do
-        Global.monitor.synchronize do
-          @agent.terminate unless @agent.terminated?
+      #
+      # command lifecycle: termination phase
+      #
+
+      termination_phase :timeout => 5
+      terminate :agent
+      terminate :parent_process_connection, :module => CommonCommandAction
+
+      # Terminate agent.
+      def terminate_agent
+        if @agent and not(@agent.terminated?)
+          @agent.terminate
+          @agent.wait_until_terminated(nil)
         end
       end
     end

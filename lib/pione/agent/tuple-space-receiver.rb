@@ -5,14 +5,19 @@ module Pione
       # instance methods
       #
 
-      def initialize(broker)
+      # notification handler threads
+      attr_reader :notification_handlers
+
+      def initialize(broker_front)
         super()
-        @broker = broker
-        @tuple_space_server_lock = Mutex.new
+        @broker_front = broker_front  # broker front
+        @tuple_space = {}             # tuple space table
+        @tuple_space_lock = Mutex.new # lock for tuple space table
+        @notification_handlers = ThreadGroup.new
       end
 
-      def tuple_space_servers
-        @tuple_space_servers.keys
+      def tuple_spaces
+        @tuple_space_lock.synchronize {@tuple_space.keys}
       end
 
       #
@@ -33,62 +38,53 @@ module Pione
       #
 
       def transit_to_init
-        @tuple_space_servers = {}
+        @tuple_space = {}
         @socket = open_socket
       end
 
-      # Receive tuple space servers and updates the table.
+      # Receive tuple space servers and update the table.
       def transit_to_receive_packet
+        # receive a presence notification
         data, addr = @socket.recvfrom(1024)
-        port = Marshal.load(data).to_i
         ip_address = addr[3]
-        provider_front = DRbObject.new_with_uri("druby://%s:%s" % [ip_address, port])
+        port = Marshal.load(data).to_i
 
-        # need return of ping in short time
-        Timeout.timeout(1) do
-          provider_front.ping
-          @tuple_space_server_lock.synchronize do
-            @tuple_space_servers[provider_front.tuple_space] = Time.now
-          end
+        # handle the notification in new thread
+        thread = Util::FreeThreadGenerator.generate do
+          handle_presence_notification(ip_address, port)
         end
-
-        if Global.show_presence_notifier
-          puts "presence notifier was received: %s" % provider_front.__drburi
-        end
-      rescue DRb::DRbConnError, DRb::ReplyReaderThreadError, IOError => e
-        @socket.close
-        @socket = open_socket
-        if Global.show_presence_notifier
-          puts "tuple space receiver disconnected: %s" % e
-        end
+        @notification_handlers.add(thread)
+      rescue IOError => e
+        Log::Debug.presence_notification("receiver agent received bad data from %s, so it ignored and reopen socket" % ip_address)
+        reopen_socket
       end
 
-      # Send empty tuple space server list.
+      # Close receiver socket.
       def transit_to_terminate
-        @socket.close
-        @tuple_space_servers = []
+        # kill threads of presence notification handler
+        @notification_handlers.list.each {|thread| thread.kill.join}
+        # close socket
+        @socket.close unless @socket.closed?
       end
 
       def transit_to_update_broker
         # update tuple space server list
-        @tuple_space_server_lock.synchronize do
-          @tuple_space_servers.delete_if do |server, time|
-            begin
-              # check timespan
-              (Time.now - time) > Global.tuple_space_receiver_disconnect_time
-            rescue Exception
-              true
-            end
+        @tuple_space_lock.synchronize do
+          # check timespan
+          @tuple_space.delete_if do |server, time|
+            (Time.now - time) > Global.tuple_space_receiver_disconnect_time
           end
         end
 
         # update broker's tuple spaces
-        begin
-          @broker.update_tuple_space_list(@tuple_space_servers)
-        rescue Exception => e
-          ErrorReport.error("broker may be dead", self, e, __FILE__, __LINE__)
-          terminate
+        timeout(3) do
+          @tuple_space_lock.synchronize do
+            @broker_front.update_tuple_space_list(@tuple_space.keys)
+          end
         end
+      rescue DRb::DRbConnError, Timeout::Error => e
+        Log::SystemLog.fatal("tuple space receiver failed to connect pione-broker: %s" % e.message)
+        raise ConnectionError.new
       end
 
       def transit_to_sleep
@@ -99,12 +95,42 @@ module Pione
       # helper methods
       #
 
-      # Open receiver socket.
+      private
+
+      # Open a receiver socket.
       def open_socket
         socket = UDPSocket.open
         socket.bind(Socket::INADDR_ANY, Global.presence_port)
         socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
         return socket
+      end
+
+      def reopen_socket
+        @socket.close
+        @socket = open_socket
+      end
+
+      def handle_presence_notification(ip_address, port)
+        # build a reference to provider front
+        provider_front = DRbObject.new_with_uri("druby://%s:%s" % [ip_address, port])
+
+        # check connection
+        Timeout.timeout(3) {provider_front.ping}
+
+        @tuple_space_lock.synchronize do
+          @tuple_space[provider_front.tuple_space] = Time.now
+        end
+
+        Log::Debug.presence_notification do
+          "receiver agent received a presence notification from provider \"%s\"" % provider_front.__drburi
+        end
+      rescue Timeout::Error
+        Log::Debug.presence_notification do
+          "receiver agent ignored the provider \"%s\" that seems to be something bad " % provider_front.__drburi
+        end
+      rescue DRb::DRbConnError, DRbPatch::ReplyReaderError => e
+        reopen_socket
+        Log::Debug.presence_notification("tuple space receiver disconnected: %s" % e)
       end
     end
   end
