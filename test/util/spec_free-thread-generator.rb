@@ -27,7 +27,7 @@ describe "Pione::Util::FreeThreadGenerator" do
       child_thread.group.should == group
 
       # test
-      free_thread = FreeThreadGenerator.generate {}
+      free_thread = Util::FreeThreadGenerator.generate {}
       free_thread.group.should == ThreadGroup::Default
     end
 

@@ -15,7 +15,7 @@ describe "Pione::Util::ProcessInfo" do
     before do
       @pid = Process.spawn("sleep", "100")
       @thread = Process.detach(@pid)
-      @info = ProcessInfo.new(@pid, @thread)
+      @info = Util::ProcessInfo.new(@pid, @thread)
     end
 
     after do

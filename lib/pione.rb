@@ -92,7 +92,6 @@ module Pione
   # expand name spaces
   include System
   include Relay
-  include Util
   include Log::MessageLog
   include TupleSpace
   include Parser
