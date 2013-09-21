@@ -1,12 +1,12 @@
 module Pione
-  module URIScheme
+  module Location
     # MyFTPScheme is a special scheme for launching PIONE embedded ftp server.
     #
     # @example
     #   URI.parse("myftp:./output")
     # @example
     #   URI.parse("myftp://abc:123@192.168.0.32:45321/home/keita/pione/output")
-    class MyFTPScheme < BasicScheme('myftp', :storage => true)
+    class MyFTPScheme < LocationScheme('myftp', :storage => true)
       PORT = 39123
 
       COMPONENT = [:scheme, :user, :password, :host, :port, :path]

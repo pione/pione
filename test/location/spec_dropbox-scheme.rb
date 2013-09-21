@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Pione::URIScheme::DropboxScheme' do
+describe 'Pione::Location::DropboxScheme' do
   it 'should be suported by PIONE' do
     URI.parse("dropbox:/").should.be.pione
   end
@@ -10,7 +10,7 @@ describe 'Pione::URIScheme::DropboxScheme' do
   end
 
   it 'should be dropbox scheme URI' do
-    URI.parse("dropbox:/Pione").should.kind_of Pione::URIScheme::DropboxScheme
+    URI.parse("dropbox:/Pione").should.kind_of Pione::Location::DropboxScheme
   end
 
   it 'should get scheme name' do

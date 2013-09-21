@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Pione::URIScheme::MyFTPScheme' do
+describe 'Pione::Location::MyFTPScheme' do
   it 'should be supported by PIONE' do
     URI.parse("myftp:/").should.be.pione
   end
@@ -10,7 +10,7 @@ describe 'Pione::URIScheme::MyFTPScheme' do
   end
 
   it 'should be myftp scheme URI' do
-    URI.parse("myftp:./output").should.kind_of Pione::URIScheme::MyFTPScheme
+    URI.parse("myftp:./output").should.kind_of Pione::Location::MyFTPScheme
   end
 
   it 'should be a directory' do
@@ -30,7 +30,7 @@ describe 'Pione::URIScheme::MyFTPScheme' do
     uri.user.should.not.nil
     uri.password.should.not.nil
     uri.host.should == Util::IPAddress.myself
-    uri.port.should == URIScheme::MyFTPScheme::PORT
+    uri.port.should == Location::MyFTPScheme::PORT
     uri.path.should == File.join(Dir.pwd, "output")
   end
 
@@ -43,7 +43,7 @@ describe 'Pione::URIScheme::MyFTPScheme' do
     uri.user.should.not.nil
     uri.password.should.not.nil
     uri.host.should == Util::IPAddress.myself
-    uri.port.should == URIScheme::MyFTPScheme::PORT
+    uri.port.should == Location::MyFTPScheme::PORT
     uri.path.should == File.join(Pathname.new("~").expand_path, "output")
   end
 
@@ -52,7 +52,7 @@ describe 'Pione::URIScheme::MyFTPScheme' do
     uri.user.should == "abc"
     uri.password.should == "123"
     uri.host.should == Util::IPAddress.myself
-    uri.port.should == URIScheme::MyFTPScheme::PORT
+    uri.port.should == Location::MyFTPScheme::PORT
     uri.path.should == "/output/"
   end
 
@@ -62,12 +62,10 @@ describe 'Pione::URIScheme::MyFTPScheme' do
     uri.user == "abc"
     uri.password.should == "123"
     uri.host.should == Util::IPAddress.myself
-    uri.port.should == URIScheme::MyFTPScheme::PORT
+    uri.port.should == Location::MyFTPScheme::PORT
     uri.path.should == "/"
   end
 
-  test_uri_scheme("myftp-scheme")
+  test_location_scheme("myftp-scheme")
 end
-
-
 

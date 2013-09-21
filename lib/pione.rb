@@ -67,7 +67,6 @@ ChildProcess.posix_spawn = true
 require 'pione/version'     # PIONE version information
 require 'pione/util'        # various helper functions
 require 'pione/patch'       # patches for libraries
-require 'pione/uri-scheme'  # PIONE's special URI schemes
 require 'pione/location'    # location system for data and package
 require 'pione/log'         # log and format
 require 'pione/global'      # global variable manager

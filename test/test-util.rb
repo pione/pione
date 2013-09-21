@@ -90,12 +90,12 @@ end
 
 module TestUtil
   # Test uri scheme.
-  def test_uri_scheme(name)
+  def test_location_scheme(name)
     yamlname = 'spec_%s.yml' % name
-    ymlpath = File.join(File.dirname(__FILE__), 'uri-scheme', yamlname)
+    ymlpath = File.join(File.dirname(__FILE__), 'location', yamlname)
     testcases = YAML.load_file(ymlpath)
 
-    describe "uri scheme test cases" do
+    describe "location scheme test cases" do
       testcases.each do |testcase|
         uri = testcase.keys.first
         it uri do

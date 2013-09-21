@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Pione::URIScheme::LocalScheme' do
+describe 'Pione::Location::LocalScheme' do
   it 'should be supported by PIONE' do
     URI.parse("local:/").should.be.pione
   end
@@ -10,7 +10,7 @@ describe 'Pione::URIScheme::LocalScheme' do
   end
 
   it 'should be local scheme URI' do
-    URI.parse("local:./output").should.kind_of Pione::URIScheme::LocalScheme
+    URI.parse("local:./output").should.kind_of Pione::Location::LocalScheme
   end
 
   it 'should get scheme name' do

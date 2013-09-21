@@ -1,9 +1,9 @@
 module Pione
-  module URIScheme
+  module Location
     # BroadcastScheme is a scheme for representing broadcast address.
     # @example
     #   URI.parse("broadcast://255.255.255.255:560001")
-    class BroadcastScheme < BasicScheme('broadcast')
+    class BroadcastScheme < LocationScheme('broadcast')
       # @api private
       COMPONENT = [:scheme, :host, :port]
     end

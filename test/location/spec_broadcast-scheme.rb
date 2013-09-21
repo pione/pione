@@ -1,6 +1,6 @@
 require_relative '../test-util'
 
-describe 'Pione::URIScheme::BroadcastScheme' do
+describe 'Pione::Location::BroadcastScheme' do
   it 'should be suported by PIONE' do
     URI.parse("broadcast://255.255.255.255").should.be.pione
   end
@@ -10,7 +10,7 @@ describe 'Pione::URIScheme::BroadcastScheme' do
   end
 
   it 'should be broadcast scheme URI' do
-    URI.parse("broadcast://255.255.255.255").should.kind_of Pione::URIScheme::BroadcastScheme
+    URI.parse("broadcast://255.255.255.255").should.kind_of Pione::Location::BroadcastScheme
   end
 
   it 'should get scheme name' do

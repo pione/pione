@@ -1,5 +1,5 @@
 module Pione
-  module URIScheme
+  module Location
     # Local represents local file system path.
     # @example
     #   # absolute path form
@@ -7,7 +7,7 @@ module Pione
     # @example
     #   # relative path form
     #   local:./test.txt
-    class LocalScheme < BasicScheme('local', :storage => true)
+    class LocalScheme < LocationScheme('local', :storage => true)
       # @api private
       COMPONENT = [:scheme, :path]
 

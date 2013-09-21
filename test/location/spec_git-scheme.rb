@@ -1,6 +1,6 @@
 require_relative "../test-util"
 
-describe "Pione::URIScheme::GitScheme" do
+describe "Pione::Location::GitScheme" do
   before do
     @uri = URI.parse("git://github.com/pione/pione.git")
   end

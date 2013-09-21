@@ -1,7 +1,7 @@
 module Pione
-  module URIScheme
-    # BasicScheme is a URI scheme for PIONE.
-    class BasicScheme < ::URI::Generic
+  module Location
+    # LocationScheme is a URI scheme for Location.
+    class LocationScheme < ::URI::Generic
       # Returns true always because classes inheriting BasicScheme are supported
       # by PIONE system.
       # @api private
@@ -19,9 +19,10 @@ module Pione
 
     # Returns a new scheme. Use this method for inheriting BasicScheme if you
     # create new scheme.
+    #
     # @return [Class]
-    def BasicScheme(name, opts={})
-      klass = Class.new(BasicScheme)
+    def LocationScheme(name, opts={})
+      klass = Class.new(LocationScheme)
 
       def klass.inherited(scheme)
         name = self.instance_variable_get(:@scheme_name)
@@ -35,6 +36,6 @@ module Pione
 
       return klass
     end
-    module_function :BasicScheme
+    module_function :LocationScheme
   end
 end
