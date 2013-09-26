@@ -257,9 +257,11 @@ module Pione
             abort "the scenario not found: %s" % option[:rehearse]
           end
         end
-      rescue Pione::Parser::ParserError => e
+      rescue Component::InvalidPackageError => e
+        abort("Package error: " + e.message)
+      rescue Lang::ParserError => e
         abort("Pione syntax error: " + e.message)
-      rescue Pione::Lang::LangError => e
+      rescue Lang::LangError => e
         abort("Pione language error: %s(%s)" % [e.message, e.class.name])
       end
 

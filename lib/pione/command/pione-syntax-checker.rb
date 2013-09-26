@@ -180,7 +180,7 @@ module Pione
           else
             p model.eval(Lang::Environment.new)
           end
-        rescue Parser::ParserError, Parslet::ParseFailed => e
+        rescue Lang::ParserError, Parslet::ParseFailed => e
           msg = "Pione syntax error: %s (%s)" % [e.message, e.class.name]
           readline_mode? ? puts(msg) : abort(msg)
         rescue Lang::PioneTypeError, Lang::VariableBindingError => e
