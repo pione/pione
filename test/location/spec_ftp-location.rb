@@ -1,10 +1,10 @@
 require 'pione/test-helper'
 require_relative 'location-behavior'
 
-Util::FTPServer.start(Util::FTPOnMemoryFS.new)
 
 describe 'Location::FTPLocation' do
   before do
+    Util::FTPServer.start(Util::FTPOnMemoryFS.new)
     Util::FTPServer.fs.clear
     @file = Util::FTPServer.make_location(Temppath.create)
     @dir = Util::FTPServer.make_location(Temppath.create)
@@ -19,6 +19,7 @@ describe 'Location::FTPLocation' do
   after do
     @file.delete
     @dir.delete
+    Util::FTPServer.stop
   end
 
   behaves_like "location"

@@ -296,15 +296,14 @@ module Pione
           @fs = fs
           @thread = Thread.new do
             EventMachine.run do
-              EventMachine.start_server("0.0.0.0", @port, EM::FTPD::Server, self)
+              @sig = EventMachine.start_server("0.0.0.0", @port, EM::FTPD::Server, self)
             end
           end
         end
 
         def stop
-          if EventMachine.reactor_running?
-            EventMachine.stop
-          end
+          EventMachine.stop_event_loop
+          EventMachine.reactor_thread.join
           @thread.kill if @thread
         end
 

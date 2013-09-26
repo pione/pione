@@ -121,7 +121,9 @@ end
 
 shared "FTPServer" do
   before do
+    Util::FTPServer.start(@fs)
     auth_info = Util::FTPServer.auth_info
+    sleep 1
     @ftp = Net::FTP.new
     @ftp.connect("localhost", Util::FTPServer.port)
     @ftp.login(auth_info.user, auth_info.password)
@@ -130,6 +132,7 @@ shared "FTPServer" do
 
   after do
     @ftp.close
+    Util::FTPServer.stop
   end
 
   it "should authenticate" do
@@ -218,10 +221,6 @@ describe "Pione::Util::FTPServer" do
     @fs.put_file(@file_a, make_temp_file("A", "A"))
     @fs.put_file(@file_b, make_temp_file("B", "AB"))
     @fs.put_file(@file_c, make_temp_file("C", "ABC"))
-    Util::FTPServer.stop
-    sleep 0.1
-    Util::FTPServer.start(@fs)
-    sleep 0.1
 
     behaves_like "FTPServer"
   end
@@ -238,10 +237,6 @@ describe "Pione::Util::FTPServer" do
     @fs.put_file(@file_a, make_temp_file("A", "A"))
     @fs.put_file(@file_b, make_temp_file("B", "AB"))
     @fs.put_file(@file_c, make_temp_file("C", "ABC"))
-    Util::FTPServer.stop
-    sleep 0.1
-    Util::FTPServer.start(@fs)
-    sleep 0.1
 
     behaves_like "FTPServer"
   end
