@@ -1,5 +1,5 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Parser::InterpolatorParser' do
-  TestUtil::Parser.spec(__FILE__, self, Lang::InterpolatorParser)
+  TestHelper::Parser.spec(__FILE__, self, Lang::InterpolatorParser)
 end

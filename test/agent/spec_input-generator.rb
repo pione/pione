@@ -1,15 +1,15 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Agent::InputGenerator" do
   before do
     @orig = Global.input_generator_stream_check_timespan
-    @space = create_tuple_space_server
+    @tuple_space = TestHelper::TupleSpace.create(self)
     Global.input_generator_stream_check_timespan = 0.1
     @base_location = read!(Pione::Tuple[:base_location].new).location
   end
 
   after do
-    @space.terminate
+    @tuple_space.terminate
     Global.input_generator_stream_check_timespan = @orig
   end
 
@@ -25,11 +25,11 @@ describe "Pione::Agent::InputGenerator" do
         (dir + "3.c").create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start(@space, :dir, dir, false)
+        generator = Agent[:input_generator].start(@tuple_space, :dir, dir, false)
         generator.wait_until_terminated
 
         # check exceptions
-        check_exceptions
+        TestHelper::TupleSpace.check_exceptions(@tuple_space)
 
         generator.terminate
 
@@ -76,7 +76,7 @@ describe "Pione::Agent::InputGenerator" do
         generator.wait_until_before(:sleep)
 
         # check exceptions
-        check_exceptions
+        TestHelper::TupleSpace.check_exceptions(@tuple_space)
 
         # check data
         count_tuple(Tuple[:data].any).should == 3
@@ -88,7 +88,7 @@ describe "Pione::Agent::InputGenerator" do
         generator.wait_until_before(:sleep)
 
         # check exceptions
-        check_exceptions
+        TestHelper::TupleSpace.check_exceptions(@tuple_space)
 
         # check data
         count_tuple(Tuple[:data].any).should == 4
@@ -99,7 +99,7 @@ describe "Pione::Agent::InputGenerator" do
         generator.wait_until_before(:sleep)
 
         # check exceptions
-        check_exceptions
+        TestHelper::TupleSpace.check_exceptions(@tuple_space)
 
         generator.terminate
 

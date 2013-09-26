@@ -1,8 +1,8 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Lang::DataExpr' do
   before do
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
   end
 
   it 'should match the same name' do
@@ -137,21 +137,21 @@ describe 'Pione::Lang::DataExpr' do
   end
 
   it 'should handle exceptions (Case 1)' do
-    exp = TestUtil::Lang.expr!(@env, "'test-*.a'.except('test-2.a')")
+    exp = TestHelper::Lang.expr!(@env, "'test-*.a'.except('test-2.a')")
     exp.should.match 'test-1.a'
     exp.should.not.match 'test-2.a'
     exp.should.match 'test-22.a'
   end
 
   it 'should handle exceptions (Case 2)' do
-    exp = TestUtil::Lang.expr!(@env, "'*'.except('test-1.a' | 'test-2.a')")
+    exp = TestHelper::Lang.expr!(@env, "'*'.except('test-1.a' | 'test-2.a')")
     exp.should.not.match 'test-1.a'
     exp.should.not.match 'test-2.a'
     exp.should.match 'test-3.a'
   end
 
   it 'should handle exceptions (Case 3)' do
-    exp = TestUtil::Lang.expr!(@env, "'test-1.a'.except('*')")
+    exp = TestHelper::Lang.expr!(@env, "'test-1.a'.except('*')")
     exp.should.not.match 'test-1.a'
   end
 end
@@ -171,13 +171,13 @@ end
 #
 ymlpath = File.join(File.dirname(__FILE__), "data", "data-expr_match.yml")
 testcases = YAML.load_file(ymlpath)
-env = TestUtil::Lang.env
+env = TestHelper::Lang.env
 
 describe "Lang::DataExprSequence" do
   testcases.each do |title, cases|
     describe title do
       cases.each do |expr, testcase|
-        data_expr = TestUtil::Lang.expr!(env, expr)
+        data_expr = TestHelper::Lang.expr!(env, expr)
 
         testcase['match'].map do |name|
           it "#{expr} should match #{name}" do
@@ -194,5 +194,5 @@ describe "Lang::DataExprSequence" do
     end
   end
 
-  test_pione_method("data-expr")
+  TestHelper::Lang.test_pione_method(__FILE__)
 end

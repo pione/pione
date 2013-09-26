@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 $a = Lang::PioneString.new("a")
 $b = Lang::PioneString.new("b")

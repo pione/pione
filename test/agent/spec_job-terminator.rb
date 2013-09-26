@@ -1,8 +1,8 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Agent::JobTerminator' do
   before do
-    @tuple_space = create_tuple_space_server
+    @tuple_space = TestHelper::TupleSpace.create(self)
   end
 
   after do

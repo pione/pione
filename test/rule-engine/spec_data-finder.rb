@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 #
 # test cases
@@ -9,8 +9,8 @@ testcases = YAML.load_file(ymlpath)
 
 describe 'Pione::RuleEngine::DataFinder' do
   before do
-    @space = create_tuple_space_server
-    @env = TestUtil::Lang.env
+    @space = TestHelper::TupleSpace.create(self)
+    @env = TestHelper::Lang.env
   end
 
   after do
@@ -71,7 +71,7 @@ describe 'Pione::RuleEngine::DataFinder' do
           modifier = d["modifier"] == "all" ? :all : :each
           DataExpr.new(d["name"], modifier)
         else
-          TestUtil::Lang.expr!(@env, d)
+          TestHelper::Lang.expr!(@env, d)
         end
       }
 

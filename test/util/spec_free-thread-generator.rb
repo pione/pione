@@ -1,4 +1,4 @@
-require_relative "../test-util"
+require 'pione/test-helper'
 
 describe "Pione::Util::FreeThreadGenerator" do
   it "should get a thread in safety" do

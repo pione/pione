@@ -1,4 +1,4 @@
-require_relative "../test-util"
+require 'pione/test-helper'
 
 def make_temp_file(name, content)
   location = Location[Temppath.create]

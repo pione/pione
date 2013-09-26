@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 raw_process_log = Pione::Location[File.join(File.dirname(__FILE__), "raw-process-log", "pione-process.log")]
 

@@ -1,8 +1,8 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Agent::TupleSpaceProvider' do
   before do
-    @tuple_space = create_tuple_space_server
+    @tuple_space = TestHelper::TupleSpace.create(self)
     @front = Front::TupleSpaceProviderFront.new(@tuple_space)
     @orig = Global.presence_notification_addresses
   end

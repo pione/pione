@@ -1,12 +1,12 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Agent::TaskWorker' do
   describe 'task acquisition' do
     before do
-      @tuple_space = create_tuple_space_server
+      @tuple_space = TestHelper::TupleSpace.create(self)
 
       @env = Lang::Environment.new.setup_new_package("TaskWorker")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R1
           output 'out'.touch
         End
@@ -17,7 +17,7 @@ describe 'Pione::Agent::TaskWorker' do
         End
       PIONE
 
-      features = TestUtil::Lang.expr!(@env, "^A & ^B & ^C")
+      features = TestHelper::Lang.expr!(@env, "^A & ^B & ^C")
       @worker = Agent::TaskWorker.new(@tuple_space, features, @env)
     end
 
@@ -27,7 +27,7 @@ describe 'Pione::Agent::TaskWorker' do
 
     it 'should take a task' do
       # make a task with no features
-      task = TestUtil::Tuple.task(@env.current_package_id, 'R1', [], nil, Lang::FeatureSequence.new)
+      task = TestHelper::Tuple.task(@env.current_package_id, 'R1', [], nil, Lang::FeatureSequence.new)
 
       # publish the task
       write(task)
@@ -39,7 +39,7 @@ describe 'Pione::Agent::TaskWorker' do
 
     it 'should timeout because of unmatched features' do
       # make a task with feature "+X"
-      task = TestUtil::Tuple.task(@env.current_package_id, 'R2', [], nil, TestUtil::Lang.expr!(@env, '+X'))
+      task = TestHelper::Tuple.task(@env.current_package_id, 'R2', [], nil, TestHelper::Lang.expr!(@env, '+X'))
 
       # publish the task
       write(task)
@@ -55,7 +55,7 @@ describe 'Pione::Agent::TaskWorker' do
 
     it 'should take a task because of features' do
       # make a task with feature "+A"
-      task = TestUtil::Tuple.task(@env.current_package_id, 'R2', [], nil, TestUtil::Lang.expr!(@env, '+A'))
+      task = TestHelper::Tuple.task(@env.current_package_id, 'R2', [], nil, TestHelper::Lang.expr!(@env, '+A'))
 
       # publish the task
       write(task)
@@ -65,7 +65,7 @@ describe 'Pione::Agent::TaskWorker' do
     end
 
     it 'should raise an exception because of unknown rule' do
-      task = TestUtil::Tuple.task(@env.current_package_id, 'Unknown', [])
+      task = TestHelper::Tuple.task(@env.current_package_id, 'Unknown', [])
 
       # publish the task
       write(task)
@@ -78,14 +78,14 @@ describe 'Pione::Agent::TaskWorker' do
 
   describe 'task execution' do
     before do
-      @tuple_space = create_tuple_space_server
+      @tuple_space = TestHelper::TupleSpace.create(self)
 
       # make a data
       data = Tuple[:data].new(name: "a", location: Location[Temppath.create].create("abc"))
 
       # make a rule
       @env = Lang::Environment.new.setup_new_package("TaskWorker")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R
           input  'a'
           output 'b'.stdout
@@ -95,7 +95,7 @@ describe 'Pione::Agent::TaskWorker' do
       PIONE
 
       # make a task
-      @task = TestUtil::Tuple.task(@env.current_package_id, "R", [[data]])
+      @task = TestHelper::Tuple.task(@env.current_package_id, "R", [[data]])
 
       # write the data
       domain_id = Util::DomainID.generate(@env.current_package_id, "R", [["a"]], Lang::ParameterSet.new)

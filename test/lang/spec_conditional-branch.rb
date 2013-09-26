@@ -1,8 +1,8 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Lang::IfBranch" do
   before do
-    @branch = TestUtil::Lang.conditional_branch(<<-STRING)
+    @branch = TestHelper::Lang.conditional_branch(<<-STRING)
       if $x == 1
         $y := 1
       else
@@ -10,13 +10,13 @@ describe "Pione::Lang::IfBranch" do
       end
     STRING
 
-    @branch_without_else = TestUtil::Lang.conditional_branch(<<-STRING)
+    @branch_without_else = TestHelper::Lang.conditional_branch(<<-STRING)
       if $x == 1
         $y := 1
       end
     STRING
 
-    @fake_branch = TestUtil::Lang.conditional_branch(<<-STRING)
+    @fake_branch = TestHelper::Lang.conditional_branch(<<-STRING)
       if true
         $y := 1
       else
@@ -24,7 +24,7 @@ describe "Pione::Lang::IfBranch" do
       end
     STRING
 
-    @invalid_branch = TestUtil::Lang.conditional_branch(<<-STRING)
+    @invalid_branch = TestHelper::Lang.conditional_branch(<<-STRING)
       if 1
         $y := 1
       else
@@ -34,19 +34,19 @@ describe "Pione::Lang::IfBranch" do
   end
 
   it "should get expr" do
-    @branch.expr.should == TestUtil::Lang.expr("$x == 1")
+    @branch.expr.should == TestHelper::Lang.expr("$x == 1")
   end
 
   it "shold get true-context" do
     @branch.true_context.should.kind_of Lang::ConditionalBranchContext
     @branch.true_context.elements.size.should == 1
-    @branch.true_context.elements[0].should == TestUtil::Lang.declaration("$y := 1")
+    @branch.true_context.elements[0].should == TestHelper::Lang.declaration("$y := 1")
   end
 
   it "shold get else-context" do
     @branch.else_context.should.kind_of Lang::ConditionalBranchContext
     @branch.else_context.elements.size.should == 1
-    @branch.else_context.elements[0].should == TestUtil::Lang.declaration("$y := 2")
+    @branch.else_context.elements[0].should == TestHelper::Lang.declaration("$y := 2")
 
     # if branch has no else context, we expect to get an empty context
     @branch_without_else.else_context.should.kind_of Lang::ConditionalBranchContext
@@ -66,11 +66,11 @@ describe "Pione::Lang::IfBranch" do
   end
 
   it "should evaluate and return suitable context" do
-    env1 = TestUtil::Lang.env
-    TestUtil::Lang.declaration!(env1, "$x := 1")
+    env1 = TestHelper::Lang.env
+    TestHelper::Lang.declaration!(env1, "$x := 1")
 
-    env2 = TestUtil::Lang.env
-    TestUtil::Lang.declaration!(env2, "$x := 2")
+    env2 = TestHelper::Lang.env
+    TestHelper::Lang.declaration!(env2, "$x := 2")
 
     # branch
     @branch.eval(env1).should == @branch.true_context
@@ -87,14 +87,14 @@ describe "Pione::Lang::IfBranch" do
 
   it "should raise structural error when condition is not boolean" do
     should.raise(Lang::StructuralError) do
-      @invalid_branch.eval(TestUtil::Lang.env)
+      @invalid_branch.eval(TestHelper::Lang.env)
     end
   end
 end
 
 describe "Pione::Lang::CaseBranch" do
   before do
-    @branch = TestUtil::Lang.conditional_branch(<<-STRING)
+    @branch = TestHelper::Lang.conditional_branch(<<-STRING)
       case $x
       when 1
         $y := 1
@@ -105,7 +105,7 @@ describe "Pione::Lang::CaseBranch" do
       end
     STRING
 
-    @branch_without_else = TestUtil::Lang.conditional_branch(<<-STRING)
+    @branch_without_else = TestHelper::Lang.conditional_branch(<<-STRING)
       case $x
       when 1
         $y := 1
@@ -114,7 +114,7 @@ describe "Pione::Lang::CaseBranch" do
       end
     STRING
 
-    @sequential = TestUtil::Lang.conditional_branch(<<-STRING)
+    @sequential = TestHelper::Lang.conditional_branch(<<-STRING)
       case $x
       when 1 | 2 | 3
         $y := 1
@@ -127,7 +127,7 @@ describe "Pione::Lang::CaseBranch" do
   end
 
   it "should get expr" do
-    @branch.expr.should == TestUtil::Lang.expr("$x")
+    @branch.expr.should == TestHelper::Lang.expr("$x")
   end
 
   it "should get when_contexts" do
@@ -135,24 +135,24 @@ describe "Pione::Lang::CaseBranch" do
   end
 
   it "should get else context" do
-    @branch.else_context.should == TestUtil::Lang.conditional_branch_context("$y := 3")
+    @branch.else_context.should == TestHelper::Lang.conditional_branch_context("$y := 3")
   end
 
   it "should get contexts" do
-    env1 = TestUtil::Lang.env
-    TestUtil::Lang.declaration!(env1, "$x := 1")
+    env1 = TestHelper::Lang.env
+    TestHelper::Lang.declaration!(env1, "$x := 1")
 
-    env2 = TestUtil::Lang.env
-    TestUtil::Lang.declaration!(env2, "$x := 2")
+    env2 = TestHelper::Lang.env
+    TestHelper::Lang.declaration!(env2, "$x := 2")
 
-    env3 = TestUtil::Lang.env
-    TestUtil::Lang.declaration!(env3, "$x := 3")
+    env3 = TestHelper::Lang.env
+    TestHelper::Lang.declaration!(env3, "$x := 3")
 
-    env4 = TestUtil::Lang.env
-    TestUtil::Lang.declaration!(env4, "$x := 1 | 2 | 3")
+    env4 = TestHelper::Lang.env
+    TestHelper::Lang.declaration!(env4, "$x := 1 | 2 | 3")
 
-    env5 = TestUtil::Lang.env
-    TestUtil::Lang.declaration!(env5, "$x := (1 | 2 | 3).all")
+    env5 = TestHelper::Lang.env
+    TestHelper::Lang.declaration!(env5, "$x := (1 | 2 | 3).all")
 
     @branch.eval(env1).should == @branch.when_contexts[0]
     @branch.eval(env2).should == @branch.when_contexts[1]

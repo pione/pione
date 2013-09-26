@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Lang::Variable' do
   before do
@@ -15,13 +15,13 @@ describe 'Lang::Variable' do
   end
 
   it 'should get the value of variable' do
-    env = TestUtil::Lang.env
+    env = TestHelper::Lang.env
     Lang::VariableBindingDeclaration.new(@a, Lang::IntegerSequence.of(1)).eval(env)
     @a.eval(env).should == Lang::IntegerSequence.of(1)
   end
 
   it 'should get the value of nested variable' do
-    env = TestUtil::Lang.env
+    env = TestHelper::Lang.env
     Lang::VariableBindingDeclaration.new(@a, Lang::IntegerSequence.of(1)).eval(env)
     Lang::VariableBindingDeclaration.new(@b, @a).eval(env)
     @a.eval(env).should == Lang::IntegerSequence.of(1)

@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 require_relative 'command-behavior'
 
 describe "Pione::Command::PioneClient" do
@@ -8,7 +8,7 @@ describe "Pione::Command::PioneClient" do
   # it "should execute a PIONE document" do
   #   path = Temppath.create
   #   args = ["example/HelloWorld/HelloWorld.pione", "-o", path.to_s]
-  #   res = TestUtil::Command.succeed do
+  #   res = TestHelper::Command.succeed do
   #     Pione::Command::PioneClient.run args
   #   end
   #   Location[path + "message.txt"].should.exist
@@ -18,7 +18,7 @@ describe "Pione::Command::PioneClient" do
   it "should execute a PIONE document with stand alone mode" do
     path = Temppath.create
     args = ["example/HelloWorld/HelloWorld.pione", "-o", path.to_s, "--stand-alone"]
-    res = TestUtil::Command.succeed do
+    res = TestHelper::Command.succeed do
       Pione::Command::PioneClient.run args
     end
     Location[path + "message.txt"].should.exist
@@ -28,7 +28,7 @@ describe "Pione::Command::PioneClient" do
   # it "should execute a PIONE package" do
   #   path = Temppath.create
   #   args = ["example/HelloWorld/", "-o", path.to_s]
-  #   res = TestUtil::Command.succeed do
+  #   res = TestHelper::Command.succeed do
   #     Pione::Command::PioneClient.run args
   #   end
   #   Location[path + "message.txt"].should.exist
@@ -38,7 +38,7 @@ describe "Pione::Command::PioneClient" do
   it "should execute a PIONE package with stand alone mode" do
     path = Temppath.create
     args = ["example/HelloWorld/", "-o", path.to_s, "--stand-alone"]
-    res = TestUtil::Command.succeed do
+    res = TestHelper::Command.succeed do
       Pione::Command::PioneClient.run args
     end
     Location[path + "message.txt"].should.exist
@@ -47,7 +47,7 @@ describe "Pione::Command::PioneClient" do
 
   it "should show parameters list of package" do
     args = ["example/HelloWorld/HelloWorld.pione", "--list-params"]
-    res = TestUtil::Command.succeed do
+    res = TestHelper::Command.succeed do
       Pione::Command::PioneClient.run args
     end
     res.stdout.string.size.should > 0

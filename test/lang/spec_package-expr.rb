@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Lang::PackageExpr' do
   before do

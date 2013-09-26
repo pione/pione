@@ -1,7 +1,7 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Location::BroadcastScheme' do
-  it 'should be suported by PIONE' do
+  it 'should be parsed as broadcast scheme' do
     URI.parse("broadcast://255.255.255.255").should.be.pione
   end
 

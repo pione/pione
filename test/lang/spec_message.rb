@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Lang::Message' do
   before do

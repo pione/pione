@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 require_relative 'tuple-behavior'
 
 describe 'Pione::Tuple::TaskTuple' do

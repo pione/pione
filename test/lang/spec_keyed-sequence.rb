@@ -1,5 +1,5 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Lang::Sequence' do
-  test_pione_method("keyed-sequence")
+  TestHelper::Lang.test_pione_method(__FILE__)
 end

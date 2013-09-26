@@ -2,7 +2,7 @@ module Pione
   module Command
     # PioneClient is a command to request processing.
     class PioneClient < BasicCommand
-      include TupleSpaceServerInterface
+      include TupleSpace::TupleSpaceInterface
 
       #
       # basic informations
@@ -224,7 +224,7 @@ module Pione
       def setup_tuple_space
         # run tuple space server
         @tuple_space = TupleSpace::TupleSpaceServer.new(task_worker_resource: option[:request_task_worker])
-        set_tuple_space_server(@tuple_space)
+        set_tuple_space(@tuple_space)
         Global.front.set_tuple_space(@tuple_space)
 
         # write tuples

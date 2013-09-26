@@ -13,7 +13,7 @@ end
 
 desc 'execute basic tests'
 task 'test' do
-  sh "bundle exec bacon -I lib -rsimplecov test/agent/spec_*.rb test/command/spec_*.rb test/component/spec_*.rb test/lang/spec_*.rb test/location/spec_*.rb test/log/spec_*.rb test/patch/spec_*.rb test/rule-engine/spec_*.rb test/system/spec_*.rb test/tuple/spec_*.rb test/tuple-space/spec_*.rb test/uri-scheme/spec_*.rb test/util/spec_*.rb"
+  sh "bundle exec bacon -rsimplecov -a"
 end
 
 desc 'parser test'

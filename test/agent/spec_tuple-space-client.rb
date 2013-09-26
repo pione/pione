@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 class TestTupleSpaceClient < Agent::TupleSpaceClient
   set_agent_type :test_tuple_space_client, self
@@ -14,7 +14,7 @@ end
 
 describe 'Pione::Agent::TupleSpaceClient' do
   before do
-    @space = create_tuple_space_server
+    @space = TestHelper::TupleSpace.create(self)
   end
 
   after do

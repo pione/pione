@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Transformer::DocumentTransformer' do
   it "should transform" do

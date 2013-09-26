@@ -2,11 +2,11 @@ module Pione
   module RuleEngine
     # DataFinder finds data tuples from tuple space server.
     class DataFinder
-      include TupleSpaceServerInterface
+      include TupleSpace::TupleSpaceInterface
 
       # Creates a new finder.
       def initialize(space, domain_id)
-        set_tuple_space_server(space)
+        set_tuple_space(space)
         @domain_id = domain_id
       end
 
@@ -53,10 +53,9 @@ module Pione
         end
       end
 
-      # Finds all matched data tuples by the rule expression condition from tuple space.
+      # Find all matched data tuples by the rule expression condition from tuple space.
       def find_tuples_by_condition(condition)
-        query = Tuple[:data].new(name: condition, domain: @domain_id)
-        return tuple_space_server.read_all(query)
+        return read_all(Tuple[:data].new(name: condition, domain: @domain_id))
       end
 
       # Make input/output variables by data expression with all distribution.

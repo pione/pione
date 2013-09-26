@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 module SpecLogger
   class TestRecord < Pione::Log::ProcessRecord
@@ -13,7 +13,7 @@ end
 
 describe "Pione::Agent::Logger" do
   before do
-    @space = create_tuple_space_server
+    @space = TestHelper::TupleSpace.create(self)
     @location = Location[Temppath.create] + "pione-process.log"
     @logger = Agent[:logger].start(@space, @location)
     @msg1 = SpecLogger::TestRecord.new(uuid: "e07860f6-18f0-4c1a-8a5a-7d9f3353c83f")

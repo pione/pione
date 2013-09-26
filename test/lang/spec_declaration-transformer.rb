@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Transformer::DeclarationTransformer' do
   transformer_spec("variable_binding_sentence", :variable_binding_sentence) do
@@ -142,7 +142,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::AnnotationDeclaration
-      declaration.expr.should == TestUtil::Lang.expr("author :: \"Keita Yamaguchi\"")
+      declaration.expr.should == TestHelper::Lang.expr("author :: \"Keita Yamaguchi\"")
     end
   end
 
@@ -151,7 +151,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::ExprDeclaration
-      declaration.expr.should == TestUtil::Lang.expr("1 + 1")
+      declaration.expr.should == TestHelper::Lang.expr("1 + 1")
     end
   end
 
@@ -227,11 +227,11 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.expr.should == Lang::RuleExprSequence.of("R")
       declaration.rule_condition_context.should.kind_of Lang::RuleConditionContext
       declaration.rule_condition_context.elements.size.should == 2
-      declaration.rule_condition_context.elements[0] == TestUtil::Lang.declaration("input '*.a'")
-      declaration.rule_condition_context.elements[1] == TestUtil::Lang.declaration("output '{$*}.b'")
+      declaration.rule_condition_context.elements[0] == TestHelper::Lang.declaration("input '*.a'")
+      declaration.rule_condition_context.elements[1] == TestHelper::Lang.declaration("output '{$*}.b'")
       declaration.flow_context.should.kind_of Lang::FlowContext
       declaration.flow_context.elements.size.should == 1
-      declaration.flow_context.elements[0].should == TestUtil::Lang.declaration("rule A")
+      declaration.flow_context.elements[0].should == TestHelper::Lang.declaration("rule A")
     end
   end
 
@@ -248,8 +248,8 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.expr.should == Lang::RuleExprSequence.of("R")
       declaration.condition_context.should.kind_of Lang::RuleConditionContext
       declaration.condition_context.elements.size.should == 2
-      declaration.condition_context.elements[0] == TestUtil::Lang.declaration("input '*.a'")
-      declaration.condition_context.elements[1] == TestUtil::Lang.declaration("output '{$*}.b'")
+      declaration.condition_context.elements[0] == TestHelper::Lang.declaration("input '*.a'")
+      declaration.condition_context.elements[1] == TestHelper::Lang.declaration("output '{$*}.b'")
       declaration.action_context.should == Lang::ActionContext.new("cat {$I[0]} > {$O[0]}\n")
     end
   end
@@ -265,8 +265,8 @@ describe 'Pione::Transformer::DeclarationTransformer' do
       declaration.expr.should == Lang::RuleExprSequence.of("R")
       declaration.condition_context.should.kind_of Lang::RuleConditionContext
       declaration.condition_context.elements.size.should == 2
-      declaration.condition_context.elements[0] == TestUtil::Lang.declaration("input '*.a'")
-      declaration.condition_context.elements[1] == TestUtil::Lang.declaration("output '{$*}.b'.touch")
+      declaration.condition_context.elements[0] == TestHelper::Lang.declaration("input '*.a'")
+      declaration.condition_context.elements[1] == TestHelper::Lang.declaration("output '{$*}.b'.touch")
     end
   end
 end

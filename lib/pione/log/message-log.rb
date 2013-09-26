@@ -1,6 +1,6 @@
 module Pione
   module Log
-    # ConsoleMessage is a set of utility methods for sending messages to user.
+    # MessageLog is a set of utility methods for sending messages to user.
     module MessageLog
       # @api private
       MESSAGE_QUEUE = Queue.new

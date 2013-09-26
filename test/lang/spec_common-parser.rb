@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-require_relative '../test-util'
+require 'pione/test-helper'
 
 class TestParser < Parslet::Parser
   include Pione::Lang::CommonParser
@@ -253,7 +253,7 @@ describe 'Pione::Parser::CommonParser' do
     end
   end
 
-  TestUtil::Parser.spec(__FILE__, self)
+  TestHelper::Parser.spec(__FILE__, self)
 end
 
 

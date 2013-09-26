@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Lang::ParameterSetSequence' do
   before do
@@ -60,5 +60,5 @@ describe 'Pione::Lang::ParameterSetSequence' do
     end
   end
 
-  test_pione_method("parameter-set")
+  TestHelper::Lang.test_pione_method(__FILE__)
 end

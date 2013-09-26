@@ -1,8 +1,8 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Agent::Messenger" do
   before do
-    tuple_space_server = create_tuple_space_server
+    tuple_space_server = TestHelper::TupleSpace.create(self)
     @messenger = Agent::Messenger.new(tuple_space_server)
     class << @messenger
       attr_accessor :msgs

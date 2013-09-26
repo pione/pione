@@ -1,10 +1,10 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 document_location = Location[File.dirname(__FILE__)] + "spec_document.pione"
 
 describe 'Pione::Component::Document' do
   before do
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
     @opt = {package_name: "Test", filename: "spec_document.pione"}
   end
 
@@ -38,7 +38,7 @@ describe 'Pione::Component::Document' do
 
   it 'should have document variable bindings' do
     Component::Document.load(document_location, @opt).eval(@env)
-    @env.variable_get(Lang::Variable.new("X")).should == TestUtil::Lang.expr("1")
+    @env.variable_get(Lang::Variable.new("X")).should == TestHelper::Lang.expr("1")
   end
 
   it 'should raise variable binding error' do

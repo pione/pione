@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 location = Location[File.dirname(__FILE__)] + "spec_action-handler.pione"
 package_id = "SpecActionHandler"
@@ -9,7 +9,7 @@ context.eval(env)
 
 describe 'Pione::RuleHandler::ActionHandler' do
   before do
-    @ts = create_tuple_space_server
+    @ts = TestHelper::TupleSpace.create(self)
 
     location = Location[Temppath.create]
     location_a = location + "1.a"

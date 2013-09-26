@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Location::MyFTPScheme' do
   it 'should be supported by PIONE' do
@@ -66,6 +66,6 @@ describe 'Pione::Location::MyFTPScheme' do
     uri.path.should == "/"
   end
 
-  test_location_scheme("myftp-scheme")
+  TestHelper::Location.test_scheme(__FILE__)
 end
 

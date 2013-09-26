@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 class TestLogger < Log::SystemLogger
   forward :@out, :puts, :fatal

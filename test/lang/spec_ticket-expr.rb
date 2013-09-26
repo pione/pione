@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Lang::TicketExpr' do
   it 'should equal' do
@@ -35,5 +35,5 @@ describe "Pione::Lang::TicketExprSequence" do
     @seq.names.should.not.include("Z")
   end
 
-  test_pione_method "ticket-expr"
+  TestHelper::Lang.test_pione_method(__FILE__)
 end

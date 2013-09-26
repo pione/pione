@@ -1,8 +1,8 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 package_id = "SpecEmptyHandler"
 env = Lang::Environment.new.setup_new_package(package_id)
-TestUtil::Lang.package_context!(env, <<-PIONE)
+TestHelper::Lang.package_context!(env, <<-PIONE)
 Rule TestTouch
   input '*.a'
   output '{$*}.b'.touch
@@ -17,7 +17,7 @@ PIONE
 describe 'Pione::RuleHandler::EmptyHandler' do
   describe 'touch with nonexistance' do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       # setup data
       location = Location[Temppath.create]
@@ -69,7 +69,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
 
   describe 'touch with existance' do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       # setup data
       location = Location[Temppath.create]
@@ -121,7 +121,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
 
   describe 'remove' do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       # setup data
       location = Location[Temppath.create]

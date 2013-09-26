@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Transformer::LiteralTransformer' do
   transformer_spec('boolean', :boolean) do

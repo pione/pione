@@ -1,9 +1,9 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Agent::Broker" do
   before do
     # setup language environment
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
 
     # setup tuple spaces
     @space1 = TupleSpaceServer.new({task_worker_resource: 1}, false)

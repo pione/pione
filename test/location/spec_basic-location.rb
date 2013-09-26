@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 class TestLocation < Location::DataLocation
   set_scheme "test"

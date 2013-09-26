@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Lang::PioneFloat' do
   before do
@@ -19,5 +19,5 @@ describe 'Pione::Lang::PioneFloat' do
     @one.should.not == Lang::PioneInteger.new(1)
   end
 
-  test_pione_method("float")
+  TestHelper::Lang.test_pione_method(__FILE__)
 end

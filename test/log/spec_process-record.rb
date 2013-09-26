@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 module SpecProcessRecord
   class TestRecord < Pione::Log::ProcessRecord

@@ -1,4 +1,4 @@
-require_relative "../test-util"
+require 'pione/test-helper'
 
 module TestEvalator
   extend Pione::Util::Evaluatable

@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 class TestTuple < Pione::Tuple::BasicTuple
   define_format([:test,

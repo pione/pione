@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Rinda patch' do
   it 'should be different tuples that have different contentes' do

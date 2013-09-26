@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Lang::RuleExpr' do
   before do
@@ -14,5 +14,5 @@ describe 'Pione::Lang::RuleExpr' do
     @a.should.not == @b
   end
 
-  test_pione_method("rule-expr")
+  TestHelper::Lang.test_pione_method(__FILE__)
 end

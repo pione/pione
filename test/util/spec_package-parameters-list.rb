@@ -1,9 +1,9 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Util::PackageParametersList" do
   before do
     @dir = Location[File.dirname(__FILE__)]
-    @env = TestUtil::Lang.env.setup_new_package("SpecPackageParametersList")
+    @env = TestHelper::Lang.env.setup_new_package("SpecPackageParametersList")
   end
 
   after do

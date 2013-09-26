@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 shared "archiver" do
   it "should compress and uncompress" do

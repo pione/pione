@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Transformer::InterpolatorTransformer' do
   opts = {
@@ -7,9 +7,9 @@ describe 'Pione::Transformer::InterpolatorTransformer' do
   }
 
   transformer_spec("embeded_variable", :embeded_variable, opts) do
-    test("{$x}", TestUtil::Lang.expr("$x"))
-    test("{$x.as_string}", TestUtil::Lang.expr("$x.as_string"))
-    test("{$x.m(A, 1, true)}", TestUtil::Lang.expr("$x.m(A, 1, true)"))
-    test("{$x + $y}", TestUtil::Lang.expr("$x + $y"))
+    test("{$x}", TestHelper::Lang.expr("$x"))
+    test("{$x.as_string}", TestHelper::Lang.expr("$x.as_string"))
+    test("{$x.m(A, 1, true)}", TestHelper::Lang.expr("$x.m(A, 1, true)"))
+    test("{$x + $y}", TestHelper::Lang.expr("$x + $y"))
   end
 end

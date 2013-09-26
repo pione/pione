@@ -1,7 +1,5 @@
-require_relative "../test-util"
+require 'pione/test-helper'
 require_relative "http-behavior"
-require 'webrick'
-require 'webrick/https'
 
 describe "Pione::Location::HTTPSLocation" do
   before do

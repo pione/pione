@@ -1,11 +1,10 @@
-require_relative "../test-util"
+require 'pione/test-helper'
 require_relative "http-behavior"
-require 'webrick'
 
 describe "Pione::Location::HTTPLocation" do
   before do
     @path = File.join(File.dirname(__FILE__), "spec_http-location")
-    @server = TestUtil::WebServer.start(@path)
+    @server = TestHelper::WebServer.start(@path)
   end
 
   after do

@@ -2,7 +2,7 @@ module Pione
   module RuleEngine
     # BasicHandler is a base class for rule handlers.
     class BasicHandler
-      include TupleSpaceServerInterface
+      include TupleSpace::TupleSpaceInterface
       include Log::MessageLog
 
       attr_reader :plain_env        # plain environment
@@ -24,7 +24,7 @@ module Pione
       # Create a new handler for rule.
       def initialize(space, env, package_id, rule_name, rule_definition, inputs, param_set, domain_id, caller_id)
         ### set tuple space server
-        set_tuple_space_server(space)
+        set_tuple_space(space)
 
         ### set informations
         @plain_env = env

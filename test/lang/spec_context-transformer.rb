@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Transformer::ContextTransformer' do
   transformer_spec("structural_context", :structural_context) do

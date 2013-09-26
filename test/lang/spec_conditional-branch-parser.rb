@@ -1,5 +1,5 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Parser::ConditionalBranchParser' do
-  TestUtil::Parser.spec(__FILE__, self)
+  TestHelper::Parser.spec(__FILE__, self)
 end

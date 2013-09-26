@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 require_relative 'location-behavior'
 
 describe 'Location::LocalLocation' do

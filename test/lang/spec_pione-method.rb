@@ -1,8 +1,8 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Lang::PioneMethod" do
   before do
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
     @int_1 = Lang::IntegerSequence.of(1)
     @int_2 = Lang::IntegerSequence.of(2)
     @int_3 = Lang::IntegerSequence.of(3)

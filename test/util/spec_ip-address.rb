@@ -1,4 +1,4 @@
-require_relative "../test-util"
+require 'pione/test-helper'
 
 describe "Pione::Util::IPAddress" do
   it "should get my IP address" do

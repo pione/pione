@@ -1,14 +1,14 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Lang::ConditionalBranchContext" do
   before do
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
   end
 
   describe "in package context" do
     it "should inherit acceptance from parent context" do
       should.raise(Lang::ContextError) do
-        TestUtil::Lang.package_context!(@env, <<-PIONE)
+        TestHelper::Lang.package_context!(@env, <<-PIONE)
           $X := true
           if $X
             rule A
@@ -21,7 +21,7 @@ describe "Pione::Lang::ConditionalBranchContext" do
   describe "in parameter context" do
     it "should inherit acceptance from parent context" do
       should.raise(Lang::ContextError) do
-        TestUtil::Lang.context(<<-PIONE)
+        TestHelper::Lang.context(<<-PIONE)
           Param
             if true; rule $X; end
           End
@@ -33,7 +33,7 @@ describe "Pione::Lang::ConditionalBranchContext" do
   describe "in rule condition context" do
     it "should inherit acceptance from parent context" do
       should.raise(Lang::ContextError) do
-        TestUtil::Lang.package_context!(@env, <<-PIONE)
+        TestHelper::Lang.package_context!(@env, <<-PIONE)
           $X := true
           Rule R
             input '*.i'
@@ -52,7 +52,7 @@ describe "Pione::Lang::ConditionalBranchContext" do
   describe "in flow context" do
     it "should inherit acceptance from parent context" do
       should.raise(Lang::ContextError) do
-        TestUtil::Lang.package_context!(@env, <<-PIONE)
+        TestHelper::Lang.package_context!(@env, <<-PIONE)
           $X := true
           Rule R
             input '*.i'
@@ -68,7 +68,7 @@ describe "Pione::Lang::ConditionalBranchContext" do
     end
 
     it "should make branch by if" do
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R
           input '*.i'
           output '*.o'
@@ -96,11 +96,11 @@ describe "Pione::Lang::ConditionalBranchContext" do
       rule_set_true.rules.pieces.should.include Lang::RuleExpr.new("A")
       rule_set_true.rules.pieces.should.include Lang::RuleExpr.new("B")
       rule_set_false.rules.pieces.size.should == 1
-      rule_set_false.rules.should == TestUtil::Lang.expr!(@env, "B")
+      rule_set_false.rules.should == TestHelper::Lang.expr!(@env, "B")
     end
 
     it "should make branch by if-then-else" do
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R
           input '*.i'
           output '*.o'
@@ -126,9 +126,9 @@ describe "Pione::Lang::ConditionalBranchContext" do
 
       # test
       rule_set_true.rules.pieces.size.should == 1
-      rule_set_true.rules.should == TestUtil::Lang.expr!(@env, "A")
+      rule_set_true.rules.should == TestHelper::Lang.expr!(@env, "A")
       rule_set_false.rules.pieces.size.should == 1
-      rule_set_false.rules.should == TestUtil::Lang.expr!(@env, "B")
+      rule_set_false.rules.should == TestHelper::Lang.expr!(@env, "B")
     end
   end
 end
@@ -139,12 +139,12 @@ end
 
 describe "Pione::Lang::RuleConditionContext" do
   before do
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
   end
 
   it "should get context error" do
     should.raise(Lang::ContextError) do
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R
           rule A
         Flow
@@ -157,11 +157,11 @@ end
 
 describe "Pione::Lang::FlowContext" do
   before do
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
   end
 
   it "should be able to refer variables which are bound in package context" do
-    TestUtil::Lang.package_context!(@env, <<-PIONE)
+    TestHelper::Lang.package_context!(@env, <<-PIONE)
       $X := R1
       $Y := 10
 
@@ -178,14 +178,14 @@ describe "Pione::Lang::FlowContext" do
     rule_set = definition.flow_context.eval(@env)
 
     # test
-    @env.variable_get(Lang::Variable.new("X")).should == TestUtil::Lang.expr!(@env, "R1")
-    @env.variable_get(Lang::Variable.new("Y")).should == TestUtil::Lang.expr!(@env, "10")
+    @env.variable_get(Lang::Variable.new("X")).should == TestHelper::Lang.expr!(@env, "R1")
+    @env.variable_get(Lang::Variable.new("Y")).should == TestHelper::Lang.expr!(@env, "10")
     rule_set.rules.pieces.size.should == 2
-    rule_set.rules.should == TestUtil::Lang.expr!(@env, "R1 | (R2 {Y: 10})")
+    rule_set.rules.should == TestHelper::Lang.expr!(@env, "R1 | (R2 {Y: 10})")
   end
 
   it "should be able to refer variables which are bound in rule condition context" do
-    TestUtil::Lang.package_context!(@env, <<-PIONE)
+    TestHelper::Lang.package_context!(@env, <<-PIONE)
       Rule R
         input '*.i'
         output '*.o'
@@ -201,14 +201,14 @@ describe "Pione::Lang::FlowContext" do
     rule_set = definition.flow_context.eval(@env)
 
     # test
-    @env.variable_get(Lang::Variable.new("X")).should == TestUtil::Lang.expr!(@env, "R1")
-    @env.variable_get(Lang::Variable.new("Y")).should == TestUtil::Lang.expr!(@env, "10")
+    @env.variable_get(Lang::Variable.new("X")).should == TestHelper::Lang.expr!(@env, "R1")
+    @env.variable_get(Lang::Variable.new("Y")).should == TestHelper::Lang.expr!(@env, "10")
     rule_set.rules.pieces.size.should == 2
-    rule_set.rules.should == TestUtil::Lang.expr!(@env, "R1 | (R2 {Y: 10})")
+    rule_set.rules.should == TestHelper::Lang.expr!(@env, "R1 | (R2 {Y: 10})")
   end
 
   it "should be able to refer variables which are bound in flow context" do
-    TestUtil::Lang.package_context!(@env, <<-PIONE)
+    TestHelper::Lang.package_context!(@env, <<-PIONE)
       Rule R
         input '*.i'
         output '*.o'
@@ -224,10 +224,10 @@ describe "Pione::Lang::FlowContext" do
     rule_set = definition.flow_context.eval(@env)
 
     # test
-    @env.variable_get(Lang::Variable.new("X")).should == TestUtil::Lang.expr!(@env, "R1")
-    @env.variable_get(Lang::Variable.new("Y")).should == TestUtil::Lang.expr!(@env, "10")
+    @env.variable_get(Lang::Variable.new("X")).should == TestHelper::Lang.expr!(@env, "R1")
+    @env.variable_get(Lang::Variable.new("Y")).should == TestHelper::Lang.expr!(@env, "10")
     rule_set.rules.pieces.size.should == 2
-    rule_set.rules.should == TestUtil::Lang.expr!(@env, "R1 | (R2 {Y: 10})")
+    rule_set.rules.should == TestHelper::Lang.expr!(@env, "R1 | (R2 {Y: 10})")
   end
 end
 

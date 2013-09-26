@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 $stdout = STDOUT
 $stderr = STDERR
@@ -87,7 +87,7 @@ describe "Pione::Location::GitRepositoryLocation" do
   describe "local" do
     before do
       @repos_location = Location[Temppath.mkdir]
-      repos_zip = TestUtil::TEST_PACKAGE_DIR + "HelloWorld-gitrepos.zip"
+      repos_zip = Location[File.dirname(__FILE__)] + ".." + "component" +  "data" + "HelloWorld-gitrepos.zip"
       Util::Zip.uncompress(repos_zip, @repos_location)
     end
 
@@ -127,9 +127,9 @@ describe "Pione::Location::GitRepositoryLocation" do
   # describe "http" do
   #    before do
   #     @repos_location = Location[Temppath.mkdir]
-  #     repos_zip = TestUtil::TEST_PACKAGE_DIR + "HelloWorld-gitrepos.zip"
+  #     repos_zip = TestHelper::TEST_PACKAGE_DIR + "HelloWorld-gitrepos.zip"
   #     Util::Zip.uncompress(repos_zip, @repos_location)
-  #     @server = TestUtil::WebServer.start(@repos_location)
+  #     @server = TestHelper::WebServer.start(@repos_location)
   #     @location = Location[git: @server.root.uri]
   #   end
 

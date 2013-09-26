@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 class FakeHandler < RuleEngine::BasicHandler
   DOMAIN_LOCATION = Location[Temppath.create]

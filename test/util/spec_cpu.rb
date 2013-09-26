@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe "Pione::Util::CPU" do
   it "should get number of CPU cores" do

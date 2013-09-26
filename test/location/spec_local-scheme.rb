@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::Location::LocalScheme' do
   it 'should be supported by PIONE' do

@@ -1,4 +1,4 @@
-require_relative "../test-util"
+require 'pione/test-helper'
 
 location = Location[File.dirname(__FILE__)] + "spec_id.pione"
 
@@ -27,7 +27,7 @@ end
 
 describe "Pione::Util::DomainID" do
   before do
-    @env = TestUtil::Lang.env
+    @env = TestHelper::Lang.env
     @pid1 = Util::PackageID.generate(@env, "A")
     @pid2 = Util::PackageID.generate(@env, "B")
     @name1 = "R1"
@@ -78,14 +78,14 @@ end
 
 describe "Pione::Util::PackageID" do
   it "should generate package id based on package name" do
-    env = TestUtil::Lang.env
+    env = TestHelper::Lang.env
     id = Util::PackageID.generate(env, "Test")
     id.should != "Test"
     id.should.include "Test"
   end
 
   it "should generate different ids from same package name" do
-    env = TestUtil::Lang.env
+    env = TestHelper::Lang.env
     id1 = Util::PackageID.generate(env, "Test")
     id2 = Util::PackageID.generate(env, "Test")
     id1.should != id2

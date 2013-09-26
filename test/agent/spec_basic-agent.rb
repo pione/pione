@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 class TestAgentType < Agent::BasicAgent
   set_agent_type :test_agent_type, self

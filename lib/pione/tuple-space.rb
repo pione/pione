@@ -3,5 +3,5 @@ module Pione
   module TupleSpace; end
 end
 
-require 'pione/tuple-space/tuple-space-server-interface'
+require 'pione/tuple-space/tuple-space-interface'
 require 'pione/tuple-space/tuple-space-server'

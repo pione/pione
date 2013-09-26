@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 shared "package filename" do
   it "should parse the package filename" do

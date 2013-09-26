@@ -1,4 +1,4 @@
-require_relative '../test-util'
+require 'pione/test-helper'
 
 describe 'Pione::RuleHandler::FlowRule' do
   describe "simple" do
@@ -9,7 +9,7 @@ describe 'Pione::RuleHandler::FlowRule' do
     context.eval(env)
 
     before do
-      @ts = create_tuple_space_server
+      @ts = TestHelper::TupleSpace.create(self)
 
       # setup data
       location = Location[Temppath.create]
@@ -78,11 +78,11 @@ describe 'Pione::RuleHandler::FlowRule' do
 
   describe "redundant task unification" do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       # package "Abstract"
       @env = Lang::Environment.new.setup_new_package("Unification")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R1
           output 'message.txt'
         Flow
@@ -130,10 +130,10 @@ describe 'Pione::RuleHandler::FlowRule' do
 
   describe "rule branch" do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       @env = Lang::Environment.new.setup_new_package("Branch")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule Main
           output '*.o'
           param $F := true
@@ -198,11 +198,11 @@ describe 'Pione::RuleHandler::FlowRule' do
 
   describe "rule override" do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       # package "Parent"
       _env = Lang::Environment.new.setup_new_package("Parent")
-      TestUtil::Lang.package_context!(_env, <<-PIONE)
+      TestHelper::Lang.package_context!(_env, <<-PIONE)
         Rule R1
           output '*-message.txt'
         Flow
@@ -218,7 +218,7 @@ describe 'Pione::RuleHandler::FlowRule' do
 
       # package "Child"
       @env = _env.setup_new_package("Child", "Parent")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R2
           output 'child-message.txt'
         Action
@@ -261,11 +261,11 @@ describe 'Pione::RuleHandler::FlowRule' do
 
   describe "abstract rule" do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       # package "Abstract"
       _env = Lang::Environment.new.setup_new_package("Abstract")
-      TestUtil::Lang.package_context!(_env, <<-PIONE)
+      TestHelper::Lang.package_context!(_env, <<-PIONE)
         Rule R1
           output 'message.txt'
         Flow
@@ -275,7 +275,7 @@ describe 'Pione::RuleHandler::FlowRule' do
 
       # package "Concrete"
       @env = _env.setup_new_package("Concrete", "Abstract")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R2
           output 'message.txt'
         Action
@@ -318,10 +318,10 @@ describe 'Pione::RuleHandler::FlowRule' do
 
   describe "distribution by parameter" do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       @env = Lang::Environment.new.setup_new_package("ParamDist")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R1
           output '*.o'.all
         Flow
@@ -369,10 +369,10 @@ describe 'Pione::RuleHandler::FlowRule' do
 
   describe "recursion by parameter" do
     before do
-      @space = create_tuple_space_server
+      @space = TestHelper::TupleSpace.create(self)
 
       @env = Lang::Environment.new.setup_new_package("Recursion")
-      TestUtil::Lang.package_context!(@env, <<-PIONE)
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R1
           output '*.o'.all
           param $X := 5
