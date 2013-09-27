@@ -1,0 +1,165 @@
+#
+# tuple-definition.yml - tuple format definition file
+#
+
+# AgentTuple represents existance of agent joining the tuple space.
+AgentTuple:
+  - agent
+  - uuid       # UUID of the agent
+  - agent_type # agent type name
+
+AttributeTuple:
+  - attribute
+  - key:  # attribute name
+      "String"
+  - value # attribute value
+
+BaseLocationTuple:
+  - base_location
+  - location
+
+ByeTuple:
+  - bye
+  - uuid
+  - agent_type
+
+CommandTuple:
+  - command
+  - name
+  - args
+
+# DataNullTuple is a tuple for the situation that output data is null.
+DataNullTuple:
+  - data_null
+  - domain:   # target domain
+      String
+  - position: # output condition position
+      Integer
+
+# DataTuple is a class for input/output data.
+DataTuple:
+  - data
+  - domain:   # target domain
+      String
+  - name:     # data name
+      "Type.or(String, Pione::Lang::DataExprSequence)"
+  - location: # data location
+      "Pione::Location::BasicLocation"
+  - time:     # data created time
+      Time
+
+# DryRunTuple means availability of dry-run mode in the tuple space.
+DryRunTuple:
+  - dry_run
+  - availability # dry-run mode if true
+
+# EnvTuple is a tuple for sharing language environment.
+EnvTuple:
+  - env
+  - obj
+
+# exception notifier from agents
+ExceptionTuple:
+  - exception
+  - uuid       # UUID of the agent who happened the exception
+  - agent_type # agent type name
+  - value      # exception object
+
+# FinishedTuple represents task finished notifier.
+FinishedTuple:
+  - finished
+  - domain:  # task domain
+      String
+  - status:  # status of the task processing
+      Symbol
+  - outputs: # outputs
+      Array
+
+# ForegroundTuple represents the task is active (rule engine is processing it now).
+ForegroundTuple:
+  - foreground
+  - domain # domain of the task
+  - digest # digest string of the task
+
+# LiftTuple represents data movement information from old location to new
+# location.
+LiftTuple:
+  - lift
+  - old_location:
+      "Location::BasicLocation"
+  - new_location:
+      "Location::BasicLocation"
+
+MessageTuple:
+  - message
+  - type
+  - head
+  - color
+  - level
+  - contents
+
+PorcessInfoTuple:
+  - process_info
+  - name       # process name
+  - process_id # process id
+
+# ProcessLogTuple represents process event messages.
+ProcessLogTuple:
+  - process_log
+  - message:
+      "Log::ProcessRecord"
+
+# RuleTuple represents rule content.
+RuleTuple:
+  - rule
+  - rule_path # rule location path
+  - content   # rule content
+
+# TaskTuple is a class for rule application job with inputs, outpus and parameters.
+TaskTuple:
+  - task
+  - digest:     # digest
+      String
+  - package_id: # package id
+      String
+  - rule_name:  # rule name
+      String
+  - inputs:     # input data list
+      Array
+  - param_set:  # parameter set
+      "Pione::Lang::ParameterSet"
+  - features:   # request features
+      "Pione::Lang::FeatureSequence"
+  - domain_id:  # domain id of the task
+      String
+  - caller_id:  # domain id of the caller task
+      String
+
+# number of task worker for tuple space server
+TaskWorkerResourceTuple:
+  - task_worker_resource
+  - number # resource number of task workers.
+
+# TicketTuple is a tuple representation of ticket.
+TicketTuple:
+  - ticket
+  - domain
+  - ticket_name
+
+TouchTuple:
+  - touch
+  - domain: # target domain
+      String
+  - name:   # name
+      String
+  - time:   # touched time
+      Time
+
+# WorkingTuple represents current working task informations.
+WorkingTuple:
+  - working
+  - domain: # caller domain
+      String
+  - digest: # rule handler digest
+      String
+

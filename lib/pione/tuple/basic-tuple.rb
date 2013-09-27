@@ -314,5 +314,39 @@ module Pione
         TABLE[identifier].new(*args)
       end
     end
+
+    #
+    # handle tuple definition file
+    #
+
+    YAML.load_file(File.join(File.dirname(__FILE__), "tuple-definition.yml")).each do |class_name, definition|
+      klass = Class.new(BasicTuple)
+      const_set(class_name, klass)
+      format = definition.map do |d|
+        # key is field name, and value is type (value's class name)
+        if d.kind_of?(Hash)
+          [d.keys.first.to_sym, eval(d[d.keys.first])]
+        else
+          d.to_sym
+        end
+      end
+      klass.module_eval {klass.define_format(format)}
+    end
+
+    #
+    # special tuple extension
+    #
+
+    class ProcessLogTuple
+      def timestamp=(time)
+        @timestamp = time
+        message.timestamp = time
+      end
+    end
+
+    class DataTuple
+      attr_accessor :update_criteria
+      attr_accessor :accept_nonexistence
+    end
   end
 end
