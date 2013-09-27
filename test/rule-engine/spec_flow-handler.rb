@@ -5,7 +5,7 @@ describe 'Pione::RuleHandler::FlowRule' do
     location = Location[File.dirname(__FILE__)] + "spec_flow-handler.pione"
     env = Lang::Environment.new.setup_new_package("SpecFlowHandler")
     opt = {package_name: "SpecFlowHandler", filename: "spec_flow-handler.pione"}
-    context = Component::Document.load(location, opt)
+    context = Package::Document.load(location, opt)
     context.eval(env)
 
     before do

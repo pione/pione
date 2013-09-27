@@ -7,7 +7,7 @@ path = Pathname.new(File.join(File.dirname(__FILE__), "spec_update-criteria.pion
 env = Lang::Environment.new
 env.current_package_id = "Test"
 opt = {package_name: "Test", filename: "spec_update-criteria.pione"}
-context = Component::Document.load(path, opt)
+context = Package::Document.load(path, opt)
 context.eval(env)
 
 time = 10.times.map {sleep 0.001; Time.now}

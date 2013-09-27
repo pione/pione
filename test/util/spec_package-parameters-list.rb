@@ -11,7 +11,7 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print parameters list of the package: 1" do
-    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_1.pione").eval(@env)
+    package_id = Package::PackageReader.read(@dir + "spec_package-parameters-list_1.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
     Util::PackageParametersList.print(@env, package_id)
@@ -25,7 +25,7 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print parameters list of the package: 2" do
-    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_2.pione").eval(@env)
+    package_id = Package::PackageReader.read(@dir + "spec_package-parameters-list_2.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
     Util::PackageParametersList.print(@env, package_id)
@@ -37,7 +37,7 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print parameters list of the package: 3" do
-    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_3.pione").eval(@env)
+    package_id = Package::PackageReader.read(@dir + "spec_package-parameters-list_3.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
     Util::PackageParametersList.print(@env, package_id)
@@ -49,7 +49,7 @@ describe "Pione::Util::PackageParametersList" do
   end
 
   it "should print no parameters message" do
-    package_id = Component::PackageReader.read(@dir + "spec_package-parameters-list_4.pione").eval(@env)
+    package_id = Package::PackageReader.read(@dir + "spec_package-parameters-list_4.pione").eval(@env)
     stdout = StringIO.new("", "w")
     $stdout = stdout
     Util::PackageParametersList.print(@env, package_id)

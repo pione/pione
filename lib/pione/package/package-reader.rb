@@ -1,5 +1,5 @@
 module Pione
-  module Component
+  module Package
     module PackageTypeClassifier
       class << self
         # Distinguish the type of package based on the location.
@@ -108,7 +108,7 @@ module Pione
       #   the package
       def read_document
         opt = {package_name: "Anonymous", filename: @location.basename}
-        context = Component::Document.load(@location, opt)
+        context = Document.load(@location, opt)
         Package.new(info: {"PackageName" => "Anonymous"}, context: context)
       end
 
@@ -137,7 +137,7 @@ module Pione
       def create_context(package_name, document_names)
         document_names.inject(Lang::PackageContext.new) do |context, name|
           opt = {package_name: package_name, filename: name}
-          context + Component::Document.load(@location + name, opt)
+          context + Document.load(@location + name, opt)
         end
       end
     end

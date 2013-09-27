@@ -6,19 +6,19 @@ $stderr = STDERR
 TestHelper.scope do |this|
   this::PACKAGE_DIR = Location[File.dirname(__FILE__)] + "data"
 
-  describe "Pione::Component::PackageReader" do
+  describe "Pione::Package::PackageReader" do
     shared "package" do
       it "should read the package and return it" do
-        Component::PackageReader.read(@location).should.kind_of Component::Package
+        Package::PackageReader.read(@location).should.kind_of Package::Package
       end
 
       it "should get package informations" do
-        package = Component::PackageReader.read(@location)
+        package = Package::PackageReader.read(@location)
         package.name.should == "HelloWorld"
       end
 
       it "should get scenarios" do
-        package = Component::PackageReader.read(@location)
+        package = Package::PackageReader.read(@location)
         package.name.should == "HelloWorld"
         scenario = package.scenarios[0]
         scenario.name.should == "HelloWorld"
@@ -42,7 +42,7 @@ TestHelper.scope do |this|
 
     shared "directory package" do
       it "should read package directory" do
-        Component::PackageReader.new(@location).type.should == :directory
+        Package::PackageReader.new(@location).type.should == :directory
       end
     end
 

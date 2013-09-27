@@ -1,5 +1,5 @@
 module Pione
-  module Component
+  module Package
     # PackageExpander expands package files from archive.
     class PackageExpander
       attr_reader :location

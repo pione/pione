@@ -3,24 +3,24 @@ require 'pione/test-helper'
 TestHelper.scope do |this|
   this::PACKAGE_DIR = Location[File.dirname(__FILE__)] + "data"
 
-  describe "Pione::Component::Package" do
+  describe "Pione::Package::Package" do
     before do
       @env = TestHelper::Lang.env
       @location = this::PACKAGE_DIR + "TestPackage1"
-      @package = Component::PackageReader.read(@location)
+      @package = Package::PackageReader.read(@location)
       @case1 = @package.scenarios[0]
       @case2 = @package.scenarios[1]
       @case3 = @package.scenarios[2]
     end
 
     it "should equal" do
-      Component::Package.new(location: @location, info: {"PackageName1" => "Test"}).should ==
-        Component::Package.new(location: @location, info: {"PackageName1" => "Test"})
+      Package::Package.new(location: @location, info: {"PackageName1" => "Test"}).should ==
+        Package::Package.new(location: @location, info: {"PackageName1" => "Test"})
     end
 
     it "should not equal" do
-      Component::Package.new(location: @location, info: {"PackageName1" => "Test1"}).should !=
-        Component::Package.new(location: @location, info: {"PackageName1" => "Test2"})
+      Package::Package.new(location: @location, info: {"PackageName1" => "Test1"}).should !=
+        Package::Package.new(location: @location, info: {"PackageName1" => "Test2"})
     end
 
     it "should get the package name" do
@@ -64,22 +64,22 @@ TestHelper.scope do |this|
     end
   end
 
-  describe "Pione::Component::PackageScenario" do
+  describe "Pione::Package::PackageScenario" do
     before do
       @location = this::PACKAGE_DIR + "TestPackage1"
-      @case1 = Component::PackageScenarioReader.new(@location, "scenario/case1").read
-      @case2 = Component::PackageScenarioReader.new(@location, "scenario/case2").read
-      @case3 = Component::PackageScenarioReader.new(@location, "scenario/case3").read
+      @case1 = Package::PackageScenarioReader.new(@location, "scenario/case1").read
+      @case2 = Package::PackageScenarioReader.new(@location, "scenario/case2").read
+      @case3 = Package::PackageScenarioReader.new(@location, "scenario/case3").read
     end
 
     it 'should equal' do
-      Component::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test"}).should ==
-        Component::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test"})
+      Package::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test"}).should ==
+        Package::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test"})
     end
 
     it 'should not equal' do
-      Component::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test1"}).should !=
-        Component::PackageScenario.new(@path, "scenario/case1", {"ScenarioName" => "Test2"})
+      Package::PackageScenario.new(@location, "scenario/case1", {"ScenarioName" => "Test1"}).should !=
+        Package::PackageScenario.new(@path, "scenario/case1", {"ScenarioName" => "Test2"})
     end
 
     it "should get the scenario name" do

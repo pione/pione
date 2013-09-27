@@ -2,7 +2,7 @@ require 'pione/test-helper'
 
 shared "package filename" do
   it "should parse the package filename" do
-    Component::PackageFilename.parse(@filename).tap do |fname|
+    Package::PackageFilename.parse(@filename).tap do |fname|
       fname.package_name.should == @package_name
       fname.edition.should == @edition
       fname.tag.should == @tag
@@ -11,11 +11,11 @@ shared "package filename" do
   end
 
   it "should build package filename string" do
-    Component::PackageFilename.parse(@filename).to_s.should == @filename
+    Package::PackageFilename.parse(@filename).to_s.should == @filename
   end
 end
 
-describe "Pione::Component::PackageFilename" do
+describe "Pione::Package::PackageFilename" do
   describe "package name + edition + tag + hash_id" do
     before do
       @filename = "Test(keita.yamaguchi@gmail.com)+test@d462c59.ppg"

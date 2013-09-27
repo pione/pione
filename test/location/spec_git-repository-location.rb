@@ -87,7 +87,7 @@ describe "Pione::Location::GitRepositoryLocation" do
   describe "local" do
     before do
       @repos_location = Location[Temppath.mkdir]
-      repos_zip = Location[File.dirname(__FILE__)] + ".." + "component" +  "data" + "HelloWorld-gitrepos.zip"
+      repos_zip = Location[File.dirname(__FILE__)] + ".." + "package" +  "data" + "HelloWorld-gitrepos.zip"
       Util::Zip.uncompress(repos_zip, @repos_location)
     end
 

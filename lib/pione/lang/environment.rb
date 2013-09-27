@@ -303,7 +303,7 @@ module Pione
         variable_set(Variable.new("ROOT_PARAM_SET"), param_set)
         # make root rule
         opt = {package_name: current_package_id, filename: "*system*"}
-        Component::Document.parse(<<-PIONE, opt).eval(self)
+        Package::Document.parse(<<-PIONE, opt).eval(self)
            Rule Root
              input '*'.all or null
              output '*'.all

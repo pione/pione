@@ -4,7 +4,7 @@ location = Location[File.dirname(__FILE__)] + "spec_action-handler.pione"
 package_id = "SpecActionHandler"
 env = Lang::Environment.new.setup_new_package(package_id)
 opt = {package_name: "SpecActionHandler", filename: "spec_action-handler.pione"}
-context = Component::Document.load(location, opt)
+context = Package::Document.load(location, opt)
 context.eval(env)
 
 describe 'Pione::RuleHandler::ActionHandler' do

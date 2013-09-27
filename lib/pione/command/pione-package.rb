@@ -94,7 +94,7 @@ module Pione
           begin
             # make archiver
             archiver_option = {tag: option[:tag], branch: option[:branch], hash_id: option[:hash_id]}
-            archiver = Component::PackageArchiver.new(location, archiver_option)
+            archiver = Package::PackageArchiver.new(location, archiver_option)
 
             # archive
             return archiver.archive(option[:output])

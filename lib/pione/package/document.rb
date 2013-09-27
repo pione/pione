@@ -1,5 +1,5 @@
 module Pione
-  module Component
+  module Package
     class Document < StructX
       class << self
         # Load a PIONE rule document as file.

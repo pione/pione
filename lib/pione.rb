@@ -74,7 +74,7 @@ require 'pione/system'      # PIONE system functions
 require 'pione/relay'       # relay connection
 require 'pione/tuple-space' # tuple space functions
 require 'pione/rule-engine' # rule processing behaviors
-require 'pione/component'   # rule engine component
+require 'pione/package'     # package system
 require 'pione/lang'        # PIONE languge
 require 'pione/tuple'       # tuple definitions
 require 'pione/agent'       # agent system

@@ -4,7 +4,7 @@ module Pione
       class << self
         # Print parameter list of the package.
         #
-        # @param package [Component::Package]
+        # @param package [Package::Package]
         #   package
         def print(env, package_id)
           definition = env.package_get(Lang::PackageExpr.new(package_id: package_id))

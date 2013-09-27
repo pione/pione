@@ -1,5 +1,5 @@
 module Pione
-  module Component
+  module Package
     class PackageFilenameParser < Parslet::Parser
       root(:filename)
 

@@ -3,14 +3,14 @@ require 'pione/test-helper'
 TestHelper.scope do |this|
   this::PACKAGE_DIR = Location[File.dirname(__FILE__)] + "data"
 
-  describe "Pione::Component::PackageArchiver" do
+  describe "Pione::Package::PackageArchiver" do
     before do
       @path = this::PACKAGE_DIR + "TestPackage1"
     end
 
     it "should create archive file" do
       out = Location[Temppath.mkdir]
-      Component::PackageArchiver.new(@path).archive(out)
+      Package::PackageArchiver.new(@path).archive(out)
 
       # easy check
       pkg = out + "TestPackage1+v0.1.0.ppg"

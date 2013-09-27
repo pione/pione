@@ -1,5 +1,5 @@
 module Pione
-  module Component
+  module Package
     # PackageArchiver makes PPG file as PIONE archive.
     class PackageArchiver
       attr_reader :location

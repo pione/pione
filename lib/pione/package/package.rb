@@ -1,5 +1,5 @@
 module Pione
-  module Component
+  module Package
     # InvalidPackageError raises when the package is something bad.
     class InvalidPackageError < StandardError
       attr_reader :package

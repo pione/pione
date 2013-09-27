@@ -244,7 +244,7 @@ module Pione
         end
 
         # read package
-        @package = Component::PackageReader.read(Location[@argv.first])
+        @package = Package::PackageReader.read(Location[@argv.first])
         @package_id = @package.eval(@env)
         @env = @env.set(current_package_id: @package_id)
         @package.upload(option[:output_location] + "package")
@@ -257,7 +257,7 @@ module Pione
             abort "the scenario not found: %s" % option[:rehearse]
           end
         end
-      rescue Component::InvalidPackageError => e
+      rescue Package::InvalidPackageError => e
         abort("Package error: " + e.message)
       rescue Lang::ParserError => e
         abort("Pione syntax error: " + e.message)
