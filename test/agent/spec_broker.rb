@@ -29,12 +29,14 @@ describe "Pione::Agent::Broker" do
     @broker.add_tuple_space @space1
     @broker.wait_until_before(:sleep)
     @broker.quantity.should == 5
+    sleep 0.1 # wait workers to join the space
     @space1.current_task_worker_size.should == 5
 
     # with space1 and space2
     @broker.add_tuple_space @space2
     @broker.wait_until_before(:sleep)
     @broker.quantity.should == 5
+    sleep 0.1 # wait workers to join the space
     @space1.current_task_worker_size.should == 2
     @space2.current_task_worker_size.should == 3
 
@@ -42,6 +44,7 @@ describe "Pione::Agent::Broker" do
     @broker.add_tuple_space @space3
     @broker.wait_until_before(:sleep)
     @broker.quantity.should == 5
+    sleep 0.1 # wait workers to join the space
     @space1.current_task_worker_size.should == 1
     @space2.current_task_worker_size.should == 2
     @space3.current_task_worker_size.should == 2
