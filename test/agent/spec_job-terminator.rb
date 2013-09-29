@@ -16,7 +16,7 @@ describe 'Pione::Agent::JobTerminator' do
     job_terminator = Agent::JobTerminator.start(@tuple_space) {fired = true}
 
     # write terminate command
-    write(Tuple[:command].new(name: "terminate", args: []))
+    write(TupleSpace::CommandTuple.new(name: "terminate", args: []))
 
     # wait termination
     job_terminator.wait_until_terminated

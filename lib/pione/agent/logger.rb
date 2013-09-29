@@ -32,7 +32,7 @@ module Pione
       # Record process_log tuples.
       def transit_to_record
         begin
-          write_records(take_all(Tuple[:process_log].any))
+          write_records(take_all(TupleSpace::ProcessLogTuple.any))
         rescue => e
           # logger is terminated at last in termination processes, so tuple space may be closed
           Log::SystemLog.warn("logger agent failed to take process logs: %s" % e.message)
@@ -43,7 +43,7 @@ module Pione
       # Copy from output to log when log and output are different.
       def transit_to_terminate
         begin
-          write_records(take_all!(Tuple[:process_log].any))
+          write_records(take_all!(TupleSpace::ProcessLogTuple.any))
         rescue => e
           # logger is terminated at last in termination processes, so tuple space may be closed
           Log::SystemLog.warn("logger agent failed to take process logs.", self, e)

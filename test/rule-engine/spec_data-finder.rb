@@ -19,9 +19,9 @@ describe 'Pione::RuleEngine::DataFinder' do
 
   it 'should find a data tuple by complete name' do
     tuples = [
-      Tuple[:data].new('test', '1.a', nil, Time.now),
-      Tuple[:data].new('test', '2.a', nil, Time.now),
-      Tuple[:data].new('test', '3.a', nil, Time.now)
+      TupleSpace::DataTuple.new('test', '1.a', nil, Time.now),
+      TupleSpace::DataTuple.new('test', '2.a', nil, Time.now),
+      TupleSpace::DataTuple.new('test', '3.a', nil, Time.now)
     ]
     tuples.each {|t| write(t) }
     finder = RuleEngine::DataFinder.new(tuple_space_server, 'test')
@@ -30,9 +30,9 @@ describe 'Pione::RuleEngine::DataFinder' do
 
   it 'should find data tuples by incomplete name' do
     tuples = [
-      Tuple[:data].new('test', '1.a', nil, Time.now),
-      Tuple[:data].new('test', '2.a', nil, Time.now),
-      Tuple[:data].new('test', '3.a', nil, Time.now)
+      TupleSpace::DataTuple.new('test', '1.a', nil, Time.now),
+      TupleSpace::DataTuple.new('test', '2.a', nil, Time.now),
+      TupleSpace::DataTuple.new('test', '3.a', nil, Time.now)
     ]
     tuples.each {|t| write(t) }
     finder = RuleEngine::DataFinder.new(tuple_space_server, 'test')
@@ -41,14 +41,14 @@ describe 'Pione::RuleEngine::DataFinder' do
   end
 
   it 'should find no data' do
-    tuple = Tuple[:data].new('test', '2.a', nil, Time.now)
+    tuple = TupleSpace::DataTuple.new('test', '2.a', nil, Time.now)
     tuple_space_server.write(tuple)
     finder = RuleEngine::DataFinder.new(tuple_space_server, 'test')
     finder.send(:find_tuples_by_condition, '1.a').should.empty
   end
 
   it 'should find in the domain' do
-    tuple = Tuple[:data].new('other', '1.a', nil, Time.now)
+    tuple = TupleSpace::DataTuple.new('other', '1.a', nil, Time.now)
     tuple_space_server.write(tuple)
     finder = RuleEngine::DataFinder.new(tuple_space_server, 'test')
     finder.send(:find_tuples_by_condition, '1.a').should.empty
@@ -60,7 +60,7 @@ describe 'Pione::RuleEngine::DataFinder' do
 
       # tuples
       testcase['tuples'].map {|name|
-        Tuple[:data].new(name: name, domain: 'test', location: Location[name])
+        TupleSpace::DataTuple.new(name: name, domain: 'test', location: Location[name])
       }.each do |tuple|
         write(tuple)
       end
@@ -79,9 +79,9 @@ describe 'Pione::RuleEngine::DataFinder' do
       results = testcase['results'].map {|res|
         res.map {|name|
           if name.kind_of?(Array)
-            name.map {|n| Tuple[:data].new(name: n, domain: 'test', location: Location[n]) }
+            name.map {|n| TupleSpace::DataTuple.new(name: n, domain: 'test', location: Location[n]) }
           else
-            Tuple[:data].new(name: name, domain: 'test', location: Location[name])
+            TupleSpace::DataTuple.new(name: name, domain: 'test', location: Location[name])
           end
         }
       }

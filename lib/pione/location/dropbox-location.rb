@@ -13,10 +13,10 @@ module Pione
         #   tuple space server
         # @return [void]
         def self.init(tuple_space_server)
-          tuple_consumer_key = Tuple[:attribute].new("dropbox_consumer_key", nil)
-          tuple_consumer_secret = Tuple[:attribute].new("dropbox_consumer_secret", nil)
-          tuple_access_token_key = Tuple[:attribute].new("dropbox_access_token_key", nil)
-          tuple_access_token_secret = Tuple[:attribute].new("dropbox_access_token_secret", nil)
+          tuple_consumer_key = TupleSapce::AttributeTuple.new("dropbox_consumer_key", nil)
+          tuple_consumer_secret = TupleSpace::AttributeTuple.new("dropbox_consumer_secret", nil)
+          tuple_access_token_key = TupleSpace::AttributeTuple.new("dropbox_access_token_key", nil)
+          tuple_access_token_secret = TupleSpace::AttributeTuple.new("dropbox_access_token_secret", nil)
 
           consumer_key = tuple_space_server.read(tuple_consumer_key, 0).value rescue nil
           consumer_secret = tuple_space_server.read(tuple_consumer_secret, 0).value rescue nil
@@ -42,10 +42,10 @@ module Pione
         # @return [void]
         def share_access_token(tuple_space_server, consumer_key, consumer_secret)
           access_token = session.get_access_token
-          [ Tuple[:attribute].new("dropbox_consumer_key", consumer_key),
-            Tuple[:attribute].new("dropbox_consumer_secret", consumer_secret),
-            Tuple[:attribute].new("dropbox_access_token_key", access_token.key),
-            Tuple[:attribute].new("dropbox_access_token_secret", access_token.secret)
+          [ TupleSpace::AttributeTuple.new("dropbox_consumer_key", consumer_key),
+            TupleSpace::AttributeTuple.new("dropbox_consumer_secret", consumer_secret),
+            TupleSpace::AttributeTuple.new("dropbox_access_token_key", access_token.key),
+            TupleSpace::AttributeTuple.new("dropbox_access_token_secret", access_token.secret)
           ].each {|tuple| tuple_space_server.write(tuple) }
         end
 

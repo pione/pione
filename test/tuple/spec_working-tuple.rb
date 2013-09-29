@@ -1,18 +1,14 @@
 require 'pione/test-helper'
 
-describe 'Pione::Tuple::WorkingTuple' do
+describe 'Pione::TupleSpace::WorkingTuple' do
   before do
     @domain = "A"
     @digest = "_"
-    @working = Tuple::WorkingTuple.new(@domain, @digest)
+    @working = TupleSpace::WorkingTuple.new(@domain, @digest)
   end
 
   after do
     @working = nil
-  end
-
-  it 'should get the class from identifier' do
-    Tuple[:working].should == Tuple::WorkingTuple
   end
 
   it 'should get identifier' do
@@ -40,17 +36,17 @@ describe 'Pione::Tuple::WorkingTuple' do
   end
 
   it 'should raise format error' do
-    should.raise(Tuple::FormatError) do
-      Tuple::WorkingTuple.new(true, @digest)
+    should.raise(TupleSpace::TupleFormatError) do
+      TupleSpace::WorkingTuple.new(true, @digest)
     end
 
-    should.raise(Tuple::FormatError) do
-      Tuple::WorkingTuple.new(@domain, true)
+    should.raise(TupleSpace::TupleFormatError) do
+      TupleSpace::WorkingTuple.new(@domain, true)
     end
   end
 
   it 'should get any tuple' do
-    any = Tuple::WorkingTuple.any
+    any = TupleSpace::WorkingTuple.any
     any.identifier.should == :working
     any.domain.should == nil
     any.digest.should == nil

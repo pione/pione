@@ -25,21 +25,21 @@ module Pione
 
       # Define tuple space interfaces.
       tuple_space_interface :read, :result => lambda{|t|
-        Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
+        TupleSpace.from_array(t).tap{|x| x.timestamp = t.timestamp}
       }
       tuple_space_interface :read_all, :result => lambda{|list|
         list.map{|t|
-          Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
+          TupleSpace.from_array(t).tap{|x| x.timestamp = t.timestamp}
         }
       }
       tuple_space_interface :take, :result => lambda{|t|
-        Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}
+        TupleSpace.from_array(t).tap{|x| x.timestamp = t.timestamp}
       }
       tuple_space_interface :take_all, :result => lambda{|list|
-        list.map {|t| Tuple.from_array(t).tap{|x| x.timestamp = t.timestamp}}
+        list.map {|t| TupleSpace.from_array(t).tap{|x| x.timestamp = t.timestamp}}
       }
       tuple_space_interface :write, :validator => Proc.new {|*args|
-        args.first.writable? if args.first.kind_of?(Tuple::BasicTuple)
+        args.first.writable? if args.first.kind_of?(TupleSpace::BasicTuple)
       }, :result => lambda{|t|
         # don't return raw tuple entry in PIONE
         nil
@@ -65,7 +65,7 @@ module Pione
 
         # check task worker resource
         resource = data[:task_worker_resource] || 1
-        write(Tuple[:task_worker_resource].new(number: resource))
+        write(TupleSpace::TaskWorkerResourceTuple.new(number: resource))
 
         @terminated = false
       end
@@ -76,7 +76,7 @@ module Pione
       #   base location
       # @return [void]
       def set_base_location(location)
-        write(Tuple[:base_location].new(location.as_directory))
+        write(TupleSpace::BaseLocationTuple.new(location.as_directory))
       end
 
       #def drburi
@@ -102,12 +102,12 @@ module Pione
       # @return [BasicLocation]
       #   base location
       def base_location
-        read(Tuple[:base_location].any).location
+        read(TupleSpace::BaseLocationTuple.any).location
       end
 
       # Return the worker resource size of the server.
       def task_worker_resource
-        read(Tuple[:task_worker_resource].any).number
+        read(TupleSpace::TaskWorkerResourceTuple.any).number
       end
 
       # Return the number of tuples matched with specified tuple.
@@ -117,7 +117,7 @@ module Pione
 
       # Return the current worker size of the server.
       def current_task_worker_size
-        read_all(Tuple[:agent].new(agent_type: :task_worker)).size
+        read_all(TupleSpace::AgentTuple.new(agent_type: :task_worker)).size
       end
 
       # Return all tuples of the tuple space.

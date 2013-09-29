@@ -214,7 +214,7 @@ module Rinda
       #   the domain
       def domain(tuple)
         identifier = tuple.value[0]
-        pos = Pione::Tuple[identifier].domain_position
+        pos = Pione::TupleSpace[identifier].domain_position
         tuple.value[pos]
       end
     end
@@ -778,8 +778,8 @@ module Rinda
     # @return [BasicTuple]
     #   lifted tuple
     def lift_tuple(tuple)
-      if Pione::Tuple[tuple.first]
-        if pos = Pione::Tuple[tuple.first].location_position
+      if Pione::TupleSpace[tuple.first]
+        if pos = Pione::TupleSpace[tuple.first].location_position
           if new_location = lift_location(tuple[pos])
             tuple = tuple.clone
             tuple[pos] = new_location

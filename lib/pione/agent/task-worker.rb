@@ -45,14 +45,14 @@ module Pione
 
       # Take a task and turn it to foreground.
       def transit_to_take_task
-        return take(Tuple[:task].new(features: @features))
+        return take(TupleSpace::TaskTuple.new(features: @features))
       end
 
       # Initialize the task.
       def transit_to_init_task(task)
         # make flag tuples
-        working = Tuple[:working].new(task.domain_id, task.digest)
-        foreground = Tuple[:foreground].new(task.domain_id, task.digest)
+        working = TupleSpace::WorkingTuple.new(task.domain_id, task.digest)
+        foreground = TupleSpace::ForegroundTuple.new(task.domain_id, task.digest)
 
         if read!(working)
           # the task is working already, so we will dicard the task
@@ -90,8 +90,8 @@ module Pione
 
       # Finalize the task. This method will turn working flag off and background.
       def transit_to_finalize_task(task)
-        take!(Tuple[:working].new(task.domain_id, task.digest))
-        take!(Tuple[:foreground].new(task.domain_id, task.digest))
+        take!(TupleSpace::WorkingTuple.new(task.domain_id, task.digest))
+        take!(TupleSpace::ForegroundTuple.new(task.domain_id, task.digest))
       end
 
       # Report the connection error.
@@ -105,7 +105,7 @@ module Pione
 
       # Get a environment object from tuple space.
       def get_environment
-        if env = read!(Tuple[:env].new)
+        if env = read!(TupleSpace::EnvTuple.new)
           env.obj
         else
           raise TupleSpaceError.new("\"env\" tuple not found.")
@@ -130,7 +130,7 @@ module Pione
       # while rule execution thread is alive.
       def spawn_child_task_worker(task)
         child_agent = nil
-        foreground = Tuple[:foreground].new(task.domain, task.digest)
+        foreground = TupleSpace::ForegroundTuple.new(task.domain, task.digest)
 
         # child worker loop
         while @execution_thread.alive? do

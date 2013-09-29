@@ -1,7 +1,7 @@
 require 'pione/test-helper'
 
 TestHelper.scope do |this|
-  class this::TestTuple < Tuple::BasicTuple
+  class this::TestTuple < TupleSpace::BasicTuple
     define_format [:test_, :sym]
   end
 
@@ -27,13 +27,13 @@ TestHelper.scope do |this|
 
     it "should count workers" do
       @server.current_task_worker_size.should == 0
-      t1 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util::UUID.generate)
+      t1 = TupleSpace::AgentTuple.new(agent_type: :task_worker, uuid: Util::UUID.generate)
       @server.write(t1)
       @server.current_task_worker_size.should == 1
-      t2 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util::UUID.generate)
+      t2 = TupleSpace::AgentTuple.new(agent_type: :task_worker, uuid: Util::UUID.generate)
       @server.write(t2)
       @server.current_task_worker_size.should == 2
-      t3 = Tuple[:agent].new(agent_type: :task_worker, uuid: Util::UUID.generate)
+      t3 = TupleSpace::AgentTuple.new(agent_type: :task_worker, uuid: Util::UUID.generate)
       @server.write(t3)
       @server.current_task_worker_size.should == 3
       @server.take(t1)

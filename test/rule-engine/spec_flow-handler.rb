@@ -23,8 +23,8 @@ describe 'Pione::RuleHandler::FlowRule' do
       @rule_name = "Test"
       param_set = Lang::ParameterSet.new(table: {"*" => Lang::StringSequence.of("1")})
 
-      tuple_a = Tuple[:data].new(name: '1.a', location: location_a, time: Time.now)
-      tuple_b = Tuple[:data].new(name: '1.b', location: location_b, time: Time.now)
+      tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, time: Time.now)
+      tuple_b = TupleSpace::DataTuple.new(name: '1.b', location: location_b, time: Time.now)
       inputs = [tuple_a, tuple_b]
 
       domain_id = Util::DomainID.generate(@package_id, @rule_name, inputs, param_set)
@@ -56,7 +56,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       thread = Thread.new { Thread.current[:outputs] = @handler.execute }
 
       # check tasks in space
-      task = read(Tuple[:task].new)
+      task = read(TupleSpace::TaskTuple.new)
       task.package_id.should == @package_id
       task.rule_name.should == "Shell"
       task.inputs.flatten.map{|d| d.name}.sort.should == ['1.a', '1.b']
@@ -71,7 +71,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       outputs.size.should == 1
       outputs[0][0].name.should == '1.c'
       should.not.raise do
-        read(Tuple[:data].new(name: '1.c', domain: @handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: '1.c', domain: @handler.domain_id))
       end
     end
   end
@@ -112,7 +112,7 @@ describe 'Pione::RuleHandler::FlowRule' do
 
       # check tasks in space
       sleep 1
-      tasks = read_all(Tuple[:task].new)
+      tasks = read_all(TupleSpace::TaskTuple.new)
       tasks.size.should == 1
 
       # make task worker and wait
@@ -123,7 +123,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       outputs.size.should == 1
       outputs[0][0].name.should == 'message.txt'
       should.not.raise do
-        read(Tuple[:data].new(name: 'message.txt', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: 'message.txt', domain: handler.domain_id))
       end
     end
   end
@@ -178,7 +178,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
 
       # check tasks in space
-      task = read(Tuple[:task].new)
+      task = read(TupleSpace::TaskTuple.new)
       task.package_id.should == @env.current_package_id
       task.rule_name.should == "A"
       task.inputs.should == []
@@ -191,7 +191,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       outputs.size.should == 1
       outputs[0][0].name.should == 'a.o'
       should.not.raise do
-        read(Tuple[:data].new(name: 'a.o', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: 'a.o', domain: handler.domain_id))
       end
     end
   end
@@ -240,7 +240,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
 
       # check tasks in space
-      task = read(Tuple[:task].new)
+      task = read(TupleSpace::TaskTuple.new)
       task.package_id.should == "Child"
       task.rule_name.should == "R2"
       task.inputs.should == []
@@ -254,7 +254,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       outputs[0][0].name.should == 'child-message.txt'
       # outputs[0][0].location.read.should == "child"
       should.not.raise do
-        read(Tuple[:data].new(name: 'child-message.txt', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: 'child-message.txt', domain: handler.domain_id))
       end
     end
   end
@@ -297,7 +297,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
 
       # check tasks in space
-      task = read(Tuple[:task].new)
+      task = read(TupleSpace::TaskTuple.new)
       task.package_id.should == "Concrete"
       task.rule_name.should == "R2"
       task.inputs.should == []
@@ -311,7 +311,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       outputs[0][0].name.should == 'message.txt'
       # outputs[0][0].location.read.should == "child"
       should.not.raise do
-        read(Tuple[:data].new(name: 'message.txt', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: 'message.txt', domain: handler.domain_id))
       end
     end
   end
@@ -348,9 +348,9 @@ describe 'Pione::RuleHandler::FlowRule' do
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
 
       # check tasks in space
-      read(Tuple[:task].new)
+      read(TupleSpace::TaskTuple.new)
       sleep 1
-      tasks = read_all(Tuple[:task].new)
+      tasks = read_all(TupleSpace::TaskTuple.new)
 
       # make task worker and wait
       task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)
@@ -360,9 +360,9 @@ describe 'Pione::RuleHandler::FlowRule' do
       outputs.size.should == 1
       outputs[0].map{|t| t.name}.sort.should == ['1.o', '2.o', '3.o']
       should.not.raise do
-        read(Tuple[:data].new(name: '1.o', domain: handler.domain_id))
-        read(Tuple[:data].new(name: '2.o', domain: handler.domain_id))
-        read(Tuple[:data].new(name: '3.o', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: '1.o', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: '2.o', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: '3.o', domain: handler.domain_id))
       end
     end
   end
@@ -403,7 +403,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
 
       # check tasks in space
-      read(Tuple[:task].new)
+      read(TupleSpace::TaskTuple.new)
 
       # make task worker and wait
       task_worker = Agent::TaskWorker.start(@space, Lang::FeatureSequence.new, @env)

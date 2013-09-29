@@ -31,8 +31,8 @@ describe "Pione::Agent::Logger" do
   end
 
   it "should log messages" do
-    write(Tuple[:process_log].new(@msg1))
-    write(Tuple[:process_log].new(@msg2))
+    write(TupleSpace::ProcessLogTuple.new(@msg1))
+    write(TupleSpace::ProcessLogTuple.new(@msg2))
     sleep 1 # wait to write out tuples
     @logger.terminate
     @logger.wait_until_terminated
@@ -44,19 +44,19 @@ describe "Pione::Agent::Logger" do
 
   it "should terminate logging by terminate message" do
     # terminate
-    write(Tuple[:process_log].new(@msg1))
+    write(TupleSpace::ProcessLogTuple.new(@msg1))
     sleep 1 # wait to write out the tuple
     @logger.terminate
     @logger.wait_until_terminated
     # write a message after logger was terminated
-    write(Tuple[:process_log].new(@msg2))
+    write(TupleSpace::ProcessLogTuple.new(@msg2))
     SpecLogger::TestLog.read(@location).values.first.records.map{|record| record.uuid}.tap do |records|
       records.should.include(@msg1.uuid)
     end
   end
 
   it "should write all records when the logger terminates" do
-    1000.times {write(Tuple[:process_log].new(@msg1))}
+    1000.times {write(TupleSpace::ProcessLogTuple.new(@msg1))}
     sleep 2
     @logger.terminate
     @logger.wait_until_terminated

@@ -5,7 +5,7 @@ class FakeHandler < RuleEngine::BasicHandler
 
   def initialize
     @param_set = Lang::ParameterSet.new(Lang::Variable.new("X") => Lang::StringSequence.of("a"))
-    @inputs = [[Tuple::DataTuple.new(name: "A", domain: DOMAIN_LOCATION.to_s, location: DOMAIN_LOCATION + "A", time: Time.now)]]
+    @inputs = [[TupleSpace::DataTuple.new(name: "A", domain: DOMAIN_LOCATION.to_s, location: DOMAIN_LOCATION + "A", time: Time.now)]]
   end
 
   def domain_location

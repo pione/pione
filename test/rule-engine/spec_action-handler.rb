@@ -28,8 +28,8 @@ describe 'Pione::RuleHandler::ActionHandler' do
           .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.c"))
       })
 
-    tuple_a = Tuple[:data].new(name: '1.a', location: location_a, time: Time.now)
-    tuple_b = Tuple[:data].new(name: '1.b', location: location_b, time: Time.now)
+    tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, time: Time.now)
+    tuple_b = TupleSpace::DataTuple.new(name: '1.b', location: location_b, time: Time.now)
     inputs = [tuple_a, tuple_b]
 
     domain_id = Util::DomainID.generate(package_id, @rule_name, inputs, param_set)
@@ -88,7 +88,7 @@ describe 'Pione::RuleHandler::ActionHandler' do
       outputs[0][0].name.should == '1.c'
       outputs[0][0].location.read.chomp.should == "3"
       should.not.raise do
-        read(Tuple[:data].new(name: '1.c', domain: handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: '1.c', domain: handler.domain_id))
       end
     end
   end

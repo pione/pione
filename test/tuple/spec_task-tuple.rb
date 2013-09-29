@@ -1,10 +1,10 @@
 require 'pione/test-helper'
 require_relative 'tuple-behavior'
 
-describe 'Pione::Tuple::TaskTuple' do
+describe 'Pione::TupleSpace::TaskTuple' do
   before do
     domain = "A"
-    data = Tuple[:data].new(domain, "a.txt", Location["local:/home/keita/"], Time.now)
+    data = TupleSpace::DataTuple.new(domain, "a.txt", Location["local:/home/keita/"], Time.now)
 
     @digest = "digest"
     @package_id = "Main"
@@ -16,7 +16,7 @@ describe 'Pione::Tuple::TaskTuple' do
     @caller_id = "caller"
 
     args = [@digest, @package_id, @rule_name, @inputs, @params, @features, @domain, @caller_id]
-    @tuple = Tuple::TaskTuple.new(*args)
+    @tuple = TupleSpace::TaskTuple.new(*args)
   end
 
   behaves_like "tuple"

@@ -51,7 +51,7 @@ module Pione
 
       # Build a record string for inputs.
       #
-      # @param inputs [Array<Tuple::DataTuple>]
+      # @param inputs [Array<TupleSpace::DataTuple>]
       #   input tuples
       # @return [String]
       #   a record string
@@ -67,7 +67,7 @@ module Pione
 
       # Build a data tuple string.
       #
-      # @param input [Tuple::DataTuple]
+      # @param input [TupleSpace::DataTuple]
       #   data tuple
       # @param i [Integer]
       #   index number

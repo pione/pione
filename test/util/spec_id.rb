@@ -4,8 +4,8 @@ location = Location[File.dirname(__FILE__)] + "spec_id.pione"
 
 describe "Pione::Util::TaskID" do
   before do
-    @t1 = Tuple[:data].new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
-    @t2 = Tuple[:data].new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
+    @t1 = TupleSpace::DataTuple.new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
+    @t2 = TupleSpace::DataTuple.new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
     @p1 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("A")})
     @p2 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("B")})
   end
@@ -32,8 +32,8 @@ describe "Pione::Util::DomainID" do
     @pid2 = Util::PackageID.generate(@env, "B")
     @name1 = "R1"
     @name2 = "R2"
-    @t1 = Tuple[:data].new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
-    @t2 = Tuple[:data].new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
+    @t1 = TupleSpace::DataTuple.new(domain: "test", name: "1.a", location: Location[Temppath.create], time: Time.now)
+    @t2 = TupleSpace::DataTuple.new(domain: "test", name: "2.a", location: Location[Temppath.create], time: Time.now)
     @p0 = Lang::ParameterSet.new
     @p1 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("A")})
     @p2 = Lang::ParameterSet.new(table: {"X" => Lang::StringSequence.of("B")})

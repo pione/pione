@@ -15,7 +15,7 @@ tuple = {}
 ['a', 'b', 'c'].map do |ext|
   10.times do |i|
     name = 't%d.%s' % [i, ext]
-    tuple[name] = Tuple[:data].new('test', name, nil, time[i])
+    tuple[name] = TupleSpace::DataTuple.new('test', name, nil, time[i])
   end
 end
 
@@ -41,7 +41,7 @@ describe 'RuleHandler::UpdateCriteria' do
             output.kind_of?(Array) ? output.map {|i| tuple[i]} : [tuple[output]]
           end
           data_null_tuples = (testcase["data_null_tuples"] || []).map do |pos|
-            Tuple::DataNullTuple.new(position: pos-1)
+            TupleSpace::DataNullTuple.new(position: pos-1)
           end
 
           testcase["criteria"].each do |criterion, truth|

@@ -174,7 +174,7 @@ module Pione
       #
       # @api private
       def message(type, head, color, msg, level=0)
-        write(Tuple[:message].new(type: type, head: head, color: color, contents: msg, level: level))
+        write(TupleSpace::MessageTuple.new(type: type, head: head, color: color, contents: msg, level: level))
       rescue NoMethodError
         MESSAGE_QUEUE.push "%s%s %s" % ["  "*level, ("%5s" % head).color(color), msg]
       end

@@ -133,7 +133,7 @@ module Pione
       def make_output_tuple_with_time(name)
         time = (@working_directory + name).mtime
         location = make_output_location(name)
-        Tuple[:data].new(name: name, domain: @domain_id, location: location, time: time)
+        TupleSpace::DataTuple.new(name: name, domain: @domain_id, location: location, time: time)
       end
 
       # Collect output data by names from working directory.

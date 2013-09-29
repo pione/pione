@@ -16,7 +16,7 @@ describe "Pione::Agent::Messenger" do
   end
 
   it "should take messages" do
-    write(Tuple[:message].new(type: "test", head: "test", color: :green, contents: "test", level: 0))
+    write(TupleSpace::MessageTuple.new(type: "test", head: "test", color: :green, contents: "test", level: 0))
     @messenger.start
     sleep 1
     @messenger.msgs.size.should == 1

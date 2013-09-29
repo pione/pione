@@ -19,7 +19,7 @@ module Pione
 
       # Transits to the state +print+.
       def transit_to_print
-        tuples = take_all(Tuple[:message].any)
+        tuples = take_all(TupleSpace::MessageTuple.any)
         tuples.sort{|a,b| a.timestamp <=> b.timestamp}.each do |tuple|
           msgs = tuple.contents
           msgs = [msgs] if tuple.contents.kind_of?(String)

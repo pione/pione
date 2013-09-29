@@ -26,7 +26,7 @@ module Pione
       #
 
       def transit_to_wait
-        read(Tuple[:command].new(name: "terminate"))
+        read(TupleSpace::CommandTuple.new(name: "terminate"))
       end
 
       def transit_to_fire

@@ -11,13 +11,13 @@ module Pione
 
       # Send a hello message to the tuple space server.
       def hello
-        write(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
+        write(TupleSpace::AgentTuple.new(agent_type: agent_type, uuid: uuid))
       end
 
       # Send a bye message to the tuple space server.
       def bye
         Util.ignore_exception do
-          take!(Tuple[:agent].new(agent_type: agent_type, uuid: uuid))
+          take!(TupleSpace::AgentTuple.new(agent_type: agent_type, uuid: uuid))
         end
       end
 
@@ -25,12 +25,12 @@ module Pione
       def notify_exception(e)
         # ignore exception because the exception caused tuple server is down...
         Util.ignore_exception do
-          write(Tuple[:exception].new(uuid, agent_type, e))
+          write(TupleSpace::ExceptionTuple.new(uuid, agent_type, e))
         end
       end
 
       def base_location
-        read(Tuple[:base_location].any).location
+        read(TupleSpace::BaseLocationTuple.any).location
       end
 
       # Protected take.

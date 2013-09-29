@@ -55,7 +55,7 @@ module Pione
 
       # Find all matched data tuples by the rule expression condition from tuple space.
       def find_tuples_by_condition(condition)
-        return read_all(Tuple[:data].new(name: condition, domain: @domain_id))
+        return read_all(TupleSpace::DataTuple.new(name: condition, domain: @domain_id))
       end
 
       # Make input/output variables by data expression with all distribution.

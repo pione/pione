@@ -1,43 +1,21 @@
 module Pione
-  module Tuple
+  module TupleSpace
     # tuple type table
     # @api private
-    TABLE = Hash.new
+    TUPLE = Hash.new
 
-    # FormatError is raised when tuple format is invalid.
-    class FormatError < StandardError
-      # Creates an error.
-      # @param [Array<Object>] invalid_data
-      #   invalid data
-      # @param [Symbol] identifier
-      #   tuple identifier
-      def initialize(invalid_data, identifier=nil)
-        @invalid_data = invalid_data
-        @identifier = identifier
-      end
-
-      # Returns a message of this error.
-      # @return [String]
-      #   message string with invalid data and tuple identifier
-      # @api private
-      def message
-        msg = "Format error found in %s tuple: %s" % [@identifier, @invalid_data.inspect]
-        return msg
-      end
-    end
-
-    # Type represents tuple's field data type. Type has simple and complex form,
+    # TupleType represents tuple's field data type. TupleType has simple and complex form,
     # the latter is consisted by types or-relation. The method +===+ is used by
     # matching field data and type.
     # @example
     #   # create simple type
-    #   simple_type = Type.new(String)
+    #   simple_type = TupleType.new(String)
     #   simple_type === "abc" #=> true
     #   # create complex type
-    #   complex_type = Type.new(String, Symbol)
+    #   complex_type = TupleType.new(String, Symbol)
     #   complex_type === "abc" #=> true
     #   complex_type === :abc  #=> true
-    class Type < PioneObject
+    class TupleType < PioneObject
       class << self
         alias :or :new
       end
@@ -83,29 +61,29 @@ module Pione
         # check arguments: format is a list of symbols
         format.each do |name, _|
           unless Symbol === name
-            raise FormatError.new(name, identifier)
+            raise TupleFormatError.new(name, identifier)
           end
         end
 
         # forbid to define same identifier and different format
-        if TABLE.has_key?(identifier)
-          if not(TABLE[identifier].format == format)
-            raise FormatError.new(format, identifier)
+        if TUPLE.has_key?(identifier)
+          if not(TUPLE[identifier].format == format)
+            raise TupleFormatError.new(format, identifier)
           else
-            return TABLE[identifier]
+            return TUPLE[identifier]
           end
         end
 
         # make a class and set it in a table
-        TABLE[identifier] = self
+        TUPLE[identifier] = self
       end
 
       # Deletes a tuple format definition.
       # @return [void]
       def delete_format(identifier)
-        if TABLE.has_key?(identifier)
-          name = TABLE[identifier].name.split('::').last
-          TABLE.delete(identifier)
+        if TUPLE.has_key?(identifier)
+          name = TUPLE[identifier].name.split('::').last
+          TUPLE.delete(identifier)
           remove_const(name)
         end
       end
@@ -196,12 +174,12 @@ module Pione
           _data.keys.each do |key|
             # key check
             unless format_keys.include?(key)
-              raise FormatError.new(key, format.first)
+              raise TupleFormatError.new(key, format.first)
             end
             # type check
             if _data[key] && not(format_table[key].nil?)
               unless format_table[key] === _data[key]
-                raise FormatError.new(_data[key], format.first)
+                raise TupleFormatError.new(_data[key], format.first)
               end
             end
           end
@@ -209,14 +187,14 @@ module Pione
         else
           # length check
           unless data.size == format.size - 1
-            raise FormatError.new(data, format.first)
+            raise TupleFormatError.new(data, format.first)
           end
           # type check
           data.each_with_index do |key, i|
             if format[i+1].kind_of?(Array)
               # type specified
               unless format[i+1][1] === data[i] or data[i].nil?
-                raise FormatError.new(data[i], format.first)
+                raise TupleFormatError.new(data[i], format.first)
               end
             end
           end
@@ -291,27 +269,27 @@ module Pione
       # @return [Class]
       #   tuple class
       def [](identifier)
-        TABLE[identifier]
+        TUPLE[identifier]
       end
 
       # Returns identifiers.
       # @return [Array<Symbol>]
       #   all tuple identifiers in PIONE system.
       def identifiers
-        TABLE.keys
+        TUPLE.keys
       end
 
       # Return a tuple data object converted from an array.
       # @return [TupleObject]
       #   tuple object
       def from_array(ary)
-        raise FormatError.new(ary) unless ary.size > 0
-        raise FormatError.new(ary) unless ary.kind_of?(Enumerable)
+        raise TupleFormatError.new(ary) unless ary.size > 0
+        raise TupleFormatError.new(ary) unless ary.kind_of?(Enumerable)
         _ary = ary.to_a
         identifier = _ary.first
-        raise FormatError.new(identifier) unless TABLE.has_key?(identifier)
+        raise TupleFormatError.new(identifier) unless TUPLE.has_key?(identifier)
         args = _ary[1..-1]
-        TABLE[identifier].new(*args)
+        TUPLE[identifier].new(*args)
       end
     end
 

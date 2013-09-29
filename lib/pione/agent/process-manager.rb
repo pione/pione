@@ -41,11 +41,11 @@ module Pione
         @rule_condition = definition.rule_condition_context.eval(@env)
 
         # share my environment
-        write(Tuple[:env].new(@env.dumpable)) # need to be dumpable
+        write(TupleSpace::EnvTuple.new(@env.dumpable)) # need to be dumpable
       end
 
       def transit_to_sleep
-        take(Tuple[:command].new("start-root-rule", nil))
+        take(TupleSpace::CommandTuple.new("start-root-rule", nil))
       end
 
       def transit_to_run

@@ -24,11 +24,11 @@ describe 'Pione::Agent::TupleSpaceClient' do
   it 'should say "hello"' do
     agent = TestTupleSpaceClient.start(@space)
     agent.wait_until(:sleep)
-    t1 = read!(Tuple[:agent].new(agent_type: :test_tuple_space_client))
+    t1 = read!(TupleSpace::AgentTuple.new(agent_type: :test_tuple_space_client))
     t1.should.not.nil
     t1.uuid.should == agent.uuid
     agent.terminate
-    t2 = read!(Tuple[:agent].new(agent_type: :test_tuple_space_client))
+    t2 = read!(TupleSpace::AgentTuple.new(agent_type: :test_tuple_space_client))
     t2.should.nil
   end
 end

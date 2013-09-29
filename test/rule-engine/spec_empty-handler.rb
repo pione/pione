@@ -38,7 +38,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
         })
 
       domain_id = Util::DomainID.generate(package_id, 'TestTouch', [['1.a']], param_set)
-      @tuple_a = Tuple[:data].new(name: '1.a', location: location_a, domain: domain_id, time: Time.now)
+      @tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, domain: domain_id, time: Time.now)
       @inputs = [@tuple_a]
 
       write(@tuple_a)
@@ -62,7 +62,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
       outputs[0][0].location.read.should == ""
       # check existance of data tuple
       should.not.raise do
-        read(Tuple[:data].new(name: '1.b', domain: @handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: '1.b', domain: @handler.domain_id))
       end
     end
   end
@@ -89,8 +89,8 @@ describe 'Pione::RuleHandler::EmptyHandler' do
         })
 
       domain_id = Util::DomainID.generate(package_id, 'TestTouch', [['1.a']], param_set)
-      @tuple_a = Tuple[:data].new(name: '1.a', location: location_a, domain: domain_id, time: Time.now)
-      @tuple_b = Tuple[:data].new(name: '1.b', location: location_b, domain: domain_id, time: Time.now)
+      @tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, domain: domain_id, time: Time.now)
+      @tuple_b = TupleSpace::DataTuple.new(name: '1.b', location: location_b, domain: domain_id, time: Time.now)
       @inputs = [@tuple_a]
 
       write(@tuple_a)
@@ -114,7 +114,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
       outputs[0][0].location.read.should == "2"
       outputs[0][0].time.should > @tuple_b.time
       should.not.raise do
-        read(Tuple[:data].new(name: '1.b', domain: @handler.domain_id))
+        read(TupleSpace::DataTuple.new(name: '1.b', domain: @handler.domain_id))
       end
     end
   end
@@ -141,8 +141,8 @@ describe 'Pione::RuleHandler::EmptyHandler' do
         })
 
       domain_id = Util::DomainID.generate(package_id, 'TestRemove', [['1.a']], param_set)
-      @tuple_a = Tuple[:data].new(name: '1.a', location: location_a, domain: domain_id, time: Time.now)
-      @tuple_b = Tuple[:data].new(name: '1.b', location: location_b, domain: domain_id, time: Time.now)
+      @tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, domain: domain_id, time: Time.now)
+      @tuple_b = TupleSpace::DataTuple.new(name: '1.b', location: location_b, domain: domain_id, time: Time.now)
       @inputs = [@tuple_a]
 
       write(@tuple_a)
@@ -160,10 +160,10 @@ describe 'Pione::RuleHandler::EmptyHandler' do
     end
 
     it 'should remove tuple' do
-      read!(Tuple[:data].new(name: '1.b', domain: @handler.domain_id)).should.not.nil
+      read!(TupleSpace::DataTuple.new(name: '1.b', domain: @handler.domain_id)).should.not.nil
       should.not.raise { @handler.handle }
       # FIXME: remove operation dones't remove data tuple now, but it should remove
-      #read!(Tuple[:data].new(name: '1.b', domain: @handler.domain_id)).should.nil
+      #read!(TupleSpace::DataTuple.new(name: '1.b', domain: @handler.domain_id)).should.nil
     end
   end
 end

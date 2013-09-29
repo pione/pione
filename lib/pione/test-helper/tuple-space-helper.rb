@@ -8,7 +8,7 @@ module Pione
 
         # base location
         base_location = Pione::Location[Temppath.create]
-        tuple_space.write(Pione::Tuple[:base_location].new(base_location))
+        tuple_space.write(Pione::TupleSpace::BaseLocationTuple.new(base_location))
 
         context.set_tuple_space(tuple_space) if context
 
@@ -17,7 +17,7 @@ module Pione
 
       # Check exceptions in tuple space.
       def self.check_exceptions(tuple_space)
-        exceptions = tuple_space.read_all(Pione::Tuple[:exception].any)
+        exceptions = tuple_space.read_all(Pione::TupleSpace::ExceptionTuple.any)
         exceptions.each do |tuple|
           e = tuple.value
           Bacon::ErrorLog << "#{e.class}: #{e.message}\n"

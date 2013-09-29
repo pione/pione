@@ -81,7 +81,7 @@ describe 'Pione::Agent::TaskWorker' do
       @tuple_space = TestHelper::TupleSpace.create(self)
 
       # make a data
-      data = Tuple[:data].new(name: "a", location: Location[Temppath.create].create("abc"))
+      data = TupleSpace::DataTuple.new(name: "a", location: Location[Temppath.create].create("abc"))
 
       # make a rule
       @env = Lang::Environment.new.setup_new_package("TaskWorker")
@@ -143,10 +143,10 @@ describe 'Pione::Agent::TaskWorker' do
       @worker1.wait_until_before(:take_task)
 
       # check finished tuple
-      finished = read(Tuple[:finished].any)
+      finished = read(TupleSpace::FinishedTuple.any)
 
       # check result data
-      data = read(Tuple[:data].new(name: "b", domain: @task.domain_id))
+      data = read(TupleSpace::DataTuple.new(name: "b", domain: @task.domain_id))
       data.location.read.should == "input: abc"
     end
   end

@@ -77,7 +77,7 @@ module Pione
       # @return [void]
       def process_log(record)
         record = record.merge(transition: "complete") unless record.transition
-        write(Tuple[:process_log].new(record))
+        write(TupleSpace::ProcessLogTuple.new(record))
       end
 
       # Do the action with loggging.
@@ -102,7 +102,7 @@ module Pione
       #   error message
       # @return [void]
       def processing_error(msg)
-        write(Tuple[:command].new(name: "terminate", args: {message: msg}))
+        write(TupleSpace::CommandTuple.new(name: "terminate", args: {message: msg}))
       end
 
       # Set tuple space server which provides operations.

@@ -37,8 +37,8 @@ module Pione
         @outputs = []
         @param_set = param_set
         @digest = Util::TaskDigest.generate(package_id, rule_name, inputs, param_set)
-        @base_location = read!(Tuple[:base_location].any).location
-        @dry_run = begin read!(Tuple[:dry_run].any).availability rescue false end
+        @base_location = read!(TupleSpace::BaseLocationTuple.any).location
+        @dry_run = begin read!(TupleSpace::DryRunTuple.any).availability rescue false end
         @domain_id = domain_id
         @domain_location = make_location("", @domain_id)
         @caller_id = caller_id
@@ -67,9 +67,9 @@ module Pione
         # publish outputs and finished
         begin
           outputs.flatten.compact.each {|output| write(output)}
-          write(Tuple[:finished].new(@domain_id, :succeeded, outputs))
+          write(TupleSpace::FinishedTuple.new(@domain_id, :succeeded, outputs))
         rescue Rinda::RedundantTupleError
-          write(Tuple[:finished].new(@domain_id, :error, outputs))
+          write(TupleSpace::FinishedTuple.new(@domain_id, :error, outputs))
         end
 
         # show end message
@@ -120,7 +120,7 @@ module Pione
       def make_output_tuple(data_expr)
         name = data_expr.first.name
         location = make_output_location(name)
-        Tuple[:data].new(name: name, domain: @domain_id, location: location, time: nil)
+        TupleSpace::DataTuple.new(name: name, domain: @domain_id, location: location, time: nil)
       end
 
       # Setup handler's environment. We make a new environment that is
@@ -144,7 +144,7 @@ module Pione
       #
       # @return [void]
       def find_outputs_from_space
-        tuples = read_all(Tuple[:data].new(domain: @domain_id))
+        tuples = read_all(TupleSpace::DataTuple.new(domain: @domain_id))
         outputs = []
 
         @rule_condition.outputs.each_with_index do |condition, i|
@@ -189,9 +189,9 @@ module Pione
         location.create("") unless location.exist?
         # FIXME: write a touch tuple
         time = Time.now
-        write(Tuple[:touch].new(name: name, domain: @domain_id, time: time))
+        write(TupleSpace::TouchTuple.new(name: name, domain: @domain_id, time: time))
         # FIXME: create an output data tuple
-        data_tuple = Tuple[:data].new(name: name, domain: @domain_id, location: location, time: time)
+        data_tuple = TupleSpace::DataTuple.new(name: name, domain: @domain_id, location: location, time: time)
         write(data_tuple)
         [data_tuple]
       end
@@ -199,20 +199,20 @@ module Pione
       def update_time_by_touch_operation(tuples)
         fun = lambda do |tuple|
           time = Time.now
-          new_data = Tuple[:data].new(name: tuple.name, domain: @domain_id, location: tuple.location, time: time)
-          write(Tuple[:touch].new(name: tuple.name, domain: @domain_id, time: time))
+          new_data = TupleSpace::DataTuple.new(name: tuple.name, domain: @domain_id, location: tuple.location, time: time)
+          write(TupleSpace::TouchTuple.new(name: tuple.name, domain: @domain_id, time: time))
           write(new_data)
           new_data
         end
         tuples.map do |tuple|
-          take!(Tuple[:data].new(name: tuple.name, domain: @domain_id)) ? fun.call(tuple) : tuple
+          take!(TupleSpace::DataTuple.new(name: tuple.name, domain: @domain_id)) ? fun.call(tuple) : tuple
         end
       end
 
       # Write a data null tuple if the output condition accepts nonexistence.
       def write_data_null(output, tuples, i)
         if output.accept_nonexistence? and tuples.nil?
-          write(Tuple::DataNullTuple.new(domain: @domain_id, position: i))
+          write(TupleSpace::DataNullTuple.new(domain: @domain_id, position: i))
         end
       end
 

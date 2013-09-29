@@ -90,7 +90,7 @@ module Pione
       # means the input generation was completed.
       def transit_to_stop_iteration(e)
         if not(@inputs.empty?) or not(@generator.stream?)
-          write(Tuple[:command].new("start-root-rule", nil))
+          write(TupleSpace::CommandTuple.new("start-root-rule", nil))
         end
       end
 
@@ -155,7 +155,7 @@ module Pione
         location = @enum.next
         if new_file?(location.basename, location.mtime)
           @table[location.basename] = location.mtime
-          return Tuple[:data].new(InputGenerator::DOMAIN, location.basename, location, location.mtime)
+          return TupleSpace::DataTuple.new(InputGenerator::DOMAIN, location.basename, location, location.mtime)
         end
       end
 

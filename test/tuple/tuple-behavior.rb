@@ -1,6 +1,6 @@
 shared "tuple" do
   it 'should get the identifier' do
-    Tuple.identifiers.should.include(@tuple.identifier)
+    TupleSpace.identifiers.should.include(@tuple.identifier)
   end
 
   it 'should get records' do

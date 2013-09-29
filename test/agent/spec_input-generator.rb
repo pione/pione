@@ -5,7 +5,7 @@ describe "Pione::Agent::InputGenerator" do
     @orig = Global.input_generator_stream_check_timespan
     @tuple_space = TestHelper::TupleSpace.create(self)
     Global.input_generator_stream_check_timespan = 0.1
-    @base_location = read!(Pione::Tuple[:base_location].new).location
+    @base_location = read!(Pione::TupleSpace::BaseLocationTuple.new).location
   end
 
   after do
@@ -34,10 +34,16 @@ describe "Pione::Agent::InputGenerator" do
         generator.terminate
 
         # check data
-        count_tuple(Tuple[:data].any).should == 3
-        read!(Tuple[:data].new(name: "1.a", location: @base_location + "input" + "1.a", domain: "root")).location.read.should == "11"
-        read!(Tuple[:data].new(name: "2.b", location: @base_location + "input" + "2.b", domain: "root")).location.read.should == "22"
-        read!(Tuple[:data].new(name: "3.c", location: @base_location + "input" + "3.c", domain: "root")).location.read.should == "33"
+        count_tuple(TupleSpace::DataTuple.any).should == 3
+        read!(TupleSpace::DataTuple.new(
+            name: "1.a", location: @base_location + "input" + "1.a", domain: "root"
+        )).location.read.should == "11"
+        read!(TupleSpace::DataTuple.new(
+            name: "2.b", location: @base_location + "input" + "2.b", domain: "root"
+        )).location.read.should == "22"
+        read!(TupleSpace::DataTuple.new(
+            name: "3.c", location: @base_location + "input" + "3.c", domain: "root"
+        )).location.read.should == "33"
       end
     end
   end
@@ -79,7 +85,7 @@ describe "Pione::Agent::InputGenerator" do
         TestHelper::TupleSpace.check_exceptions(@tuple_space)
 
         # check data
-        count_tuple(Tuple[:data].any).should == 3
+        count_tuple(TupleSpace::DataTuple.any).should == 3
 
         ## an addtional input
         # create additional files
@@ -91,7 +97,7 @@ describe "Pione::Agent::InputGenerator" do
         TestHelper::TupleSpace.check_exceptions(@tuple_space)
 
         # check data
-        count_tuple(Tuple[:data].any).should == 4
+        count_tuple(TupleSpace::DataTuple.any).should == 4
 
         # create additional files
         (dir + "5.e").create("55")
@@ -104,12 +110,22 @@ describe "Pione::Agent::InputGenerator" do
         generator.terminate
 
         # check data
-        count_tuple(Tuple[:data].any).should == 5
-        read!(Tuple[:data].new(name: "1.a", location: @base_location + "input" + "1.a", domain: "root")).location.read.should == "11"
-        read!(Tuple[:data].new(name: "2.b", location: @base_location + "input" + "2.b", domain: "root")).location.read.should == "22"
-        read!(Tuple[:data].new(name: "3.c", location: @base_location + "input" + "3.c", domain: "root")).location.read.should == "33"
-        read!(Tuple[:data].new(name: "4.d", location: @base_location + "input" + "4.d", domain: "root")).location.read.should == "44"
-        read!(Tuple[:data].new(name: "5.e", location: @base_location + "input" + "5.e", domain: "root")).location.read.should == "55"
+        count_tuple(TupleSpace::DataTuple.any).should == 5
+        read!(TupleSpace::DataTuple.new(
+            name: "1.a", location: @base_location + "input" + "1.a", domain: "root"
+        )).location.read.should == "11"
+        read!(TupleSpace::DataTuple.new(
+            name: "2.b", location: @base_location + "input" + "2.b", domain: "root"
+        )).location.read.should == "22"
+        read!(TupleSpace::DataTuple.new(
+            name: "3.c", location: @base_location + "input" + "3.c", domain: "root"
+        )).location.read.should == "33"
+        read!(TupleSpace::DataTuple.new(
+            name: "4.d", location: @base_location + "input" + "4.d", domain: "root"
+        )).location.read.should == "44"
+        read!(TupleSpace::DataTuple.new(
+            name: "5.e", location: @base_location + "input" + "5.e", domain: "root"
+        )).location.read.should == "55"
       end
     end
   end

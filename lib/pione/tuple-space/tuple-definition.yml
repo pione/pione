@@ -42,7 +42,7 @@ DataTuple:
   - domain:   # target domain
       String
   - name:     # data name
-      "Type.or(String, Pione::Lang::DataExprSequence)"
+      "TupleType.or(String, Pione::Lang::DataExprSequence)"
   - location: # data location
       "Pione::Location::BasicLocation"
   - time:     # data created time
@@ -98,7 +98,7 @@ MessageTuple:
   - level
   - contents
 
-PorcessInfoTuple:
+ProcessInfoTuple:
   - process_info
   - name       # process name
   - process_id # process id

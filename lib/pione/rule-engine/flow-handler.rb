@@ -32,7 +32,7 @@ module Pione
           @domain_location.file_entries.each do |file|
             # ignore dot files
             unless file.basename[0] == "."
-              write(Tuple[:data].new(@domain_id, file.basename, file, file.mtime))
+              write(TupleSpace::DataTuple.new(@domain_id, file.basename, file, file.mtime))
             end
           end
         end
@@ -56,7 +56,7 @@ module Pione
               # sync cache if the old is cached in this machine
               System::FileCache.sync(old_location, new_location)
               # write lift tuple
-              write(Tuple[:lift].new(old_location, new_location))
+              write(TupleSpace::LiftTuple.new(old_location, new_location))
               # push history
               lifted << old_location
             end
@@ -84,7 +84,7 @@ module Pione
       #   domain of the finished tuple
       # @return [void]
       def remove_finished_tuple(domain)
-        take!(Tuple[:finished].new(domain: domain))
+        take!(TupleSpace::FinishedTuple.new(domain: domain))
       end
 
       # Copy the data tuple with the specified domain and return the tuple list.
@@ -104,11 +104,11 @@ module Pione
 
       # Remove the data from the domain.
       def remove_data_from_domain(data, domain)
-        take!(Tuple[:data].new(name: data.name, domain: domain))
+        take!(TupleSpace::DataTuple.new(name: data.name, domain: domain))
       end
 
       def touch_data_in_domain(data, domain)
-        if target = read!(Tuple[:data].new(name: data.name, domain: domain))
+        if target = read!(TupleSpace::DataTuple.new(name: data.name, domain: domain))
           data = target
         end
         new_data = data.clone.tap {|x| x.domain = domain; x.time = Time.now}
@@ -131,7 +131,7 @@ module Pione
         features = rule_condition.features.inject(Lang::FeatureSequence.new) do |f, expr|
           f + f.eval(env)
         end
-        Tuple[:task].new(
+        TupleSpace::TaskTuple.new(
           digest,
           rule.package_id,
           rule.name,
@@ -205,7 +205,7 @@ module Pione
         # select rules which ticktes exist in this domain
         rules.select do |rule|
           rule.input_tickets.pieces.all? do |ticket|
-            read!(Tuple[:ticket].new(domain_id, ticket.name))
+            read!(TupleSpace::TicketTuple.new(domain_id, ticket.name))
           end
         end
       end
@@ -304,7 +304,7 @@ module Pione
       # Check updatability of the task and get update order.
       def check_updatability(task)
         # read all tuples of data-null
-        data_null_tuples = read_all(Tuple::DataNullTuple.new(domain: task.domain_id))
+        data_null_tuples = read_all(TupleSpace::DataNullTuple.new(domain: task.domain_id))
 
         res = []
 
@@ -378,8 +378,8 @@ module Pione
             distributed << task
 
             # clear finished tuple and data tuples from the domain
-            take!(Tuple[:finished].new(domain: task.domain_id))
-            take_all!(Tuple[:data].new(domain: task.domain_id))
+            take!(TupleSpace::FinishedTuple.new(domain: task.domain_id))
+            take_all!(TupleSpace::DataTuple.new(domain: task.domain_id))
 
             # copy input data from this domain to the task domain
             task.inputs.flatten.each {|input| copy_data_into_domain(input, task.domain_id)}
@@ -400,8 +400,8 @@ module Pione
         wait_task_completion(distributed, canceled)
 
         # turn foreground if the task is background
-        unless read!(Tuple[:foreground].new(domain_id, digest))
-          write(Tuple[:foreground].new(domain_id, digest))
+        unless read!(TupleSpace::ForegroundTuple.new(domain_id, digest))
+          write(TupleSpace::ForegroundTuple.new(domain_id, digest))
         end
 
         # log and message
@@ -414,7 +414,7 @@ module Pione
       def need_to_publish_task?(task, tuple)
         # reuse task finished result if order is weak update
         if task.order == :weak
-          if read!(Tuple[:finished].new(domain: task.domain_id, status: :succeeded))
+          if read!(TupleSpace::FinishedTuple.new(domain: task.domain_id, status: :succeeded))
             return false
           end
         end
@@ -423,7 +423,7 @@ module Pione
         return false if read!(tuple)
 
         # another worker is working now, so we don't need to publish
-        return false if read!(Tuple[:working].new(domain: task.domain_id))
+        return false if read!(TupleSpace::WorkingTuple.new(domain: task.domain_id))
 
         # we need to publish the task
         return true
@@ -434,7 +434,7 @@ module Pione
         # wait to finish threads
         tasks.each do |task|
           # wait to finish the work
-          finished = read(Tuple[:finished].new(domain: task.domain_id))
+          finished = read(TupleSpace::FinishedTuple.new(domain: task.domain_id))
 
           ### task completion processing ###
           # copy write operation data tuple from the task domain to this domain
@@ -445,7 +445,7 @@ module Pione
 
           # publish output tickets
           task.rule.output_tickets.pieces do |piece|
-            write(Tuple[:ticket].new(domain_id, piece.name))
+            write(TupleSpace::TicketTuple.new(domain_id, piece.name))
           end
         end
       end
@@ -479,8 +479,8 @@ module Pione
 
       # Lift effects of touch operations from the task domain to this domain.
       def lift_touch_tuple(task)
-        read_all(Tuple[:touch].new(domain: task.domain_id)).each do |touch|
-          if target = read!(Tuple[:data].new(name: touch.name, domain: domain_id))
+        read_all(TupleSpace::TouchTuple.new(domain: task.domain_id)).each do |touch|
+          if target = read!(TupleSpace::DataTuple.new(name: touch.name, domain: domain_id))
             # update time of data tuple
             write(target.tap {|x| x.time = touch.time}) unless target.time > touch.time
 

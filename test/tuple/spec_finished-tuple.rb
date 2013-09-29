@@ -1,7 +1,7 @@
 require 'pione/test-helper'
 require_relative 'tuple-behavior'
 
-describe 'Pione::Tuple::FinishedTuple' do
+describe 'Pione::TupleSpace::FinishedTuple' do
   before do
     @domain = "A"
     @status = :success
@@ -9,10 +9,10 @@ describe 'Pione::Tuple::FinishedTuple' do
     name = Lang::DataExprSequence.of("a.txt")
     location = Location["local:/home/keita/"]
     time = Time.now
-    data = Tuple::DataTuple.new(@domain, name, location, time)
+    data = TupleSpace::DataTuple.new(@domain, name, location, time)
 
     @outputs = [data]
-    @tuple = Tuple::FinishedTuple.new(@domain, @status, @outputs)
+    @tuple = TupleSpace::FinishedTuple.new(@domain, @status, @outputs)
   end
 
   behaves_like "tuple"

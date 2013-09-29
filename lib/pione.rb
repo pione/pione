@@ -72,11 +72,10 @@ require 'pione/log'         # log and format
 require 'pione/global'      # global variable manager
 require 'pione/system'      # PIONE system functions
 require 'pione/relay'       # relay connection
-require 'pione/tuple-space' # tuple space functions
-require 'pione/rule-engine' # rule processing behaviors
 require 'pione/package'     # package system
 require 'pione/lang'        # PIONE languge
-require 'pione/tuple'       # tuple definitions
+require 'pione/tuple-space' # tuple space functions
+require 'pione/rule-engine' # rule processing behaviors
 require 'pione/agent'       # agent system
 require 'pione/front'       # command front interface
 require 'pione/command'     # command definitions

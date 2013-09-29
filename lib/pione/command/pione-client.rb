@@ -228,8 +228,8 @@ module Pione
         Global.front.set_tuple_space(@tuple_space)
 
         # write tuples
-        write(Tuple[:process_info].new('standalone', 'Standalone'))
-        write(Tuple[:dry_run].new(option[:dry_run]))
+        write(TupleSpace::ProcessInfoTuple.new('standalone', 'Standalone'))
+        write(TupleSpace::DryRunTuple.new(option[:dry_run]))
       end
 
       def setup_lang_environment

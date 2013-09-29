@@ -9,7 +9,7 @@ describe "Pione::Agent::Broker" do
     @space1 = TupleSpaceServer.new({task_worker_resource: 1}, false)
     @space2 = TupleSpaceServer.new({task_worker_resource: 2}, false)
     @space3 = TupleSpaceServer.new({task_worker_resource: 3}, false)
-    [@space1, @space2, @space3].each {|space| space.write(Tuple[:env].new(obj: @env))}
+    [@space1, @space2, @space3].each {|space| space.write(TupleSpace::EnvTuple.new(obj: @env))}
 
     # setup broker
     Global.expressional_features = Util.parse_features("*")

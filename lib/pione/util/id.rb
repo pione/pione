@@ -6,7 +6,7 @@ module Pione
       def generate(inputs, params)
         # NOTE: auto variables are ignored
         param_set = params.filter(["I", "INPUT", "O", "OUTPUT", "*"])
-        inputs = inputs.map {|t| t.is_a?(Tuple::DataTuple) ? t.name : t}
+        inputs = inputs.map {|t| t.is_a?(TupleSpace::DataTuple) ? t.name : t}
         Digest::MD5.hexdigest("%s::%s" % [inputs.join(":"), param_set.textize])
       end
       module_function :generate
