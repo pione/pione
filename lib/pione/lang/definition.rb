@@ -70,12 +70,13 @@ module Pione
       member :value
     end
 
-    # Definition of packages. packages have its id and the parent id.
+    # Definition of packages. Packages have its ID and the parent IDs. Note that
+    # PIONE permits multiple parent packages.
     class PackageDefinition < StructX
       # package id
       member :package_id
-      # parent package id
-      member :parent_id
+      # parent package IDs
+      member :parent_ids, default: lambda {Array.new}
       # definition table of package parameter
       member :param_definition, default: lambda {|_| Hash.new }
       # parameter set

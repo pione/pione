@@ -217,7 +217,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       PIONE
 
       # package "Child"
-      @env = _env.setup_new_package("Child", "Parent")
+      @env = _env.setup_new_package("Child", ["Parent"])
       TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R2
           output 'child-message.txt'
@@ -274,7 +274,7 @@ describe 'Pione::RuleHandler::FlowRule' do
       PIONE
 
       # package "Concrete"
-      @env = _env.setup_new_package("Concrete", "Abstract")
+      @env = _env.setup_new_package("Concrete", ["Abstract"])
       TestHelper::Lang.package_context!(@env, <<-PIONE)
         Rule R2
           output 'message.txt'

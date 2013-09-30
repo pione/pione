@@ -5,7 +5,7 @@ module Pione
       piece_type_name "PackageExpr"
       member :name
       member :package_id
-      member :parent_id
+      member :parent_ids
       member :param, default: ParameterSetSequence.new
 
       def eval(env)
@@ -16,7 +16,7 @@ module Pione
         # update package expression
         attr = {}
         attr[:package_id] = definition.package_id
-        attr[:parent_id] = definition.parent_id
+        attr[:parent_ids] = definition.parent_ids
         attr[:param] = param.eval(env)
         set(attr)
       end

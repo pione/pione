@@ -25,7 +25,7 @@ describe 'Pione::Lang::Environment' do
     # test
     child_id = @env.variable_get(Lang::Variable.new("p")).pieces.first.package_id
     definition = @env.package_get(Lang::PackageExpr.new(package_id: child_id))
-    definition.parent_id.should == @env.current_package_id
+    definition.parent_ids.should == [@env.current_package_id]
   end
 
   it 'should delegate to find variable' do

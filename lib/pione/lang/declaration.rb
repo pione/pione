@@ -45,7 +45,7 @@ module Pione
         if package_id = name.package_id
           # get package id from the name
           return package_id
-        else package_id
+        else
           # or current package id in the environment
           return env.current_package_id
         end
@@ -99,12 +99,12 @@ module Pione
           # update package table
           definition = PackageDefinition.new(
             package_id: child_id,
-            parent_id: parent_piece.package_id,
+            parent_ids: [parent_piece.package_id],
             param_definition: parent_definition.param_definition,
             param: parent_definition.param.merge(parent_piece.param)
           )
           # create child piece
-          child_piece = parent_piece.set(package_id: child_id, parent_id: parent_piece.package_id)
+          child_piece = parent_piece.set(package_id: child_id, parent_ids: [parent_piece.package_id])
           # register the child to package table
           env.package_set(child_piece, definition)
           # result
@@ -266,9 +266,9 @@ module Pione
     end
 
     class FlowRuleDeclaration < Declaration
-      member :expr              # rule name
+      member :expr                   # rule name
       member :rule_condition_context # rule condition context
-      member :flow_context      # flow context
+      member :flow_context           # flow context
 
       def eval(env)
         rules = get_reference(env, expr, RuleExprSequence)

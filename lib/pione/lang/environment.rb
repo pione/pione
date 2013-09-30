@@ -56,10 +56,16 @@ module Pione
           return @parent.get_value(env, ref) if @parent
         else
           # or find by parent package id
-          if parent_id = env.find_parent_id(ref.package_id)
-            return get_value(env, ref.set(package_id: parent_id))
+          if parent_ids = env.find_parent_ids(ref.package_id)
+            parent_ids.each do |parent_id|
+              if val = get_value(env, ref.set(package_id: parent_id))
+                return val
+              end
+            end
           end
         end
+
+        return nil
       end
 
       # Update table with the name and value. We will raise +RebindError+ if the
@@ -250,9 +256,9 @@ module Pione
         package_id_table[package_name]
       end
 
-      def find_parent_id(package_id)
+      def find_parent_ids(package_id)
         if package = package_get(PackageExpr.new(package_id: package_id))
-          package.parent_id
+          package.parent_ids
         end
       end
 
@@ -277,14 +283,14 @@ module Pione
         return self
       end
 
-      def add_package(package_name, parent_id=nil)
+      def add_package(package_name, parent_ids=[])
         # generate a new package id
         package_id = Util::PackageID.generate(self, package_name)
         # add package id table
         package_id_table[package_name] = package_id
         # make reference and definition
         ref = PackageExpr.new(name: package_name, package_id: package_id)
-        definition = PackageDefinition.new(package_id: package_id, parent_id: parent_id)
+        definition = PackageDefinition.new(package_id: package_id, parent_ids: parent_ids)
         # set it to package table
         package_set(ref, definition)
         # return package id
@@ -292,8 +298,8 @@ module Pione
       end
 
       # Introduce new package in the environment.
-      def setup_new_package(package_name, parent_id=nil)
-        package_id = add_package(package_name, parent_id)
+      def setup_new_package(package_name, parent_ids=[])
+        package_id = add_package(package_name, parent_ids)
         # update current package id
         set(current_package_id: package_id)
       end
