@@ -96,8 +96,8 @@ module Pione
         rec.set_annotation_type("PackageName")
       end
 
-      define_pione_method("Edition", [], TypeString) do |env, rec|
-        rec.set_annotation_type("Edition")
+      define_pione_method("Editor", [], TypeString) do |env, rec|
+        rec.set_annotation_type("Editor")
       end
 
       define_pione_method("Tag", [], TypeString) do |env, rec|

@@ -5,7 +5,7 @@ module Pione
       piece_type_name "PackageExpr"
       member :name
       member :tag
-      member :edition
+      member :editor
       member :package_id
       member :parent_ids
       member :param, default: ParameterSetSequence.new
@@ -36,9 +36,9 @@ module Pione
     # pione methods
     #
     TypePackageExpr.instance_eval do
-      # Set the edition name.
-      define_pione_method("edition", [TypeString], TypePackageExpr) do |env, rec, name|
-        rec.map {|piece| piece.set(edition: name)}
+      # Set the editor name.
+      define_pione_method("editor", [TypeString], TypePackageExpr) do |env, rec, name|
+        rec.map {|piece| piece.set(editor: name)}
       end
 
       # Set the tag name.

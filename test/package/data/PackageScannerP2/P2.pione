@@ -1,5 +1,5 @@
 .@ PackageName :: "P2"
-.@ Parent :: &P1.edition("yamaguchi").tag("test")
+.@ Parent :: &P1.editor("yamaguchi").tag("test")
 
 Rule R2
   input 'i1'

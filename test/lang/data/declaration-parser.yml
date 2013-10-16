@@ -29,7 +29,7 @@ package_binding_sentence:
     # with parameter
     - "package $P <- &Package{X: 1, Y:2}"
     # with messages
-    - 'package $P <- &Package.edition("A").tag("v1.2.3")'
+    - 'package $P <- &Package.editor("A").tag("v1.2.3")'
     # split lines
     - "package \n $P \n <- \n &Package"
   invalid:

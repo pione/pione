@@ -4,16 +4,16 @@ module Pione
     class Document
       class << self
         # Load a PIONE rule document into the environment.
-        def load(env, src, package_name, edition, tag, filename)
+        def load(env, src, package_name, editor, tag, filename)
           _src = src.kind_of?(Location::DataLocation) ? src.read : src
-          parse(_src, package_name, edition, tag, filename).eval(env)
+          parse(_src, package_name, editor, tag, filename).eval(env)
         end
 
         # Parse a PIONE rule document as a string and return the package
         # context.
-        def parse(src, package_name, edition, tag, filename)
+        def parse(src, package_name, editor, tag, filename)
           # make transformer options
-          opt = {package_name: package_name, edition: edition, tag: tag, filename: filename}
+          opt = {package_name: package_name, editor: editor, tag: tag, filename: filename}
 
           # parse the document
           stree = Lang::DocumentParser.new.parse(src)

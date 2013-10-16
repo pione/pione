@@ -4,31 +4,31 @@ TestHelper.scope do |this|
   this::FILENAMES = [
     [ "Test(keita.yamaguchi@gmail.com)+test@13790a8dadb31a8654edd39e17e753e9.ppg",
       { package_name: "Test",
-        edition: "keita.yamaguchi@gmail.com",
+        editor: "keita.yamaguchi@gmail.com",
         tag: "test",
         digest: "13790a8dadb31a8654edd39e17e753e9" }
     ],
     [ "Test(keita.yamaguchi@gmail.com)+test@13790a8dadb31a8654edd39e17e753e9",
       { package_name: "Test",
-        edition: "keita.yamaguchi@gmail.com",
+        editor: "keita.yamaguchi@gmail.com",
         tag: "test",
         digest: "13790a8dadb31a8654edd39e17e753e9" }
     ],
     [ "Test+test@13790a8dadb31a8654edd39e17e753e9.ppg",
       { package_name: "Test",
-        edition: "origin",
+        editor: "origin",
         tag: "test",
         digest: "13790a8dadb31a8654edd39e17e753e9" }
     ],
     [ "Test+test.ppg",
       { package_name: "Test",
-        edition: "origin",
+        editor: "origin",
         tag: "test",
         digest: nil }
     ],
     [ "Test@13790a8dadb31a8654edd39e17e753e9.ppg",
       { package_name: "Test",
-        edition: "origin",
+        editor: "origin",
         tag: nil,
         digest: "13790a8dadb31a8654edd39e17e753e9" }
     ]
@@ -39,7 +39,7 @@ TestHelper.scope do |this|
       this::FILENAMES.each do |(filename, data)|
         Package::PackageFilename.parse(filename).tap do |fname|
           fname.package_name.should == data[:package_name]
-          fname.edition.should == data[:edition]
+          fname.editor.should == data[:editor]
           fname.tag.should == data[:tag]
           fname.digest.should == data[:digest]
         end

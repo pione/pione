@@ -46,7 +46,7 @@ module Pione
       def filename(digest)
         PackageFilename.new(
           package_name: @package_info.name,
-          edition: @package_info.edition,
+          editor: @package_info.editor,
           tag: @package_info.tag,
           digest: digest
         ).to_s

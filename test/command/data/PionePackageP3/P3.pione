@@ -1,5 +1,5 @@
 .@ PackageName :: "P3"
-.@ Edition :: "keita.yamaguchi@gmail.com"
+.@ Editor :: "keita.yamaguchi@gmail.com"
 
 Rule Main
   input 'i1'

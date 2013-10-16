@@ -15,21 +15,21 @@ module Pione
       def scan
         if @package_location.directory?
           documents = scan_documents(@package_location)
-          name, edition, tag, parents = scan_annotations(documents)
+          name, editor, tag, parents = scan_annotations(documents)
           scenarios = scan_scenarios(@package_location)
           bins = scan_bins(@package_location)
 
           return PackageInfo.new(
-            name: name, edition: edition, tag: tag, parents: parents,
+            name: name, editor: editor, tag: tag, parents: parents,
             documents: documents, scenarios: scenarios, bins: bins
           )
         else
           # the case for single document package
-          name, edition, tag, parents = scan_annotations([@package_location])
+          name, editor, tag, parents = scan_annotations([@package_location])
           documents = [@package_location.basename]
 
           return PackageInfo.new(
-            name: name, edition: edition, tag: tag, parents: parents,
+            name: name, editor: editor, tag: tag, parents: parents,
             documents: documents
           )
         end
@@ -70,11 +70,11 @@ module Pione
         # get annotations
         annotations = env.package_get(Lang::PackageExpr.new(package_id: env.current_package_id)).annotations
         name = find_package_info(annotations, "PackageName")
-        edition = find_package_info(annotations, "Edition")
+        editor = find_package_info(annotations, "Editor")
         tag = find_package_info(annotations, "Tag")
         parents = find_parents(annotations)
 
-        return name, edition, tag, parents
+        return name, editor, tag, parents
       end
 
       # Find package information of the annotation type from annotations.
@@ -94,9 +94,9 @@ module Pione
           if annotation.annotation_type == "Parent"
             annotation.pieces.each do |parent|
               name = parent.name
-              edition = parent.edition ? parent.edition.value : nil
+              editor = parent.editor ? parent.editor.value : nil
               tag = parent.tag ? parent.tag.value : nil
-              parents << ParentPackageInfo.new(name: name, edition: edition, tag: tag)
+              parents << ParentPackageInfo.new(name: name, editor: editor, tag: tag)
             end
           end
         end

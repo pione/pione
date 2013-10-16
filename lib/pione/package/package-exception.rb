@@ -4,14 +4,14 @@ module Pione
 
     # NotFound is raised when package not found in package database.
     class NotFound < PackageError
-      def initialize(name, edition, tag)
+      def initialize(name, editor, tag)
         @name = name
-        @edition = eidition
+        @editor = eidition
         @tag = tag
       end
 
       def message
-        "the package(name: %s, edition: %s, tag: %s) not found" % [@name, @edition, @tag]
+        "the package(name: %s, editor: %s, tag: %s) not found" % [@name, @editor, @tag]
       end
     end
 

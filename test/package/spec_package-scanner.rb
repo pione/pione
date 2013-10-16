@@ -20,7 +20,7 @@ TestHelper.scope do |this|
     it "should scan package informations" do
       p1 = Package::PackageScanner.new(this::P1).scan
       p1.name.should == "P1"
-      p1.edition.should == "yamaguchi"
+      p1.editor.should == "yamaguchi"
       p1.tag.should == "test"
       p1.parents.should.empty
     end
@@ -28,16 +28,16 @@ TestHelper.scope do |this|
     it "should scan parents" do
       p2 = Package::PackageScanner.new(this::P2).scan
       p2.name.should == "P2"
-      p2.edition.should.nil
+      p2.editor.should.nil
       p2.tag.should.nil
       p2.parents.size.should == 1
-      p2.parents.should.include Package::ParentPackageInfo.new(name: "P1", edition: "yamaguchi", tag: "test")
+      p2.parents.should.include Package::ParentPackageInfo.new(name: "P1", editor: "yamaguchi", tag: "test")
       p3 = Package::PackageScanner.new(this::P3).scan
       p3.name.should == "P3"
-      p3.edition.should.nil
+      p3.editor.should.nil
       p3.tag.should.nil
       p3.parents.size.should == 2
-      p3.parents.should.include Package::ParentPackageInfo.new(name: "P1", edition: "yamaguchi", tag: "test")
+      p3.parents.should.include Package::ParentPackageInfo.new(name: "P1", editor: "yamaguchi", tag: "test")
       p3.parents.should.include Package::ParentPackageInfo.new(name: "P2")
     end
 

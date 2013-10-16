@@ -1,5 +1,5 @@
 .@ PackageName :: "P1"
-.@ Edition     :: "yamaguchi"
+.@ Editor      :: "yamaguchi"
 .@ Tag         :: "test"
 
 Rule R1

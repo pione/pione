@@ -46,13 +46,13 @@ module Pione
       def eval(env)
         # load parent packages
         parent_package_ids = @info.parents.map do |parent_info|
-          load_parent_package(env, parent_info.name, parent_info.edition, parent_info.tag)
+          load_parent_package(env, parent_info.name, parent_info.editor, parent_info.tag)
         end
 
         # load this package
         _env = env.setup_new_package(info.name || "Anonymous", parent_package_ids)
         @info.documents.inject(Lang::PackageContext.new) do |_context, d|
-          Document.load(_env, @location + d, @info.name, @info.edition, @info.tag, d)
+          Document.load(_env, @location + d, @info.name, @info.editor, @info.tag, d)
         end
 
         return _env
@@ -90,14 +90,14 @@ module Pione
 
       # Load parent packages from package database. Parent packages should be
       # recorded in the database, or Package::NotFound error is raised.
-      def load_parent_package(env, name, edition, tag)
-        if digest = Global.package_database.find(name, edition, tag)
+      def load_parent_package(env, name, editor, tag)
+        if digest = Global.package_database.find(name, editor, tag)
           parent_location = PackageCache.directory_cache(digest)
           handler = PackageHandler.new(parent_location, digest: digest)
           handler.eval(env)
           return env.current_package_id
         else
-          raise NotFound.new(name, edition, tag)
+          raise NotFound.new(name, editor, tag)
         end
       end
     end

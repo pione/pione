@@ -1,7 +1,7 @@
 module Pione
   module Package
     # Package::Database is a repository of package informations and the digest
-    # for cache reference. The keys of database are package name, edition, and
+    # for cache reference. The keys of database are package name, editor, and
     # tag.
     class Database
       class << self
@@ -9,7 +9,7 @@ module Pione
         def read(str)
           JSON.load(str).each_with_object(new) do |data, db|
             db.add(DatabaseRecord.new(
-                name: data["PackageName"], edition: data["Edition"], tag: data["Tag"],
+                name: data["PackageName"], editor: data["Editor"], tag: data["Tag"],
                 location: data["Location"], state: data["State"], digest: data["Digest"]
             ))
           end
@@ -43,13 +43,13 @@ module Pione
         unless record.kind_of?(DatabaseRecord)
           record = DatabaseRecord.new(record)
         end
-        @table[record.name][record.edition || "origin"][record.tag] = record
+        @table[record.name][record.editor || "origin"][record.tag] = record
       end
 
-      # Delete a record by the tuple of name, edition, and tag. Edition is
+      # Delete a record by the tuple of name, editor, and tag. Editor is
       # "origin" if it is nil.
-      def delete(name, edition, tag)
-        @table[name][edition || "origin"][tag] = nil
+      def delete(name, editor, tag)
+        @table[name][editor || "origin"][tag] = nil
       end
 
       # Return record number of the database.
@@ -61,9 +61,9 @@ module Pione
         end
       end
 
-      # Find a record by the tuple of name, edition, and tag. Edition is "origin" if it is nil.
-      def find(name, edition, tag)
-        @table[name][edition || "origin"][tag]
+      # Find a record by the tuple of name, editor, and tag. Editor is "origin" if it is nil.
+      def find(name, editor, tag)
+        @table[name][editor || "origin"][tag]
       end
 
       # Save the database to the location.
@@ -91,7 +91,7 @@ module Pione
     # DatabaseRecord is a record of package database.
     class DatabaseRecord < StructX
       member :name
-      member :edition
+      member :editor
       member :tag
       member :location
       member :state
@@ -100,7 +100,7 @@ module Pione
       def to_json(*args)
         data = Hash.new
         data["PackageName"] = name
-        data["Edition"] = edition
+        data["Editor"] = editor
         data["Tag"] = tag
         data["Location"] = location if location
         data["State"] = state if state

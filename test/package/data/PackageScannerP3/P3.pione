@@ -1,5 +1,5 @@
 .@ PackageName :: "P3"
-.@ Parent :: &P1.edition("yamaguchi").tag("test")
+.@ Parent :: &P1.editor("yamaguchi").tag("test")
 .@ Parent :: &P2
 
 Rule Main

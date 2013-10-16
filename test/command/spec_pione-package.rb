@@ -36,7 +36,7 @@ TestHelper.scope do |this|
       pkg.size.should > 0
     end
 
-    it "should build PIONE package with the edition" do
+    it "should build PIONE package with the editor" do
       output_location = Location[Temppath.mkdir]
       res = TestHelper::Command.succeed do
         Command::PionePackage.run ["--build", "-o", output_location.path.to_s, this::P3.path.to_s]
@@ -74,7 +74,7 @@ TestHelper.scope do |this|
       digest.size.should > 0
     end
 
-    it "should add package with edition to database" do
+    it "should add package with editor to database" do
       res = TestHelper::Command.succeed do
         Command::PionePackage.run ["--add", this::P3.path.to_s]
       end

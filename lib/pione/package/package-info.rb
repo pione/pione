@@ -3,7 +3,7 @@ module Pione
     # PackageInfo is a information storage about package.
     class PackageInfo < StructX
       member :name
-      member :edition
+      member :editor
       member :tag
       member :parents, default: lambda { Array.new }
       member :documents, default: lambda { Array.new }
@@ -15,7 +15,7 @@ module Pione
         data = JSON.load(str)
         args = Hash.new
         args[:name] = data["PackageName"] if data.has_key?("PackageName")
-        args[:edition] = data["Edition"] if data.has_key?("Edition")
+        args[:editor] = data["Editor"] if data.has_key?("Editor")
         args[:tag] = data["Tag"] if data.has_key?("Tag")
         args[:parents] = data["Parents"].map {|_data| ParentPackageInfo.json_create(_data)}
         args[:documents] = data["Documents"]
@@ -28,7 +28,7 @@ module Pione
       def to_json(*args)
         data = {}
         data["PackageName"] = name
-        data["Edition"] = edition if edition
+        data["Editor"] = editor if editor
         data["Tag"] = tag if tag
         data["Parents"] = parents
         data["Documents"] = documents
@@ -41,13 +41,13 @@ module Pione
     # ParentPackageInfo is a information set about parent package.
     class ParentPackageInfo < StructX
       member :name
-      member :edition
+      member :editor
       member :tag
 
       def self.json_create(data)
         args = Hash.new
         args[:name] = data["PackageName"]
-        args[:edition] = data["Edition"] if data.has_key?("Edition")
+        args[:editor] = data["Editor"] if data.has_key?("Editor")
         args[:tag] = data["Tag"] if data.has_key?("Tag")
         new(args)
       end
@@ -55,7 +55,7 @@ module Pione
       def to_json
         data = {}
         data["PackageName"] = name
-        data["Edition"] = edition if edition
+        data["Editor"] = editor if editor
         data["Tag"] = tag if tag
         data.to_json
       end

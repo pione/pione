@@ -95,7 +95,7 @@ module Pione
       def execute_add_package
         handler = Package::PackageReader.read(Location[@target])
         db = Package::Database.load
-        db.add(name: handler.info.name, edition: handler.info.edition, tag: handler.info.tag, digest: handler.digest)
+        db.add(name: handler.info.name, editor: handler.info.editor, tag: handler.info.tag, digest: handler.digest)
         db.save
         Log::SystemLog.info("added %s" % handler.info.name)
       end
