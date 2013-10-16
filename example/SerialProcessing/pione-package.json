@@ -1,0 +1,15 @@
+{
+  "PackageName": "SerialProcessing",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "SerialProcessing.pione"
+  ],
+  "Scenarios": [
+    "scenario"
+  ],
+  "Bins": [
+
+  ]
+}

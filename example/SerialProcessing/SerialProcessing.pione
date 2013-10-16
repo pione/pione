@@ -1,3 +1,5 @@
+.@ PackageName :: "SerialProcessing"
+
 Rule Main
   output '*.a'.all
   output '*.b'.all
