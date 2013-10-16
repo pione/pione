@@ -77,7 +77,7 @@ module Pione
         @execution_thread = Thread.new {engine.handle}
 
         # spawn child task worker if flow
-        if engine.rule_definition.rule_type == :flow
+        if engine.rule_definition.rule_type == "flow"
           spawn_child_task_worker(task)
         end
 
@@ -130,14 +130,14 @@ module Pione
       # while rule execution thread is alive.
       def spawn_child_task_worker(task)
         child_agent = nil
-        foreground = TupleSpace::ForegroundTuple.new(task.domain, task.digest)
+        foreground = TupleSpace::ForegroundTuple.new(task.domain_id, task.digest)
 
         # child worker loop
         while @execution_thread.alive? do
           if @execution_thread.status == "sleep"
             if child_agent.nil? or not(child_agent.terminated?)
               # when there isn't active child agent
-              child_agent = self.class.new(tuple_space_server, @env, @features)
+              child_agent = self.class.new(tuple_space_server, @features, @env)
               child_agent.once = true
 
               # make log record
