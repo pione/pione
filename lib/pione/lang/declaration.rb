@@ -243,7 +243,7 @@ module Pione
       member :expr
 
       def eval(env)
-        env.current_definition.annotations << expr
+        env.current_definition.annotations << expr.eval(env)
       end
     end
 

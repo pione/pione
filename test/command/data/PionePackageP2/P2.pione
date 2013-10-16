@@ -1,0 +1,10 @@
+.@ PackageName :: "P2"
+.@ Tag :: "v0.1.0"
+
+Rule Main
+  input 'i1'
+  output 'o1'
+Action
+  echo i1 > o1
+End
+

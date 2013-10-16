@@ -157,12 +157,12 @@ constraint_sentence:
 annotation_sentence:
   valid:
     # with annotation expression
-    - "@. author :: \"Keita Yamaguchi\""
+    - ".@ author :: \"Keita Yamaguchi\""
     # permits any expressions, but raises model error maybe
-    - "@. 1"
+    - ".@ 1"
   invalid:
     # with no expressions
-    - "@."
+    - ".@"
 
 expr_sentence:
   valid:

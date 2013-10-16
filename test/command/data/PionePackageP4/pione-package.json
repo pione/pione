@@ -1,0 +1,17 @@
+{
+  "PackageName": "P4",
+  "Edition": "keita.yamaguchi@gmail.com",
+  "Tag": "v0.1.0",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "P4.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ]
+}

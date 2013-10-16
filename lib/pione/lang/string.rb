@@ -14,15 +14,9 @@ module Pione
       pione_type TypeString
       piece_class PioneString
 
-      member :annotation_type
-
       # Return a string that is joined pieces string.
       def value
         @__value__ ||= pieces.map{|piece| piece.value}.join
-      end
-
-      def set_annotation_type(type)
-        set(annotation_type: type)
       end
     end
 
@@ -96,6 +90,26 @@ module Pione
       # FIXME
       define_pione_method("author", [], TypeString) do |env, rec|
         rec.set_annotation_type(:author)
+      end
+
+      define_pione_method("PackageName", [], TypeString) do |env, rec|
+        rec.set_annotation_type("PackageName")
+      end
+
+      define_pione_method("Edition", [], TypeString) do |env, rec|
+        rec.set_annotation_type("Edition")
+      end
+
+      define_pione_method("Tag", [], TypeString) do |env, rec|
+        rec.set_annotation_type("Tag")
+      end
+
+      define_pione_method("ScenarioName", [], TypeString) do |env, rec|
+        rec.set_annotation_type("ScenarioName")
+      end
+
+      define_pione_method("ParamSet", [], TypeString) do |env, rec|
+        rec.set_annotation_type("ParamSet")
       end
     end
   end

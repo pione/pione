@@ -1,0 +1,6 @@
+Rule R6
+  input 'i6'
+  output 'o6'
+Action
+  cat i6 > o6
+End

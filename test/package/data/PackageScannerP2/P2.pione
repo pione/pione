@@ -1,0 +1,9 @@
+.@ PackageName :: "P2"
+.@ Parent :: &P1.edition("yamaguchi").tag("test")
+
+Rule R2
+  input 'i1'
+  output 'p1'
+Action
+  cat i1 > p1
+End

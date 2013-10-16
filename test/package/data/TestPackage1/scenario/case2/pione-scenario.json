@@ -1,0 +1,14 @@
+{
+  "ScenarioName": "Case2",
+  "ParamSet": null,
+  "Inputs": [
+    "input/1.txt",
+    "input/3.txt",
+    "input/2.txt"
+  ],
+  "Outputs": [
+    "output/2.count",
+    "output/3.count",
+    "output/1.count"
+  ]
+}

@@ -1,0 +1,6 @@
+Rule R7
+  input 'i7'
+  output 'o7'
+Action
+  cat i7 > o7
+End

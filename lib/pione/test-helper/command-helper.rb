@@ -15,8 +15,14 @@ module Pione
           exception.backtrace.each do |line|
             puts "TRACE: %s" % line
           end
-          puts stdout.string[0..100] if stdout.string.size > 0
-          puts stderr.string[0..100] if stderr.string.size > 0
+          if stdout.string.size > 0
+            puts "STDOUT:"
+            puts stdout.string
+          end
+          if stderr.string.size > 0
+            puts "STDERR:"
+            puts stderr.string[0..100]
+          end
         end
       end
     end

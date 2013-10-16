@@ -126,7 +126,7 @@ shared "location" do
   it "should get local location" do
     @file.create("A")
     local = @file.local
-    local.scheme.should == "local"
+    local.should.local
     local.should.exist
     local.should.file
   end

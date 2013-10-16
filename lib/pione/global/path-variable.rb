@@ -47,21 +47,6 @@ module Pione
     define_internal_item(:file_cache_directory) do
       Pathname.new(Dir.mktmpdir(nil, Global.file_cache_directory_root))
     end
-
-    # Git repository directory
-    define_internal_item(:git_repository_directory) do
-      Location[Global.dot_pione_dir + "git-repository"]
-    end
-
-    # Git package directory
-    define_internal_item(:git_package_directory) do
-      Location[Global.dot_pione_dir] + "git-package"
-    end
-
-    # archive_package_cache_dir
-    define_internal_item(:archive_package_cache_dir) do
-      Location[Global.dot_pione_dir + "archive-package-cache"]
-    end
   end
 end
 

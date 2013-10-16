@@ -379,25 +379,60 @@ describe "Pione::Lang::ConstraintDeclaration" do
 end
 
 describe "Pione::Lang::AnnotationDeclaration" do
-  before do
-    @env = TestHelper::Lang.env
-    TestHelper::Lang.package_context!(@env, <<-CONTEXT)
-      Rule R
-        input '*.i'
-        output '{$*}.o'
-        @. "annotation1"
-        @. "annotation2"
-        @. "annotation3"
-      End
-    CONTEXT
+  describe "package annotation" do
+    before do
+      @env = TestHelper::Lang.env
+
+      @env = @env.setup_new_package("P1")
+      TestHelper::Lang.package_context!(@env, <<-CONTEXT)
+        .@ PackageName :: "P1"
+        .@ Tag :: "test"
+
+        Rule R1
+          input '*.i1'
+          output '{$*}.o1'
+        End
+      CONTEXT
+
+      @env = @env.setup_new_package("P2", ["P1"])
+      TestHelper::Lang.package_context!(@env, <<-CONTEXT)
+        .@ PackageName :: "P2"
+        .@ Parent :: &P1
+
+        Rule R2
+          input '*.i2'
+          output '{$*}.o2'
+        End
+      CONTEXT
+    end
+
+    it "should have package name" do
+      annotations = @env.package_get(Lang::PackageExpr.new(name: "P1", package_id: "P1")).annotations
+      annotations.should.include(Lang::StringSequence.of("P1").set_annotation_type("PackageName"))
+    end
   end
 
-  it "should get constraints" do
-    condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
-    condition.annotations.size.should == 3
-    condition.annotations.should.include TestHelper::Lang.expr('"annotation1"')
-    condition.annotations.should.include TestHelper::Lang.expr('"annotation2"')
-    condition.annotations.should.include TestHelper::Lang.expr('"annotation3"')
+  describe "rule annotaion" do
+    before do
+      @env = TestHelper::Lang.env
+      TestHelper::Lang.package_context!(@env, <<-CONTEXT)
+        Rule R
+          input '*.i'
+          output '{$*}.o'
+          .@ "annotation1"
+          .@ "annotation2"
+          .@ "annotation3"
+        End
+      CONTEXT
+    end
+
+    it "should get constraints" do
+      condition = @env.rule_get(Lang::RuleExpr.new("R")).rule_condition_context.eval(@env)
+      condition.annotations.size.should == 3
+      condition.annotations.should.include TestHelper::Lang.expr('"annotation1"')
+      condition.annotations.should.include TestHelper::Lang.expr('"annotation2"')
+      condition.annotations.should.include TestHelper::Lang.expr('"annotation3"')
+    end
   end
 end
 

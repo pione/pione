@@ -3,12 +3,12 @@ module Pione
     class PackageFilenameParser < Parslet::Parser
       root(:filename)
 
-      rule(:filename) { package_name.maybe >> edition.maybe >> tag.maybe >> hash_id.maybe >> ext }
+      rule(:filename) { package_name.maybe >> edition.maybe >> tag.maybe >> digest.maybe >> ext.maybe }
 
       rule(:package_name) { ((str("(") | str(".") | str("+") | str("@")).absent? >> any).repeat(1).as(:package_name) }
       rule(:edition) { str("(") >> (str(")").absent? >> any).repeat(1).as(:edition) >> str(")") }
       rule(:tag) { str("+") >> ((ext | str("@")).absent? >> any).repeat(1).as(:tag) }
-      rule(:hash_id) { str("@") >>  match('[0-9a-fA-F]').repeat(1).as(:hash_id) }
+      rule(:digest) { str("@") >>  match('[0-9a-fA-F]').repeat(1).as(:digest) }
       rule(:ext) { str(".ppg") }
     end
 
@@ -16,22 +16,30 @@ module Pione
       member :package_name
       member :edition, default: "origin"
       member :tag
-      member :hash_id
+      member :digest
 
       class << self
+        # Parse the filename.
         def parse(str)
-          new(PackageFilenameParser.new.parse(str))
+          begin
+            new(PackageFilenameParser.new.parse(str))
+          rescue => e
+            raise InvalidPackageFilename.new(str, e)
+          end
         end
       end
 
-      def to_s
+      def string(ext=true)
         name = ""
         name << package_name
         name << "(%s)" % edition if edition and edition != "origin"
         name << "+%s" % tag if tag
-        name << "@%s" % hash_id if hash_id
-        name + ".ppg"
+        name << "@%s" % digest if digest
+        name << ".ppg" if ext
+        return name
       end
+
+      alias :to_s :string
     end
   end
 end

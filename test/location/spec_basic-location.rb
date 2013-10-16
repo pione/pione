@@ -36,4 +36,8 @@ describe 'Location::BasicLocation' do
   it 'should get extension name' do
     Location["test:/a/name.txt"].extname.should == ".txt"
   end
+
+  it "should get dirname" do
+    Location["test:/a/name"].dirname.should == Location["test:/a/"]
+  end
 end

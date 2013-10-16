@@ -56,14 +56,19 @@ module Pione
         raise ArgumentError.new(uri) unless @uri.scheme = scheme
       end
 
-      # Copy the content to temporary local location and return it. If the
-      # scheme is local, return itselft.
+      # Copy the content to temporary local location and return the location. If
+      # the scheme is local, return itself.
       def local
         if scheme == "local"
           self
         else
           Location[Temppath.create].tap {|tmp| copy(tmp)}
         end
+      end
+
+      # Return true if scheme of the location is local.
+      def local?
+        scheme == "local"
       end
 
       # Create new location appended the name.
@@ -102,6 +107,11 @@ module Pione
         File.extname(basename)
       end
 
+      # Return the dirname of location. This method returns it as a location.
+      def dirname
+        rebuild(@path.dirname).as_directory
+      end
+
       # Rebuild location with the path.
       #
       # @param path [Pathname]
@@ -110,9 +120,9 @@ module Pione
       #   location with new path
       def rebuild(path)
         scheme = @uri.scheme
-        auth = "%s:%s@" % [@uri.user, @uri.password] if @uri.user and @uri.password
+        auth = @uri.user and @uri.password ? "%s:%s@" % [@uri.user, @uri.password] : ""
         host = @uri.host
-        port = ":%i" % @uri.port
+        port = @uri.port ? ":%i" % @uri.port : ""
         path = path.expand_path("/").to_s
         Location["%s://%s%s%s%s" % [scheme, auth, host, port, path]]
       end

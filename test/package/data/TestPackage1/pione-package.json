@@ -1,0 +1,18 @@
+{
+  "PackageName": "TestPackage1",
+  "Tag": "v0.1.0",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Test.pione"
+  ],
+  "Scenarios": [
+    "scenario/case1",
+    "scenario/case3",
+    "scenario/case2"
+  ],
+  "Bins": [
+    "bin/count"
+  ]
+}

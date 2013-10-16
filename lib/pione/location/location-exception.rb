@@ -18,7 +18,7 @@ module Pione
     # NotFound is raised when there isn't data on the location.
     class NotFound < LocationError
       def message
-        "%s not found" % @location.inspect
+        "location \"%s\" not found" % @location.address
       end
     end
 
@@ -29,9 +29,21 @@ module Pione
       end
     end
 
+    # GitError is raised when git command operation fails.
     class GitError < LocationError
       def message
         "%s: %s" % [@option[:message], @location.address]
+      end
+    end
+
+    # NotLocal is raised when local location is expected but it is other type location.
+    class NotLocal < LocationError
+      def initialize(location)
+        @location = location
+      end
+
+      def message
+        "the location \"%s\" should local location" % @location.address
       end
     end
   end

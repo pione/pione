@@ -118,7 +118,9 @@ module Pione
 
       def copy(dest)
         if dest.kind_of?(LocalLocation)
-          dest.path.dirname.mkpath unless dest.path.dirname.exist?
+          unless dest.path.dirname.exist?
+            dest.path.dirname.mkpath
+          end
           IO.copy_stream(@path.open, dest.path)
         else
           dest.exist? ? dest.update(read) : dest.create(read)

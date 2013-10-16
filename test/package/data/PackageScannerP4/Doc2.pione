@@ -1,0 +1,6 @@
+Rule R2
+  input 'i2'
+  output 'o2'
+Action
+  cat i2 > o2
+End

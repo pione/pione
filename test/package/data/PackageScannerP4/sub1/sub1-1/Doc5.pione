@@ -1,0 +1,6 @@
+Rule R5
+  input 'i5'
+  output 'o5'
+Action
+  cat i5 > o5
+End

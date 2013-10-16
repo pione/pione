@@ -81,6 +81,8 @@ module Pione
       member :param_definition, default: lambda {|_| Hash.new }
       # parameter set
       member :param, default: lambda {|_| ParameterSetSequence.new }
+      # annotations
+      member :annotations, default: lambda {Array.new}
     end
   end
 end

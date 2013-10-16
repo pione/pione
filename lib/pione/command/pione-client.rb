@@ -244,20 +244,19 @@ module Pione
         end
 
         # read package
-        @package = Package::PackageReader.read(Location[@argv.first])
-        @package_id = @package.eval(@env)
-        @env = @env.set(current_package_id: @package_id)
-        @package.upload(option[:output_location] + "package")
+        @handler = Package::PackageReader.read(Location[@argv.first])
+        @env = @handler.eval(@env)
+        @handler.upload(option[:output_location] + "package")
 
         # check rehearse scenario
-        if option[:rehearse] and not(@package.scenarios.empty?)
-          if scenario = @package.find_scenario(option[:rehearse])
+        if option[:rehearse] and not(@handler.info.scenarios.empty?)
+          if scenario = @hanlder.find_scenario(option[:rehearse])
             option[:input_location] = scenario.input
           else
             abort "the scenario not found: %s" % option[:rehearse]
           end
         end
-      rescue Package::InvalidPackageError => e
+      rescue Package::InvalidPackage => e
         abort("Package error: " + e.message)
       rescue Lang::ParserError => e
         abort("Pione syntax error: " + e.message)
@@ -306,7 +305,7 @@ module Pione
 
       # Print list of user parameters.
       def execute_list_params
-        Util::PackageParametersList.print(@env, @package_id)
+        Util::PackageParametersList.print(@env, @env.current_package_id)
       end
 
       def execute_job_terminator

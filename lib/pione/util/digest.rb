@@ -1,7 +1,7 @@
 module Pione
   module Util
     module TaskDigest
-      def generate(package_id, rule_name, inputs, param_set)
+      def self.generate(package_id, rule_name, inputs, param_set)
         case inputs.flatten.size
         when 0
           _inputs = ""
@@ -14,7 +14,17 @@ module Pione
         _param_set = _param_set.map{|k,v| "%s:%s" % [k, v.textize]}.join(",")
         "&%s:%s([%s],{%s})" % [package_id, rule_name, _inputs, _param_set]
       end
-      module_function :generate
+    end
+
+    module PackageDigest
+      # Generate a MD5 digest of the PPG archive.
+      def self.generate(ppg_location)
+        if ppg_location.local?
+          Digest::MD5.file(ppg_location.path).to_s
+        else
+          raise Location::NotLocal.new(ppg_location)
+        end
+      end
     end
   end
 end

@@ -1,0 +1,5 @@
+.@ ScenarioName :: "S6"
+.@ ParamSet :: "{P1: true}"
+.@ ParamSet :: "{P2: false}"
+.@ ParamSet :: "{P3: 1}"
+

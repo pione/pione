@@ -138,7 +138,7 @@ describe 'Pione::Transformer::DeclarationTransformer' do
   end
 
   transformer_spec("annotation_sentence", :annotation_sentence) do
-    test "@. author :: \"Keita Yamaguchi\"" do |declaration|
+    test ".@ author :: \"Keita Yamaguchi\"" do |declaration|
       declaration.pos.line.should == 1
       declaration.pos.column.should == 1
       declaration.should.kind_of Lang::AnnotationDeclaration

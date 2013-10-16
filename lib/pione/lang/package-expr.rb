@@ -4,21 +4,26 @@ module Pione
     class PackageExpr < Piece
       piece_type_name "PackageExpr"
       member :name
+      member :tag
+      member :edition
       member :package_id
       member :parent_ids
       member :param, default: ParameterSetSequence.new
 
       def eval(env)
         # get package id
-        _package_id = package_id ? package_id : env.find_package_id_by_package_name(name)
-        # get definition
-        definition = env.package_get(set(package_id: _package_id))
-        # update package expression
-        attr = {}
-        attr[:package_id] = definition.package_id
-        attr[:parent_ids] = definition.parent_ids
-        attr[:param] = param.eval(env)
-        set(attr)
+        if _package_id = package_id ? package_id : env.find_package_id_by_package_name(name)
+          # get definition
+          definition = env.package_get(set(package_id: _package_id))
+          # update package expression
+          attr = {}
+          attr[:package_id] = definition.package_id
+          attr[:parent_ids] = definition.parent_ids
+          attr[:param] = param.eval(env)
+          return set(attr)
+        else
+          return self
+        end
       end
     end
 
@@ -71,6 +76,10 @@ module Pione
       # Assign the package id to the rule expression.
       define_pione_method("rule", [TypeRuleExpr], TypeRuleExpr) do |env, rec, rule|
         RuleExprSequence.map2(rec, rule) {|rec_piece, rule_piece| rule_piece.set(package_id: rec_piece.package_id)}
+      end
+
+      define_pione_method("Parent", [], TypePackageExpr) do |env, rec|
+        rec.set_annotation_type("Parent")
       end
     end
   end

@@ -44,7 +44,7 @@ structural_context_element:
         output 'b.txt'.touch
       End
     # annotation sentence
-    - "@. author :: \"Keita Yamaguchi\""
+    - ".@ author :: \"Keita Yamaguchi\""
     # expr sentence
     - "? 1 + 1"
     # if branch
@@ -91,7 +91,7 @@ structural_context:
         input 'a.txt'
         output 'b.txt'.touch
       End
-      @. author :: "Keita Yamaguchi"
+      .@ author :: "Keita Yamaguchi"
       ? 1 + 1
       if $X
         rule A

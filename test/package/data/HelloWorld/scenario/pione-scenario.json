@@ -1,0 +1,10 @@
+{
+  "ScenarioName": "HelloWorld",
+  "ParamSet": null,
+  "Inputs": [
+
+  ],
+  "Outputs": [
+    "output/message.txt"
+  ]
+}

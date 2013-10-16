@@ -10,7 +10,7 @@ TestHelper.scope do |this|
 
     it "should create archive file" do
       out = Location[Temppath.mkdir]
-      Package::PackageArchiver.new(@path).archive(out)
+      Package::PackageArchiver.new(@path).archive(out, false)
 
       # easy check
       pkg = out + "TestPackage1+v0.1.0.ppg"

@@ -1,0 +1,11 @@
+.@ PackageName :: "P1"
+.@ Edition     :: "yamaguchi"
+.@ Tag         :: "test"
+
+Rule R1
+  input 'i1'
+  output 'o1'
+Flow
+  rule R2
+  rule R3
+End

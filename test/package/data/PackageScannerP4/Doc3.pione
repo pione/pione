@@ -1,0 +1,6 @@
+Rule R3
+  input 'i3'
+  output 'o3'
+Action
+  cat i3 > o3
+End

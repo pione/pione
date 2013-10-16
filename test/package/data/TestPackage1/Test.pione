@@ -1,3 +1,6 @@
+.@ PackageName :: "TestPackage1"
+.@ Tag :: "v0.1.0"
+
 param $WORD := "world"
 
 Rule Main

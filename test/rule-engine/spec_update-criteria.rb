@@ -3,12 +3,10 @@ require 'pione/test-helper'
 #
 # test sinario loader
 #
-path = Pathname.new(File.join(File.dirname(__FILE__), "spec_update-criteria.pione"))
+location = Location[File.dirname(__FILE__)] + "spec_update-criteria.pione"
 env = Lang::Environment.new
 env.current_package_id = "Test"
-opt = {package_name: "Test", filename: "spec_update-criteria.pione"}
-context = Package::Document.load(path, opt)
-context.eval(env)
+Package::Document.load(env, location, "Test", nil, nil, "spec_update-criteria.pione")
 
 time = 10.times.map {sleep 0.001; Time.now}
 tuple = {}

@@ -21,7 +21,7 @@ module Pione
 
       # Return the local location of repository.
       def local
-        Global.git_repository_directory + @address_digest
+        return Global.git_repository_directory + @address_digest
       end
 
       # Return true if the local location exists.
@@ -75,8 +75,6 @@ module Pione
 
       # Export git repository by hash id.
       def export(location)
-        clone_to_local unless has_local?
-
         hash_id = compact_hash_id
 
         # git archive
@@ -91,16 +89,7 @@ module Pione
         end
 
         # unzip
-        local = Location[Temppath.mkdir]
-        Util::Zip.uncompress(Location[path], local)
-
-        # update package.yml
-        info = YAML.load((local + "package.yml").read)
-        info["HashID"] = hash_id
-        (local + "package.yml").update(YAML.dump(info))
-
-        # upload
-        local.entries.each {|entry| entry.move(location)}
+        Util::Zip.uncompress(Location[path], location)
       end
 
       private

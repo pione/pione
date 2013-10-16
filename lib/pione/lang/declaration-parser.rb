@@ -111,7 +111,7 @@ module Pione
 
       # +annotation_sentence+ matches annotation declarations.
       rule(:annotation_sentence) {
-        line((atmark >> dot).as(:declarator) >> pad >> expr!.as(:expr)).as(:annotation_sentence)
+        line((dot >> atmark).as(:declarator) >> pad >> expr!.as(:expr)).as(:annotation_sentence)
       }
 
       # +expr_sentence+ matches expression declarations(maybe this is ignored in normal contexts).

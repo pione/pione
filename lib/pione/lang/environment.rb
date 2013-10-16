@@ -141,7 +141,7 @@ module Pione
       end
     end
 
-    # PackageTable is a table for pairs of child package id and parent package id.
+    # PackageTable is a table for pairs of child package id and the definition.
     class PackageTable
       def initialize
         @table = Hash.new
@@ -294,22 +294,22 @@ module Pione
         # set it to package table
         package_set(ref, definition)
         # return package id
-        return package_id
+        return package_id, definition
       end
 
       # Introduce new package in the environment.
       def setup_new_package(package_name, parent_ids=[])
-        package_id = add_package(package_name, parent_ids)
+        package_id, definition = add_package(package_name, parent_ids)
+
         # update current package id
-        set(current_package_id: package_id)
+        set(current_package_id: package_id, current_definition: definition)
       end
 
       def make_root_rule(param_set)
         # set $ROOT_PRARAM_SET
         variable_set(Variable.new("ROOT_PARAM_SET"), param_set)
         # make root rule
-        opt = {package_name: current_package_id, filename: "*system*"}
-        Package::Document.parse(<<-PIONE, opt).eval(self)
+        Package::Document.parse(<<-PIONE, current_package_id, nil, nil, "*system*").eval(self)
            Rule Root
              input '*'.all or null
              output '*'.all

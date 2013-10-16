@@ -47,23 +47,23 @@ module Pione
         textize
       end
     end
-  end
 
-  module Callable
-    # Call the pione method.
-    def call_pione_method(env, name, args)
-      # check arguments
-      raise ArgumentError.new(args) unless args.is_a?(Array)
+    module Callable
+      # Call the pione method.
+      def call_pione_method(env, name, args)
+        # check arguments
+        raise ArgumentError.new(args) unless args.is_a?(Array)
 
-      if pione_method = pione_type.find_method(env, name, self, args)
-        # evaluate arguments if the method type is immediate
-        if pione_method.method_type == :immediate
-          args = args.map {|arg| arg.eval(env)}
+        if pione_method = pione_type.find_method(env, name, self, args)
+          # evaluate arguments if the method type is immediate
+          if pione_method.method_type == :immediate
+            args = args.map {|arg| arg.eval(env)}
+          end
+          # call it
+          pione_method.call(env, self, args)
+        else
+          raise MethodNotFound.new(name, self, args)
         end
-        # call it
-        pione_method.call(env, self, args)
-      else
-        raise MethodNotFound.new(name, self, args)
       end
     end
   end

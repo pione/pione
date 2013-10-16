@@ -1,0 +1,15 @@
+{
+  "PackageName": "HelloWorld",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "HelloWorld.pione"
+  ],
+  "Scenarios": [
+    "scenario"
+  ],
+  "Bins": [
+
+  ]
+}

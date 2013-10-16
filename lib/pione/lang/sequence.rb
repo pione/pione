@@ -47,6 +47,7 @@ module Pione
 
       member :pieces, default: []
       member :distribution, default: :each, values: [:each, :all]
+      member :annotation_type
 
       forward! :class, :piece_classes, :index_type
       forward! Proc.new{pieces}, :size, :length, :include?
@@ -115,6 +116,11 @@ module Pione
           piece.set(_data)
         end
         set(pieces: _pieces)
+      end
+
+      # Set the annotation type to the sequence.
+      def set_annotation_type(type)
+        set(annotation_type: type)
       end
     end
 

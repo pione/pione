@@ -1,0 +1,6 @@
+Rule R4
+  input 'i4'
+  output 'o4'
+Action
+  cat i4 > o4
+End

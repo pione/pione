@@ -1,3 +1,5 @@
+.@ PackageName :: "HelloWorld"
+
 Rule Main
   output 'message.txt'
 Action
