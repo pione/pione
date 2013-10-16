@@ -36,7 +36,7 @@ module Pione
       # Update ticket condition of the other by adding receiver tickets
       define_pione_method("==>", [TypeRuleExpr], TypeRuleExpr) do |env, rec, other|
         other.map do |piece|
-          piece.set(input_tickets: piece.input_tcikets + rec)
+          piece.set(input_tickets: piece.input_tickets + rec)
         end
       end
 

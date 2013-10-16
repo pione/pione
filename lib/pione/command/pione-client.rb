@@ -250,7 +250,7 @@ module Pione
 
         # check rehearse scenario
         if option[:rehearse] and not(@handler.info.scenarios.empty?)
-          if scenario = @hanlder.find_scenario(option[:rehearse])
+          if scenario = @handler.find_scenario(option[:rehearse])
             option[:input_location] = scenario.input
           else
             abort "the scenario not found: %s" % option[:rehearse]
