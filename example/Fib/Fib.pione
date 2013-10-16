@@ -1,7 +1,8 @@
-@ author :: "Keita Yamaguchi"
-@ "Fib.pione calculates the value of Fibonacci number."
+.@ PackageName :: "Fib"
+.@ Editor :: "keita.yamaguchi@gmail.com"
+.@ "Fib.pione calculates the value of Fibonacci number."
 
-param ($NUM := 3)
+param $NUM := 3
 
 Rule Main
   output 'result.txt'
@@ -11,21 +12,21 @@ Flow
 End
 
 Rule Fib0
-  @ "the value of fib(0) is 0"
+  .@ "the value of fib(0) is 0"
   output 'fib0.txt'
 Action
   echo -n '0' > fib0.txt
 End
 
 Rule Fib1
-  @ "the value of fib(1) is 1"
+  .@ "the value of fib(1) is 1"
   output 'fib1.txt'
 Action
   echo -n '1' > fib1.txt
 End
 
 Rule Fib
-  @ "fib(n) is fib(0), fib(1), or fib(n-1) + fib(n-2)"
+  .@ "fib(n) is fib(0), fib(1), or fib(n-1) + fib(n-2)"
   output 'fib{$N}.txt'
   param $N
 Flow
@@ -44,7 +45,7 @@ Flow
 End
 
 Rule Calc
-  @ "calculate the value of fib(n-1) + fib(n-2)"
+  .@ "calculate the value of fib(n-1) + fib(n-2)"
   input 'fib{$P1}.txt'
   input 'fib{$P2}.txt'
   output 'fib{$N}.txt'
@@ -56,7 +57,7 @@ Action
 End
 
 Rule Result
-  @ "make the result"
+  .@ "make the result"
   input 'fib*.txt'
   output 'result.txt'
 Action
