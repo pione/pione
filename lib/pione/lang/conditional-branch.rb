@@ -61,7 +61,7 @@ module Pione
         val = expr.eval!(env)
 
         # return matched branch's context
-        matched = when_contexts.find do |_expr, _context|
+        _, matched = when_contexts.find do |_expr, _context|
           val.call_pione_method(env, "==*", [_expr]).value
         end
 

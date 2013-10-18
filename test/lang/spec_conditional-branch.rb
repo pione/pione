@@ -154,23 +154,23 @@ describe "Pione::Lang::CaseBranch" do
     env5 = TestHelper::Lang.env
     TestHelper::Lang.declaration!(env5, "$x := (1 | 2 | 3).all")
 
-    @branch.eval(env1).should == @branch.when_contexts[0]
-    @branch.eval(env2).should == @branch.when_contexts[1]
+    @branch.eval(env1).should == @branch.when_contexts[0][1]
+    @branch.eval(env2).should == @branch.when_contexts[1][1]
     @branch.eval(env3).should == @branch.else_context
-    @branch.eval(env4).should == @branch.when_contexts[0]
+    @branch.eval(env4).should == @branch.when_contexts[0][1]
     @branch.eval(env5).should == @branch.else_context
 
-    @branch_without_else.eval(env1).should == @branch_without_else.when_contexts[0]
-    @branch_without_else.eval(env2).should == @branch_without_else.when_contexts[1]
+    @branch_without_else.eval(env1).should == @branch_without_else.when_contexts[0][1]
+    @branch_without_else.eval(env2).should == @branch_without_else.when_contexts[1][1]
     @branch_without_else.eval(env3).should == Lang::ConditionalBranchContext.new([])
-    @branch_without_else.eval(env4).should == @branch_without_else.when_contexts[0]
+    @branch_without_else.eval(env4).should == @branch_without_else.when_contexts[0][1]
     @branch_without_else.eval(env5).should == Lang::ConditionalBranchContext.new([])
 
-    @sequential.eval(env1).should == @sequential.when_contexts[0]
-    @sequential.eval(env2).should == @sequential.when_contexts[0]
-    @sequential.eval(env3).should == @sequential.when_contexts[0]
-    @sequential.eval(env4).should == @sequential.when_contexts[0]
-    @sequential.eval(env5).should == @sequential.when_contexts[1]
+    @sequential.eval(env1).should == @sequential.when_contexts[0][1]
+    @sequential.eval(env2).should == @sequential.when_contexts[0][1]
+    @sequential.eval(env3).should == @sequential.when_contexts[0][1]
+    @sequential.eval(env4).should == @sequential.when_contexts[0][1]
+    @sequential.eval(env5).should == @sequential.when_contexts[1][1]
   end
 end
 

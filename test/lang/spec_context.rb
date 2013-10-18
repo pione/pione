@@ -130,6 +130,48 @@ describe "Pione::Lang::ConditionalBranchContext" do
       rule_set_false.rules.pieces.size.should == 1
       rule_set_false.rules.should == TestHelper::Lang.expr!(@env, "B")
     end
+
+    it "should make branch by case" do
+      TestHelper::Lang.package_context!(@env, <<-PIONE)
+        Rule R
+          input '*.i'
+          output '*.o'
+        Flow
+          case $x
+          when 1
+            rule A
+          when 2
+            rule B
+          else
+            rule C
+          end
+        End
+      PIONE
+      definition = @env.rule_get(Lang::RuleExpr.new("R"))
+
+      # x := 0
+      env0 = @env.layer
+      env0.variable_set(Lang::Variable.new("x"), Lang::IntegerSequence.of(1))
+      rule_set0 = definition.flow_context.eval(env0)
+
+      # x := 1
+      env1 = @env.layer
+      env1.variable_set(Lang::Variable.new("x"), Lang::IntegerSequence.of(2))
+      rule_set1 = definition.flow_context.eval(env1)
+
+      # x := 2
+      env2 = @env.layer
+      env2.variable_set(Lang::Variable.new("x"), Lang::IntegerSequence.of(3))
+      rule_set2 = definition.flow_context.eval(env2)
+
+      # test
+      rule_set0.rules.pieces.size.should == 1
+      rule_set0.rules.should == TestHelper::Lang.expr!(@env, "A")
+      rule_set1.rules.pieces.size.should == 1
+      rule_set1.rules.should == TestHelper::Lang.expr!(@env, "B")
+      rule_set2.rules.pieces.size.should == 1
+      rule_set2.rules.should == TestHelper::Lang.expr!(@env, "C")
+    end
   end
 end
 
