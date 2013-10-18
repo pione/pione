@@ -444,7 +444,7 @@ module Pione
           lift_touch_tuple(task)
 
           # publish output tickets
-          task.rule.output_tickets.pieces do |piece|
+          task.rule.output_tickets.pieces.each do |piece|
             write(TupleSpace::TicketTuple.new(domain_id, piece.name))
           end
         end
