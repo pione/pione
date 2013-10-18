@@ -55,12 +55,6 @@ module Pione
         item.value = :as_is
       end
 
-      define_option(:tag) do |item|
-        item.long = "--branch=NAME"
-        item.desc = "specify branch name"
-        item.value = :as_is
-      end
-
       define_option(:hash_id) do |item|
         item.long = "--hash-id=HASH"
         item.desc = "specify git hash id"
@@ -94,8 +88,9 @@ module Pione
       # Add the package to package database.
       def execute_add_package
         handler = Package::PackageReader.read(Location[@target])
+        tag = option[:tag] || handler.info.tag
         db = Package::Database.load
-        db.add(name: handler.info.name, editor: handler.info.editor, tag: handler.info.tag, digest: handler.digest)
+        db.add(name: handler.info.name, editor: handler.info.editor, tag: tag, digest: handler.digest)
         db.save
 
         # show log

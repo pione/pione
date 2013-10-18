@@ -92,6 +92,15 @@ TestHelper.scope do |this|
       digest.size.should > 0
     end
 
+    it "should add tag alias" do
+      TestHelper::Command.succeed do
+        Command::PionePackage.run ["--add", "--tag", "TEST", this::P4.path.to_s]
+      end
+      db = Package::Database.load
+      digest = db.find("P4", "keita.yamaguchi@gmail.com", "TEST")
+      digest.size.should > 0
+    end
+
     it "should write a package information file" do
       location = Location[Temppath.mkdir]
       (this::P1 + "P1.pione").copy(location + "P1.pione")
