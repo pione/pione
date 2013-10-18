@@ -13,6 +13,14 @@ module Pione
         new(name: data["ScenarioName"], param_set: data["ParamSet"], inputs: data["Inputs"], outputs: data["Outputs"])
       end
 
+      # Return file paths of the scenario.
+      def filepaths
+        list = []
+        list += inputs
+        list += outputs
+        return list
+      end
+
       def to_json(*args)
         data = Hash.new
         data["ScenarioName"] = name

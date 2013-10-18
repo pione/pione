@@ -19,10 +19,10 @@ TestHelper.scope do |this|
       pkg.size.should > 0
 
       # structure check
-      Zip::Archive.open(pkg.path.to_s) do |ar|
-        ar.each do |file|
-          unless file.directory?
-            file.read.should == (@path + file.name).read
+      Zip::File.open(pkg.path.to_s) do |zip|
+        zip.each do |entry|
+          unless entry.directory? or entry.name == ".digest"
+            zip.file.open(entry.name).read.should == (@path + entry.name).read
           end
         end
       end

@@ -45,7 +45,7 @@ module Pione
             # PIONE document has extension ".pione"
             if /^[^.].+.pione$/.match(entry.basename)
               # document path should be relative
-              paths << entry.path.relative_path_from(@package_location.path)
+              paths << entry.path.relative_path_from(@package_location.path).to_s
             end
           else
             # excepting dot-headed or scenario, scan the directory recursively
@@ -108,7 +108,7 @@ module Pione
         location.entries.each_with_object([]) do |entry, list|
           if entry.directory?
             if ScenarioScanner.scenario?(entry)
-              list << entry.path.relative_path_from(@package_location.path)
+              list << entry.path.relative_path_from(@package_location.path).to_s
             else
               list.concat(scan_scenarios(entry))
             end
@@ -121,7 +121,7 @@ module Pione
         if (location + "bin").exist?
           (location + "bin").entries.each_with_object([]) do |entry, list|
             if entry.file?
-              list << entry.path.relative_path_from(@package_location.path)
+              list << entry.path.relative_path_from(@package_location.path).to_s
             end
           end
         else

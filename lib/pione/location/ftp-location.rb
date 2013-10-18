@@ -77,6 +77,10 @@ module Pione
         connect {|ftp| exist? ? ftp.mtime(@path.to_s) : (raise NotFound.new(self))}
       end
 
+      def mtime=(time)
+
+      end
+
       def size
         connect {|ftp| exist? ? ftp.size(@path.to_s) : (raise NotFound.new(self))}
       end

@@ -18,10 +18,12 @@ module Pione
         location = @location.local
 
         # expand zip archive
-        Zip::Archive.open(location.path.to_s) do |ar|
-          ar.each do |file|
-            unless file.directory?
-              (output + file.name).write(file.read)
+        Zip::File.open(location.path.to_s) do |zip|
+          zip.each do |entry|
+            unless entry.ftype == :directory
+              tmp = Temppath.create
+              entry.extract(tmp.to_s)
+              Location[tmp].move(output + entry.name)
             end
           end
         end

@@ -97,7 +97,15 @@ module Pione
         db = Package::Database.load
         db.add(name: handler.info.name, editor: handler.info.editor, tag: handler.info.tag, digest: handler.digest)
         db.save
-        Log::SystemLog.info("added %s" % handler.info.name)
+
+        # show log
+        args = []
+        args << "editor: " + handler.info.editor if handler.info.editor
+        args << "tag: " + handler.info.tag if handler.info.tag
+        _args = args.size > 0 ? "(" + args.join(", ") + ")" : ""
+        Log::SystemLog.info(
+          "package \"%s\"%s was added to package database" % [handler.info.name, _args]
+        )
       end
 
       execute :build => :build_package

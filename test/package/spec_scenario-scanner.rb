@@ -31,13 +31,13 @@ TestHelper.scope do |this|
       s1.name.should == "S1"
       s1.param_set.should.nil
       s1.inputs.size.should == 3
-      s1.inputs.should.include Pathname.new("input/i1")
-      s1.inputs.should.include Pathname.new("input/i2")
-      s1.inputs.should.include Pathname.new("input/i3")
+      s1.inputs.should.include "input/i1"
+      s1.inputs.should.include "input/i2"
+      s1.inputs.should.include "input/i3"
       s1.outputs.size.should == 3
-      s1.outputs.should.include Pathname.new("output/o1")
-      s1.outputs.should.include Pathname.new("output/o2")
-      s1.outputs.should.include Pathname.new("output/o3")
+      s1.outputs.should.include "output/o1"
+      s1.outputs.should.include "output/o2"
+      s1.outputs.should.include "output/o3"
     end
 
     it "should scan scenario direcotry: S2" do
@@ -46,7 +46,7 @@ TestHelper.scope do |this|
       s2.param_set.should.nil
       s2.inputs.size.should == 0
       s2.outputs.size.should == 1
-      s2.outputs.should.include Pathname.new("output/o1")
+      s2.outputs.should.include "output/o1"
     end
 
     it "should scan scenario direcotry: S3" do

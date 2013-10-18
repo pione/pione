@@ -31,8 +31,15 @@ module Pione
         false
       end
 
-      def copy(dest)
+      def copy(dest, option={})
+        # setup options
+        option[:keep_mtime] ||= true
+
+        # copy
         http_get {|rec| dest.write rec.body}
+
+        # modify mtime
+        dest.mtime = self.mtime if option[:keep_mtime]
       end
 
       private

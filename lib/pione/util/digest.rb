@@ -17,12 +17,53 @@ module Pione
     end
 
     module PackageDigest
-      # Generate a MD5 digest of the PPG archive.
-      def self.generate(ppg_location)
-        if ppg_location.local?
-          Digest::MD5.file(ppg_location.path).to_s
-        else
-          raise Location::NotLocal.new(ppg_location)
+      class << self
+        # Generate a MD5 digest of the PPG archive.
+        def generate(location)
+          case Package::PackageTypeClassifier.classify(location)
+          when :archive
+            generate_from_ppg(location)
+          when :directory
+            generate_from_directory_package(location)
+          else
+            nil
+          end
+        end
+
+        # Generate a MD5 digest of the directory package.
+        def generate_from_directory_package(location)
+          files = []
+
+          # package files
+          package_info = Package::PackageScanner.scan(location)
+          files << "pione-package.json"
+          files += package_info.filepaths
+
+          # scenario files
+          scenario_infos = package_info.scenarios.map do |scenario|
+            files << File.join(scenario, "pione-scenario.json")
+            files += Package::ScenarioScanner.scan(location + scenario).filepaths.map do |path|
+              File.join(scenario, path)
+            end
+          end
+
+          # make seed string for digest
+          seed = files.sort.each_with_object("") do |filepath, string|
+            digest = Digest::MD5.file((location + filepath).path).to_s
+            string << "%s %s\n" % [filepath, digest]
+          end
+
+          return Digest::MD5.hexdigest(seed)
+        end
+
+        # Generate a MD5 digest of the PPG archive.
+        def generate_from_ppg(location)
+          local_location = location.local
+          tmp = Temppath.create
+          ::Zip::File.open(local_location.path.to_s) do |zip|
+            zip.extract(".digest", tmp)
+          end
+          Location[tmp].read
         end
       end
     end

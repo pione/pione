@@ -199,6 +199,13 @@ module Pione
         raise NotImplementedError
       end
 
+      # Set last modification time of the location.
+      #
+      # @return [void]
+      def mtime=(time)
+        raise NotImplementedError
+      end
+
       # Return byte size of data in the location.
       #
       # @return [Integer]
@@ -211,7 +218,7 @@ module Pione
       #
       # @return [Array<Location>]
       #   entries of the location
-      def entries
+      def entries(&b)
         raise NotImplementedError
       end
 

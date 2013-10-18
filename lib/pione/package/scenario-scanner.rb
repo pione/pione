@@ -57,7 +57,7 @@ module Pione
         if (@location + name).exist?
           (@location + name).file_entries.each_with_object([]) do |entry, target|
             unless /^\./.match(entry.basename)
-              target << Pathname(name) + entry.basename
+              target << File.join(name, entry.basename)
             end
           end
         else

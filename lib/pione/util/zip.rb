@@ -17,14 +17,16 @@ module Pione
           _archive = Location[Temppath.create]
 
           # compress
-          ::Zip::Archive.open(_archive.path.to_s, ::Zip::CREATE) do |ar|
+          ::Zip::File.open(_archive.path.to_s, ::Zip::File::CREATE) do |zip|
             _src.rel_entries(rec: true).each do |relpath|
               relpath = relpath.to_s
               location = _src + relpath
               if location.directory?
-                ar.add_dir(relpath)
+                zip.mkdir(relpath)
               else
-                ar.add_file(relpath, location.path.to_s)
+                entry = zip.add(relpath, location.path.to_s)
+                entry.time = ::Zip::DOSTime.at(location.mtime)
+                entry.extra.delete("UniversalTime")
               end
             end
           end
@@ -41,18 +43,17 @@ module Pione
         #    the destination directory location
         def uncompress(archive, dest)
           _archive = archive.local
-          _dest = dest.local
-          ::Zip::Archive.open(_archive.path.to_s) do |ar|
-            ar.each do |f|
-              path = _dest + f.name
-              if f.directory?
-                path.mkdir
+          ::Zip::File.open(_archive.path.to_s) do |zip|
+            zip.each do |entry|
+              if entry.directory?
+                (dest + entry.name).mkdir
               else
-                f.read(8192) {|chunk| path.append(chunk)}
+                tmp = Temppath.create
+                entry.extract(tmp)
+                Location[tmp].move(dest + entry.name)
               end
             end
           end
-          _dest.move(dest)
         end
       end
     end

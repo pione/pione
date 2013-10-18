@@ -27,8 +27,10 @@ module Pione
               f.read
             end
           else
-            new
-            # raise DatabaseError.new("package database file not found: %s" % Global.package_database_location.address)
+            db = new
+            db.save
+            Log::SystemLog.info "PIONE created a new package database at %s" % Global.package_database_location.address
+            return db
           end
         end
       end
@@ -36,6 +38,7 @@ module Pione
       def initialize
         # make a 3d table
         @table = Hash.new {|h1,k1| h1[k1] = Hash.new {|h2,k2| h2[k2] = Hash.new}}
+        @digests = []
       end
 
       # Add the record.
@@ -44,6 +47,7 @@ module Pione
           record = DatabaseRecord.new(record)
         end
         @table[record.name][record.editor || "origin"][record.tag] = record
+        @digests << record.digest
       end
 
       # Delete a record by the tuple of name, editor, and tag. Editor is
@@ -59,6 +63,11 @@ module Pione
             t2.inject(i2) {|i3, (_, val)| val ? i3 + 1 : i3}
           end
         end
+      end
+
+      # Return true if the digest is included in package database.
+      def has_digest?(digest)
+        @digests.include?(digest)
       end
 
       # Find a record by the tuple of name, editor, and tag. Editor is "origin" if it is nil.

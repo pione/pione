@@ -9,7 +9,7 @@ end
 
 describe Pione::Util::PackageDigest do
   it "should generate package digest" do
-    location = Location[File.dirname(__FILE__)] + "data" + "HelloWorld+v0.1.0.ppg"
-    Util::PackageDigest.generate(location).should == "e1869237e587c17134f5ecb9a7caf22c"
+    location = Location[File.dirname(__FILE__)] + "data" + "HelloWorld+v0.1.1.ppg"
+    Util::PackageDigest.generate(location).should == "699c478eb7ce00fa00743a30f999f245"
   end
 end

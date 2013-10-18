@@ -1,13 +1,14 @@
 module Pione
   module Global
-    # client-front port range begin
+    # This is a begin number of port range for client's front.
     define_external_item(:client_front_port_range_begin, 40000)
 
-    # client-front port range end
-    define_external_item(:client_front_port_range_end, 40999)
+    # This is an end number of port range for client's front.
+    define_external_item(:client_front_port_range_end, 40099)
 
-    # client-front port range
-    define_internal_item(:client_front_port_range) do
+    # This is port range for client's front.
+    define_computed_item(:client_front_port_range,
+      [:client_front_port_range_begin, :client_front_port_range_end]) do
       Range.new(
         Global.client_front_port_range_begin,
         Global.client_front_port_range_end

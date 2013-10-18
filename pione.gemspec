@@ -36,7 +36,7 @@ Gem::Specification.new do |gem|
   # requisite for system
   gem.add_runtime_dependency "parslet", "~> 1.5.0"
   gem.add_runtime_dependency "uuidtools", "~> 2.1.4"
-  gem.add_runtime_dependency "highline", "~> 1.6.15"
+  gem.add_runtime_dependency "highline", "~> 1.6.20"
   gem.add_runtime_dependency "hamster", "~> 0.4.3"
   gem.add_runtime_dependency "naming", "~> 0.1.0"
   gem.add_runtime_dependency "forwardablex", "~> 0.1.4"
@@ -48,10 +48,10 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "sys-cpu", "~> 0.7.1"
   gem.add_runtime_dependency "structx", "~> 0.1.3"
   gem.add_runtime_dependency "syslog-logger", "~> 1.6.8"
-  gem.add_runtime_dependency "zipruby", "~> 0.3.6"
   gem.add_runtime_dependency "retriable", "~> 1.3.3"
   gem.add_runtime_dependency "childprocess", "~> 0.3.9"
   gem.add_runtime_dependency "lettercase", "~> 0.0.3"
+  gem.add_runtime_dependency "rubyzip", "~> 1.0.0"
 
   # for locations
   gem.add_runtime_dependency "dropbox-sdk", "~> 1.5.1"

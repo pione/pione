@@ -44,25 +44,25 @@ TestHelper.scope do |this|
     it "should scan documents" do
       p4 = Package::PackageScanner.new(this::P4).scan
       p4.name.should == "P4"
-      p4.documents.should.include Pathname.new("Doc1.pione")
-      p4.documents.should.include Pathname.new("Doc2.pione")
-      p4.documents.should.include Pathname.new("Doc3.pione")
-      p4.documents.should.include Pathname.new("sub1/Doc4.pione")
-      p4.documents.should.include Pathname.new("sub1/sub1-1/Doc5.pione")
-      p4.documents.should.include Pathname.new("sub2/sub2-1/sub2-1-1/Doc6.pione")
-      p4.documents.should.include Pathname.new("sub2/sub2-1/sub2-1-2/Doc7.pione")
+      p4.documents.should.include "Doc1.pione"
+      p4.documents.should.include "Doc2.pione"
+      p4.documents.should.include "Doc3.pione"
+      p4.documents.should.include "sub1/Doc4.pione"
+      p4.documents.should.include "sub1/sub1-1/Doc5.pione"
+      p4.documents.should.include "sub2/sub2-1/sub2-1-1/Doc6.pione"
+      p4.documents.should.include "sub2/sub2-1/sub2-1-2/Doc7.pione"
     end
 
     it "should scan scenario" do
       p5 = Package::PackageScanner.new(this::P5).scan
       p5.name.should == "P5"
-      p5.scenarios.should.include Pathname.new("scenario1")
-      p5.scenarios.should.include Pathname.new("scenario2")
-      p5.scenarios.should.include Pathname.new("scenario3")
-      p5.scenarios.should.include Pathname.new("sub1/scenario4")
-      p5.scenarios.should.include Pathname.new("sub1/sub1-1/scenario5")
-      p5.scenarios.should.include Pathname.new("sub2/sub2-1/sub2-1-1/scenario6")
-      p5.scenarios.should.include Pathname.new("sub2/sub2-1/sub2-1-2/scenario7")
+      p5.scenarios.should.include "scenario1"
+      p5.scenarios.should.include "scenario2"
+      p5.scenarios.should.include "scenario3"
+      p5.scenarios.should.include "sub1/scenario4"
+      p5.scenarios.should.include "sub1/sub1-1/scenario5"
+      p5.scenarios.should.include "sub2/sub2-1/sub2-1-1/scenario6"
+      p5.scenarios.should.include "sub2/sub2-1/sub2-1-2/scenario7"
     end
   end
 end

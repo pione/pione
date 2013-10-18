@@ -64,11 +64,15 @@ module Pione
         @path.exist? ? @path.mtime : (raise NotFound.new(self))
       end
 
+      def mtime=(time)
+        @path.utime(@path.atime, time)
+      end
+
       def size
         @path.exist? ? @path.size : (raise NotFound.new(self))
       end
 
-      def entries(option={})
+      def entries(option={rec: false})
         rel_entries(option).map do |entry|
           Location["local:%s" % (@path + entry).expand_path]
         end
@@ -76,7 +80,7 @@ module Pione
         raise NotFound.new(self)
       end
 
-      def rel_entries(option={})
+      def rel_entries(option={rec: false})
         list = []
         @path.entries.each do |entry|
           if not(entry.to_s == "." or entry.to_s == "..")
@@ -89,6 +93,38 @@ module Pione
           end
         end
         return list
+      rescue Errno::ENOENT
+        raise NotFound.new(self)
+      end
+
+      def each_entry(option={rec: false}, &b)
+        each_rel_entry(option) do |entry|
+          yield Location["local:%s" % (@path + entry).expand_path]
+        end
+      rescue Errno::ENOENT
+        raise NotFound.new(self)
+      end
+
+      def each_rel_entry(option={rec: false}, &b)
+        if block_given?
+          @path.each_entry do |entry|
+            # ignore current or parent directory
+            next if entry.to_s == "." or entry.to_s == ".."
+
+            # call the block
+            yield entry
+
+            # recursion mode
+            entry_location = self + entry
+            if option[:rec] and entry_location.directory?
+              entry_location.rel_entries(option) do |subentry|
+                yield File.join(entry, subentry)
+              end
+            end
+          end
+        else
+          return Enumerator.new(self, :foreach)
+        end
       rescue Errno::ENOENT
         raise NotFound.new(self)
       end
@@ -107,6 +143,7 @@ module Pione
 
       def move(dest)
         raise NotFound.new(self) unless exist?
+
         if dest.kind_of?(LocalLocation)
           dest.path.dirname.mkpath unless dest.path.dirname.exist?
           FileUtils.mv(@path, dest.path, force: true)
@@ -116,14 +153,26 @@ module Pione
         end
       end
 
-      def copy(dest)
+      def copy(dest, option={})
+        # setup options
+        option[:keep_mtime] ||= true
+
         if dest.kind_of?(LocalLocation)
-          unless dest.path.dirname.exist?
-            dest.path.dirname.mkpath
-          end
+          # make parent directories
+          dest.path.dirname.mkpath unless dest.path.dirname.exist?
+
+          # copy
           IO.copy_stream(@path.open, dest.path)
         else
-          dest.exist? ? dest.update(read) : dest.create(read)
+          dest.write(read)
+        end
+
+        # modify mtime
+        begin
+          dest.mtime = self.mtime if option[:keep_mtime]
+        rescue NotImplemented
+          msg = "the location operation faild to keep mtime: copy from %s to %s"
+          Log::SystemLog.debug(msg % [address, dest.address])
         end
       end
 

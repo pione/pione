@@ -24,6 +24,14 @@ module Pione
         new(args)
       end
 
+      # Return package file paths.
+      def filepaths
+        list = []
+        list += documents
+        list += bins
+        return list
+      end
+
       # Convert to JSON object.
       def to_json(*args)
         data = {}

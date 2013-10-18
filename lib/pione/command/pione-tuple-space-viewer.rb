@@ -83,16 +83,21 @@ module Pione
       #
 
       setup :pp
-      setup :tuple_space_servers
+      setup :tuple_space
 
       def setup_pp
         require 'pp'
       end
 
-      def setup_tuple_space_servers
-        find_tuple_space_servers
+      def setup_tuple_space
+        unless @argv.size > 0
+          abort("you should set tuple space address")
+        end
 
-        # tuple space servers are not found
+        address = @argv.first
+        @tuple_spaces = get_tuple_space(address)
+
+        # the tuple space not found
         if @tuple_spaces.empty?
           abort("No tuple space servers.")
         end
@@ -105,7 +110,7 @@ module Pione
       execute :print_bag
 
       def execute_print_bag
-        @tuple_space_servers.each do |address, tuple_space_server|
+        @tuple_spaces.each do |address, tuple_space_server|
           puts "TupleSpaceServer: %s" % address.color(:red)
           puts "-"*78
           if option[:bag_type] == :bag or option[:bag_type].nil?
@@ -136,30 +141,13 @@ module Pione
 
       private
 
-      # Find tuple spaces.
-      def find_tuple_spaces
-        if option[:address]
-          @tuple_spaces << [option[:address], get_tuple_space_server(option[:address])]
-        else
-          find_tuple_spaces_in_range
-        end
-      end
-
-      # Find tuple space server in some port range. This scans ports of the address.
-      def find_tuple_spaces_in_range
-        Global.client_front_port_range.each do |port|
-          Util.ignore_exception do
-            address = "druby://%s:%s" % [Global.my_ip_address, port]
-            @tuple_spaces << [address, get_tuple_space_server(address)]
-          end
-        end
-      end
-
       # Get a tuple space from the address.
       def get_tuple_space(address)
         ref = DRbObject.new_with_uri(address)
         ref.ping
         ref.get_tuple_space(nil)
+      rescue DRb::DRbConnError => e
+        abort("cannot connect to %s: %s" % [address, e.message])
       end
 
       # Show tuples of the typed bag in the tuple space server.
@@ -168,7 +156,7 @@ module Pione
           next if not(option[:identifiers].empty?) and not(option[:identifiers].include?(tuple.first.to_s))
           next if option[:exclusions].include?(tuple.first.to_s)
 
-          t = Tuple.from_array(tuple)
+          t = TupleSpace::Tuple.from_array(tuple)
 
           # rule_path
           if option[:rule_path]
