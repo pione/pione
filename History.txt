@@ -1,5 +1,14 @@
 # History
 
+## 0.3.0(2013/10/20)
+
+* Improved multi-inheritance package system.
+* Added package database.
+* Added package cache system.
+* Improved language parser and interpreter.
+* Refactored many codes.
+* Improved test coverage.
+
 ## 0.2.2(2013/07/02)
 
 * Enabled to load remote package.
