@@ -244,13 +244,13 @@ module Pione
         end
 
         # read package
-        @handler = Package::PackageReader.read(Location[@argv.first])
-        @env = @handler.eval(@env)
-        @handler.upload(option[:output_location] + "package")
+        @package_handler = Package::PackageReader.read(Location[@argv.first])
+        @env = @package_handler.eval(@env)
+        @package_handler.upload(option[:output_location] + "package")
 
         # check rehearse scenario
-        if option[:rehearse] and not(@handler.info.scenarios.empty?)
-          if scenario = @handler.find_scenario(option[:rehearse])
+        if option[:rehearse] and not(@package_handler.info.scenarios.empty?)
+          if scenario = @package_handler.find_scenario(option[:rehearse])
             option[:input_location] = scenario.input
           else
             abort "the scenario not found: %s" % option[:rehearse]
@@ -374,18 +374,18 @@ module Pione
       # Start process manager agent.
       def execute_process_manager
         @process_manager =
-          Agent::ProcessManager.start(@tuple_space, @env, @package, option[:params], option[:stream])
+          Agent::ProcessManager.start(@tuple_space, @env, @package_handler, option[:params], option[:stream])
         @process_manager.wait_until_terminated(nil)
       end
 
       # Check rehearsal result.
       def execute_check_rehearsal_result
-        return unless option[:rehearse] and not(@package.scenarios.empty?)
-        return unless scenario = @package.find_scenario(option[:rehearse])
+        return unless option[:rehearse] and not(@package_handler.info.scenarios.empty?)
+        return unless scenario = @package_handler.find_scenario(option[:rehearse])
 
         errors = scenario.validate(option[:output_location])
         if errors.empty?
-          System.show "Rehearsal Result: Succeeded"
+          Log::SystemLog.info "Rehearsal Result: Succeeded"
         else
           puts "Rehearsal Result: Failed"
           errors.each {|error| puts "- %s" % error.to_s}
