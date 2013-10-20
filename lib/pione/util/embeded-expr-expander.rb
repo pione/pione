@@ -3,6 +3,8 @@ module Pione
     module EmbededExprExpander
       # Expand embeded expressions in the string.
       def self.expand(env, str)
+        return nil if str.nil?
+
         # parse and transform
         tree = Lang::InterpolatorParser.new.parse(str)
         list = Lang::InterpolatorTransformer.new.apply(tree, {package_name: nil, filename: nil})

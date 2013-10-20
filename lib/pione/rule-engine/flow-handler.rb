@@ -212,7 +212,7 @@ module Pione
 
       # Make tasks from rules.
       def make_tasks(rules)
-        rules.inject([]) do |tasks, rule|
+        rules.each_with_object([]) do |rule, tasks|
           # set handler's package id if rule's package id is implicit
           rule = rule.set(package_id: package_id) unless rule.package_id
 
@@ -222,7 +222,7 @@ module Pione
           # handle parameter sequence
           pieces = rule.param_sets.pieces
           if not(pieces.empty?)
-            pieces.inject(tasks) do |_tasks, param_set|
+            pieces.each do |param_set|
               ### merge default parameter values ####
               # setup task's environment by parameter set
               _env = plain_env.layer.merge(param_set)
@@ -243,16 +243,17 @@ module Pione
                 # get task's condition
                 rule_condition = rule_definition.rule_condition_context.eval(_env)
 
-                _tasks += find_tasks_by_rule_condition(_env, rule, rule_definition, rule_condition, expanded_param_set).uniq
+                tasks.concat find_tasks_by_rule_condition(_env, rule, rule_definition, rule_condition, expanded_param_set).uniq
               end
-
-              _tasks
             end
           else
             _env = plain_env.layer
             # get task's condition
             rule_condition = rule_definition.rule_condition_context.eval(_env)
-            find_tasks_by_rule_condition(_env, rule, rule_definition, rule_condition, Lang::ParameterSet.new).uniq
+            this_tasks = find_tasks_by_rule_condition(
+              _env, rule, rule_definition, rule_condition, Lang::ParameterSet.new
+            ).uniq
+            tasks.concat(this_tasks)
           end
         end
       end
@@ -361,9 +362,6 @@ module Pione
 
       # Distribute tasks.
       def distribute_tasks(tasks)
-        distributed = []
-        canceled = []
-
         # log and message
         process_log(make_task_process_record.merge(transition: "suspend"))
         process_log(make_rule_process_record.merge(transition: "suspend"))
@@ -375,8 +373,6 @@ module Pione
 
           # publish tasks
           if need_to_publish_task?(task, tuple)
-            distributed << task
-
             # clear finished tuple and data tuples from the domain
             take!(TupleSpace::FinishedTuple.new(domain: task.domain_id))
             take_all!(TupleSpace::DataTuple.new(domain: task.domain_id))
@@ -392,12 +388,12 @@ module Pione
             user_message(">>> %s".color(:yellow) % task.digest, 3, "", :blue)
           else
             # cancel the task
-            canceled << task.domain_id
+            Log::Debug.rule_engine "task %s canceled at %s" % [task.digest, digest]
           end
         end
 
         # wait an end of distributed tasks
-        wait_task_completion(distributed, canceled)
+        wait_task_completion(tasks)
 
         # turn foreground if the task is background
         unless read!(TupleSpace::ForegroundTuple.new(domain_id, digest))
@@ -430,8 +426,7 @@ module Pione
       end
 
       # Wait until tasks completed.
-      def wait_task_completion(tasks, canceled)
-        # wait to finish threads
+      def wait_task_completion(tasks)
         tasks.each do |task|
           # wait to finish the work
           finished = read(TupleSpace::FinishedTuple.new(domain: task.domain_id))

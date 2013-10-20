@@ -9,6 +9,10 @@ module Pione
     class IntegerSequence < OrdinalSequence
       pione_type TypeInteger
       piece_class PioneInteger
+
+      def textize
+        "(%s/i)" % pieces.map {|piece| piece.value}.join("|")
+      end
     end
 
     TypeInteger.instance_eval do

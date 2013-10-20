@@ -117,6 +117,10 @@ module Pione
       end
       # This alias is for RINDA's template matcher.
       alias :"=~" :match?
+
+      def textize
+        "(%s/d)" % pieces.map {|piece| piece.pattern}.join("|")
+      end
     end
 
     TypeDataExpr.instance_eval do

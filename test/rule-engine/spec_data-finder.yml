@@ -8,6 +8,17 @@ case1:
   results:
     - [[1.a]]
 
+case1-2:
+  tuples:
+    - 1.a
+    - 2.a
+    - 3.a
+  query:
+    - "'1.a'"
+    - "'2.a'"
+  results:
+    - [[1.a], [2.a]]
+
 case2:
   tuples:
     - 1.a

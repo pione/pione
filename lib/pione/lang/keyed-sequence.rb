@@ -67,6 +67,11 @@ module Pione
         content = pieces.map {|key, val| "%s:(%s)" % [key.pieces.first.value, val.textize]}.join(",")
         "#<%s [%s]>" % [name, content]
       end
+
+      def textize
+        content = pieces.map {|key, val| "%s=>%s" % [key.textize, val.textize]}.join(",")
+        "<%s>" % content
+      end
     end
 
     TypeKeyedSequence.instance_eval do
