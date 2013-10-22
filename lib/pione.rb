@@ -1,11 +1,24 @@
 Thread.abort_on_exception = true
 
 #
-# load libraries
+# setup bundler
 #
 
-# bundler
 require 'bundler/setup' rescue nil
+
+#
+# initialize profiler
+#
+
+require 'pione/util/profiler'
+if targets = ENV["PIONE_PROFILE"]
+  Pione::Util::Profiler.init
+  Pione::Util::Profiler.targets.concat(targets.split(":"))
+end
+
+#
+# load libraries
+#
 
 # standard
 require 'set'

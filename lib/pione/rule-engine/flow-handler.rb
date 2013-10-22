@@ -179,9 +179,12 @@ module Pione
         # start message
         user_message_begin("Rule Application: %s" % digest, 1)
 
-        # rule application loop
-        while tasks = find_tasks(rules) do
-          distribute_tasks(tasks)
+        # with profile
+        Util::Profiler.profile(Util::RuleApplicationProfileReport.new(digest)) do
+          # rule application loop
+          while tasks = find_tasks(rules) do
+            distribute_tasks(tasks)
+          end
         end
 
         # end message

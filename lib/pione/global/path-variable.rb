@@ -47,6 +47,9 @@ module Pione
     define_internal_item(:file_cache_directory) do
       Pathname.new(Dir.mktmpdir(nil, Global.file_cache_directory_root))
     end
+
+    # This is profile report directory.
+    define_internal_item(:profile_report_directory) {Global.dot_pione_dir + "profile"}
   end
 end
 
