@@ -135,7 +135,7 @@ module Pione
         # child worker loop
         while @execution_thread.alive? do
           if @execution_thread.status == "sleep"
-            if child_agent.nil? or not(child_agent.terminated?)
+            if child_agent.nil? or child_agent.terminated?
               # when there isn't active child agent
               child_agent = self.class.new(tuple_space_server, @features, @env)
               child_agent.once = true
