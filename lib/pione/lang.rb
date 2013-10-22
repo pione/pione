@@ -43,7 +43,6 @@ require 'pione/lang/context-parser'            # context parser
 require 'pione/lang/conditional-branch-parser' # conditional branch parser
 require 'pione/lang/declaration-parser'        # declaration parser
 require 'pione/lang/document-parser'           # document parser
-require 'pione/lang/interpolator-parser'       # interpolator parser
 
 # inner model transformer
 require 'pione/lang/literal-transformer'            # literal transformer
@@ -52,4 +51,3 @@ require 'pione/lang/context-transformer'            # context transformer
 require 'pione/lang/declaration-transformer'        # declaration transformer
 require 'pione/lang/conditional-branch-transformer' # conditional branch transformer
 require 'pione/lang/document-transformer'           # document transformer
-require 'pione/lang/interpolator-transformer'       # interpolator transformer

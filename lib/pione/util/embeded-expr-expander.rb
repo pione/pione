@@ -6,17 +6,11 @@ module Pione
         return nil if str.nil?
 
         # parse and transform
-        tree = Lang::InterpolatorParser.new.parse(str)
-        list = Lang::InterpolatorTransformer.new.apply(tree, {package_name: nil, filename: nil})
-
-        # evaluate and join
-        list.map do |elt|
-          if elt.is_a?(String)
-            elt
-          else
-            elt.eval(env).call_pione_method(env, "textize", []).value
-          end
-        end.join("")
+        str.gsub(/\{(\$.+?)\}|\<\?\s*(.+?)\s*\?>/) do
+          tree = Lang::DocumentParser.new.expr.parse($1 || $2)
+          expr = Lang::DocumentTransformer.new.apply(tree, {package_name: nil, filename: nil})
+          expr.eval(env).call_pione_method(env, "textize", []).value
+        end
       end
     end
   end
