@@ -171,6 +171,7 @@ module Pione
       def initialize(handler)
         super(handler)
         @data_finder = DataFinder.new(tuple_space_server, domain_id)
+        @finished = [] # finished tuple cache
       end
 
       # Apply input data to rules.
@@ -410,7 +411,12 @@ module Pione
       def need_to_publish_task?(task, tuple)
         # reuse task finished result if order is weak update
         if task.order == :weak
-          if read!(TupleSpace::FinishedTuple.new(domain: task.domain_id, status: :succeeded))
+          template = TupleSpace::FinishedTuple.new(domain: task.domain_id, status: :succeeded)
+          if @finished.include?(template)
+            return false
+          end
+          if finished = read!(template)
+            @finished << finished
             return false
           end
         end
