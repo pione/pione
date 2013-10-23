@@ -34,6 +34,7 @@ module Pione
       execute :remove_cache_directory
       execute :remove_ppg_cache
       execute :remove_directory_cache
+      execute :remove_profile_reports
 
       def execute_remove_working_directory
         FileUtils.remove_entry_secure(Global.working_directory_root)
@@ -56,6 +57,12 @@ module Pione
           unless @db.has_digest?(entry.basename)
             entry.delete
           end
+        end
+      end
+
+      def execute_remove_profile_reports
+        Location[Global.profile_report_directory].each_entry do |entry|
+          entry.delete
         end
       end
     end
