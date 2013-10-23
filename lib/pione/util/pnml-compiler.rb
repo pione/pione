@@ -72,7 +72,7 @@ module Pione
           outputs = output_table[rule_name]
           rules << [rule_name, inputs, outputs]
         end
-        return rules
+        return rules.sort {|a, b| a.first <=> b.first}
       end
 
       FLOW_RULE_TEMPLATE = <<-RULE
