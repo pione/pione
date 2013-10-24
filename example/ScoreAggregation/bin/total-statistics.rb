@@ -2,9 +2,9 @@
 
 require "pione"
 
-name_list = Pione.val "$*"
-scores_f  = Pione.val "$I[1]"
-means_f   = Pione.val "$I[2]"
+name_list = Pione.val '$*.join(":")'
+scores_f  = Pione.val '$I[1].join(":")'
+means_f   = Pione.val '$I[2].join(":")'
 
 total_mean = Pione::Location[Pione.val("$I[3]")].read.to_f
 

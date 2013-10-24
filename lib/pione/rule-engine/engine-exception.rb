@@ -16,6 +16,17 @@ module Pione
       end
     end
 
+    class ActionError < StandardError
+      def initialize(digest, report)
+        @digest = digest
+        @report = report
+      end
+
+      def message
+        "Action rule %s has errored:\n%s" % [@digest, @report]
+      end
+    end
+
     class InvalidOutputError < RuleExecutionError
       def initialize(handler, outputs)
         super(handler)

@@ -341,9 +341,9 @@ module Pione
           # setup output variables
           var_o = Lang::Variable.new("O")
           task.env.variable_set(Lang::Variable.new("OUTPUT"), var_o)
-          o = find_output_variables(task, inputs, Lang::KeyedSequence.new)
-          task.env.variable_set(var_o, o)
-          param_set = param_set.set(table: param_set.table.merge({"O" => o}))
+          kseq = find_output_variables(task, Lang::KeyedSequence.new)
+          task.env.variable_set(var_o, kseq)
+          param_set = param_set.set(table: param_set.table.merge({"O" => kseq}))
 
           return task.set(order: order, env: env, param_set: param_set)
         else
@@ -351,17 +351,17 @@ module Pione
         end
       end
 
-      def find_output_variables(task, inputs, o)
-        _o = o
+      def find_output_variables(task, kseq)
+        _kseq = kseq
         task.rule_condition.outputs.each_with_index do |condition, i|
           begin
             data = condition.eval(task.env)
-            _o = o.put(Lang::IntegerSequence.of(i+1), data)
+            _kseq = _kseq.put(Lang::IntegerSequence.of(i+1), data)
           rescue Lang::UnboundError
             next
           end
         end
-        return _o
+        return _kseq
       end
 
       # Distribute tasks.

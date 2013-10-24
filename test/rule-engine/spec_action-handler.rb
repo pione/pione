@@ -1,94 +1,157 @@
 require 'pione/test-helper'
 
-location = Location[File.dirname(__FILE__)] + "spec_action-handler.pione"
-package_id = "SpecActionHandler"
-env = Lang::Environment.new.setup_new_package(package_id)
-Package::Document.load(env, location, "SpecActionHandler", nil, nil, "spec_action-handler.pione")
+TestHelper.scope do |this|
+  this::DIR = Location[File.dirname(__FILE__)] + "data" + "action-handler"
+  this::BASIC_ACTION = this::DIR + "BasicAction.pione"
+  this::USE_PACKAGE_SCRIPT = this::DIR + "UsePackageScript.pione"
 
-describe 'Pione::RuleHandler::ActionHandler' do
-  before do
-    @ts = TestHelper::TupleSpace.create(self)
+  describe 'Pione::RuleHandler::ActionHandler' do
+    describe "basic actions" do
+      before do
+        env = Lang::Environment.new.setup_new_package("BasicAction")
+        package_id = "BasicAction"
+        Package::Document.load(env, this::BASIC_ACTION, package_id, nil, nil, "BasicAction.pione")
 
-    location = Location[Temppath.create]
-    location_a = location + "1.a"
-    location_b = location + "1.b"
-    location_a.create("1")
-    location_b.create("2")
+        @ts = TestHelper::TupleSpace.create(self)
 
-    param_set = Lang::ParameterSet.new(table: {
-        "*" => Lang::StringSequence.of("1"),
-        "INPUT" => Lang::Variable.new("I"),
-        "I" => Lang::KeyedSequence.new
-          .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.a"))
-          .put(Lang::IntegerSequence.of(2), Lang::DataExprSequence.of("1.b")),
-        "OUTPUT" => Lang::Variable.new("O"),
-        "O" => Lang::KeyedSequence.new
-          .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.c"))
-      })
+        location = Location[Temppath.create]
+        location_a = location + "1.a"
+        location_b = location + "1.b"
+        location_a.create("1")
+        location_b.create("2")
 
-    tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, time: Time.now)
-    tuple_b = TupleSpace::DataTuple.new(name: '1.b', location: location_b, time: Time.now)
-    inputs = [tuple_a, tuple_b]
+        param_set = Lang::ParameterSet.new(table: {
+            "*" => Lang::StringSequence.of("1"),
+            "INPUT" => Lang::Variable.new("I"),
+            "I" => Lang::KeyedSequence.new
+              .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.a"))
+              .put(Lang::IntegerSequence.of(2), Lang::DataExprSequence.of("1.b")),
+            "OUTPUT" => Lang::Variable.new("O"),
+            "O" => Lang::KeyedSequence.new
+              .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.c"))
+          })
 
-    domain_id = Util::DomainID.generate(package_id, @rule_name, inputs, param_set)
-    tuple_a.domain = domain_id
-    tuple_b.domain = domain_id
-    inputs.each {|t| write(t) }
+        tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, time: Time.now)
+        tuple_b = TupleSpace::DataTuple.new(name: '1.b', location: location_b, time: Time.now)
+        inputs = [tuple_a, tuple_b]
 
-    @handler_sh1 = RuleEngine.make(@ts, env, package_id, 'Shell1', inputs, param_set, domain_id, 'root')
-    @handler_sh2 = RuleEngine.make(@ts, env, package_id, 'Shell2', inputs, param_set, domain_id, 'root')
-    @handler_ruby = RuleEngine.make(@ts, env, package_id, 'Ruby', inputs, param_set, domain_id, 'root')
-  end
+        domain_id = Util::DomainID.generate(package_id, @rule_name, inputs, param_set)
+        tuple_a.domain = domain_id
+        tuple_b.domain = domain_id
+        inputs.each {|t| write(t) }
 
-  after do
-    @ts.terminate
-  end
+        @handler_sh1 = RuleEngine.make(@ts, env, package_id, 'Shell1', inputs, param_set, domain_id, 'root')
+        @handler_sh2 = RuleEngine.make(@ts, env, package_id, 'Shell2', inputs, param_set, domain_id, 'root')
+        @handler_ruby = RuleEngine.make(@ts, env, package_id, 'Ruby', inputs, param_set, domain_id, 'root')
+      end
 
-  it 'should be action handler' do
-    @handler_sh1.should.be.kind_of(RuleEngine::ActionHandler)
-    @handler_sh2.should.be.kind_of(RuleEngine::ActionHandler)
-    @handler_ruby.should.be.kind_of(RuleEngine::ActionHandler)
-  end
+      after do
+        @ts.terminate
+      end
 
-  it 'should have working directory' do
-    @handler_sh1.working_directory.should.exist
-    @handler_sh2.working_directory.should.exist
-    @handler_ruby.working_directory.should.exist
-  end
+      it 'should be action handler' do
+        @handler_sh1.should.be.kind_of(RuleEngine::ActionHandler)
+        @handler_sh2.should.be.kind_of(RuleEngine::ActionHandler)
+        @handler_ruby.should.be.kind_of(RuleEngine::ActionHandler)
+      end
 
-  it 'should make different working directories' do
-    @handler_sh1.working_directory.should != @handler_sh2.working_directory
-    @handler_sh2.working_directory.should != @handler_ruby.working_directory
-    @handler_ruby.working_directory.should != @handler_sh1.working_directory
-  end
+      it 'should have working directory' do
+        @handler_sh1.working_directory.should.exist
+        @handler_sh2.working_directory.should.exist
+        @handler_ruby.working_directory.should.exist
+      end
 
-  it 'should write a shell script' do
-    @handler_sh1.write_shell_script do |path|
-      File.should.exist(path)
-      File.should.executable(path)
-      File.read(path).should == "VAL1=`cat 1.a`;\nVAL2=`cat 1.b`;\nexpr $VAL1 + $VAL2 > 1.c\n"
+      it 'should make different working directories' do
+        @handler_sh1.working_directory.should != @handler_sh2.working_directory
+        @handler_sh2.working_directory.should != @handler_ruby.working_directory
+        @handler_ruby.working_directory.should != @handler_sh1.working_directory
+      end
+
+      it 'should write a shell script' do
+        @handler_sh1.write_shell_script do |path|
+          File.should.exist(path)
+          File.should.executable(path)
+          File.read(path).should == "VAL1=`cat 1.a`;\nVAL2=`cat 1.b`;\nexpr $VAL1 + $VAL2 > 1.c\n"
+        end
+      end
+
+      it 'should call shell script' do
+        @handler_sh1.setup_working_directory
+        @handler_sh1.write_shell_script do |path|
+          @handler_sh1.call_shell_script(path)
+          (@handler_sh1.working_directory + "1.b").should.exist
+        end
+      end
+
+      [:sh1, :sh2, :ruby].each do |sym|
+        it "should execute an action: #{sym}" do
+          # execute and get result
+          handler = eval("@handler_#{sym}")
+          outputs = handler.execute
+          outputs[0][0].name.should == '1.c'
+          outputs[0][0].location.read.chomp.should == "3"
+          should.not.raise do
+            read(TupleSpace::DataTuple.new(name: '1.c', domain: handler.domain_id))
+          end
+        end
+      end
     end
-  end
 
-  it 'should call shell script' do
-    @handler_sh1.setup_working_directory
-    @handler_sh1.write_shell_script do |path|
-      @handler_sh1.call_shell_script(path)
-      (@handler_sh1.working_directory + "1.b").should.exist
-    end
-  end
+    describe "use package script" do
+      before do
+        env = Lang::Environment.new.setup_new_package("UsePackageScript")
+        package_id = "UsePackageScript"
+        Package::Document.load(env, this::USE_PACKAGE_SCRIPT, package_id, nil, nil, "UsePackageScript.pione")
 
-  [:sh1, :sh2, :ruby].each do |sym|
-    it "should execute an action: #{sym}" do
-      # execute and get result
-      handler = eval("@handler_#{sym}")
-      outputs = handler.execute
-      outputs[0][0].name.should == '1.c'
-      outputs[0][0].location.read.chomp.should == "3"
-      should.not.raise do
-        read(TupleSpace::DataTuple.new(name: '1.c', domain: handler.domain_id))
+        @ts = TestHelper::TupleSpace.create(self)
+
+        location = Location[Temppath.create]
+        location_a = location + "1.a"
+        location_a.create("1")
+
+        param_set = Lang::ParameterSet.new(table: {
+            "*" => Lang::StringSequence.of("1"),
+            "INPUT" => Lang::Variable.new("I"),
+            "I" => Lang::KeyedSequence.new
+              .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.a")),
+            "OUTPUT" => Lang::Variable.new("O"),
+            "O" => Lang::KeyedSequence.new
+              .put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("1.b"))
+          })
+
+        tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, time: Time.now)
+        inputs = [tuple_a]
+
+        sh = (@ts.base_location + "package" + "bin" + "test.sh")
+        sh.write("echo abc > 1.b")
+        sh.path.chmod(0700)
+
+        domain_id = Util::DomainID.generate(package_id, @rule_name, inputs, param_set)
+        tuple_a.domain = domain_id
+        inputs.each {|t| write(t) }
+
+        @handler1 = RuleEngine.make(@ts, env, package_id, 'R1', inputs, param_set, domain_id, 'root')
+        @handler2 = RuleEngine.make(@ts, env, package_id, 'R2', inputs, param_set, domain_id, 'root')
+      end
+
+      after do
+        @ts.terminate
+      end
+
+      it "should call package script" do
+        outputs = @handler1.execute
+        outputs[0][0].name.should == '1.b'
+        outputs[0][0].location.read.chomp.should == "abc"
+        should.not.raise do
+          read(TupleSpace::DataTuple.new(name: '1.b', domain: @handler1.domain_id))
+        end
+      end
+
+      it "should raise action error because the script not found" do
+        should.raise(RuleEngine::ActionError) do
+          outputs = @handler2.execute
+        end
       end
     end
   end
 end
-

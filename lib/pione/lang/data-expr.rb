@@ -260,6 +260,14 @@ module Pione
           end
         end
       end
+
+      define_pione_method("join", [TypeString], TypeString) do |env, rec, sep|
+        rec.call_pione_method(env, "str", []).call_pione_method(env, "join", [sep])
+      end
+
+      define_pione_method("join", [], TypeString) do |env, rec, sep|
+        rec.call_pione_method(env, "str", []).call_pione_method(env, "join", [])
+      end
     end
   end
 end

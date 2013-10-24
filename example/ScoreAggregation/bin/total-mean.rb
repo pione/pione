@@ -3,7 +3,7 @@
 require "pione"
 
 # info
-means = Pione.val "$I[1]"
+means = Pione.val '$I[1].join(":")'
 
 # calc & output
 totals = means.split(":").map{|filename| File.read(filename).chomp.to_f}

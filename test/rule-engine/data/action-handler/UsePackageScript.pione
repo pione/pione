@@ -1,0 +1,17 @@
+.@ PackageName :: "UsePackageScript"
+
+Rule R1
+  input '1.a'
+  output '1.b'
+Action
+  test.sh
+End
+
+Rule R2
+  input '1.a'
+  output '1.b'
+Action
+  not_exist.sh
+End
+
+

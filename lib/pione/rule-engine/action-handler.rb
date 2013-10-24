@@ -68,7 +68,7 @@ module Pione
         end
 
         # FIXME: should not copy bin files in the package each time.
-        bin = @base_location + "package" + @package_id + "bin"
+        bin = @base_location + "package" + "bin"
         if bin.exist?
           bin.entries.each do |entry|
             dest = @working_directory + "bin" + entry.basename
@@ -118,12 +118,19 @@ module Pione
         err = ".stderr"
 
         # execute command
-        `cd #{@working_directory.path}; PATH=./bin/:$PATH ; ./#{scriptname} > #{out} 2> #{err}`
+        `cd #{@working_directory.path}; PATH=#{(@working_directory + "bin").path}:$PATH ; ./#{scriptname} > #{out} 2> #{err}`
 
-        # delete unneeded files
+        # the case the script has errored
+        unless $?.success?
+          raise ActionError.new(digest, (@working_directory + err).read)
+        end
+
+        # delete .stdout file if it is empty
         if stdout.nil? and (@working_directory + out).size == 0
           (@working_directory + out).delete
         end
+
+        # delete .stderr file if it is emtpy
         if (@working_directory + err).size == 0
           (@working_directory + err).delete
         end

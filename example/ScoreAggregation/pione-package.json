@@ -1,0 +1,21 @@
+{
+  "PackageName": "ScoreAggregation",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "ScoreAggregation.pione"
+  ],
+  "Scenarios": [
+    "scenario/case1"
+  ],
+  "Bins": [
+    "bin/total-statistics.rb",
+    "bin/apply-template.rb",
+    "bin/mean-summary.rb",
+    "bin/personal-bar-graph.sh",
+    "bin/personal-pre-statistics.rb",
+    "bin/total-mean.rb",
+    "bin/histgram-graph.sh"
+  ]
+}
