@@ -229,7 +229,6 @@ module Pione
         state = nil
 
         Thread.new {
-
           # kill all chain threads
           @chain_threads.list.each do |thread|
             state = thread[:agent_state] # save last state

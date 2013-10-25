@@ -33,22 +33,20 @@ module Pione
       # Get value of the variable.
       def get(name)
         val = instance_variable_get("@%s" % name)
-        if val.nil?
-          # call lazy initializer
-          if @__lazy_initializer__.has_key?(name)
-            set(name, @__lazy_initializer__[name].call)
-          end
 
-          # call initial updater
-          if @__updater__.has_key?(name)
-            update(name)
-          end
-
-          # get value
-          get(name)
-        else
-          return val
+        # call lazy initializer
+        if val.nil? and @__lazy_initializer__.has_key?(name)
+          set(name, @__lazy_initializer__[name].call)
+          return instance_variable_get("@%s" % name)
         end
+
+        # call initial updater
+        if val.nil? and @__updater__.has_key?(name)
+          update(name)
+          return instance_variable_get("@%s" % name)
+        end
+
+        return val
       end
 
       # Set value of the variable.

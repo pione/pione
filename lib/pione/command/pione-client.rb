@@ -309,8 +309,12 @@ module Pione
       end
 
       def execute_job_terminator
-        @job_terminator = Agent::JobTerminator.start(@tuple_space) do
-          terminate
+        @job_terminator = Agent::JobTerminator.start(@tuple_space) do |status|
+          if status.error?
+            abort("pione-client catched the error: %s" % status.exception.message)
+          else
+            terminate
+          end
         end
       end
 
@@ -402,6 +406,7 @@ module Pione
       terminate :process_job => :spawner_thread
       terminate :child_process, :module => CommonCommandAction
       terminate :process_job => :process_manager
+      terminate :process_job => :job_terminator
       terminate :process_job => :task_worker
       terminate :process_job => :input_generator
       terminate :process_job => :logger
@@ -415,9 +420,17 @@ module Pione
         @spawner_threads.list.each {|thread| thread.kill}
       end
 
-      # Terminate process manager
+      # Terminate process manager. Be careful that pione-client main thread
+      # waits to stop the process manager's chain thread, so agents pione-client
+      # has cannot terminate maybe. You need to terminate it after process
+      # manager terminated.
       def terminate_process_manager
         @process_manager.terminate if @process_manager
+      end
+
+      # Terminate job terminator.
+      def terminate_job_terminator
+        @job_terminator.terminate if @job_terminator and not(@job_terminator.terminated?)
       end
 
       # Terminate task worker agents.

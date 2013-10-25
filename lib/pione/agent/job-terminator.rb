@@ -26,12 +26,17 @@ module Pione
       #
 
       def transit_to_wait
-        read(TupleSpace::CommandTuple.new(name: "terminate"))
+        tuple = read(TupleSpace::CommandTuple.new(name: "terminate"))
+        status = System::Status.success
+        unless tuple.args.empty?
+          status = tuple.args.first
+        end
+        return status
       end
 
-      def transit_to_fire
+      def transit_to_fire(status)
         Log::Debug.system("job terminator fires the action %s." % @action)
-        @action.call
+        @action.call(status)
       end
     end
   end

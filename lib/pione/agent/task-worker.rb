@@ -74,7 +74,14 @@ module Pione
         engine = make_engine(task)
 
         # start the engine
-        @execution_thread = Thread.new {engine.handle}
+        @execution_thread = Thread.new do
+          begin
+            engine.handle
+          rescue RuleEngine::ActionError => e
+            write(TupleSpace::CommandTuple.new("terminate", [System::Status.error(e)]))
+            terminate
+          end
+        end
 
         # spawn child task worker if flow
         if engine.rule_definition.rule_type == "flow"

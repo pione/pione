@@ -1,0 +1,5 @@
+Rule Main
+  output 'o1'
+Action
+  unknown_action.sh
+End
