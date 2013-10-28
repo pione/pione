@@ -41,12 +41,15 @@ module Pione
 
     # OptionDefinition is a class for holding option definitions.
     class OptionDefinition
+      attr_accessor :parser_mode
+
       # Creata a command option context.
       def initialize
         extend OptionInterface
         @items = []      # option item definitions
         @default = {}    # default value table
         @validators = [] # option validators
+        @parser_mode = :parse!
       end
 
       def item(name)
@@ -73,7 +76,7 @@ module Pione
 
           # setup option parser
           @items.sort{|a,b| a.long <=> b.long}.each {|item| setup_item(command_name, opt, data, item)}
-        end.parse!(argv)
+        end.send(@parser_mode, argv)
 
         # check option's validness
         check(data)

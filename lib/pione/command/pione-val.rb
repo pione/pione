@@ -8,6 +8,7 @@ module Pione
 
       command_name "pione-val"
       command_banner "Get the evaluation result value of the PIONE expression."
+      PioneCommand.add_subcommand("val", self)
 
       #
       # options

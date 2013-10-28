@@ -39,6 +39,10 @@ module Pione
           end
         end
 
+        def option_parser_mode(mode)
+          @option_definition.parser_mode = mode
+        end
+
         # Set progaram name or return the name.
         def command_name(name=nil, &b)
           if name

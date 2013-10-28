@@ -8,7 +8,8 @@ module Pione
       #
 
       command_name "pione-clean"
-      command_banner "Clean working directories and file cache directories."
+      command_banner "remove PIONE's temporary files, cache, and etc."
+      PioneCommand.add_subcommand("clean", self)
 
       #
       # options
