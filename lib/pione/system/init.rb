@@ -5,27 +5,25 @@ module Pione
         # turn on "abort on exception" mode
         Thread.abort_on_exception = true
 
-        # load configration file
-        System::Config.load(Global.config_path)
+        # load configration file for global system
+        Global::Config.load(Global.config_path)
 
         # make temporary directories
-        unless Global.temporary_directory_root.exist?
-          Global.temporary_directory_root.mkdir(0777)
-        end
         unless Global.temporary_directory.exist?
-          Global.temporary_directory.mkdir(0700)
+          Global.temporary_directory.mkdir(0777)
         end
-        unless Global.working_directory_root.exist?
-          Global.working_directory_root.mkdir(0777)
-        end
-        unless Global.working_directory.exist?
-          Global.working_directory.mkdir(0700)
-        end
-        unless Global.file_cache_directory_root.exist?
-          Global.file_cache_directory_root.mkdir(0777)
-        end
+
+        # setup default temporary path generator
+        Temppath.update_basedir(Global.my_temporary_directory + "others_%s" % Util::UUID.generate)
+
+        # make file cache directory
         unless Global.file_cache_directory.exist?
-          Global.file_cache_directory.mkdir(0700)
+          Global.file_cache_directory.mkdir(0777)
+        end
+
+        # make my file cache directory
+        unless Global.file_cache_directory.exist?
+          Global.file_cache_directory.mkdir(0777)
         end
       end
     end

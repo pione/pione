@@ -135,7 +135,7 @@ module Pione
         def get(location)
           # cache if record doesn't exist
           unless @table.has_key?(location)
-            cache_location = Location[Temppath.create(basedir: @tmpdir)]
+            cache_location = Location[Global.file_cache_path_generator.create]
             location.turn(cache_location)
             @table[location] = cache_location
           end

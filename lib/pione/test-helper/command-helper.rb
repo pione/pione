@@ -69,12 +69,20 @@ module Pione
           begin
             b.call
           rescue Object => e
-            res.exception = e
+            unless options.include?(:show_exception)
+              res.exception = e
+            else
+              raise
+            end
           end
 
           # revert stdout and stderr
           $stdout = STDOUT
           $stderr = STDERR
+
+          if options.include?(:report)
+            res.report
+          end
 
           return res
         end

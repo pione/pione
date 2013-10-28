@@ -69,3 +69,16 @@ task 'clean' do
   sh "rm -rf output/*"
   sh "rm -rf log.txt"
 end
+
+#
+# man
+#
+
+def generate_man(src, dest)
+  sh "pandoc -s --from=markdown+pandoc_title_block --to=man %s > %s" % [src, dest]
+end
+
+desc "generate man documents"
+task "man" do
+  generate_man("doc/man/pione-clean.md", "man/pione-clean.1")
+end

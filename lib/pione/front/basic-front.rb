@@ -63,7 +63,7 @@ module Pione
           begin
             DRb.start_service(build_front_server_uri(enum.next), self, config)
           rescue StopIteration => e
-            raise FrontError.new(self, e)
+            raise
           rescue
             retry
           end

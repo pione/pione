@@ -10,7 +10,7 @@ module Pione
 
       def initialize(*args)
         super(*args)
-        @working_directory = Location[make_working_directory]
+        @working_directory = Location[Global.working_directory_generator.mkdir]
         @env.variable_set(
           Lang::Variable.new("__WORKING_DIRECTORY__"),
           Lang::StringSequence.of(@working_directory.path.to_s)
@@ -34,6 +34,9 @@ module Pione
         # write other resources
         write_other_resources
 
+        # clear working directory
+        @working_directory.delete
+
         # return tuples
         return outputs
       end
@@ -44,14 +47,6 @@ module Pione
 
         @variable_table.set(Variable.new("__BASE__"), PioneString.new(base_location.uri).to_seq)
         @variable_table.set(Variable.new("_"), PackageExprSequence.new([PackageExpr.new(@rule.package_name)]))
-      end
-
-      # Make a working directory for the action.
-      #
-      # @return [Location]
-      #   location of working directory
-      def make_working_directory
-        return (Global.working_directory + Util::UUID.generate).tap{|path| path.mkpath}
       end
 
       # Synchronize input data into working directory.

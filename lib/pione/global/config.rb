@@ -1,5 +1,5 @@
 module Pione
-  module System
+  module Global
     # Config is a class for setting PIONE system configuration.
     class Config
       # Load configuration and apply it to global settings.
@@ -23,7 +23,7 @@ module Pione
       def apply
         @table.each do |key, val|
           key = key.to_sym
-          if Global.all_names.include?(key) and Global.configurable?(key)
+          if Global.item[key] and Global.item[key].configurable?
             Global.set(key, val)
           else
             raise UnconfigurableVariableError.new(key)

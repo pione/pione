@@ -5,32 +5,54 @@ module Pione
     #
 
     # presence port
-    define_external_item(:presence_port, 56000)
+    define_external_item(:presence_port) do |item|
+      item.desc = "presence port number"
+      item.type = :integer
+      item.init = 56000
+    end
 
     #
     # pione-tuple-space-provider
     #
 
     # tuple space provider uri
-    define_internal_item(:tuple_space_provider_uri)
+    define_internal_item(:tuple_space_provider_uri) do |item|
+      item.desc = "URI of uple space provider"
+    end
 
     # provider-front port range begin
-    define_external_item(:tuple_space_provider_front_port_range_begin, 42000)
+    define_external_item(:tuple_space_provider_front_port_range_begin) do |item|
+      item.desc = "start port number of tuple space provider front"
+      item.type = :integer
+      item.init = 42000
+    end
 
     # provider-front port range end
-    define_external_item(:tuple_space_provider_front_port_range_end, 42999)
+    define_external_item(:tuple_space_provider_front_port_range_end) do |item|
+      item.desc = "start port number of tuple space provider front"
+      item.type = :integer
+      item.init = 42099
+  end
 
     # provider-front port range
-    define_internal_item(:tuple_space_provider_front_port_range) do
-      Range.new(
-        Global.tuple_space_provider_front_port_range_begin,
-        Global.tuple_space_provider_front_port_range_end
-      )
+    define_internal_item(:tuple_space_provider_front_port_range,
+      [:tuple_space_provider_front_port_range_begin, :tuple_space_provider_front_port_range_end]) do |item|
+      item.desc = "port range of tuple space provider"
+      item.define_updater do
+        Range.new(
+          Global.tuple_space_provider_front_port_range_begin,
+          Global.tuple_space_provider_front_port_range_end
+        )
+      end
     end
 
     # presence notification address
-    define_external_item(:presence_notification_addresses) do
-      [URI.parse("broadcast://%s:%s" % ["255.255.255.255", Global.presence_port])]
+    define_external_item(:presence_notification_addresses) do |item|
+      item.desc = "presence notification addresses"
+      item.init = ["255.255.255.255:56000"]
+      item.define_updater do |vals|
+        vals.map {|val| URI.parse("broadcast://%s" % val)}
+      end
     end
 
     #
@@ -38,23 +60,41 @@ module Pione
     #
 
     # tuple space receiver uri
-    define_internal_item(:tuple_space_receiver_uri)
+    define_internal_item(:tuple_space_receiver_uri) do |item|
+      item.desc = "URI of tuple space receiver"
+    end
 
     # receiver-front port range begin
-    define_external_item(:tuple_space_receiver_front_port_range_begin, 43000)
+    define_external_item(:tuple_space_receiver_front_port_range_begin) do |item|
+      item.desc = "start port number of tuple space receiver front"
+      item.type = :integer
+      item.init = 43000
+    end
 
     # receiver-front port range end
-    define_external_item(:tuple_space_receiver_front_port_range_end, 43999)
+    define_external_item(:tuple_space_receiver_front_port_range_end) do |item|
+      item.desc = "end port number of tuple space receiver front"
+      item.type = :integer
+      item.init = 43999
+    end
 
     # receiver-front port range
-    define_internal_item(:tuple_space_receiver_front_port_range) do
-      Range.new(
-        Global.tuple_space_receiver_front_port_range_begin,
-        Global.tuple_space_receiver_front_port_range_end
-      )
+    define_computed_item(:tuple_space_receiver_front_port_range,
+      [:tuple_space_receiver_front_port_range_begin, :tuple_space_receiver_front_port_range_end]) do |item|
+      item.desc = "port range of tuple space receiver front"
+      item.define_updater do
+        Range.new(
+          Global.tuple_space_receiver_front_port_range_begin,
+          Global.tuple_space_receiver_front_port_range_end
+        )
+      end
     end
 
     # disconnect time for tuple space receiver
-    define_external_item(:tuple_space_receiver_disconnect_time, 180)
+    define_internal_item(:tuple_space_receiver_disconnect_time) do |item|
+      item.desc = "tuple space receiver disconnect time"
+      item.type = :integer
+      item.init = 180
+    end
   end
 end

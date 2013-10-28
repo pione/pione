@@ -23,7 +23,7 @@ module Pione
       end
 
       def message
-        "invalid package filename \"%s\": %s" % [name, @error.message]
+        "invalid package filename \"%s\": %s" % [@name, @error.message]
       end
     end
 

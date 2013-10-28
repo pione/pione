@@ -40,7 +40,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "hamster", "~> 0.4.3"
   gem.add_runtime_dependency "naming", "~> 0.1.0"
   gem.add_runtime_dependency "forwardablex", "~> 0.1.4"
-  gem.add_runtime_dependency "temppath", "~> 0.2.0"
+  gem.add_runtime_dependency "temppath", "~> 0.3.1"
   gem.add_runtime_dependency "ruby-xes", "~> 0.1.0"
   gem.add_runtime_dependency "sys-uname", "~> 0.9.2"
   gem.add_runtime_dependency "simple-identity", "~> 0.1.1"

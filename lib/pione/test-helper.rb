@@ -15,7 +15,14 @@ module Pione
       @scope_id = (@scope_id || 0) + 1
       mod = Module.new
       const_set("MODULE%s" % @scope_id, mod)
-      mod.instance_eval(&b)
+      mod.send(:define_method, :this) do
+        mod
+      end
+      mod.module_eval(&b)
+    end
+
+    def self.scope_of(mod)
+      eval(mod.name.split("::").reverse.drop(1).reverse.join("::"))
     end
   end
 end
