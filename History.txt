@@ -1,5 +1,14 @@
 # History
 
+## 0.3.1(2013/10/29)
+
+* Fixed performance bug.
+* Enable to generate profile reports of rule application.
+* Added PNML compiler.
+* Changed to stop processing when action rule happens error.
+* Improved pione-clean command and the document, see `man pione-clean`.
+* Added `pione` facade command.
+
 ## 0.3.0(2013/10/20)
 
 * Improved multi-inheritance package system.
