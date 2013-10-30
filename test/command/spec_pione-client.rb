@@ -92,11 +92,23 @@ TestHelper.scope do |this|
       it "should get a result" do
         path = Temppath.create
         args = ["example/PegasusWMS/Merge/", "-o", path.to_s]
-        res = TestHelper::Command.succeed do
+        TestHelper::Command.succeed do
           Pione::Command::PioneClient.run(args)
         end
         Location[path + "binaries.txt"].should.exist
         Location[path + "binaries.txt"].size.should > 0
+      end
+    end
+
+    describe "example/PegasusWMS/Pipeline" do
+      it "should get a result" do
+        path = Temppath.create
+        args = ["example/PegasusWMS/Pipeline/", "-o", path.to_s]
+        TestHelper::Command.succeed do
+          Pione::Command::PioneClient.run(args)
+        end
+        Location[path + "count.txt"].should.exist
+        Location[path + "count.txt"].size.should > 0
       end
     end
   end

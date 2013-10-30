@@ -1,0 +1,15 @@
+{
+  "PackageName": "PegasusWMS-Pipeline",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Pipeline.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ]
+}

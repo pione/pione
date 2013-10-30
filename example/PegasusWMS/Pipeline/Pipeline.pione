@@ -1,3 +1,5 @@
+.@ PackageName :: "PegasusWMS-Pipeline"
+
 Rule Main
   output 'count.txt'
 Flow
