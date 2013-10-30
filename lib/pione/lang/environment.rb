@@ -9,7 +9,7 @@ module Pione
 
       # Return true if the name with the package id is bound.
       def bound?(package_id, name)
-        @table[package_id][name] || (@parent ? @parent.bound?(package_id, name) : false)
+        (@table.has_key?(package_id) and @table[package_id][name]) || (@parent ? @parent.bound?(package_id, name) : false)
       end
 
       # Find value of the reference recursively. We will raise
@@ -283,6 +283,15 @@ module Pione
         return self
       end
 
+      def force_merge(param_set)
+        param_set.keys.each do |key|
+          var = Variable.new(name: key, package_id: current_package_id)
+          val = param_set[key]
+          variable_set!(var, val)
+        end
+        return self
+      end
+
       def add_package(package_name, parent_ids=[])
         # generate a new package id
         package_id = Util::PackageID.generate(self, package_name)
@@ -306,15 +315,13 @@ module Pione
       end
 
       def make_root_rule(param_set)
-        # set $ROOT_PRARAM_SET
-        variable_set(Variable.new("ROOT_PARAM_SET"), param_set)
         # make root rule
         Package::Document.parse(<<-PIONE, current_package_id, nil, nil, "*system*").eval(self)
            Rule Root
              input '*'.all or null
              output '*'.all
            Flow
-             rule Main.param($ROOT_PARAM_SET)
+             rule Main
            End
         PIONE
         rule_get(RuleExpr.new("Root"))

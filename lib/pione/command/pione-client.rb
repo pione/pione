@@ -75,10 +75,10 @@ module Pione
         item.default = Lang::ParameterSetSequence.new
         item.action = proc do |command_name, option, str|
           begin
-            stree = DocumentParser.new.parameter_set.parse(str)
+            stree = Lang::DocumentParser.new.parameter_set.parse(str)
             opt = {package_name: "-", filename: "-"}
-            params = DocumentTransformer.new.apply(stree, opt)
-            option[:params].merge!(params)
+            params = Lang::DocumentTransformer.new.apply(stree, opt)
+            option[:params] = option[:params].merge(params)
           rescue Parslet::ParseFailed => e
             raise OptionError.new("invalid parameters \"%s\" in %s" % [str, command_name])
           end
@@ -246,6 +246,13 @@ module Pione
         # read package
         @package_handler = Package::PackageReader.read(Location[@argv.first])
         @env = @package_handler.eval(@env)
+
+        # merge user's parameter set
+        if not(option[:params].pieces.empty?)
+          @env.force_merge(option[:params].pieces.first)
+        end
+
+        # upload the package
         @package_handler.upload(option[:output_location] + "package")
 
         # check rehearse scenario
