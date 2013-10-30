@@ -1,0 +1,48 @@
+.TH pione\-compiler 1 "" "PIONE User Manual"
+.SH NAME
+.PP
+pione\-compiler \- compile to PIONE file.
+.SH SYNOPSIS
+.PP
+\f[B]pione\-compiler\f[] [options] file
+.SH DESCRIPTION
+.PP
+pione\-compiler compiles from PNML(Petri Net Markup Language) to PIONE
+document.
+Source PNML file should be written in a manner of PIONE\[aq]s special
+notations.
+Target PIONE document is printed out to STDOUT.
+.SH OPTIONS
+.TP
+.B \-\-name=\f[I]NAME\f[]
+Set the package name.
+.RS
+.RE
+.TP
+.B \-\-editor=\f[I]NAME\f[]
+Set the package editor.
+.RS
+.RE
+.TP
+.B \-\-tag=\f[I]NAME\f[]
+Set the package tag.
+.RS
+.RE
+.SH EXAMPLES
+.TP
+.B pione\-compiler Sequence.pnml
+Compile from Sequence.pnml to PIONE document.
+.RS
+.RE
+.TP
+.B pione\-compiler \-\-name=Sequence Sequence.pnml
+Compile from Sequence.pnml to PIONE document with package name
+"Sequence".
+.RS
+.RE
+.SH REPORTING BUGS
+.PP
+Report bugs or feature requests to PIONE\[aq]s issue
+tracker(https://github.com/pione/pione/issues).
+.SH AUTHORS
+Keita Yamaguchi.

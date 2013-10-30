@@ -81,4 +81,5 @@ end
 desc "generate man documents"
 task "man" do
   generate_man("doc/man/pione-clean.md", "man/pione-clean.1")
+  generate_man("doc/man/pione-compiler.md", "man/pione-compiler.1")
 end
