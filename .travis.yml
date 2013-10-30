@@ -1,3 +1,6 @@
+before_script:
+  - sudo apt-get install bc # for processing Fib.pione
+
 language: ruby
 rvm:
 #  - "1.9.2" # PIONE doesn't support 1.9.2
