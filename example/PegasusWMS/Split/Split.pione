@@ -1,3 +1,5 @@
+.@ PackageName :: "PegasusWMS-Split"
+
 Rule Main
   output 'count.txt.*'.all
 Flow

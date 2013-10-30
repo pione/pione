@@ -28,16 +28,17 @@ module Pione
 end
 
 # load test helpers
-require "pione/test-helper/extension"           # extensions for test
-require "pione/test-helper/webserver"           # fake HTTP server
-require "pione/test-helper/location-helper"     # location test helper
-require "pione/test-helper/command-helper"      # command test helper
-require "pione/test-helper/parser-helper"       # parser test utility
-require "pione/test-helper/transformer-helper"  # transformer test utility
-require "pione/test-helper/lang-helper"         # language test method
-require "pione/test-helper/package-helper"      # pakcage test
-require "pione/test-helper/tuple-helper"        # tuple test
-require "pione/test-helper/tuple-space-helper"  # tuple space
+require "pione/test-helper/extension"             # extensions for test
+require "pione/test-helper/webserver"             # fake HTTP server
+require "pione/test-helper/location-helper"       # location test helper
+require "pione/test-helper/command-helper"        # command test helper
+require "pione/test-helper/parser-helper"         # parser test utility
+require "pione/test-helper/transformer-helper"    # transformer test utility
+require "pione/test-helper/lang-helper"           # language test method
+require "pione/test-helper/package-helper"        # pakcage test
+require "pione/test-helper/tuple-helper"          # tuple test
+require "pione/test-helper/tuple-space-helper"    # tuple space
+require "pione/test-helper/internet-connectivity" # check internet connection
 
 # extend bacon's context
 class Bacon::Context
