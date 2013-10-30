@@ -1,3 +1,5 @@
+.@ PackageName :: "PegasusWMS-Merge"
+
 Rule Main
   output 'binaries.txt'
 Flow
@@ -17,5 +19,5 @@ Rule Join
   input 'bin_*.txt'.all
   output 'binaries.txt'
 Action
-  cat {$I[1].as_string.join(" ")} > {$O[1]}
+  cat {$I[1]} > {$O[1]}
 End

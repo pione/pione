@@ -239,7 +239,7 @@ module Pione
               _param_set = param_set.merge_default_values(rule_condition)
 
               # handle parameter distribution
-              _param_set.expand do |expanded_param_set|
+              _param_set.eval(_env).expand do |expanded_param_set|
                 # rebuild environment by expanded param set
                 _env = plain_env.layer.merge(expanded_param_set)
                 _env.set(current_package_id: rule.package_id || env.current_package_id)
