@@ -88,5 +88,39 @@ module Pione
         end
       end
     end
+
+    class PioneClientRunner < StructX
+      member :title
+      member :template, default: "%s"
+      member :args
+      member :base, default: lambda {Pione::Location[Temppath.mkdir]}
+      member :default_arguments
+      member :context
+
+      def self.test(context, &b)
+        # with client mode
+        new(context: context).tap do |runner|
+          runner.default_arguments = ["-o", runner.base.path.to_s]
+          b.call(runner)
+        end
+
+        # with stand alone mode
+        new(context: context, template: "%s with stand alone mode").tap do |runner|
+          runner.default_arguments = ["-o", runner.base.path.to_s, "--stand-alone"]
+          b.call(runner)
+        end
+      end
+
+      def run(&b)
+        _args = args
+        _base = base
+        context.it(template % title) do
+          TestHelper::Command.succeed do
+            Pione::Command::PioneClient.run(_args)
+          end
+          b.call(_base)
+        end
+      end
+    end
   end
 end

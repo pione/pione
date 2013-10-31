@@ -65,14 +65,13 @@ TestHelper.scope do |this|
     end
 
     describe "example/Fib" do
-      it "should get a result with no parameters (default fib(3))" do
-        path = Temppath.create
-        args = ["example/Fib/Fib.pione", "-o", path.to_s]
-        res = TestHelper::Command.succeed do
-          Pione::Command::PioneClient.run(args)
+      TestHelper::PioneClientRunner.test(self) do |runner|
+        runner.title = "should get a result with no parameters (default fib(3))"
+        runner.args = ["example/Fib/Fib.pione", *runner.default_arguments]
+        runner.run do |base|
+          (base + "result.txt").should.exist
+          (base + "result.txt").read.should.start_with "2"
         end
-        Location[path + "result.txt"].should.exist
-        Location[path + "result.txt"].read.should.start_with "2"
       end
 
       # FIXME: this test is unstable... maybe there are bugs
@@ -89,27 +88,25 @@ TestHelper.scope do |this|
     end
 
     describe "example/PegasusWMS/Merge" do
-      it "should get a result of example/PegasusWMS/Merge" do
-        path = Temppath.create
-        args = ["example/PegasusWMS/Merge/", "-o", path.to_s]
-        TestHelper::Command.succeed do
-          Pione::Command::PioneClient.run(args)
+      TestHelper::PioneClientRunner.test(self) do |runner|
+        runner.title = "should get a result of example/PegasusWMS/Merge"
+        runner.args = ["example/PegasusWMS/Merge/", *runner.default_arguments]
+        runner.run do |base|
+          (base + "binaries.txt").should.exist
+          (base + "binaries.txt").size.should > 0
         end
-        Location[path + "binaries.txt"].should.exist
-        Location[path + "binaries.txt"].size.should > 0
       end
     end
 
     describe "example/PegasusWMS/Pipeline" do
       if TestHelper::InternetConnectivity.ok?
-        it "should get a result of example/PegasusWMS/Pipeline" do
-          path = Temppath.create
-          args = ["example/PegasusWMS/Pipeline/", "-o", path.to_s]
-          TestHelper::Command.succeed do
-            Pione::Command::PioneClient.run(args)
+        TestHelper::PioneClientRunner.test(self) do |runner|
+          runner.title = "should get a result of example/PegasusWMS/Pipeline"
+          runner.args = ["example/PegasusWMS/Pipeline/", *runner.default_arguments]
+          runner.run do |base|
+            (base + "count.txt").should.exist
+            (base + "count.txt").size.should > 0
           end
-          Location[path + "count.txt"].should.exist
-          Location[path + "count.txt"].size.should > 0
         end
       else
         puts "    * ignored because of no internet connection"
@@ -118,20 +115,19 @@ TestHelper.scope do |this|
 
     describe "example/PegasusWMS/Split" do
       if TestHelper::InternetConnectivity.ok?
-        it "should get a result of example/PegasusWMS/Split" do
-          path = Temppath.create
-          args = ["example/PegasusWMS/Split/", "-o", path.to_s]
-          TestHelper::Command.succeed do
-            Pione::Command::PioneClient.run(args)
+        TestHelper::PioneClientRunner.test(self) do |runner|
+          runner.title = "should get a result of example/PegasusWMS/Split"
+          runner.args = ["example/PegasusWMS/Split/", "-o", path.to_s]
+          runner.run do |base|
+            (base + "count.txt.a").should.exist
+            (base + "count.txt.a").size.should > 0
+            (base + "count.txt.b").should.exist
+            (base + "count.txt.b").size.should > 0
+            (base + "count.txt.c").should.exist
+            (base + "count.txt.c").size.should > 0
+            (base + "count.txt.d").should.exist
+            (base + "count.txt.d").size.should > 0
           end
-          Location[path + "count.txt.a"].should.exist
-          Location[path + "count.txt.a"].size.should > 0
-          Location[path + "count.txt.b"].should.exist
-          Location[path + "count.txt.b"].size.should > 0
-          Location[path + "count.txt.c"].should.exist
-          Location[path + "count.txt.c"].size.should > 0
-          Location[path + "count.txt.d"].should.exist
-          Location[path + "count.txt.d"].size.should > 0
         end
       else
         puts "    * ignored because of no internet connection"
