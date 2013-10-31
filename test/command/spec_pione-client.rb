@@ -153,5 +153,29 @@ TestHelper.scope do |this|
       end
     end
 
+    describe "example/SerialProcessing" do
+      TestHelper::PioneClientRunner.test(self) do |runner|
+        runner.title = "should get a result of example/SerialProcessing"
+        runner.args = ["example/SerialProcessing", "--rehearse", *runner.default_arguments]
+        runner.run do |base|
+          (base + "1.a").should.exist
+          (base + "2.a").should.exist
+          (base + "3.a").should.exist
+          (base + "4.a").should.exist
+          (base + "1.b").should.exist
+          (base + "2.b").should.exist
+          (base + "3.b").should.exist
+          (base + "4.b").should.exist
+          (base + "1.a").mtime.should < (base + "2.a").mtime
+          (base + "2.a").mtime.should < (base + "3.a").mtime
+          (base + "3.a").mtime.should < (base + "4.a").mtime
+          (base + "4.a").mtime.should < (base + "1.b").mtime
+          (base + "1.b").mtime.should < (base + "2.b").mtime
+          (base + "2.b").mtime.should < (base + "3.b").mtime
+          (base + "3.b").mtime.should < (base + "4.b").mtime
+        end
+      end
+    end
+
   end
 end
