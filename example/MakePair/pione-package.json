@@ -1,0 +1,17 @@
+{
+  "PackageName": "MakePair",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "MakePair.pione"
+  ],
+  "Scenarios": [
+    "scenario/case1",
+    "scenario/case3",
+    "scenario/case2"
+  ],
+  "Bins": [
+
+  ]
+}

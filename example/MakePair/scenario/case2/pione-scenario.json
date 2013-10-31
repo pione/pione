@@ -1,0 +1,22 @@
+{
+  "ScenarioName": "case2",
+  "ParamSet": null,
+  "Inputs": [
+    "input/11.i",
+    "input/9.i",
+    "input/10.i"
+  ],
+  "Outputs": [
+    "output/comb-9-11.pair",
+    "output/succ-10-11.pair",
+    "output/perm-11-10.pair",
+    "output/perm-9-11.pair",
+    "output/perm-10-9.pair",
+    "output/comb-10-11.pair",
+    "output/perm-11-9.pair",
+    "output/perm-9-10.pair",
+    "output/succ-9-10.pair",
+    "output/comb-9-10.pair",
+    "output/perm-10-11.pair"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "ScenarioName": "case3",
+  "ParamSet": null,
+  "Inputs": [
+    "input/3.i",
+    "input/5.i",
+    "input/1.i",
+    "input/9.i",
+    "input/7.i"
+  ],
+  "Outputs": [
+    "output/comb-3-5.pair",
+    "output/perm-5-9.pair",
+    "output/perm-5-1.pair",
+    "output/comb-3-9.pair",
+    "output/perm-3-7.pair",
+    "output/comb-7-9.pair",
+    "output/perm-7-3.pair",
+    "output/comb-3-7.pair",
+    "output/perm-1-5.pair",
+    "output/comb-1-7.pair",
+    "output/perm-5-3.pair",
+    "output/perm-7-5.pair",
+    "output/comb-1-3.pair",
+    "output/perm-3-5.pair",
+    "output/comb-1-5.pair",
+    "output/perm-9-5.pair",
+    "output/perm-1-9.pair",
+    "output/perm-9-3.pair",
+    "output/perm-5-7.pair",
+    "output/perm-3-9.pair",
+    "output/perm-3-1.pair",
+    "output/comb-1-9.pair",
+    "output/comb-5-7.pair",
+    "output/perm-1-7.pair",
+    "output/perm-1-3.pair",
+    "output/comb-5-9.pair",
+    "output/perm-9-1.pair",
+    "output/perm-9-7.pair",
+    "output/perm-7-1.pair",
+    "output/perm-7-9.pair"
+  ]
+}

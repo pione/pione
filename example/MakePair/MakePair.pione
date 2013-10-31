@@ -1,3 +1,5 @@
+.@ PackageName :: "MakePair"
+
 Rule Main
   input '*.i'.all
   output '*.pair'.all

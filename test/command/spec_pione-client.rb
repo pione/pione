@@ -117,7 +117,7 @@ TestHelper.scope do |this|
       if TestHelper::InternetConnectivity.ok?
         TestHelper::PioneClientRunner.test(self) do |runner|
           runner.title = "should get a result of example/PegasusWMS/Split"
-          runner.args = ["example/PegasusWMS/Split/", "-o", path.to_s]
+          runner.args = ["example/PegasusWMS/Split/", *runner.default_arguments]
           runner.run do |base|
             (base + "count.txt.a").should.exist
             (base + "count.txt.a").size.should > 0
@@ -173,6 +173,25 @@ TestHelper.scope do |this|
           (base + "1.b").mtime.should < (base + "2.b").mtime
           (base + "2.b").mtime.should < (base + "3.b").mtime
           (base + "3.b").mtime.should < (base + "4.b").mtime
+        end
+      end
+    end
+
+    describe "example/MakePair" do
+      TestHelper::PioneClientRunner.test(self) do |runner|
+        runner.title = "should get a result of example/MakePair"
+        runner.args = ["example/MakePair", "--rehearse", "case1", *runner.default_arguments]
+        runner.run do |base|
+          1.upto(5) do |i|
+            1.upto(5) do |ii|
+              comb = (base + "comb-%s-%s.pair" % [i, ii])
+              i < ii ? comb.should.exist : comb.should.not.exist
+              perm = (base + "perm-%s-%s.pair" % [i, ii])
+              i != ii ? perm.should.exist : perm.should.not.exist
+              succ = (base + "succ-%s-%s.pair" % [i, ii])
+              ii - i == 1 ? succ.should.exist : succ.should.not.exist
+            end
+          end
         end
       end
     end
