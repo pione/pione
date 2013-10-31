@@ -133,5 +133,25 @@ TestHelper.scope do |this|
         puts "    * ignored because of no internet connection"
       end
     end
+
+    describe "example/OddSelector" do
+      TestHelper::PioneClientRunner.test(self) do |runner|
+        runner.title = "should get a result of example/OddSelector"
+        runner.args = ["example/OddSelector", "--rehearse", *runner.default_arguments]
+        runner.run do |base|
+          (base + "1.res").should.exist
+          (base + "2.res").should.not.exist
+          (base + "3.res").should.exist
+          (base + "4.res").should.not.exist
+          (base + "5.res").should.exist
+          (base + "6.res").should.not.exist
+          (base + "7.res").should.exist
+          (base + "8.res").should.not.exist
+          (base + "9.res").should.exist
+          (base + "10.res").should.not.exist
+        end
+      end
+    end
+
   end
 end

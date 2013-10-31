@@ -1,0 +1,15 @@
+{
+  "PackageName": "OddSelector",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "OddSelector.pione"
+  ],
+  "Scenarios": [
+    "scenario"
+  ],
+  "Bins": [
+
+  ]
+}
