@@ -77,7 +77,7 @@ module Pione
         @execution_thread = Thread.new do
           begin
             engine.handle
-          rescue RuleEngine::ActionError => e
+          rescue RuleEngine::ActionError, Lang::MethodNotFound => e
             write(TupleSpace::CommandTuple.new("terminate", [System::Status.error(e)]))
             terminate
           end
