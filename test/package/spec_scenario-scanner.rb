@@ -29,7 +29,7 @@ TestHelper.scope do |this|
     it "should scan scenario direcotry: S1" do
       s1 = Package::ScenarioScanner.new(this::S1).scan
       s1.name.should == "S1"
-      s1.param_set.should.nil
+      s1.textual_param_sets.should.nil
       s1.inputs.size.should == 3
       s1.inputs.should.include "input/i1"
       s1.inputs.should.include "input/i2"
@@ -43,7 +43,7 @@ TestHelper.scope do |this|
     it "should scan scenario direcotry: S2" do
       s2 = Package::ScenarioScanner.new(this::S2).scan
       s2.name.should == "S2"
-      s2.param_set.should.nil
+      s2.textual_param_sets.should.nil
       s2.inputs.size.should == 0
       s2.outputs.size.should == 1
       s2.outputs.should.include "output/o1"
@@ -52,7 +52,7 @@ TestHelper.scope do |this|
     it "should scan scenario direcotry: S3" do
       s3 = Package::ScenarioScanner.new(this::S3).scan
       s3.name.should == "S3"
-      s3.param_set.should == "{PARAM: 1}"
+      s3.textual_param_sets.should == "{PARAM: 1}"
     end
 
     it "should raise exception because of no scenario names" do

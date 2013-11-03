@@ -1,3 +1,5 @@
+.@ PackageName :: "SelectRuleByParam"
+
 Rule Main
   output 'message.txt'
   param $NAME := "A"
@@ -10,10 +12,10 @@ Flow
   when "C"
     $RULE := C
   end
-  rule Abstract {R: $RULE}
+  rule RuleSelector {R: $RULE}
 End
 
-Rule Abstract
+Rule RuleSelector
   output 'message.txt'
   param $R
 Flow

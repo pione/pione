@@ -1,4 +1,0 @@
-ScenarioName: B
-Params: '{NAME: "B"}'
-Outputs:
-  - "message.txt"

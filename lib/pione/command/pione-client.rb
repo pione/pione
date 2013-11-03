@@ -75,10 +75,7 @@ module Pione
         item.default = Lang::ParameterSetSequence.new
         item.action = proc do |command_name, option, str|
           begin
-            stree = Lang::DocumentParser.new.parameter_set.parse(str)
-            opt = {package_name: "-", filename: "-"}
-            params = Lang::DocumentTransformer.new.apply(stree, opt)
-            option[:params] = option[:params].merge(params)
+            option[:params] = option[:params].merge(Util.parse_param_set(str))
           rescue Parslet::ParseFailed => e
             raise OptionError.new("invalid parameters \"%s\" in %s" % [str, command_name])
           end
@@ -118,7 +115,7 @@ module Pione
       end
 
       define_option(:rehearse) do |item|
-        item.long = '--rehearse[=SCENARIO]'
+        item.long = '--rehearse [SCENARIO]'
         item.desc = 'rehearse the scenario'
         item.value = proc {|scenario_name| scenario_name || :anything}
       end
@@ -236,7 +233,7 @@ module Pione
         @env = Lang::Environment.new
       end
 
-      # Read a package.
+      # Read a PIONE package. This setups package sharing and secnario handling also.
       def setup_package
         # package is not found
         if @argv.first.nil?
@@ -247,18 +244,13 @@ module Pione
         @package_handler = Package::PackageReader.read(Location[@argv.first])
         @env = @package_handler.eval(@env)
 
-        # merge user's parameter set
-        if not(option[:params].pieces.empty?)
-          @env.force_merge(option[:params].pieces.first)
-        end
-
         # upload the package
         @package_handler.upload(option[:output_location] + "package")
 
         # check rehearse scenario
         if option[:rehearse] and not(@package_handler.info.scenarios.empty?)
-          if scenario = @package_handler.find_scenario(option[:rehearse])
-            option[:input_location] = scenario.input
+          if @scenario_handler = @package_handler.find_scenario(option[:rehearse])
+            option[:input_location] = @scenario_handler.input
           else
             abort "the scenario not found: %s" % option[:rehearse]
           end
@@ -384,8 +376,21 @@ module Pione
 
       # Start process manager agent.
       def execute_process_manager
+        param_set = Lang::ParameterSet.new
+
+        # use paramerter set on command option
+        if option[:params] and not(option[:params].pieces.empty?)
+          param_set = option[:params].pieces.first
+        end
+
+        # use parameter set on scenario
+        if not(@scenario_handler.nil?) and @scenario_handler.info.textual_param_sets
+          param_set = Util.parse_param_set(@scenario_handler.info.textual_param_sets).pieces.first
+        end
+
+        # start
         @process_manager =
-          Agent::ProcessManager.start(@tuple_space, @env, @package_handler, option[:params], option[:stream])
+          Agent::ProcessManager.start(@tuple_space, @env, @package_handler, param_set, option[:stream])
         @process_manager.wait_until_terminated(nil)
       end
 

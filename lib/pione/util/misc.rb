@@ -34,8 +34,14 @@ module Pione
 
       def parse_features(textual_features)
         stree = Lang::DocumentParser.new.expr.parse(textual_features)
-        opt = {package_name: "*feature*", filename: "*feature*"}
+        opt = {package_name: "*Feature*", filename: "*Feature*"}
         Lang::DocumentTransformer.new.apply(stree, opt)
+      end
+
+      def parse_param_set(textual_param_set)
+        stree = Lang::DocumentParser.new.parameter_set.parse(textual_param_set)
+        opt = {package_name: "*ParamSet*", filename: "*ParamSet*"}
+        params = Lang::DocumentTransformer.new.apply(stree, opt)
       end
     end
 

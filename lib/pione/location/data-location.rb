@@ -191,15 +191,23 @@ module Pione
         raise NotImplementedError
       end
 
-      # Return last modification time of the location.
+      # Return ctime of the location.
       #
       # @return [Time]
-      #   last modification time
+      #   ctime
+      def ctime
+        raise NotImplementedError
+      end
+
+      # Return mtime of the location.
+      #
+      # @return [Time]
+      #   mtime
       def mtime
         raise NotImplementedError
       end
 
-      # Set last modification time of the location.
+      # Set mtime of the location.
       #
       # @return [void]
       def mtime=(time)

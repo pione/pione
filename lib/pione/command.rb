@@ -23,4 +23,4 @@ require 'pione/command/pione-log'
 require 'pione/command/pione-val'
 require 'pione/command/pione-package'
 require 'pione/command/pione-compiler'
-
+require 'pione/command/pione-update-package-info'

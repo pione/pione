@@ -4,13 +4,22 @@ module Pione
     class PackageHandler
       class << self
         # Update package info file and scenario info files.
-        def write_info_files(location)
+        def write_info_files(location, option={})
+          # scan the package directory
           package_info = PackageScanner.new(location).scan
-          (location + "pione-package.json").write(JSON.pretty_generate(package_info))
-          Log::SystemLog.info("write %s" % (location + "pione-package.json").address)
+          last_time = Util::LastTime.get(package_info.filepaths.map{|path| location + path})
+
+          # update the package info file
+          info_location = location + "pione-package.json"
+          if option[:force] or not(info_location.exist?) or last_time > info_location.mtime
+            info_location.write(JSON.pretty_generate(package_info))
+            Log::SystemLog.info("update the package info file: %s" % info_location.address)
+          end
+
+          # write scenario info files
           package_info.scenarios.each do |scenario|
             scenario_info = ScenarioScanner.new(location + scenario).scan
-            ScenarioHandler.new(location + scenario, scenario_info).write_info_file
+            ScenarioHandler.new(location + scenario, scenario_info).write_info_file(option)
           end
         end
       end

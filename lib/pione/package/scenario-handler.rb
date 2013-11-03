@@ -17,9 +17,15 @@ module Pione
       end
 
       # Write an information file for the scenario.
-      def write_info_file
-        (@location + "pione-scenario.json").write(JSON.pretty_generate(@info))
-        Log::SystemLog.info("write %s" % (@location + "pione-scenario.json").address)
+      def write_info_file(option={})
+        last_time = Util::LastTime.get(@info.filepaths.map{|path| @location + path})
+
+        # update the scenario info file
+        location = @location + "pione-scenario.json"
+        if option[:force] or not(location.exist?) or last_time > location.mtime
+          location.write(JSON.pretty_generate(@info))
+          Log::SystemLog.info("update the scenario info file: %s" % location.address)
+        end
       end
 
       # Return input location of the scenario. If the scenario doesn't have

@@ -90,6 +90,8 @@ module Pione
         @client.file_delete(@path)
       end
 
+      # dropbox have "modified" time only, therefore ctime is not implemented
+
       def mtime
         metadata = @client.metadata(@path)
         Time.parse(metadata["modified"])

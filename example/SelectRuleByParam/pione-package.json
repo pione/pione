@@ -1,0 +1,17 @@
+{
+  "PackageName": "SelectRuleByParam",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "SelectRuleByParam.pione"
+  ],
+  "Scenarios": [
+    "scenario/a",
+    "scenario/b",
+    "scenario/c"
+  ],
+  "Bins": [
+
+  ]
+}

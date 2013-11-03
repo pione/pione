@@ -2,7 +2,7 @@ module Pione
   module Package
     class ScenarioInfo < StructX
       member :name
-      member :param_set
+      member :textual_param_sets
       member :inputs, default: lambda {Array.new}
       member :outputs, default: lambda {Array.new}
 
@@ -10,12 +10,13 @@ module Pione
       # location of the file.
       def self.read(src)
         data = JSON.load(src.is_a?(Location::DataLocation) ? src.read : src)
-        new(name: data["ScenarioName"], param_set: data["ParamSet"], inputs: data["Inputs"], outputs: data["Outputs"])
+        new(name: data["ScenarioName"], textual_param_sets: data["ParamSet"], inputs: data["Inputs"], outputs: data["Outputs"])
       end
 
       # Return file paths of the scenario.
       def filepaths
         list = []
+        list << "Scenario.pione"
         list += inputs
         list += outputs
         return list
@@ -24,7 +25,7 @@ module Pione
       def to_json(*args)
         data = Hash.new
         data["ScenarioName"] = name
-        data["ParamSet"] = param_set
+        data["ParamSet"] = textual_param_sets
         data["Inputs"] = inputs
         data["Outputs"] = outputs
         data.to_json(*args)

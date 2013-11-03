@@ -55,12 +55,10 @@ module Pione
           # get value from parent table
           return @parent.get_value(env, ref) if @parent
         else
-          # or find by parent package id
-          if parent_ids = env.find_parent_ids(ref.package_id)
-            parent_ids.each do |parent_id|
-              if val = get_value(env, ref.set(package_id: parent_id))
-                return val
-              end
+          # otherwise, find by parent package id
+          env.find_ancestor_ids(ref.package_id).each do |ancestor_id|
+            if val = get_value(env, ref.set(package_id: ancestor_id))
+              return val
             end
           end
         end
@@ -90,6 +88,22 @@ module Pione
           @table[k1].keys.inject(res) do |_res, k2|
             ref = make_reference(k1, k2)
             _res.include?(ref) ? _res : res << ref
+          end
+        end
+      end
+
+      # Return all names that related to the package ID and ancestors.
+      #
+      # @return [Array<String>]
+      #   all names in the table
+      def select_names_by(env, package_id)
+        names = @parent ? @parent.select_names_by(package_id) : []
+        target_ids = [package_id, *env.find_ancestor_ids(package_id)]
+        target_ids.each_with_object(names) do |target_id, names|
+          @table[target_id].keys.each do |name|
+            if not(names.include?(name))
+              names << name
+            end
           end
         end
       end
@@ -256,10 +270,20 @@ module Pione
         package_id_table[package_name]
       end
 
-      def find_parent_ids(package_id)
+      # Find ancestor's IDs of the package ID. The way of ancestors search is depth-first.
+      def find_ancestor_ids(package_id)
+        ancestor_ids = []
         if package = package_get(PackageExpr.new(package_id: package_id))
-          package.parent_ids
+          ancestor_ids += package.parent_ids
+          package.parent_ids.each do |parent_id|
+            find_ancestor_ids(parent_id).each do |ancestor_id|
+              if not(ancestor_ids.include?(ancestor_id))
+                ancestor_ids << ancestor_id
+              end
+            end
+          end
         end
+        return ancestor_ids
       end
 
       # Create a new environment which tables are overlayed current tables.
@@ -274,20 +298,17 @@ module Pione
         )
       end
 
-      def merge(param_set)
+      # Merge the parameter set as variables into this environment. Rebinding
+      # variables raise error, but it is ignored when force flag is true.
+      #
+      # @param param_set [Lang::ParameterSet]
+      #   parameter set to be merged
+      # @option option
+      def merge_param_set(param_set, option={})
         param_set.keys.each do |key|
           var = Variable.new(name: key, package_id: current_package_id)
           val = param_set[key]
-          variable_set(var, val)
-        end
-        return self
-      end
-
-      def force_merge(param_set)
-        param_set.keys.each do |key|
-          var = Variable.new(name: key, package_id: current_package_id)
-          val = param_set[key]
-          variable_set!(var, val)
+          option[:force] ? variable_set!(var, val) : variable_set(var, val)
         end
         return self
       end
@@ -314,14 +335,17 @@ module Pione
         set(current_package_id: package_id, current_definition: definition)
       end
 
-      def make_root_rule(param_set)
+      def make_root_rule(main_param_set)
+        # put variable of parameter set for main rule
+        variable_set(Variable.new("MAIN_PARAM_SET"), ParameterSetSequence.of(main_param_set))
+
         # make root rule
-        Package::Document.parse(<<-PIONE, current_package_id, nil, nil, "*system*").eval(self)
+        Package::Document.parse(<<-PIONE, current_package_id, nil, nil, "*System*").eval(self)
            Rule Root
              input '*'.all or null
              output '*'.all
            Flow
-             rule Main
+             rule Main.param($MAIN_PARAM_SET)
            End
         PIONE
         rule_get(RuleExpr.new("Root"))

@@ -5,7 +5,7 @@ module Pione
       # Make a task id by input data names and parameters.
       def generate(inputs, params)
         # NOTE: auto variables are ignored
-        param_set = params.filter(["I", "INPUT", "O", "OUTPUT", "*"])
+        param_set = params.delete_all(["I", "INPUT", "O", "OUTPUT", "*"])
         inputs = inputs.map {|t| t.is_a?(TupleSpace::DataTuple) ? t.name : t}
         Digest::MD5.hexdigest("%s::%s" % [inputs.join(":"), param_set.textize])
       end

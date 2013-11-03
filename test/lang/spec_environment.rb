@@ -18,6 +18,25 @@ describe 'Pione::Lang::Environment' do
     TestHelper::Lang.expr!(@env, "$p.var($y)").should  == Lang::IntegerSequence.of(2)
   end
 
+  it 'should get variable names by package ID' do
+    @env = @env.setup_new_package("A")
+    TestHelper::Lang.declaration!(@env, "$a := 1")
+    @env = @env.setup_new_package("B", ["A"])
+    TestHelper::Lang.declaration!(@env, "$b := 2")
+    @env = @env.setup_new_package("C", ["B"])
+    TestHelper::Lang.declaration!(@env, "$c := 3")
+    @env = @env.setup_new_package("D")
+    TestHelper::Lang.declaration!(@env, "$d := 4")
+    @env = @env.setup_new_package("E", ["C", "D"])
+    TestHelper::Lang.declaration!(@env, "$e := 4")
+
+    @env.variable_table.select_names_by(@env, "A").sort.should == ["a"]
+    @env.variable_table.select_names_by(@env, "B").sort.should == ["a", "b"]
+    @env.variable_table.select_names_by(@env, "C").sort.should == ["a", "b", "c"]
+    @env.variable_table.select_names_by(@env, "D").sort.should == ["d"]
+    @env.variable_table.select_names_by(@env, "E").sort.should == ["a", "b", "c", "d", "e"]
+  end
+
   it 'should append new package' do
     # append a package
     TestHelper::Lang.declaration!(@env, "package $p <- &Test")

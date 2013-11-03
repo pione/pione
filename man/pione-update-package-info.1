@@ -1,0 +1,43 @@
+.TH pione\-update\-package\-info 1 "" "PIONE User Manual"
+.SH NAME
+.PP
+pione\-update\-package\-info \- update PIONE\[aq]s package information
+files.
+.SH SYNOPSIS
+.PP
+\f[B]pione update\-package\-info\f[] [options] pacakge\-location
+.SH DESCRIPTION
+.PP
+pione\-update\-package\-info updates PIONE\[aq]s package information
+files.
+PIONE tries to update package information files automatically, but you
+should update it by this command when you add new files or do some
+operations.
+.SS NOTE
+.PP
+This command tries to update files from criterion of file timestamps.
+If files are not updated by PIONE\[aq]s mistake, you need to set
+\f[C]\-\-force\f[] option.
+.SH OPTIONS
+.TP
+.B \-\-force
+Update all package information files ignoring the update criterion.
+.RS
+.RE
+.SH EXAMPLES
+.TP
+.B pione update\-package\-info example/HelloWorld
+Update some package information files in the path of example/HelloWorld.
+.RS
+.RE
+.TP
+.B pione update\-package\-info \-\-force example/HelloWorld
+Update all package information files in the path of example/HelloWorld.
+.RS
+.RE
+.SH REPORTING BUGS
+.PP
+Report bugs or feature requests to PIONE\[aq]s issue
+tracker(https://github.com/pione/pione/issues).
+.SH AUTHORS
+Keita Yamaguchi.

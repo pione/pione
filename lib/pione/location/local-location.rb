@@ -60,6 +60,10 @@ module Pione
         @path.mkpath unless exist?
       end
 
+      def ctime
+        @path.exist? ? @path.ctime : (raise NotFound.new(self))
+      end
+
       def mtime
         @path.exist? ? @path.mtime : (raise NotFound.new(self))
       end

@@ -29,20 +29,20 @@ module Pione
           name, param_set = scan_annotations
           inputs = scan_data_dir("input")
           outputs = scan_data_dir("output")
-          ScenarioInfo.new(name: name, param_set: param_set, inputs: inputs, outputs: outputs)
+          ScenarioInfo.new(name: name, textual_param_sets: param_set, inputs: inputs, outputs: outputs)
         end
-      rescue Parslet::ParseFailed => e
-        raise InvalidScenario.new("invalid scenario document because of parser failed: %s" % e.message)
       end
 
       # Scan annotations from scenario file and return scenario name and
       # parameter set.
       def scan_annotations
+        location = @location + "Scenario.pione"
+
         # setup fake language environment
         env = Lang::Environment.new.setup_new_package("ScenarioScanner")
 
         # parse the scenario document
-        Document.load(env, @location + "Scenario.pione", nil, nil, nil, @location + "Scenario.pione")
+        Document.load(env, location, nil, nil, nil, @location + "Scenario.pione")
 
         # get name and parameter set from fake package's annotations
         annotations = env.package_get(Lang::PackageExpr.new(package_id: env.current_package_id)).annotations
@@ -50,6 +50,8 @@ module Pione
         param_set = find_param_set(annotations)
 
         return name, param_set
+      rescue Parslet::ParseFailed => e
+        raise InvalidScenario.new(location, "Parser failed: " + e.message)
       end
 
       # Scan data files.
@@ -67,15 +69,16 @@ module Pione
 
       # Find "ScenarioName" annotaion.
       def find_name(annotations)
+        location = @location + "Scenario.pione"
         names = annotations.select {|annotation| annotation.annotation_type == "ScenarioName"}
         case names.size
         when 0
-          raise InvalidScenario.new("No scenario name in %s" % (@location + "Scenario.pione"))
+          raise InvalidScenario.new(location, "No scenario name exists.")
         when 1
           names.first.value
         else
           name_list = names.map {|name| name.value}.join(", ")
-          raise InvalidScenario.new("Multiple scenario names found: %s" % name_list)
+          raise InvalidScenario.new(location, "Duplicated scenario name found." % name_list)
         end
       end
 
@@ -88,7 +91,8 @@ module Pione
         when 1
           param_sets.first.value
         else
-          raise InvalidScenario.new("Multiple parameter set found in %s" % @location.address)
+          location = @location + "Scenario.pione"
+          raise InvalidScenario.new(location, "Duplicated parameter set found.")
         end
       end
     end

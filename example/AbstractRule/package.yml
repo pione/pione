@@ -1,7 +1,0 @@
-PackageName: AbstractRule
-Documents:
-  - "AbstractRule.pione"
-Scenarios:
-  - "scenario/a"
-  - "scenario/b"
-  - "scenario/c"

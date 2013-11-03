@@ -27,6 +27,7 @@ string:
     - '"日本語"'
     # escape
     - '"\""'
+    - '"a\"b\"c"'
   invalid:
     # single quote
     - "'abc'"

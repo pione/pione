@@ -10,14 +10,15 @@ module Pione
 
       attr_reader :package
 
-      def initialize(space, env, package, param_sets, stream)
+      def initialize(space, env, package, param_set, stream)
         raise ArgumentError unless env.rule_get!(Lang::RuleExpr.new("Main"))
         super(space)
         @space = space
         @env = env
         @package = package
-        @param_sets = param_sets
+        @param_set = param_set
         @stream = stream
+        @package_id = @env.current_package_id
       end
 
       #
@@ -36,9 +37,17 @@ module Pione
       #
 
       def transit_to_init
+        # split parameter set as package toplvel's and main's
+        toplevel_variable_names = @env.variable_table.select_names_by(@env, @env.current_package_id)
+        toplevel_param_set = @param_set.filter(toplevel_variable_names)
+        main_param_set = @param_set.delete_all(toplevel_variable_names)
+
+        # merge the toplevel parameter set
+        @env.merge_param_set(toplevel_param_set, force: true)
+
         # setup root rule
-        definition = @env.make_root_rule(@param_sets)
-        @rule_condition = definition.rule_condition_context.eval(@env)
+        root_definition = @env.make_root_rule(main_param_set)
+        @rule_condition = root_definition.rule_condition_context.eval(@env)
 
         # share my environment
         write(TupleSpace::EnvTuple.new(@env.dumpable)) # need to be dumpable
@@ -55,10 +64,10 @@ module Pione
           user_message "error: no inputs"
           terminate
         else
+          # call root rule of the current package
           list.each do |env, inputs|
             package_id = @env.current_package_id
-            param_set = Lang::ParameterSet.new
-            handler = RuleEngine.make(@space, @env, package_id, "Root", inputs, param_set, 'root', nil)
+            handler = RuleEngine.make(@space, @env, package_id, "Root", inputs, Lang::ParameterSet.new, 'root', nil)
             handler.handle
           end
         end

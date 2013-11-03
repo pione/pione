@@ -10,7 +10,7 @@ module Pione
         else
           _inputs = "%s,..." % inputs.flatten[0..2].map{|i| i.name}.join(",")
         end
-        _param_set = param_set.filter(["I", "INPUT", "O", "OUTPUT", "*"])
+        _param_set = param_set.delete_all(["I", "INPUT", "O", "OUTPUT", "*"])
         _param_set = _param_set.map{|k,v| "%s:%s" % [k, v.textize]}.join(",")
         "&%s:%s([%s],{%s})" % [package_id, rule_name, _inputs, _param_set]
       end

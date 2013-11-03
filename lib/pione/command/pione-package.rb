@@ -119,6 +119,8 @@ module Pione
       # Update update info files.
       def execute_write_info
         Package::PackageHandler.write_info_files(Location[@target])
+      rescue Package::InvalidScenario => e
+        abort(e.message)
       end
 
       #

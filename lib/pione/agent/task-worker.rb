@@ -115,7 +115,7 @@ module Pione
         if env = read!(TupleSpace::EnvTuple.new)
           env.obj
         else
-          raise TupleSpaceError.new("\"env\" tuple not found.")
+          raise TupleSpaceError.new("the tuple space is invalid because \"env\" tuple not found.")
         end
       end
 

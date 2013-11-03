@@ -51,7 +51,7 @@ module Pione
       item.desc = "presence notification addresses"
       item.init = ["255.255.255.255:56000"]
       item.define_updater do |vals|
-        vals.map {|val| URI.parse("broadcast://%s" % val)}
+        vals.map {|val| val.is_a?(String) ? URI.parse("broadcast://%s" % val) : val}
       end
     end
 

@@ -1,0 +1,10 @@
+{
+  "ScenarioName": "Select B",
+  "ParamSet": "{NAME: \"B\"}",
+  "Inputs": [
+
+  ],
+  "Outputs": [
+    "output/message.txt"
+  ]
+}

@@ -132,7 +132,7 @@ module Pione
         # set current package id
         _env.set(current_package_id: package_id)
         # merge parameter set
-        _env.merge(param_set)
+        _env.merge_param_set(param_set)
 
         ### system environment
         # ENV.each do |key, value|

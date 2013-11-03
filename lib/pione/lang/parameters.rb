@@ -17,7 +17,13 @@ module Pione
         set(table: table.merge(other.table))
       end
 
+      # Return a parameter set that match the names.
       def filter(names)
+        set(table: table.select{|key, _| names.include?(key)})
+      end
+
+      # Return a parameter set excluding the names.
+      def delete_all(names)
         set(table: table.reject{|key, _| names.include?(key)})
       end
 

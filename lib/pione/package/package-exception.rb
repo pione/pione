@@ -31,7 +31,23 @@ module Pione
     class InvalidPackage < PackageError; end
 
     # InvalidScenario raises when the package is something bad.
-    class InvalidScenario < PackageError; end
+    class InvalidScenario < PackageError
+      def initialize(location, reason)
+        @location = location
+        @reason = reason
+      end
+
+      def message
+        "%<path>s is an invalid scenario document: %<reason>s" % args
+      end
+
+      def args
+        {
+          :path => @location.path,
+          :reason => @reason
+        }
+      end
+    end
 
     class DatabaseError < PackageError; end
   end

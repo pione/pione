@@ -229,7 +229,7 @@ module Pione
             pieces.each do |param_set|
               ### merge default parameter values ####
               # setup task's environment by parameter set
-              _env = plain_env.layer.merge(param_set)
+              _env = plain_env.layer.merge_param_set(param_set)
               _env.set(current_package_id: rule.package_id || env.current_package_id)
 
               # get task's condition
@@ -241,7 +241,7 @@ module Pione
               # handle parameter distribution
               _param_set.eval(_env).expand do |expanded_param_set|
                 # rebuild environment by expanded param set
-                _env = plain_env.layer.merge(expanded_param_set)
+                _env = plain_env.layer.merge_param_set(expanded_param_set)
                 _env.set(current_package_id: rule.package_id || env.current_package_id)
 
                 # get task's condition
@@ -437,7 +437,8 @@ module Pione
       # Wait until tasks completed.
       def wait_task_completion(tasks)
         tasks.each do |task|
-          # wait to finish the work
+          # wait to finish the distributed task, note that finished tuple is in
+          # the task domain
           finished = read(TupleSpace::FinishedTuple.new(domain: task.domain_id))
 
           ### task completion processing ###
