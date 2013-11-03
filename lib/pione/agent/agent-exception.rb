@@ -48,5 +48,16 @@ module Pione
         "input generator method \"%s\" is unknown" % @name
       end
     end
+
+    # JobError is raised when job ends because of something reasons.
+    class JobError < StandardError
+      def initialize(msg)
+        @msg = msg
+      end
+
+      def message
+        @msg
+      end
+    end
   end
 end

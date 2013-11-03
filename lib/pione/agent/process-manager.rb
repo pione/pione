@@ -11,7 +11,10 @@ module Pione
       attr_reader :package
 
       def initialize(space, env, package, param_set, stream)
-        raise ArgumentError unless env.rule_get!(Lang::RuleExpr.new("Main"))
+        unless env.rule_get!(Lang::RuleExpr.new("Main"))
+          raise JobError.new("Rule `Main` not found in the package.")
+        end
+
         super(space)
         @space = space
         @env = env

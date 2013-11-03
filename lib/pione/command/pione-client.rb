@@ -392,6 +392,8 @@ module Pione
         @process_manager =
           Agent::ProcessManager.start(@tuple_space, @env, @package_handler, param_set, option[:stream])
         @process_manager.wait_until_terminated(nil)
+      rescue Agent::JobError => e
+        abort(e.message)
       end
 
       # Check rehearsal result.
