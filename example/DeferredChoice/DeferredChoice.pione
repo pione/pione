@@ -1,16 +1,18 @@
+.@ PackageName :: "DefferredChoice"
+
+param $DIALOG := "zenity"
+
 Rule Main
   output 'result.txt'
-  param $DIALOG := "zenity"
 Flow
-  rule UserSelect.params({DIALOG: $DIALOG})
+  rule UserSelect
   rule A
   rule B
   rule C
 End
 
 Rule UserSelect
-  output 'a.txt:b.txt:c.txt'
-  param $DIALOG
+  output 'a.txt' or 'b.txt' or 'c.txt'
   feature +Interactive
 Action
   if [ "{$DIALOG}" = "zenity" ]
