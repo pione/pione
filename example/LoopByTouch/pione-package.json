@@ -1,0 +1,18 @@
+{
+  "PackageName": "LoopByTouch",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "SingleLoop.pione",
+    "TripletLoop.pione",
+    "PairLoop.pione",
+    "LoopByTouch.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ]
+}

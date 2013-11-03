@@ -1,3 +1,5 @@
+.@ PackageName :: "LoopByTouch"
+
 param $N := 3
 
 Rule Main
