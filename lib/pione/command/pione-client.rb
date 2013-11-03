@@ -120,6 +120,12 @@ module Pione
         item.value = proc {|scenario_name| scenario_name || :anything}
       end
 
+      define_option(:timeout) do |item|
+        item.long = '--timeout SEC'
+        item.desc = 'timeout processing after SEC'
+        item.value = proc {|sec| sec.to_i}
+      end
+
       validate_option do |option|
         unless option[:task_worker] > 0 or
             (not(option[:stand_alone]) and option[:task_worker] == 0)
@@ -391,9 +397,13 @@ module Pione
         # start
         @process_manager =
           Agent::ProcessManager.start(@tuple_space, @env, @package_handler, param_set, option[:stream])
-        @process_manager.wait_until_terminated(nil)
+        Timeout::timeout(option[:timeout]) do
+          @process_manager.wait_until_terminated(nil)
+        end
       rescue Agent::JobError => e
         abort(e.message)
+      rescue Timeout::Error => e
+        abort("Job timed out after %s sec." % option[:timeout])
       end
 
       # Check rehearsal result.

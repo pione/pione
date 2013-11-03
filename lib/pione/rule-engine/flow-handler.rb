@@ -129,7 +129,7 @@ module Pione
       # Make a task tuple from the application.
       def make_tuple(caller_id)
         features = rule_condition.features.inject(Lang::FeatureSequence.new) do |f, expr|
-          f + f.eval(env)
+          f + expr.eval(env)
         end
         TupleSpace::TaskTuple.new(
           digest,

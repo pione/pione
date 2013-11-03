@@ -93,7 +93,7 @@ module Pione
 
       # Create a task worker agent.
       def setup_agent
-        @agent = Agent::TaskWorker.new(@tuple_space, option[:expressive_features])
+        @agent = Agent::TaskWorker.new(@tuple_space, Global.expressional_features)
       rescue Agent::TupleSpaceError => e
         abort(e.message)
       end

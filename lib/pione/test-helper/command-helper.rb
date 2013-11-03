@@ -54,7 +54,7 @@ module Pione
         private
 
         # Run the command execution action.
-        def execute(options, &b)
+        def execute(*options, &b)
           # initialize exit status
           Global.exit_status = true
 
@@ -119,6 +119,15 @@ module Pione
             Pione::Command::PioneClient.run(_args)
           end
           b.call(_base)
+        end
+      end
+
+      def timeout(sec)
+        _args = args + ["--timeout", sec.to_s]
+        context.it(template % title) do
+          TestHelper::Command.fail do
+            Pione::Command::PioneClient.run(_args)
+          end
         end
       end
     end

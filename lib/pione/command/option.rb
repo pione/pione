@@ -195,7 +195,6 @@ module Pione
           begin
             # store features
             Global.features = features
-            Global.expressional_features = Util.parse_features(features)
           rescue Parslet::ParseFailed => e
             raise OptionError.new(
               "invalid feature expression \"%s\" is given for %s" % [features, command_name]

@@ -1,0 +1,15 @@
+{
+  "PackageName": "FeatureExample",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "FeatureExample.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ]
+}
