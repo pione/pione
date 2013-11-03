@@ -1,5 +1,0 @@
-Rule ABC
-  input '*.a'
-  output '*.b'
-Flow
-End

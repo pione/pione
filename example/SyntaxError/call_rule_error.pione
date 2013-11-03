@@ -1,6 +1,0 @@
-Rule ABC
-  input '*.a'
-  output '*.b'
-Flow
-  rule "abc"
-End

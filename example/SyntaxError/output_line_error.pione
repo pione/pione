@@ -1,6 +1,0 @@
-Rule ABC
-  input '*.a'
-  output ######
-Action
-cat {$I[1]} > {$O[1]}
-End
