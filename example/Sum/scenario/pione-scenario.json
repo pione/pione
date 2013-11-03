@@ -1,0 +1,10 @@
+{
+  "ScenarioName": "test",
+  "ParamSet": null,
+  "Inputs": [
+    "input/list.txt"
+  ],
+  "Outputs": [
+    "output/sum.txt"
+  ]
+}
