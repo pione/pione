@@ -12,7 +12,7 @@ module Pione
       def self.cut(text)
         line = text.lines.to_a.first
         n = line.length - line.lstrip.length
-        n > 0 ? text.gsub(/^\s{0,#{n}}/m, "") : text
+        n > 0 ? text.gsub(/^[ ]{0,#{n}}/m, "") : text
       end
     end
   end

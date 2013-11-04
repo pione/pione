@@ -1,0 +1,45 @@
+.TH pione\-action 1 "" "PIONE User Manual"
+.SH NAME
+.PP
+pione\-action \- execute an action in literate action document.
+.SH SYNOPSIS
+.PP
+\f[B]pione action\f[] [options] location action_name
+.SH DESCRIPTION
+.PP
+\f[B]action\f[] command execute or show an action in literate action
+document.
+.SH OPTIONS
+.TP
+.B \-\-show
+Show an action instead of execution.
+.RS
+.RE
+.TP
+.B \-d, \-\-directory PATH
+Execute an action in the directory.
+.RS
+.RE
+.SH EXAMPLES
+.TP
+.B pione action HelloWorld.md SayHello
+Execute \f[C]SayHello\f[] action of \f[C]HelloWorld.md\f[] in current
+directory.
+.RS
+.RE
+.TP
+.B pione action \-d /tmp HelloWorld.md SayHello
+Execute \f[C]SayHello\f[] action of \f[C]HelloWorld.md\f[] in /tmp.
+.RS
+.RE
+.TP
+.B pione action HelloWorld.md SayHello \-\-show
+Show \f[C]SayHello\f[] action of \f[C]HelloWorld.md\f[].
+.RS
+.RE
+.SH REPORTING BUGS
+.PP
+Report bugs or feature requests to PIONE\[aq]s issue
+tracker(https://github.com/pione/pione/issues).
+.SH AUTHORS
+Keita Yamaguchi.

@@ -52,6 +52,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "childprocess", "~> 0.3.9"
   gem.add_runtime_dependency "lettercase", "~> 0.0.3"
   gem.add_runtime_dependency "rubyzip", "~> 1.0.0"
+  gem.add_runtime_dependency "kramdown", "~> 1.2.0"
 
   # for locations
   gem.add_runtime_dependency "dropbox-sdk", "~> 1.5.1"

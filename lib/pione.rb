@@ -70,6 +70,7 @@ require 'zip/filesystem'
 require 'retriable'
 require 'childprocess'
 require 'lettercase/core_ext'
+require 'kramdown'
 
 # configuration for childprcess
 ChildProcess.posix_spawn = true
@@ -78,21 +79,22 @@ ChildProcess.posix_spawn = true
 # load pione
 #
 
-require 'pione/version'     # PIONE version information
-require 'pione/util'        # various helper functions
-require 'pione/patch'       # patches for libraries
-require 'pione/location'    # location system for data and package
-require 'pione/log'         # log and format
-require 'pione/global'      # global variable manager
-require 'pione/system'      # PIONE system functions
-require 'pione/relay'       # relay connection
-require 'pione/package'     # package system
-require 'pione/lang'        # PIONE languge
-require 'pione/tuple-space' # tuple space functions
-require 'pione/rule-engine' # rule processing behaviors
-require 'pione/agent'       # agent system
-require 'pione/front'       # command front interface
-require 'pione/command'     # command definitions
+require 'pione/version'         # PIONE version information
+require 'pione/util'            # various helper functions
+require 'pione/patch'           # patches for libraries
+require 'pione/location'        # location system for data and package
+require 'pione/log'             # log and format
+require 'pione/global'          # global variable manager
+require 'pione/system'          # PIONE system functions
+require 'pione/relay'           # relay connection
+require 'pione/package'         # package system
+require 'pione/lang'            # PIONE languge
+require 'pione/tuple-space'     # tuple space functions
+require 'pione/rule-engine'     # rule processing behaviors
+require 'pione/agent'           # agent system
+require 'pione/front'           # command front interface
+require 'pione/command'         # command definitions
+require 'pione/literate-action' # literate action
 
 #
 # other settings
