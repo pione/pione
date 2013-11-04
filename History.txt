@@ -1,5 +1,20 @@
 # History
 
+## 0.3.2(2013/11/05)
+
+* Added literate action document.
+* Added `update-package-info` subcommand.
+* Added `action` subcommand.
+* Added `action:list` subcommand
+* Added `--timeout SEC` option to pione-client command.
+* Changed to stop processing if PIONE methods not found.
+* PNML compiler can generate executable PIONE document.
+* Fixed many bugs about parameters.
+* Fixed many bugs about features.
+* Fixed problem of global item `presence_notification_addresses`.
+* Renamed and updated `SelectRuleByParam` package.
+* Updated many example's packages.
+
 ## 0.3.1(2013/10/29)
 
 * Fixed performance bug.
