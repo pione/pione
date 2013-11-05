@@ -1,8 +1,8 @@
 module Pione
   module Agent
-    class ProcessManager < TupleSpaceClient
+    class JobManager < TupleSpaceClient
       include Log::MessageLog
-      set_agent_type :process_manager, self
+      set_agent_type :job_manager, self
 
       #
       # instance method

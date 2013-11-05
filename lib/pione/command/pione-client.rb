@@ -305,7 +305,7 @@ module Pione
       execute :process_job => :input_generator
       execute :process_job => :tuple_space_provider
       execute :process_job => :task_worker
-      execute :process_job => :process_manager
+      execute :process_job => :job_manager
       execute :process_job => :check_rehearsal_result
 
       # Print list of user parameters.
@@ -380,8 +380,8 @@ module Pione
         end
       end
 
-      # Start process manager agent.
-      def execute_process_manager
+      # Start a job manager agent.
+      def execute_job_manager
         param_set = Lang::ParameterSet.new
 
         # use paramerter set on command option
@@ -395,10 +395,10 @@ module Pione
         end
 
         # start
-        @process_manager =
-          Agent::ProcessManager.start(@tuple_space, @env, @package_handler, param_set, option[:stream])
+        @job_manager =
+          Agent::JobManager.start(@tuple_space, @env, @package_handler, param_set, option[:stream])
         Timeout::timeout(option[:timeout]) do
-          @process_manager.wait_until_terminated(nil)
+          @job_manager.wait_until_terminated(nil)
         end
       rescue Agent::JobError => e
         abort(e.message)
@@ -429,7 +429,7 @@ module Pione
       # kill task worker bootstrap threads before terminate child processes
       terminate :process_job => :spawner_thread
       terminate :child_process, :module => CommonCommandAction
-      terminate :process_job => :process_manager
+      terminate :process_job => :job_manager
       terminate :process_job => :job_terminator
       terminate :process_job => :task_worker
       terminate :process_job => :input_generator
@@ -437,24 +437,27 @@ module Pione
       terminate :process_job => :messenger
       terminate :process_job => :tuple_space
 
-      # Terminate spawner threads. This is needed for like the situation that
-      # requested job reaches end before task worker processes finished to be
-      # spawned.
+      # Terminate spawner threads. This is needed for the case that requested
+      # job reaches end before task worker processes finish to be spawned.
       def terminate_spawner_thread
         @spawner_threads.list.each {|thread| thread.kill}
       end
 
-      # Terminate process manager. Be careful that pione-client main thread
-      # waits to stop the process manager's chain thread, so agents pione-client
-      # has cannot terminate maybe. You need to terminate it after process
-      # manager terminated.
-      def terminate_process_manager
-        @process_manager.terminate if @process_manager
+      # Terminate job manager agent. Be careful that main thread of
+      # `pione-client` command waits to stop the job manager's chain thread, so
+      # pione-client has cannot terminate until the agent has terminated. we
+      # need to terminate it after job manager terminated.
+      def terminate_job_manager
+        if @job_manager and not(@job_manager.terminated?)
+          @job_manager.terminate
+        end
       end
 
-      # Terminate job terminator.
+      # Terminate job terminator agent.
       def terminate_job_terminator
-        @job_terminator.terminate if @job_terminator and not(@job_terminator.terminated?)
+        if @job_terminator and not(@job_terminator.terminated?)
+          @job_terminator.terminate
+        end
       end
 
       # Terminate task worker agents.
@@ -466,22 +469,30 @@ module Pione
 
       # Terminate input generator agent.
       def terminate_input_generator
-        @input_generator.terminate if @input_generator
+        if @input_generator and not(@input_generator.terminated?)
+          @input_generator.terminate
+        end
       end
 
       # Terminate logger agent.
       def terminate_logger
-        @logger.terminate if @logger
+        if @logger and not(@logger.terminated?)
+          @logger.terminate
+        end
       end
 
       # Terminate messenger agent.
       def terminate_messenger
-        @messenger.terminate if @messenger
+        if @messenger and not(@messenger.terminated?)
+          @messenger.terminate
+        end
       end
 
-      # Terminate tuple space.
+      # Terminate tuple space agent.
       def terminate_tuple_space
-        @tuple_space.terminate if @tuple_space
+        if @tuple_space
+          @tuple_space.terminate
+        end
       end
     end
   end
