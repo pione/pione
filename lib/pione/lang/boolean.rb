@@ -13,6 +13,10 @@ module Pione
       def value
         @__value__ ||= pieces.inject(true){|b, piece| b and piece.value}
       end
+
+      def textize
+        "(<b>%s)" % pieces.map {|piece| piece.value}.join("|")
+      end
     end
 
     #

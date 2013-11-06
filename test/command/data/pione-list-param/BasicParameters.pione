@@ -1,0 +1,12 @@
+param $B1 := true
+param $B2 := false
+param $B3 := true | false
+
+param $I1 := 1
+param $I2 := 1 | 2 | 3
+
+param $S1 := "test"
+param $S2 := "test1" | "test2" | "test3"
+
+param $D1 := 'test.txt'
+param $D2 := 'test1.txt' | 'test2.txt' | 'test3.txt'

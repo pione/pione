@@ -1,0 +1,44 @@
+.TH pione\-list\-param 1 "" "PIONE User Manual"
+.SH NAME
+.PP
+pione\-list\-param \- show a list of parameters in the document or
+package.
+.SH SYNOPSIS
+.PP
+\f[B]pione list\-param\f[] [options] location
+.SH DESCRIPTION
+.PP
+\f[B]list\-param\f[] command shows a list of parameters in the document
+or package.
+The list includes basic parameters only by default, set
+\f[C]\-\-advanced\f[] option if you want to show advanced parameters.
+.SH OPTIONS
+.TP
+.B \-a, \-\-advanced
+Show advanced parameters.
+.RS
+.RE
+.SH EXAMPLES
+.TP
+.B pione list\-param example/HelloWorld/HelloWorld.pione
+Show basic parameters in the document
+\f[C]example/HelloWorld/HelloWorld.pione\f[].
+.RS
+.RE
+.TP
+.B pione list\-param example/HelloWorld
+Show basic parameters in the package \f[C]example/HelloWorld\f[].
+.RS
+.RE
+.TP
+.B pione list\-param \-\-advanced example/HelloWorld
+Show basic and advanced parameters in the package
+\f[C]example/HelloWorld\f[].
+.RS
+.RE
+.SH REPORTING BUGS
+.PP
+Report bugs or feature requests to PIONE\[aq]s issue
+tracker(https://github.com/pione/pione/issues).
+.SH AUTHORS
+Keita Yamaguchi.

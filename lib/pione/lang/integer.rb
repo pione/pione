@@ -11,7 +11,7 @@ module Pione
       piece_class PioneInteger
 
       def textize
-        "(%s/i)" % pieces.map {|piece| piece.value}.join("|")
+        "(<i>%s)" % pieces.map {|piece| piece.value}.join("|")
       end
     end
 

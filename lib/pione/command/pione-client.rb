@@ -108,12 +108,6 @@ module Pione
         item.value = proc {|uri| uri}
       end
 
-      define_option(:list_params) do |item|
-        item.long = '--list-params'
-        item.desc = 'show user parameter list in the document'
-        item.action = proc {|_, option| option[:action_mode] = :list_params}
-      end
-
       define_option(:rehearse) do |item|
         item.long = '--rehearse [SCENARIO]'
         item.desc = 'rehearse the scenario'
@@ -295,9 +289,6 @@ module Pione
       # command lifecycle: execution phase
       #
 
-      # mode "list params"
-      execute :list_params => :list_params
-
       # mode "process_job"
       execute :process_job => :job_terminator
       execute :process_job => :messenger
@@ -307,11 +298,6 @@ module Pione
       execute :process_job => :task_worker
       execute :process_job => :job_manager
       execute :process_job => :check_rehearsal_result
-
-      # Print list of user parameters.
-      def execute_list_params
-        Util::PackageParametersList.print(@env, @env.current_package_id)
-      end
 
       def execute_job_terminator
         @job_terminator = Agent::JobTerminator.start(@tuple_space) do |status|

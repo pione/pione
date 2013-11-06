@@ -119,7 +119,7 @@ module Pione
       alias :"=~" :match?
 
       def textize
-        "(%s/d)" % pieces.map {|piece| piece.pattern}.join("|")
+        "(<d>%s)" % pieces.map {|piece| "'%s'" % piece.pattern}.join("|")
       end
     end
 

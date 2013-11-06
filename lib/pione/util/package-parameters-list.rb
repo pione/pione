@@ -1,34 +1,22 @@
 module Pione
   module Util
     module PackageParametersList
-      class << self
-        # Print parameter list of the package.
-        #
-        # @param package [Package::Package]
-        #   package
-        def print(env, package_id)
-          definition = env.package_get(Lang::PackageExpr.new(package_id: package_id))
-          params = definition.param_definition.values
-          if params.size > 0
-            group = params.group_by {|param| param.type}
-            print_params_by_block("Basic Parameters", group[:basic]) if group[:basic]
-            print_params_by_block("Advanced Parameters", group[:advanced]) if group[:advanced]
-          else
-            puts "there are no user parameters in %s" % env.current_package_id
-          end
-        end
+      # Find parameters in the the package.
+      #
+      # @param env [Lang::Environment]
+      #   language environment
+      # @param package_id [String]
+      #   package ID
+      # @return [Array<Array<Lang::ParameterDefinition>>]
+      #   basic parameters and advanced parameters
+      def self.find(env, package_id)
+        # get parameters of the package
+        definition = env.package_get(Lang::PackageExpr.new(package_id: package_id))
+        params = definition.param_definition.values
 
-        private
-
-        # Print parameters by block.
-        def print_params_by_block(header, target_params)
-          unless target_params.empty?
-            puts "%s:" % header
-            target_params.each do |param|
-              puts "  %s := %s" % [param.name, param.value.textize]
-            end
-          end
-        end
+        # summarize parameters as basic and advanced
+        group = params.group_by {|param| param.type}
+        return [(group[:basic] || []), (group[:advanced] || [])]
       end
     end
   end

@@ -1,60 +1,47 @@
 require 'pione/test-helper'
 
-describe "Pione::Util::PackageParametersList" do
-  before do
-    @dir = Location[File.dirname(__FILE__)]
-    @env = TestHelper::Lang.env
-  end
+TestHelper.scope do |this|
+  this::DIR = Location[File.dirname(__FILE__)] + "data" + "package-parameters-list"
 
-  after do
-    $stdout = STDOUT
-  end
+  describe Pione::Util::PackageParametersList do
+    it "should find parameters from `Param1.pione`" do
+      env = Package::PackageReader.read(this::DIR + "Param1.pione").eval(Lang::Environment.new)
+      basic, advanced = Util::PackageParametersList.find(env, env.current_package_id)
+      basic.map{|param| param.name}.tap do |_basic|
+        _basic.should.include "A"
+        _basic.should.include "C"
+      end
+      advanced.map{|param| param.name}.tap do |_advanced|
+        _advanced.should.include "B"
+        _advanced.should.include "D"
+      end
+    end
 
-  it "should print parameters list of the package: 1" do
-    env = Package::PackageReader.read(@dir + "spec_package-parameters-list_1.pione").eval(@env)
-    stdout = StringIO.new("", "w")
-    $stdout = stdout
-    Util::PackageParametersList.print(env, env.current_package_id)
-    $stdout = STDOUT
-    stdout.string.should.include("Basic Parameters")
-    stdout.string.should.include("Advanced Parameters")
-    stdout.string.should.include("A :=")
-    stdout.string.should.include("B :=")
-    stdout.string.should.include("C :=")
-    stdout.string.should.include("D :=")
-  end
+    it "should find parameters from `Param2.pione`" do
+      env = Package::PackageReader.read(this::DIR + "Param2.pione").eval(Lang::Environment.new)
+      basic, advanced = Util::PackageParametersList.find(env, env.current_package_id)
+      basic.map{|param| param.name}.tap do |_basic|
+        _basic.should.include "A"
+        _basic.should.include "B"
+      end
+      advanced.should.empty
+    end
 
-  it "should print parameters list of the package: 2" do
-    env = Package::PackageReader.read(@dir + "spec_package-parameters-list_2.pione").eval(@env)
-    stdout = StringIO.new("", "w")
-    $stdout = stdout
-    Util::PackageParametersList.print(env, env.current_package_id)
-    $stdout = STDOUT
-    stdout.string.should.include("Basic Parameters")
-    stdout.string.should.not.include("Advanced Parameters")
-    stdout.string.should.include("A :=")
-    stdout.string.should.include("B :=")
-  end
+    it "should find parameters from `Param3.pione`" do
+      env = Package::PackageReader.read(this::DIR + "Param3.pione").eval(Lang::Environment.new)
+      basic, advanced = Util::PackageParametersList.find(env, env.current_package_id)
+      basic.should.empty
+      advanced.map{|param| param.name}.tap do |_advanced|
+        _advanced.should.include "A"
+        _advanced.should.include "B"
+      end
+    end
 
-  it "should print parameters list of the package: 3" do
-    env = Package::PackageReader.read(@dir + "spec_package-parameters-list_3.pione").eval(@env)
-    stdout = StringIO.new("", "w")
-    $stdout = stdout
-    Util::PackageParametersList.print(env, env.current_package_id)
-    $stdout = STDOUT
-    stdout.string.should.not.include("Basic Parameters")
-    stdout.string.should.include("Advanced Parameters")
-    stdout.string.should.include("A :=")
-    stdout.string.should.include("B :=")
-  end
-
-  it "should print no parameters message" do
-    env = Package::PackageReader.read(@dir + "spec_package-parameters-list_4.pione").eval(@env)
-    stdout = StringIO.new("", "w")
-    $stdout = stdout
-    Util::PackageParametersList.print(env, env.current_package_id)
-    $stdout = STDOUT
-    stdout.string.should.not.include("Basic Parameters")
-    stdout.string.should.not.include("Advanced Parameters")
+    it "should find parameters from `Param4.pione`" do
+      env = Package::PackageReader.read(this::DIR + "Param4.pione").eval(Lang::Environment.new)
+      basic, advanced = Util::PackageParametersList.find(env, env.current_package_id)
+      basic.should.empty
+      advanced.should.empty
+    end
   end
 end

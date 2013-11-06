@@ -18,6 +18,10 @@ module Pione
       def value
         @__value__ ||= pieces.map{|piece| piece.value}.join
       end
+
+      def textize
+        "(<s>%s)" % pieces.map {|piece| '"%s"' % piece.value}.join("|")
+      end
     end
 
     TypeString.instance_eval do
