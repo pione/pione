@@ -15,7 +15,7 @@ shared "location" do
     @file.read.should == "AB"
   end
 
-  it "should not raise exception when the file doesn't exist" do
+  it "should not raise an exception when the file doesn't exist" do
     @file.should.not.exist
     @file.append("A")
     @file.read.should == "A"

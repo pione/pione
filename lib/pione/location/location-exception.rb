@@ -46,5 +46,17 @@ module Pione
         "the location \"%s\" should local location" % @location.address
       end
     end
+
+    # `DropboxLocationUnavailable` is raised when Dropbox location isn't
+    # unavailable.
+    class DropboxLocationUnavailable < LocationError
+      def initialize(message)
+        @message = message
+      end
+
+      def message
+        @message
+      end
+    end
   end
 end

@@ -41,10 +41,15 @@ module Pione
       #
       # @return [void]
       def save
+        domain_info_location = @domain_location + FILENAME
         text = "== %s\n\n" % Time.now
         text << @record.map{|key, val| "- %s: %s" % [key,val]}.join("\n")
         text << "\n\n"
-        (@domain_location + FILENAME).append(text)
+        if domain_info_location.exist?
+          domain_info_location.append(text)
+        else
+          domain_info_location.create(text)
+        end
       end
 
       private

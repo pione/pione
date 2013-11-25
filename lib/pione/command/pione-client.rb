@@ -148,7 +148,7 @@ module Pione
       # command lifecycle: setup phase
       #
 
-      setup_phase :timeout => 20
+      # setup_phase :timeout => 20 # because of setup for dropbox...
       setup :variable
       setup :ftp_server
       setup :tuple_space
@@ -175,52 +175,22 @@ module Pione
         end
       end
 
-      # Setup dropbox.
-      def setup_dropbox
-        # start session
-        session = nil
-        consumer_key = nil
-        consumer_secret = nil
-
-        cache = Pathname.new("~/.pione/dropbox_api.cache").expand_path
-        if cache.exist?
-          session = DropboxSession.deserialize(cache.read)
-          Location::Dropbox.set_session(session)
-          consumer_key = session.instance_variable_get(:@consumer_key)
-          consumer_secret = session.instance_variable_get(:@consumer_secret)
-        else
-          api = YAML.load(Pathname.new("~/.pione/dropbox_api.yml").expand_path.read)
-          consumer_key = api["key"]
-          consumer_secret = api["secret"]
-          session = DropboxSession.new(consumer_key, consumer_secret)
-          Location::Dropbox.set_session(session)
-          authorize_url = session.get_authorize_url
-          puts "AUTHORIZING", authorize_url
-          puts "Please visit that web page and hit 'Allow', then hit Enter here."
-          STDIN.gets
-          session.get_access_token
-
-          # cache session
-          cache.open("w+") {|c| c.write session.serialize}
-        end
-
-        # check session state
-        unless session.authorized?
-          abort("We cannot authorize dropbox access to PIONE.")
-        end
-
-        # share access token in tuple space
-        Location::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
-      end
-
       def setup_output_location
+        # setup location
         case option[:output_location]
         when Location::LocalLocation
           option[:output_location] = Location[option[:output_location].path.expand_path]
           option[:output_location].path.mkpath
         when Location::DropboxLocation
-          setup_dropbox
+          Location::DropboxLocation.setup_for_cui_client(tuple_space_server)
         end
+
+        # mkdir
+        if not(option[:output_location].exist?)
+          option[:output_location].mkdir
+        end
+
+        # set base location into tuple space
         @tuple_space.set_base_location(option[:output_location])
       end
 
