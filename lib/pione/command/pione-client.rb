@@ -22,6 +22,7 @@ module Pione
       use_option :presence_notification_address
       use_option :task_worker
       use_option :features
+      use_option :parent_front
 
       option_default(:action_mode, :process_job)
 
