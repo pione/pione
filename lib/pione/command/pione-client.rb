@@ -295,7 +295,16 @@ module Pione
 
       # Start a messenger agent.
       def execute_messenger
-        @messenger = Agent::Messenger.start(@tuple_space)
+        # select receiver
+        if option[:parent_front] and option[:parent_front][:message_log_receiver]
+          # delegate parent's receiver
+          receiver = option[:parent_front][:message_log_receiver]
+        else
+          # CUI receiver
+          receiver = Log::CUIMessageLogReceiver.new
+        end
+
+        @messenger = Agent::Messenger.new(@tuple_space, receiver).start
       end
 
       # Start a logger agent.
