@@ -55,7 +55,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "kramdown", "~> 1.2.0"
 
   # for locations
-  gem.add_runtime_dependency "dropbox-sdk", "~> 1.5.1"
+  gem.add_runtime_dependency "dropbox-sdk", "~> 1.6.2"
   gem.add_runtime_dependency "em-ftpd", "~> 0.0.1"
 
   # test framework

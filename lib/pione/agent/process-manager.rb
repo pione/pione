@@ -75,6 +75,9 @@ module Pione
           end
         end
 
+        # terminate if the agent is not stream mode
+        terminate unless @stream
+
         return
       end
     end

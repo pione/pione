@@ -62,7 +62,7 @@ module Pione
         if scheme == "local"
           self
         else
-          Location[Temppath.create].tap {|tmp| copy(tmp)}
+          Location[Temppath.create].tap {|tmp| copy(tmp) if exist?}
         end
       end
 
@@ -164,7 +164,13 @@ module Pione
       #   data content
       # @return [void]
       def append(data)
-        raise NotImplmentedError
+        if @real_appendable
+          raise NotImplmentedError
+        else
+          _local = local
+          _local.append(data)
+          _local.copy(self)
+        end
       end
 
       # Read location data.
@@ -264,19 +270,28 @@ module Pione
         raise NotImplementedError
       end
 
-      # Return true if data in the location is a file.
+      # Return true if data at the location is a file. When there exists no
+      # files and no directories, then return false.
       #
       # @return [Boolean]
-      #   true if data in the location is a file
+      #   true if data at the location is a file
       def file?
         raise NotImplementedError
       end
 
-      # Return true if data in the location is a directory.
+      # Return true if data at the location is a directory. When there exists no
+      # files and no direcotries, then return false.
       #
       # @return [Boolean]
-      #   true if data in the location is a directory
+      #   true if data at the location is a directory
       def directory?
+        raise NotImplementedError
+      end
+
+      # Make the path a directory.
+      #
+      # @return [void]
+      def mkdir
         raise NotImplementedError
       end
 

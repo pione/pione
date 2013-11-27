@@ -73,7 +73,7 @@ module Pione
         if @log_location.real_appendable?
           @log_location
         else
-          Location[Pione.temporary_path(@log_location.basename)]
+          Location[Temppath.mkdir + @log_location.basename]
         end
       end
     end
