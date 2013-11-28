@@ -5,6 +5,7 @@ module Pione
     class Spawner
       attr_reader :pid         # PID of spawned child process
       attr_reader :child_front # front URI of spawned child process
+      attr_reader :thread      # watch thread for spawned child process
 
       def initialize(name)
         @name = name # callee command name
