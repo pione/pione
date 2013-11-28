@@ -150,6 +150,7 @@ module Pione
       #
 
       # setup_phase :timeout => 20 # because of setup for dropbox...
+      setup :parent_process_connection, :module => CommonCommandAction
       setup :variable
       setup :ftp_server
       setup :tuple_space

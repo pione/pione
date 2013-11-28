@@ -368,8 +368,10 @@ module Pione
       end
 
       define_action(:setup_parent_process_connection) do |cmd|
-        cmd.option[:parent_front].add_child(Process.pid, Global.front.uri)
-        ParentFrontWatchDog.new(self) # start to watch parent process
+        if cmd.option[:parent_front]
+          cmd.option[:parent_front].add_child(Process.pid, Global.front.uri)
+          ParentFrontWatchDog.new(self) # start to watch parent process
+        end
       end
 
       define_action(:terminate_parent_process_connection) do |cmd|
