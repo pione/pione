@@ -14,7 +14,34 @@ shared "archiver" do
   end
 end
 
-describe "Pione::Util::Zip" do
+describe Pione::Util::Zip do
+  describe "base" do
+    before do
+      @src = Location[Temppath.mkdir]
+      @archive = Location[Temppath.create]
+      @dest = Location[Temppath.mkdir]
+    end
+
+    it "should archive excepting broken links" do
+      # make a broken link
+      (@src + "a").create("A")
+      (@src + "b").create("B")
+      (@src + "c").link(@src + "b")
+      (@src + "b").delete
+
+      # compress and uncompress
+      Util::Zip.compress(@src, @archive)
+      Util::Zip.uncompress(@archive, @dest)
+
+      # test
+      @archive.should.exist
+      @dest.entries.size.should == 1
+      (@dest + "a").should.exist
+      (@dest + "b").should.not.exist
+      (@dest + "c").should.not.exist
+    end
+  end
+
   def create_files(src)
     (src + "A").create("A")
     (src + "B").create("B")
