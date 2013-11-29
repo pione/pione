@@ -111,7 +111,7 @@ Rule MD2HTML
   input '*.stat.md'
   output '{$*}.html.part'
 Action
-  redcarpet --parse-tables {$I[1]} > {$O[1]}
+  kramdown {$I[1]} > {$O[1]}
 End
 
 Rule ApplyTemplate
