@@ -27,7 +27,7 @@ module Pione
           retriable :on => [SpawnerRetry, Timeout::Error], :tries => 30, :interval => 0.1 do
             # when process is dead, raise an error
             if thread.nil? or not(thread.alive?)
-              raise SpawnError.new("%s failed to spawn %s." % [Global.command.command_name, @name])
+              raise SpawnError.new("%s failed to spawn %s %s." % [Global.command.command_name, @name, @args])
             end
 
             # find front and save its uri and pid
@@ -38,7 +38,7 @@ module Pione
             return self
           end
         rescue Exception => e
-          raise SpawnError.new("%s failed to spawn %s: %s" % [Global.command.command_name, @name, e.message])
+          raise SpawnError.new("%s failed to spawn %s %s: %s" % [Global.command.command_name, @name, @args, e.message])
         end
       end
 
