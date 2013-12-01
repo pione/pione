@@ -18,9 +18,6 @@ module Pione
         # create a new process and watch it
         pid = Process.spawn(@name, *@args)
 
-        # register PID to front server for termination
-        Global.front.child[pid] = nil if Global.front
-
         # keep to watch child process
         thread = Process.detach(pid)
 
@@ -63,7 +60,7 @@ module Pione
       # URI to children table of my front, so we get it from my front and create
       # the reference.
       def find_child_front(pid)
-        if child_front_uri = Global.front.child[pid]
+        if child_front_uri = Global.front.child_front_uri(pid)
           return DRbObject.new_with_uri(child_front_uri).tap do |front|
             timeout(1) {front.ping} # test connection
           end
