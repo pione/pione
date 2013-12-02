@@ -174,6 +174,14 @@ module Pione
         Global.command = self
       end
 
+      # Return current phase name.
+      #
+      # @return [Symbol]
+      #   :init, :setup, :execution, or :termination
+      def current_phase
+        @__phase_name__
+      end
+
       # Run 4 phase lifecycle of the command. This fires actions in each phase.
       def run
         @running_thread = Thread.current
@@ -358,7 +366,7 @@ module Pione
       define_action(:terminate_child_process) do |cmd|
         if Global.front
           # send signal TERM to the child process
-          Global.front.child.each do |pid, uri|
+          Global.front.child_pids.each do |pid|
             Util.ignore_exception {Process.kill(:TERM, pid)}
           end
 
@@ -371,14 +379,19 @@ module Pione
       end
 
       define_action(:setup_parent_process_connection) do |cmd|
-        cmd.option[:parent_front].add_child(Process.pid, Global.front.uri)
-        ParentFrontWatchDog.new(self) # start to watch parent process
+        begin
+          cmd.option[:parent_front].register_child(Process.pid, Global.front.uri)
+          ParentFrontWatchDog.new(self) # start to watch parent process
+        rescue Front::ChildRegistrationError
+          # terminate if the registration failed
+          Global.command.terminate
+        end
       end
 
       define_action(:terminate_parent_process_connection) do |cmd|
         # maybe parent process is dead in this timing
         Util.ignore_exception do
-          cmd.option[:parent_front].remove_child(Process.pid)
+          cmd.option[:parent_front].unregister_child(Process.pid)
         end
       end
     end
