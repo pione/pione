@@ -333,7 +333,11 @@ module Pione
               end
               @tuple_space_provider = spawner.child_front
             rescue SpawnError => e
-              abort(e.message)
+              if termination?
+                Log::Debug.system(e.message)
+              else
+                abort(e.message)
+              end
             end
           end
           @spawner_threads.add(thread)
@@ -353,7 +357,11 @@ module Pione
               begin
                 Command::PioneTaskWorker.spawn(Global.features, @tuple_space.uuid)
               rescue SpawnError => e
-                abort(e.message)
+                if termination?
+                  Log::Debug.system(e.message)
+                else
+                  abort(e.message)
+                end
               end
             end
           end
