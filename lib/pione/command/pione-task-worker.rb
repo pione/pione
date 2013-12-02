@@ -23,7 +23,7 @@ module Pione
 
       use_option :color
       use_option :debug
-      use_option :my_ip_address
+      use_option :communication_address
       use_option :parent_front
       use_option :features
 

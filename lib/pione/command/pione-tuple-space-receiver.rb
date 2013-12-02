@@ -25,7 +25,7 @@ module Pione
 
       use_option :color
       use_option :debug
-      use_option :my_ip_address
+      use_option :communication_address
       use_option :parent_front
 
       define_option(:presence_port) do |item|
@@ -53,7 +53,7 @@ module Pione
 
         # requisite options
         spawner.option("--parent-front", Global.front.uri)
-        spawner.option("--my-ip-address", Global.my_ip_address)
+        spawner.option("--communication-address", Global.communication_address)
         spawner.option("--presence-port", Global.presence_port.to_s)
 
         # optionals

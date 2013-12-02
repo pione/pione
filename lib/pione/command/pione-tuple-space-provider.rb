@@ -26,7 +26,7 @@ module Pione
 
       use_option :color
       use_option :debug
-      use_option :my_ip_address
+      use_option :communication_address
       use_option :parent_front
       use_option :presence_notification_address
 
@@ -47,7 +47,7 @@ module Pione
 
         # requisite options
         spawner.option("--parent-front", Global.front.uri)
-        spawner.option("--my-ip-address", Global.my_ip_address)
+        spawner.option("--communication-address", Global.communication_address)
         Global.presence_notification_addresses.each do |address|
           spawner.option("--presence-notification-address", address.to_s)
         end

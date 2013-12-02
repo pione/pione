@@ -18,7 +18,7 @@ module Pione
 
       use_option :debug
       use_option :color
-      use_option :my_ip_address
+      use_option :communication_address
       use_option :presence_notification_address
       use_option :task_worker
       use_option :features
