@@ -80,7 +80,7 @@ module Pione
           $stdout = STDOUT
           $stderr = STDERR
 
-          if options.include?(:report)
+          if options.include?(:report) or ENV["PIONE_TEST_REPORT"] == "true"
             res.report
           end
 

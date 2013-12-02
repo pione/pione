@@ -23,8 +23,6 @@ module Pione
       use_option :task_worker
       use_option :features
 
-      option_default(:action_mode, :process_job)
-
       define_option(:input_location) do |item|
         item.short = '-i LOCATION'
         item.long = '--input=LOCATION'
@@ -43,14 +41,14 @@ module Pione
         item.long = '--output=LOCATION'
         item.desc = 'set output directory'
         item.default = Location["local:./output/"]
-        item.action = proc do |command_name, option, uri|
+        item.action = proc do |cmd, option, uri|
           begin
             option[:output_location] = Location[uri]
             if URI.parse(uri).scheme == "myftp"
               option[:myftp] = URI.parse(uri).normalize
             end
           rescue ArgumentError
-            raise OptionError.new("output location '%s' is bad in %s" % [uri, command_name])
+            raise OptionError.new("output location '%s' is bad in %s" % [uri, cmd.command_name])
           end
         end
       end
@@ -73,11 +71,11 @@ module Pione
         item.long = '--params="{Var:1,...}"'
         item.desc = "set user parameters"
         item.default = Lang::ParameterSetSequence.new
-        item.action = proc do |command_name, option, str|
+        item.action = proc do |cmd, option, str|
           begin
             option[:params] = option[:params].merge(Util.parse_param_set(str))
           rescue Parslet::ParseFailed => e
-            raise OptionError.new("invalid parameters \"%s\" in %s" % [str, command_name])
+            raise OptionError.new("invalid parameters \"%s\" in %s" % [str, cmd.command_name])
           end
         end
       end
@@ -106,12 +104,6 @@ module Pione
         item.desc = 'turn on relay mode and set relay address'
         item.default = nil
         item.value = proc {|uri| uri}
-      end
-
-      define_option(:list_params) do |item|
-        item.long = '--list-params'
-        item.desc = 'show user parameter list in the document'
-        item.action = proc {|_, option| option[:action_mode] = :list_params}
       end
 
       define_option(:rehearse) do |item|
@@ -295,23 +287,14 @@ module Pione
       # command lifecycle: execution phase
       #
 
-      # mode "list params"
-      execute :list_params => :list_params
-
-      # mode "process_job"
-      execute :process_job => :job_terminator
-      execute :process_job => :messenger
-      execute :process_job => :logger
-      execute :process_job => :input_generator
-      execute :process_job => :tuple_space_provider
-      execute :process_job => :task_worker
-      execute :process_job => :process_manager
-      execute :process_job => :check_rehearsal_result
-
-      # Print list of user parameters.
-      def execute_list_params
-        Util::PackageParametersList.print(@env, @env.current_package_id)
-      end
+      execute :job_terminator
+      execute :messenger
+      execute :logger
+      execute :input_generator
+      execute :tuple_space_provider
+      execute :task_worker
+      execute :process_manager
+      execute :check_rehearsal_result
 
       def execute_job_terminator
         @job_terminator = Agent::JobTerminator.start(@tuple_space) do |status|

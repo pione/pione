@@ -26,3 +26,4 @@ require 'pione/command/pione-compiler'
 require 'pione/command/pione-update-package-info' # pione update-package-info
 require 'pione/command/pione-action'              # pione action
 require 'pione/command/pione-action-list'         # pione action:list
+require 'pione/command/pione-config'

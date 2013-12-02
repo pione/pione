@@ -157,6 +157,7 @@ module Pione
 
       attr_reader :option
       attr_reader :running_thread
+      attr_accessor :action_type
 
       forward! :class, :option_definition, :command_name, :command_name_block
       forward! :class, :command_banner, :command_front, :command_front_block
@@ -167,6 +168,7 @@ module Pione
         @__exit_status__ = true
         @__phase_name__ = nil
         @__action_name__ = nil
+        @action_type = nil
 
         # process has just one command object
         Global.command = self
@@ -195,7 +197,7 @@ module Pione
           @__phase_name__ = phase_name
           actions.each do |(targets, action_name, action_option)|
             # check current mode is target or not
-            if not(targets.empty?) and not(targets.include?(option[:action_mode]))
+            if not(targets.empty?) and not(targets.include?(@action_type))
               next
             end
 
@@ -260,6 +262,7 @@ module Pione
       def abort(msg_or_exception, pos=caller(1).first)
         # hide the message because some option errors are meaningless
         invisible = msg_or_exception.is_a?(HideableOptionError)
+        p msg_or_exception
 
         # setup abortion message
         msg = msg_or_exception.is_a?(Exception) ? msg_or_exception.message : msg_or_exception
@@ -301,7 +304,7 @@ module Pione
 
       # Initialize command options.
       def init_option
-        @option = option_definition.parse(@argv, command_name, command_banner)
+        @option = option_definition.parse(@argv, self)
       rescue OptionParser::ParseError, OptionError => e
         abort(e)
       end

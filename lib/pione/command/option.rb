@@ -57,17 +57,17 @@ module Pione
       end
 
       # Parse the command options.
-      def parse(argv, command_name, command_banner)
+      def parse(argv, cmd)
         data = Hash.new
 
         # parse options
         OptionParser.new do |opt|
           # set banner
-          opt.banner = "Usage: %s [options]" % command_name
-          opt.banner << "\n\n" + command_banner + "\n" if command_banner
+          opt.banner = "Usage: %s [options]" % cmd.command_name
+          opt.banner << "\n\n" + cmd.command_banner + "\n" if cmd.command_banner
 
           # set version
-          opt.program_name = command_name
+          opt.program_name = cmd.command_name
           opt.version = Pione::VERSION
 
           # default values
@@ -75,7 +75,7 @@ module Pione
           data.merge!(@default)
 
           # setup option parser
-          @items.sort{|a,b| a.long <=> b.long}.each {|item| setup_item(command_name, opt, data, item)}
+          @items.sort{|a,b| a.long <=> b.long}.each {|item| setup_item(cmd, opt, data, item)}
         end.send(@parser_mode, argv)
 
         # check option's validness
@@ -96,28 +96,28 @@ module Pione
       private
 
       # Setup the option item.
-      def setup_item(command_name, opt, data, item)
+      def setup_item(cmd, opt, data, item)
         defs = [item.short, item.long, item.desc].compact
         [ :setup_item_action,
           :setup_item_values,
           :setup_item_value,
           :setup_item_static_value
-        ].find {|method_name| send(method_name, command_name, opt, data, item, defs)}
+        ].find {|method_name| send(method_name, cmd, opt, data, item, defs)}
       end
 
-      def setup_item_action(command_name, opt, data, item, defs)
+      def setup_item_action(cmd, opt, data, item, defs)
         if item.action
-          opt.on(*defs, Proc.new{|*args| self.instance_exec(command_name, data, *args, &item.action)})
+          opt.on(*defs, Proc.new{|*args| self.instance_exec(cmd, data, *args, &item.action)})
         end
       end
 
-      def setup_item_values(command_name, opt, data, item, defs)
+      def setup_item_values(cmd, opt, data, item, defs)
         if item.values.kind_of?(Proc)
           opt.on(*defs, Proc.new{|*args| data[item.name] << self.instance_exec(*args, &item.values)})
         end
       end
 
-      def setup_item_value(command_name, opt, data, item, defs)
+      def setup_item_value(cmd, opt, data, item, defs)
         case item.value
         when Proc
           opt.on(*defs, Proc.new{|*args| data[item.name] = self.instance_exec(*args, &item.value)})
@@ -126,7 +126,7 @@ module Pione
         end
       end
 
-      def setup_item_static_value(command_name, opt, data, item, defs)
+      def setup_item_static_value(cmd, opt, data, item, defs)
         if item.value
           opt.on(*defs, Proc.new{ data[item.name] = item.value})
         end
@@ -169,7 +169,7 @@ module Pione
       define(:debug) do |item|
         item.long = '--debug[=TYPE]'
         item.desc = "turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)"
-        item.action = proc {|command_nane, _, type|
+        item.action = proc {|cmd, _, type|
           Global.system_logger.level = :debug
           case type
           when "system", nil
@@ -191,13 +191,13 @@ module Pione
       define(:features) do |item|
         item.long = '--features=FEATURES'
         item.desc = 'set features'
-        item.action = proc {|command_name, option, features|
+        item.action = proc {|cmd, option, features|
           begin
             # store features
             Global.features = features
           rescue Parslet::ParseFailed => e
             raise OptionError.new(
-              "invalid feature expression \"%s\" is given for %s" % [features, command_name]
+              "invalid feature expression \"%s\" is given for %s" % [features, cmd.command_name]
             )
           end
         }
@@ -213,13 +213,13 @@ module Pione
         item.long = '--parent-front=URI'
         item.desc = 'set parent front URI'
         item.requisite = true
-        item.action = proc do |command_name, option, uri|
+        item.action = proc do |cmd, option, uri|
           begin
             option[:parent_front] = DRbObject.new_with_uri(uri)
             timeout(1) {option[:parent_front].ping}
           rescue Exception => e
             raise HideableOptionError.new(
-              "%s couldn't connect to parent front \"%s\": %s" % [command_name, uri, e.message]
+              "%s couldn't connect to parent front \"%s\": %s" % [cmd.command_name, uri, e.message]
             )
           end
         end
