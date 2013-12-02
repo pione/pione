@@ -203,10 +203,10 @@ module Pione
         }
       end
 
-      define(:my_ip_address) do |item|
-        item.long = "--my-ip-address=ADDRESS"
-        item.desc = "set my IP address"
-        item.action = proc {|_, _, address| Global.my_ip_address = address}
+      define(:communication_address) do |item|
+        item.long = "--communication-address=ADDRESS"
+        item.desc = "set IP address for interprocess communication"
+        item.action = proc {|_, _, address| Global.communication_address = address}
       end
 
       define(:parent_front) do |item|

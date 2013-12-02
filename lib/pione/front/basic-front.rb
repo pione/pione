@@ -129,9 +129,9 @@ module Pione
       end
 
       # Build front server URI. Note that the address is configured by
-      # `Global.my_ip_address`.
+      # `Global.communication_address`.
       def build_uri(port)
-        "druby://%s:%s" % [Global.my_ip_address, port]
+        "druby://%s:%s" % [Global.communication_address, port]
       end
     end
   end

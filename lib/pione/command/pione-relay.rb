@@ -16,7 +16,7 @@ module Pione
 
       use_option :color
       use_option :debug
-      use_option :my_ip_address
+      use_option :communication_address
 
       define_option(:realm) do |item|
         item.long = "--realm name"
