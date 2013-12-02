@@ -158,13 +158,13 @@ TestHelper.scope do |this|
           (base + "2.b").should.exist
           (base + "3.b").should.exist
           (base + "4.b").should.exist
-          (base + "1.a").mtime.should < (base + "2.a").mtime
-          (base + "2.a").mtime.should < (base + "3.a").mtime
-          (base + "3.a").mtime.should < (base + "4.a").mtime
-          (base + "4.a").mtime.should < (base + "1.b").mtime
-          (base + "1.b").mtime.should < (base + "2.b").mtime
-          (base + "2.b").mtime.should < (base + "3.b").mtime
-          (base + "3.b").mtime.should < (base + "4.b").mtime
+          (base + "1.a").mtime.should <= (base + "2.a").mtime
+          (base + "2.a").mtime.should <= (base + "3.a").mtime
+          (base + "3.a").mtime.should <= (base + "4.a").mtime
+          (base + "4.a").mtime.should <= (base + "1.b").mtime
+          (base + "1.b").mtime.should <= (base + "2.b").mtime
+          (base + "2.b").mtime.should <= (base + "3.b").mtime
+          (base + "3.b").mtime.should <= (base + "4.b").mtime
         end
       end
     end
