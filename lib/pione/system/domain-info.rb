@@ -14,11 +14,7 @@ module Pione
       # Write domain info file into the location.
       def write(location)
         location = location + ".domain.dump" if location.directory?
-        unless location.exist?
-          location.create(Marshal.dump(env.dumpable))
-        else
-          location.update(Marshal.dump(env.dumpable))
-        end
+        location.write(Marshal.dump(env.dumpable))
       end
     end
   end
