@@ -68,7 +68,13 @@ module Pione
           # run the action
           begin
             b.call
-            Process.waitall # wait all children to terminate
+            begin
+              Timeout.timeout(10) do
+                Process.waitall # wait all children to terminate
+              end
+            rescue Timeout::Error
+              puts "*** child processes are not terminated, but we ignored it... ***"
+            end
           rescue Object => e
             unless options.include?(:show_exception)
               res.exception = e
