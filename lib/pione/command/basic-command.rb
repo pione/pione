@@ -270,7 +270,6 @@ module Pione
       def abort(msg_or_exception, pos=caller(1).first)
         # hide the message because some option errors are meaningless
         invisible = msg_or_exception.is_a?(HideableOptionError)
-        p msg_or_exception
 
         # setup abortion message
         msg = msg_or_exception.is_a?(Exception) ? msg_or_exception.message : msg_or_exception
