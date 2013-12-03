@@ -68,6 +68,7 @@ module Pione
           # run the action
           begin
             b.call
+            Process.waitall # wait all children to terminate
           rescue Object => e
             unless options.include?(:show_exception)
               res.exception = e
