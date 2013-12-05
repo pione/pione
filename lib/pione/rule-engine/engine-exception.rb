@@ -8,7 +8,7 @@ module Pione
 
       def message
         "Execution error when handling the rule '%s': inputs=%s, output=%s, params=%s" % [
-          @handler.rule.path,
+          @handler.rule_name,
           @handler.inputs,
           @handler.outputs,
           @handler.params.inspect
