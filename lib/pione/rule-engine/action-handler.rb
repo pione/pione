@@ -117,7 +117,7 @@ module Pione
 
         # the case the script has errored
         unless $?.success?
-          raise ActionError.new(digest, (@working_directory + err).read)
+          raise ActionError.new(self, digest, (@working_directory + err).read)
         end
 
         # delete .stdout file if it is empty

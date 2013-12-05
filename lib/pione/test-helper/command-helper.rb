@@ -129,6 +129,16 @@ module Pione
         end
       end
 
+      def fail
+        _args = args
+        _base = base
+        context.it(template % title) do
+          TestHelper::Command.fail do
+            Pione::Command::PioneClient.run(_args)
+          end
+        end
+      end
+
       def timeout(sec)
         _args = args + ["--timeout", sec.to_s]
         context.it(template % title) do

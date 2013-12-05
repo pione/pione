@@ -69,6 +69,7 @@ module Pione
     class TupleSpaceClient < BasicAgent
       include TupleSpace::TupleSpaceInterface
       include TupleSpaceClientOperation
+      include Log::MessageLog
 
       # Initialize agent's state.
       def initialize(tuple_space)

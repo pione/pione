@@ -16,8 +16,9 @@ module Pione
       end
     end
 
-    class ActionError < StandardError
-      def initialize(digest, report)
+    class ActionError < RuleExecutionError
+      def initialize(handler, digest, report)
+        super(handler)
         @digest = digest
         @report = report
       end
@@ -39,6 +40,6 @@ module Pione
       end
     end
 
-    class UnknownRule < StandardError; end
+    class UnknownRule < RuleExecutionError; end
   end
 end

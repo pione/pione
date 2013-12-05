@@ -284,7 +284,7 @@ module Pione
       #   tuple object
       def from_array(ary)
         raise TupleFormatError.new(ary) unless ary.size > 0
-        raise TupleFormatError.new(ary) unless ary.kind_of?(Enumerable)
+        raise TupleFormatError.new(ary) unless ary.respond_to?(:to_a)
         _ary = ary.to_a
         identifier = _ary.first
         raise TupleFormatError.new(identifier) unless TUPLE.has_key?(identifier)
