@@ -14,23 +14,8 @@ module Pione
 
       # Print the command result report.
       def report
-        unless success?
-          puts "[FAIL]"
-          puts "ERROR: %s" % exception.message
-          exception.backtrace.each do |line|
-            puts "TRACE: %s" % line
-          end
-          if stdout.string.size > 0
-            puts "STDOUT:"
-            puts stdout.string
-          end
-          if stderr.string.size > 0
-            puts "STDERR:"
-            puts stderr.string[0..100]
-          end
-        else
-          puts "[SUCCESS]"
-        end
+        template = File.read(File.join(File.dirname(__FILE__), "command-result-report.erb"))
+        Global.test_report.append(ERB.new(template, nil, "<>").result(binding))
       end
     end
 
@@ -39,16 +24,18 @@ module Pione
       class << self
         # Run the action with expectation command execution succeeds.
         def succeed(*options, &b)
-          res = execute(options, &b)
-          res.should.success
-          return res
+          execute(options, &b).tap do |res|
+            res.report if not(res.success?)
+            res.should.success
+          end
         end
 
         # Run the action with expectation command execution fails.
         def fail(*options, &b)
-          res = execute(options, &b)
-          res.should.not.success
-          return res
+          execute(options, &b).tap do |res|
+            res.report if res.success?
+            res.should.not.success
+          end
         end
 
         private

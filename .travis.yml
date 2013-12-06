@@ -1,11 +1,22 @@
-before_script:
-  - sudo apt-get install bc # for processing Fib.pione
-
 language: ruby
 rvm:
-#  - "1.9.2" # PIONE doesn't support 1.9.2
   - "1.9.3"
 #  - "2.0.0" # pione doesn't work with 2.0
 #  - jruby-19mode
 #  - rbx-19mode # pione doesn't work with 2.0
 script: rake test
+
+env:
+  global:
+    - secure: "RBvMvbfZYegOQWQ9AoWD1S6MejhyEx61ufLIBBFS4LgGV1cZLvlbEoPLLT3FJsKOtel1UJ/WFLD1CSelzoIaLHCWtDwg58HvKImRTGI/rQRFKpY82P+gW5E9gB80Z74d1bwhKMvC51Unj/EmPU5SinFDaGCwJD871Eedhs1oKMc="
+    - secure: "FvqAAf9yqE5se0xavXIn5huGAee9H//7yUHpGFhF6xJN9HlFJ4ciEu5kDzQIAzFh24qgLZtA+s3gY8Us5h+uW2ztEo/VHsohVK6KvZkT9ucouOepa2ubxbhacTbKJADYng8f1wlaIBt208AD22gkZbAR+/T2CwZMqiskgh5mmg8="
+
+before_script:
+  - sudo apt-get install -y bc # for processing Fib.pione
+  - sudo apt-get install -y s3cmd
+
+after_script:
+  - echo "access_key = $TRAVIS_AWS_ACCESS_KEY_ID" >> .s3cfg
+  - echo "secret_key = $TRAVIS_AWS_SECRET_KEY" >> .s3cfg
+  - s3cmd put --config=.s3cfg --acl-public test-report.txt s3://pione-travis-result/pione/test-report-$TRAVIS_JOB_NUMER.txt
+

@@ -1,9 +1,25 @@
 # This file should be loaded in spec files only.
 
 require 'bacon'
+require 'erb'
 require 'pione'
 
 Pione::Global.git_package_directory = Pione::Location[Temppath.mkdir]
+
+Pione::Global.define_internal_item(:project_root) do |item|
+  item.init = Pione::Location[File.dirname(__FILE__)] + ".." + ".."
+end
+
+Pione::Global.define_internal_item(:test_start_time) do |item|
+  item.init = Time.now
+end
+
+Pione::Global.define_internal_item(:test_report) do |item|
+  item.define_updater do
+    filename = Pione::Global.test_start_time.strftime("test-report.txt")
+    Pione::Global.project_root + filename
+  end
+end
 
 module Pione
   module TestHelper
@@ -45,6 +61,14 @@ class Bacon::Context
   include Pione
   include Pione::TestHelper::TransformerInterface
   include Pione::TupleSpace::TupleSpaceInterface
+
+  alias :orig_it :it
+  def it(desc, &b)
+    time = Time.now
+    orig_it(desc, &b)
+    line = "[%s] %s: %s\n" % [@name, desc, (Time.now - time).round(3)]
+    Pione::Global.test_report.append(line)
+  end
 end
 
 # init
