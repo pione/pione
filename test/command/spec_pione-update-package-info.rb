@@ -2,6 +2,8 @@ require 'pione/test-helper'
 
 describe Pione::Command::PioneUpdatePackageInfo do
   before do
+    @cmd = Pione::Command::PioneUpdatePackageInfo
+
     # package
     @location = Location[Temppath.mkdir]
 
@@ -29,9 +31,7 @@ describe Pione::Command::PioneUpdatePackageInfo do
 
   it "should update package info files" do
     args = [@location.path.to_s]
-    TestHelper::Command.succeed do
-      Pione::Command::PioneUpdatePackageInfo.run(args)
-    end
+    TestHelper::Command.succeed(@cmd, args)
     (@location + "pione-package.json").should.exist
     (@location + "pione-package.json").size.should > 0
     (@location + "scenario" + "pione-scenario.json").should.exist
@@ -43,9 +43,7 @@ describe Pione::Command::PioneUpdatePackageInfo do
     stime = (@location + "scenario" + "pione-scenario.json").write("").mtime
 
     args = [@location.path.to_s]
-    TestHelper::Command.succeed do
-      Pione::Command::PioneUpdatePackageInfo.run(args)
-    end
+    TestHelper::Command.succeed(@cmd, args)
 
     (@location + "pione-package.json").mtime.should == ptime
     (@location + "scenario" + "pione-scenario.json").mtime.should == stime
@@ -59,9 +57,7 @@ describe Pione::Command::PioneUpdatePackageInfo do
     sleep 1
 
     args = [@location.path.to_s, "--force"]
-    TestHelper::Command.succeed do
-      Pione::Command::PioneUpdatePackageInfo.run(args)
-    end
+    TestHelper::Command.succeed(@cmd, args)
 
     (@location + "pione-package.json").mtime.should > ptime
     (@location + "scenario" + "pione-scenario.json").mtime.should > stime

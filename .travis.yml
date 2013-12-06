@@ -12,7 +12,10 @@ env:
     - secure: "FvqAAf9yqE5se0xavXIn5huGAee9H//7yUHpGFhF6xJN9HlFJ4ciEu5kDzQIAzFh24qgLZtA+s3gY8Us5h+uW2ztEo/VHsohVK6KvZkT9ucouOepa2ubxbhacTbKJADYng8f1wlaIBt208AD22gkZbAR+/T2CwZMqiskgh5mmg8="
 
 before_script:
-  - sudo apt-get install -y bc # for processing Fib.pione
+  - LANG=C date >> test-report.txt
+  - sh misc/machine-info.sh >> test-report.txt
+  - sudo apt-get install -y bc      # for processing Fib.pione
+  - sudo apt-get install -y gnuplot # for processing ScoreAggregation.pione
   - sudo apt-get install -y s3cmd
 
 after_script:

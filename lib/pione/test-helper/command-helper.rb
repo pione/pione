@@ -3,9 +3,11 @@ module Pione
     # CommandResult is a result of command execution. This has result status,
     # stdout, stdin, and etc, so you can analyze and check it.
     class CommandResult < StructX
-      member :exception
+      member :cmd
+      member :args
       member :stdout
       member :stderr
+      member :exception
 
       # Return true if the command succeeded.
       def success?
@@ -23,16 +25,16 @@ module Pione
     module Command
       class << self
         # Run the action with expectation command execution succeeds.
-        def succeed(*options, &b)
-          execute(options, &b).tap do |res|
+        def succeed(cmd, args, *options, &b)
+          execute(cmd, args, options, &b).tap do |res|
             res.report if not(res.success?)
             res.should.success
           end
         end
 
         # Run the action with expectation command execution fails.
-        def fail(*options, &b)
-          execute(options, &b).tap do |res|
+        def fail(cmd, args, *options, &b)
+          execute(cmd, args, options, &b).tap do |res|
             res.report if res.success?
             res.should.not.success
           end
@@ -41,35 +43,27 @@ module Pione
         private
 
         # Run the command execution action.
-        def execute(*options, &b)
+        def execute(cmd, args, *options, &b)
           # initialize exit status
           Global.exit_status = true
 
           # make result
-          res = CommandResult.new(stdout: StringIO.new("", "w"), stderr: StringIO.new("", "w"))
+          res = CommandResult.new(cmd: cmd, args: args, stdout: StringIO.new("", "w"), stderr: StringIO.new("", "w"))
 
           # setup stdout and stderr
-          $stdout = res.stdout unless options.include?(:show) or options.include?(:show_stdout)
-          $stderr = res.stderr unless options.include?(:show) or options.include?(:show_stderr)
+          $stdout = res.stdout
+          $stderr = res.stderr
 
           # run the action
           begin
-            b.call
+            block_given? ? b.call(cmd, args) : cmd.run(args)
           rescue Object => e
-            unless options.include?(:show_exception)
-              res.exception = e
-            else
-              raise
-            end
+            res.exception = e
           end
 
           # revert stdout and stderr
           $stdout = STDOUT
           $stderr = STDERR
-
-          if options.include?(:report)
-            res.report
-          end
 
           return res
         end
@@ -102,9 +96,7 @@ module Pione
         _args = args
         _base = base
         context.it(template % title) do
-          TestHelper::Command.succeed do
-            Pione::Command::PioneClient.run(_args)
-          end
+          TestHelper::Command.succeed(Pione::Command::PioneClient, _args)
           b.call(_base)
         end
       end
@@ -112,9 +104,7 @@ module Pione
       def timeout(sec)
         _args = args + ["--timeout", sec.to_s]
         context.it(template % title) do
-          TestHelper::Command.fail do
-            Pione::Command::PioneClient.run(_args)
-          end
+          TestHelper::Command.fail(Pione::Command::PioneClient, _args)
         end
       end
     end
