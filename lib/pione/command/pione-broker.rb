@@ -22,7 +22,7 @@ module Pione
       use_option :daemon
       use_option :debug
       use_option :features
-      use_option :my_ip_address
+      use_option :communication_address
       use_option :task_worker
 
       validate_option do |option|

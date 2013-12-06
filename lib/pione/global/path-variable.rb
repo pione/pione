@@ -12,7 +12,7 @@ module Pione
     # This is a configuration file path.
     define_computed_item(:config_path, [:dot_pione_dir]) do |item|
       item.desc = "configuration file of PIONE"
-      item.define_updater {Global.dot_pione_dir + "config.yml"}
+      item.define_updater {Global.dot_pione_dir + "config.json"}
     end
 
     # This is a current working directory. The directory is defined by the

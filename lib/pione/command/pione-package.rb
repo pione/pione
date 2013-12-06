@@ -21,25 +21,31 @@ module Pione
       define_option(:add) do |item|
         item.long = '--add'
         item.desc = 'add the package to package database'
-        item.action = lambda do |_, option, location|
-          option[:action_mode] = :add
+        item.action = lambda do |cmd, option, location|
+          cmd.action_type = :add
         end
       end
 
       define_option(:build) do |item|
         item.long = '--build'
         item.desc = 'build PIONE archive file(*.ppg)'
-        item.action = lambda do |_, option, location|
-          option[:action_mode] = :build
+        item.action = lambda do |cmd, option, location|
+          cmd.action_type = :build
         end
       end
 
       define_option(:write_info) do |item|
         item.long = '--write-info'
         item.desc = 'write package and scenario info files'
-        item.action = lambda do |_, option, location|
-          option[:action_mode] = :write_info
+        item.action = lambda do |cmd, option, location|
+          cmd.action_type = :write_info
         end
+      end
+
+      define_option(:list_params) do |item|
+        item.long = '--list-params'
+        item.desc = 'show user parameter list in the document'
+        item.action = proc {|cmd, option| cmd.action_type = :list_params}
       end
 
       define_option(:output) do |item|
@@ -121,6 +127,17 @@ module Pione
         Package::PackageHandler.write_info_files(Location[@target])
       rescue Package::InvalidScenario => e
         abort(e.message)
+      end
+
+      execute :list_params => :list_params
+
+      # Print list of user parameters.
+      def execute_list_params
+        # read package
+        package_handler = Package::PackageReader.read(Location[@target])
+        env = package_handler.eval(Lang::Environment.new)
+
+        Util::PackageParametersList.print(env, env.current_package_id)
       end
 
       #

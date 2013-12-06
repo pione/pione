@@ -94,6 +94,14 @@ TestHelper.scope do |this|
       TestHelper::Command.succeed(@cmd, ["--write-info", location.path.to_s])
       (location + "pione-package.json").should.exist
     end
+
+    it "should show parameters list of the package" do
+      args = ["example/HelloWorld/HelloWorld.pione", "--list-params"]
+      res = TestHelper::Command.succeed do
+        Pione::Command::PionePackage.run(args)
+      end
+      res.stdout.string.size.should > 0
+    end
   end
 end
 
