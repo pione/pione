@@ -4,5 +4,6 @@ Rule Main
   input null
   output 'o1'
 Action
-  hoge.sh
+  sleep 3
+  hoge.sh > o1
 End
