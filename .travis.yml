@@ -18,5 +18,5 @@ before_script:
 after_script:
   - echo "access_key = $TRAVIS_AWS_ACCESS_KEY_ID" >> .s3cfg
   - echo "secret_key = $TRAVIS_AWS_SECRET_KEY" >> .s3cfg
-  - s3cmd put --config=.s3cfg --acl-public test-report.txt s3://pione-travis-result/pione/test-report-$TRAVIS_JOB_NUMER.txt
+  - s3cmd put --config=.s3cfg --acl-public test-report.txt s3://pione-travis-result/pione/test-report-$TRAVIS_JOB_NUMBER.txt
 
