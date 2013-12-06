@@ -4,7 +4,7 @@ Command Result Report
 
 Result : <%= success? ? "command succeeded" : "command failed" %>
 Time   : <%= Time.now %>
-<% if success? %>
+<% if not(success?) %>
 
 Error Message
 -------------
