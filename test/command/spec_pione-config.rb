@@ -2,6 +2,8 @@ require "pione/test-helper"
 
 describe Pione::Command::PioneConfig do
   before do
+    @cmd = Pione::Command::PioneConfig
+
     Global.define_external_item(:test1) do |item|
       item.type = :string
     end
@@ -30,19 +32,16 @@ describe Pione::Command::PioneConfig do
     config.set(:test3, true)
     config.save
 
-    res1 = TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--get", "test1", "-f", @path.to_s])
-    end
+    args1 = ["--get", "test1", "-f", @path.to_s]
+    res1 = TestHelper::Command.succeed(@cmd, args1)
     res1.stdout.string.chomp.should == "a"
 
-    res2 = TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--get", "test2", "-f", @path.to_s])
-    end
+    args2 = ["--get", "test2", "-f", @path.to_s]
+    res2 = TestHelper::Command.succeed(@cmd, args2)
     res2.stdout.string.chomp.should == "1"
 
-    res3 = TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--get", "test3", "-f", @path.to_s])
-    end
+    args3 = ["--get", "test3", "-f", @path.to_s]
+    res3 = TestHelper::Command.succeed(@cmd, args3)
     res3.stdout.string.chomp.should == "true"
   end
 
@@ -53,9 +52,7 @@ describe Pione::Command::PioneConfig do
     config.set(:test3, true)
     config.save
 
-    res = TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--list", "-f", @path.to_s])
-    end
+    res = TestHelper::Command.succeed(@cmd, ["--list", "-f", @path.to_s])
 
     list = res.stdout.string.split("\n")
     list.should.include("test1: a")
@@ -64,17 +61,9 @@ describe Pione::Command::PioneConfig do
   end
 
   it "should set items" do
-    TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--set", "test1", "a", "-f", @path.to_s])
-    end
-
-    TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--set", "test2", "1", "-f", @path.to_s])
-    end
-
-    TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--set", "test3", "true", "-f", @path.to_s])
-    end
+    TestHelper::Command.succeed(@cmd, ["--set", "test1", "a", "-f", @path.to_s])
+    TestHelper::Command.succeed(@cmd, ["--set", "test2", "1", "-f", @path.to_s])
+    TestHelper::Command.succeed(@cmd, ["--set", "test3", "true", "-f", @path.to_s])
 
     config = Global::Config.new(@path)
     config[:test1].should == "a"
@@ -89,17 +78,9 @@ describe Pione::Command::PioneConfig do
     config.set(:test3, true)
     config.save
 
-    TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--unset", "test1", "-f", @path.to_s])
-    end
-
-    TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--unset", "test2", "-f", @path.to_s])
-    end
-
-    TestHelper::Command.succeed do
-      Command::PioneConfig.run(["--unset", "test3", "-f", @path.to_s])
-    end
+    TestHelper::Command.succeed(@cmd, ["--unset", "test1", "-f", @path.to_s])
+    TestHelper::Command.succeed(@cmd, ["--unset", "test2", "-f", @path.to_s])
+    TestHelper::Command.succeed(@cmd, ["--unset", "test3", "-f", @path.to_s])
 
     config = Global::Config.new(@path)
     config[:test1].should.nil
