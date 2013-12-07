@@ -116,7 +116,7 @@ module Pione
       def setup_job_terminator
         @job_terminator = Agent::JobTerminator.new(@tuple_space) do |status|
           if status.error?
-            abort("pione-task-worker catched the error: %s" % status.exception.message)
+            abort("pione-task-worker catched the error: %s" % status.message)
           else
             terminate
           end

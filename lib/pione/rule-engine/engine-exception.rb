@@ -7,17 +7,18 @@ module Pione
       end
 
       def message
-        "Execution error when handling the rule '%s': inputs=%s, output=%s, params=%s" % [
-          @handler.rule.path,
+        "Execution error when handling the rule '%s': inputs=%s, output=%s, param_set=%s" % [
+          @handler.rule_name,
           @handler.inputs,
           @handler.outputs,
-          @handler.params.inspect
+          @handler.param_set
         ]
       end
     end
 
-    class ActionError < StandardError
-      def initialize(digest, report)
+    class ActionError < RuleExecutionError
+      def initialize(handler, digest, report)
+        super(handler)
         @digest = digest
         @report = report
       end
@@ -39,6 +40,6 @@ module Pione
       end
     end
 
-    class UnknownRule < StandardError; end
+    class UnknownRule < RuleExecutionError; end
   end
 end

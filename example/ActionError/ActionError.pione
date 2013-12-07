@@ -1,0 +1,9 @@
+.@ PackageName :: "ActionError"
+
+Rule Main
+  input null
+  output 'o1'
+Action
+  sleep 3
+  hoge.sh > o1
+End

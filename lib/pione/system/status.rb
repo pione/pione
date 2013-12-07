@@ -6,16 +6,16 @@ module Pione
           new(:success)
         end
 
-        def error(exception)
-          new(:error, exception)
+        def error(message)
+          new(:error, message)
         end
       end
 
-      attr_reader :exception
+      attr_reader :message
 
-      def initialize(status, exception=nil)
+      def initialize(status, message=nil)
         @status = status
-        @exception = exception
+        @message = message
       end
 
       def success?
