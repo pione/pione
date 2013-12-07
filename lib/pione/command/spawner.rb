@@ -22,22 +22,30 @@ module Pione
         # keep to watch child process
         thread = Process.detach(pid)
 
-        begin
-          # find child front while child process is alive
-          retriable :on => [SpawnerRetry, Timeout::Error], :tries => 30, :interval => 0.1 do
-            # when process is dead, raise an error
-            if thread.nil? or not(thread.alive?)
-              raise SpawnError.new("%s failed to spawn %s %s." % [Global.command.command_name, @name, @args])
-            end
-
+        # find child front while child process is alive
+        Timeout.timeout(10) do
+          while thread and thread.alive? do
             # find front and save its uri and pid
-            @child_front = find_child_front(pid) || (raise SpawnerRetry)
-            @pid = pid
-            @thread = thread
+            if child_front = find_child_front(pid)
+              @child_front = child_front
+              @pid = pid
+              @thread = thread
 
-            return self
+              return self
+            else
+              sleep 0.2 and next
+            end
           end
-        rescue Exception => e
+
+          # when process is dead, raise an error
+          raise SpawnError.new("%s failed to spawn %s %s." % [Global.command.command_name, @name, @args])
+        end
+      rescue Timeout::Error
+        raise SpawnError.new("%s tried to spawn %s %s, but timeouted." % [Global.command.command_name, @name, @args])
+      rescue Object => e
+        if e.kind_of?(SpawnError)
+          raise
+        else
           raise SpawnError.new("%s failed to spawn %s %s: %s" % [Global.command.command_name, @name, @args, e.message])
         end
       end
@@ -66,6 +74,8 @@ module Pione
             timeout(1) {front.ping} # test connection
           end
         end
+      rescue Timeout::Error
+        return nil
       end
     end
   end
