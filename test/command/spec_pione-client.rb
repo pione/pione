@@ -5,14 +5,16 @@ TestHelper.scope do |this|
   this::DIR = Location[File.dirname(__FILE__)] + "data" + "pione-client"
 
   describe "Pione::Command::PioneClient" do
+    before do
+      @cmd = Command::PioneClient
+    end
+
     behaves_like "command"
 
     it "should execute a PIONE document" do
       path = Temppath.create
       args = ["example/HelloWorld/HelloWorld.pione", "-o", path.to_s]
-      res = TestHelper::Command.succeed do
-        Pione::Command::PioneClient.run(args)
-      end
+      res = TestHelper::Command.succeed(@cmd, args)
       Location[path + "message.txt"].should.exist
       Location[path + "message.txt"].read.should.start_with "Hello, world!"
     end
@@ -20,9 +22,7 @@ TestHelper.scope do |this|
     it "should execute a PIONE document with stand alone mode" do
       path = Temppath.create
       args = ["example/HelloWorld/HelloWorld.pione", "-o", path.to_s, "--stand-alone"]
-      TestHelper::Command.succeed do
-        Pione::Command::PioneClient.run(args)
-      end
+      TestHelper::Command.succeed(@cmd, args)
       Location[path + "message.txt"].should.exist
       Location[path + "message.txt"].read.should.start_with "Hello, world!"
     end
@@ -30,9 +30,7 @@ TestHelper.scope do |this|
     it "should execute a PIONE package" do
       path = Temppath.create
       args = ["example/HelloWorld/", "-o", path.to_s]
-      TestHelper::Command.succeed do
-        Pione::Command::PioneClient.run(args)
-      end
+      TestHelper::Command.succeed(@cmd, args)
       Location[path + "message.txt"].should.exist
       Location[path + "message.txt"].read.should.start_with "Hello, world!"
     end
@@ -40,9 +38,7 @@ TestHelper.scope do |this|
     it "should execute a PIONE package with stand alone mode" do
       path = Temppath.create
       args = ["example/HelloWorld/", "-o", path.to_s, "--stand-alone"]
-      TestHelper::Command.succeed do
-        Pione::Command::PioneClient.run(args)
-      end
+      TestHelper::Command.succeed(@cmd, args)
       Location[path + "message.txt"].should.exist
       Location[path + "message.txt"].read.should.start_with "Hello, world!"
     end
@@ -51,9 +47,13 @@ TestHelper.scope do |this|
       doc = (this::DIR + "ActionError.pione").path.to_s
       path = Temppath.create
       args = [doc, "-o", path.to_s, "--stand-alone"]
-      TestHelper::Command.fail do
-        Pione::Command::PioneClient.run(args)
-      end
+      TestHelper::Command.fail(@cmd, args)
+    end
+
+    it "should show parameters list of package" do
+      args = ["example/HelloWorld/HelloWorld.pione", "--list-params"]
+      res = TestHelper::Command.succeed(@cmd, args)
+      res.stdout.string.size.should > 0
     end
 
     describe "example/Fib" do

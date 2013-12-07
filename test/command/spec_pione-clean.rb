@@ -83,10 +83,9 @@ TestHelper.scope do |this|
     end
   end
 
-  describe "Pione::Command::PioneClean" do
-    behaves_like "command"
-
+  describe Pione::Command::PioneClean do
     before do
+      @cmd = Pione::Command::PioneClean
       @orig_my_temporary_directory = Global.my_temporary_directory
       Global.my_temporary_directory = Temppath.mkdir
       @orig_file_cache_directory = Global.my_file_cache_directory
@@ -107,11 +106,11 @@ TestHelper.scope do |this|
       Global.profile_report_directory = @orig_profile_report_directory
     end
 
+    behaves_like "command"
+
     it "should remove all type files" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed do
-        Command::PioneClean.run([])
-      end
+      TestHelper::Command.succeed(@cmd, [])
       fset.temporary.size.should == 0
       fset.file_cache.size.should == 0
       fset.package_cache.size.should == 0
@@ -120,9 +119,7 @@ TestHelper.scope do |this|
 
     it "should remove old than 1 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", "1"]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", "1"])
       fset.temporary.size.should == 0
       fset.file_cache.size.should == 0
       fset.package_cache.size.should == 0
@@ -131,9 +128,7 @@ TestHelper.scope do |this|
 
     it "should remove old than 2 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", "2"]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", "2"])
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
@@ -142,9 +137,7 @@ TestHelper.scope do |this|
 
     it "should remove old than 30 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", "30"]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", "30"])
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
@@ -153,9 +146,7 @@ TestHelper.scope do |this|
 
     it "should remove old than 31 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", "31"]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", "31"])
       fset.temporary.size.should == 8
       fset.file_cache.size.should == 4
       fset.package_cache.size.should == 4
@@ -165,9 +156,7 @@ TestHelper.scope do |this|
     it "should remove older than 1 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(1)
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", date.iso8601]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
       fset.temporary.size.should == 0
       fset.file_cache.size.should == 0
       fset.package_cache.size.should == 0
@@ -177,9 +166,7 @@ TestHelper.scope do |this|
     it "should remove older than 2 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(2)
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", date.iso8601]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
@@ -189,9 +176,7 @@ TestHelper.scope do |this|
     it "should remove older than 30 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(30)
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", date.iso8601]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
@@ -201,9 +186,7 @@ TestHelper.scope do |this|
     it "should remove older than 31 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(31)
-      TestHelper::Command.succeed do
-        Command::PioneClean.run ["--older", date.iso8601]
-      end
+      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
       fset.temporary.size.should == 8
       fset.file_cache.size.should == 4
       fset.package_cache.size.should == 4
@@ -211,9 +194,9 @@ TestHelper.scope do |this|
     end
 
     it "should remove temporary files" do
-      TestHelper::Command.succeed do
+      TestHelper::Command.succeed(@cmd, ["--type", "temporary"]) do |cmd, args|
         fset = this::FakeFileSet.new
-        Command::PioneClean.run ["--type", "temporary"]
+        cmd.run(args)
         fset.temporary.size.should == 0
         fset.file_cache.size.should == 4
         fset.package_cache.size.should == 4
@@ -222,9 +205,9 @@ TestHelper.scope do |this|
     end
 
     it "should remove file cache files" do
-      TestHelper::Command.succeed do
+      TestHelper::Command.succeed(@cmd, ["--type", "file-cache"]) do |cmd, args|
         fset = this::FakeFileSet.new
-        Command::PioneClean.run ["--type", "file-cache"]
+        cmd.run(args)
         fset.temporary.size.should == 8
         fset.file_cache.size.should == 0
         fset.package_cache.size.should == 4
@@ -233,9 +216,9 @@ TestHelper.scope do |this|
     end
 
     it "should remove package cache files" do
-      TestHelper::Command.succeed do
+      TestHelper::Command.succeed(@cmd, ["--type", "package-cache"]) do |cmd, args|
         fset = this::FakeFileSet.new
-        Command::PioneClean.run ["--type", "package-cache"]
+        cmd.run(args)
         fset.temporary.size.should == 8
         fset.file_cache.size.should == 4
         fset.package_cache.size.should == 0
@@ -244,9 +227,9 @@ TestHelper.scope do |this|
     end
 
     it "should remove profile files" do
-      TestHelper::Command.succeed do
+      TestHelper::Command.succeed(@cmd, ["--type", "profile"]) do |cmd, args|
         fset = this::FakeFileSet.new
-        Command::PioneClean.run ["--type", "profile"]
+        cmd.run(args)
         fset.temporary.size.should == 8
         fset.file_cache.size.should == 4
         fset.package_cache.size.should == 4

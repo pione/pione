@@ -9,6 +9,7 @@ Gemfile.lock
 gems
 log.txt
 nohup.out
+test-report.txt
 
 /input
 /output

@@ -1,0 +1,39 @@
+
+Command Result Report
+=====================
+
+Command   : <%= cmd %>
+Arguments : <%= args %>
+Result    : <%= success? ? "command succeeded" : "command failed" %>
+Time      : <%= Time.now %>
+<% if not(success?) %>
+
+Error Message
+-------------
+
+<%=  exception.message %>
+
+
+Backtrance
+----------
+
+<% exception.backtrace.each do |line| %>
+<%= line %>
+
+<% end %>
+<% end %>
+<% if stdout.string.size > 0 %>
+
+Stdout
+------
+
+<%= stdout.string %>
+<% end %>
+<% if stderr.string.size > 0 %>
+
+Stderr
+------
+
+<%= stderr.string %>
+<% end %>
+
