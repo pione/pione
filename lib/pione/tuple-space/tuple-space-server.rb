@@ -146,6 +146,51 @@ module Pione
         @terminated = true
       end
 
+      # Read a tuple with no waiting time. If there are no matched tuples, return
+      # `nil`.
+      #
+      # @param tuple [BasicTuple]
+      #   template tuple for query
+      # @return [BasicTuple, nil]
+      #   query result
+      def read!(tuple)
+        begin
+          read(tuple, 0)
+        rescue Rinda::RequestExpiredError
+          nil
+        end
+      end
+
+      # Take a tuple with no waiting time. If there are no matched tuples, return
+      # `nil`.
+      #
+      # @param tuple [BasicTuple]
+      #   template tuple for query
+      # @return [BasicTuple, nil]
+      #   query result
+      def take!(tuple)
+        begin
+          take(tuple, 0)
+        rescue Rinda::RequestExpiredError
+          nil
+        end
+      end
+
+      # Take all tuples with no waiting time. If there are no matched tuples, return
+      # empty array.
+      #
+      # @param tuple [BasicTuple]
+      #   template tuple for query
+      # @return [Array<BasicTuple>]
+      #   query result
+      def take_all!(tuple)
+        begin
+          take_all(tuple, 0)
+        rescue Rinda::RequestExpiredError
+          []
+        end
+      end
+
       def inspect
         "#<Pione::TupleSpace::TupleSpaceServer:%s>" % object_id
       end

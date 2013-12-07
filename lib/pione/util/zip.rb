@@ -24,9 +24,14 @@ module Pione
               if location.directory?
                 zip.mkdir(relpath)
               else
-                entry = zip.add(relpath, location.path.to_s)
-                entry.time = ::Zip::DOSTime.at(location.mtime)
-                entry.extra.delete("UniversalTime")
+                # expand only if it exists, e.g. broken symbolinks are ignored
+                if location.exist?
+                  entry = zip.add(relpath, location.path.to_s)
+                  entry.time = ::Zip::DOSTime.at(location.mtime)
+                  entry.extra.delete("UniversalTime")
+                else
+                  Log::Debug.system("Try to archive the file at %s, but it was ignored because of broken link." % location.address)
+                end
               end
             end
           end

@@ -157,6 +157,7 @@ module Pione
 
       attr_reader :option
       attr_reader :running_thread
+      attr_accessor :action_type
 
       forward! :class, :option_definition, :command_name, :command_name_block
       forward! :class, :command_banner, :command_front, :command_front_block
@@ -167,9 +168,18 @@ module Pione
         @__exit_status__ = true
         @__phase_name__ = nil
         @__action_name__ = nil
+        @action_type = nil
 
         # process has just one command object
         Global.command = self
+      end
+
+      # Return current phase name.
+      #
+      # @return [Symbol]
+      #   :init, :setup, :execution, or :termination
+      def current_phase
+        @__phase_name__
       end
 
       # Run 4 phase lifecycle of the command. This fires actions in each phase.
@@ -195,7 +205,7 @@ module Pione
           @__phase_name__ = phase_name
           actions.each do |(targets, action_name, action_option)|
             # check current mode is target or not
-            if not(targets.empty?) and not(targets.include?(option[:action_mode]))
+            if not(targets.empty?) and not(targets.include?(@action_type))
               next
             end
 
@@ -260,6 +270,7 @@ module Pione
       def abort(msg_or_exception, pos=caller(1).first)
         # hide the message because some option errors are meaningless
         invisible = msg_or_exception.is_a?(HideableOptionError)
+        p msg_or_exception
 
         # setup abortion message
         msg = msg_or_exception.is_a?(Exception) ? msg_or_exception.message : msg_or_exception
@@ -301,7 +312,7 @@ module Pione
 
       # Initialize command options.
       def init_option
-        @option = option_definition.parse(@argv, command_name, command_banner)
+        @option = option_definition.parse(@argv, self)
       rescue OptionParser::ParseError, OptionError => e
         abort(e)
       end
@@ -355,7 +366,7 @@ module Pione
       define_action(:terminate_child_process) do |cmd|
         if Global.front
           # send signal TERM to the child process
-          Global.front.child.each do |pid, uri|
+          Global.front.child_pids.each do |pid|
             Util.ignore_exception {Process.kill(:TERM, pid)}
           end
 
@@ -368,14 +379,21 @@ module Pione
       end
 
       define_action(:setup_parent_process_connection) do |cmd|
-        cmd.option[:parent_front].add_child(Process.pid, Global.front.uri)
-        ParentFrontWatchDog.new(self) # start to watch parent process
+        if cmd.option[:parent_front]
+          begin
+            cmd.option[:parent_front].register_child(Process.pid, Global.front.uri)
+            ParentFrontWatchDog.new(self) # start to watch parent process
+          rescue Front::ChildRegistrationError
+            # terminate if the registration failed
+            Global.command.terminate
+          end
+        end
       end
 
       define_action(:terminate_parent_process_connection) do |cmd|
         # maybe parent process is dead in this timing
         Util.ignore_exception do
-          cmd.option[:parent_front].remove_child(Process.pid)
+          cmd.option[:parent_front].unregister_child(Process.pid)
         end
       end
     end

@@ -174,7 +174,7 @@ module Pione
         # modify mtime
         begin
           dest.mtime = self.mtime if option[:keep_mtime]
-        rescue NotImplemented
+        rescue NotImplementedError
           msg = "the location operation faild to keep mtime: copy from %s to %s"
           Log::SystemLog.debug(msg % [address, dest.address])
         end

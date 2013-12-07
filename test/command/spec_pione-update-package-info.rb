@@ -55,6 +55,9 @@ describe Pione::Command::PioneUpdatePackageInfo do
     ptime = (@location + "pione-package.json").write("").mtime
     stime = (@location + "scenario" + "pione-scenario.json").write("").mtime
 
+    # make sure mtime is different
+    sleep 1
+
     args = [@location.path.to_s, "--force"]
     TestHelper::Command.succeed do
       Pione::Command::PioneUpdatePackageInfo.run(args)

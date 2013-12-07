@@ -15,7 +15,7 @@ module Pione
       # Define an internal item. The item cannot be configured by user.
       def define_internal_item(name, initial_value=nil, &definition)
         Item.new(name, false).tap do |item|
-          definition.call(item)
+          definition.call(item) if block_given?
           item.register
         end
       end
@@ -23,7 +23,7 @@ module Pione
       # Define an external item. The item can be configured by user.
       def define_external_item(name, initial_value=nil, &definition)
         Item.new(name, true).tap do |item|
-          definition.call(item)
+          definition.call(item) if block_given?
           item.register
         end
       end
@@ -31,7 +31,7 @@ module Pione
       # Define a computed item. The item cannote be configured by user.
       def define_computed_item(name, dependencies, &definition)
         Item.new(name, false, :dependencies => dependencies).tap do |item|
-          definition.call(item)
+          definition.call(item) if block_given?
           item.register
         end
       end
@@ -101,7 +101,7 @@ module Pione
         @dependencies = option[:dependencies] || []
         @desc = nil
         @init = nil
-        @type = :string
+        @type = nil
         @updater = Proc.new {|val| val}
         @orig = nil
         @record = false
@@ -161,7 +161,22 @@ module Pione
       # Update the item with the value.
       def update(val)
         @orig = val
-        @value = @updater.call(val)
+        @value = @updater.call(ValueConverter.convert(@type, val))
+      end
+    end
+
+    module ValueConverter
+      def self.convert(type, val)
+        case type
+        when :string
+          val = val.to_s unless val.kind_of?(String)
+        when :integer
+          val = val.to_i unless val.kind_of?(Integer)
+        when :boolean
+          val = val == "true" ? true : false unless val == true or val == false
+        end
+
+        return val
       end
     end
   end

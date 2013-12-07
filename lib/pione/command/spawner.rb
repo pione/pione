@@ -5,6 +5,7 @@ module Pione
     class Spawner
       attr_reader :pid         # PID of spawned child process
       attr_reader :child_front # front URI of spawned child process
+      attr_reader :thread      # watch thread for spawned child process
 
       def initialize(name)
         @name = name # callee command name
@@ -18,9 +19,6 @@ module Pione
         # create a new process and watch it
         pid = Process.spawn(@name, *@args)
 
-        # register PID to front server for termination
-        Global.front.child[pid] = nil if Global.front
-
         # keep to watch child process
         thread = Process.detach(pid)
 
@@ -29,7 +27,7 @@ module Pione
           retriable :on => [SpawnerRetry, Timeout::Error], :tries => 30, :interval => 0.1 do
             # when process is dead, raise an error
             if thread.nil? or not(thread.alive?)
-              raise SpawnError.new("%s failed to spawn %s." % [Global.command.command_name, @name])
+              raise SpawnError.new("%s failed to spawn %s %s." % [Global.command.command_name, @name, @args])
             end
 
             # find front and save its uri and pid
@@ -40,7 +38,7 @@ module Pione
             return self
           end
         rescue Exception => e
-          raise SpawnError.new("%s failed to spawn %s: %s" % [Global.command.command_name, @name, e.message])
+          raise SpawnError.new("%s failed to spawn %s %s: %s" % [Global.command.command_name, @name, @args, e.message])
         end
       end
 
@@ -63,7 +61,7 @@ module Pione
       # URI to children table of my front, so we get it from my front and create
       # the reference.
       def find_child_front(pid)
-        if child_front_uri = Global.front.child[pid]
+        if child_front_uri = Global.front.child_front_uri(pid)
           return DRbObject.new_with_uri(child_front_uri).tap do |front|
             timeout(1) {front.ping} # test connection
           end

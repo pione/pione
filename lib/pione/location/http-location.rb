@@ -33,7 +33,7 @@ module Pione
 
       def copy(dest, option={})
         # setup options
-        option[:keep_mtime] ||= true
+        option[:keep_mtime] = true if option[:keep_mtime].nil?
 
         # copy
         http_get {|rec| dest.write rec.body}

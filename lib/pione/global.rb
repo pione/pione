@@ -5,6 +5,7 @@ module Pione
   module Global; end
 end
 
+require 'pione/global/global-exception'
 require 'pione/global/item'
 require 'pione/global/config'
 require 'pione/global/system-variable'

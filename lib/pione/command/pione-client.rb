@@ -18,12 +18,11 @@ module Pione
 
       use_option :debug
       use_option :color
-      use_option :my_ip_address
+      use_option :communication_address
       use_option :presence_notification_address
       use_option :task_worker
       use_option :features
-
-      option_default(:action_mode, :process_job)
+      use_option :parent_front, :requisite => false
 
       define_option(:input_location) do |item|
         item.short = '-i LOCATION'
@@ -43,14 +42,14 @@ module Pione
         item.long = '--output=LOCATION'
         item.desc = 'set output directory'
         item.default = Location["local:./output/"]
-        item.action = proc do |command_name, option, uri|
+        item.action = proc do |cmd, option, uri|
           begin
             option[:output_location] = Location[uri]
             if URI.parse(uri).scheme == "myftp"
               option[:myftp] = URI.parse(uri).normalize
             end
           rescue ArgumentError
-            raise OptionError.new("output location '%s' is bad in %s" % [uri, command_name])
+            raise OptionError.new("output location '%s' is bad in %s" % [uri, cmd.command_name])
           end
         end
       end
@@ -73,11 +72,11 @@ module Pione
         item.long = '--params="{Var:1,...}"'
         item.desc = "set user parameters"
         item.default = Lang::ParameterSetSequence.new
-        item.action = proc do |command_name, option, str|
+        item.action = proc do |cmd, option, str|
           begin
             option[:params] = option[:params].merge(Util.parse_param_set(str))
           rescue Parslet::ParseFailed => e
-            raise OptionError.new("invalid parameters \"%s\" in %s" % [str, command_name])
+            raise OptionError.new("invalid parameters \"%s\" in %s" % [str, cmd.command_name])
           end
         end
       end
@@ -142,7 +141,8 @@ module Pione
       # command lifecycle: setup phase
       #
 
-      setup_phase :timeout => 20
+      # setup_phase :timeout => 20 # because of setup for dropbox...
+      setup :parent_process_connection, :module => CommonCommandAction
       setup :variable
       setup :ftp_server
       setup :tuple_space
@@ -169,52 +169,22 @@ module Pione
         end
       end
 
-      # Setup dropbox.
-      def setup_dropbox
-        # start session
-        session = nil
-        consumer_key = nil
-        consumer_secret = nil
-
-        cache = Pathname.new("~/.pione/dropbox_api.cache").expand_path
-        if cache.exist?
-          session = DropboxSession.deserialize(cache.read)
-          Location::Dropbox.set_session(session)
-          consumer_key = session.instance_variable_get(:@consumer_key)
-          consumer_secret = session.instance_variable_get(:@consumer_secret)
-        else
-          api = YAML.load(Pathname.new("~/.pione/dropbox_api.yml").expand_path.read)
-          consumer_key = api["key"]
-          consumer_secret = api["secret"]
-          session = DropboxSession.new(consumer_key, consumer_secret)
-          Location::Dropbox.set_session(session)
-          authorize_url = session.get_authorize_url
-          puts "AUTHORIZING", authorize_url
-          puts "Please visit that web page and hit 'Allow', then hit Enter here."
-          STDIN.gets
-          session.get_access_token
-
-          # cache session
-          cache.open("w+") {|c| c.write session.serialize}
-        end
-
-        # check session state
-        unless session.authorized?
-          abort("We cannot authorize dropbox access to PIONE.")
-        end
-
-        # share access token in tuple space
-        Location::Dropbox.share_access_token(tuple_space_server, consumer_key, consumer_secret)
-      end
-
       def setup_output_location
+        # setup location
         case option[:output_location]
         when Location::LocalLocation
           option[:output_location] = Location[option[:output_location].path.expand_path]
           option[:output_location].path.mkpath
         when Location::DropboxLocation
-          setup_dropbox
+          Location::DropboxLocation.setup_for_cui_client(tuple_space_server)
         end
+
+        # mkdir
+        if not(option[:output_location].exist?)
+          option[:output_location].mkdir
+        end
+
+        # set base location into tuple space
         @tuple_space.set_base_location(option[:output_location])
       end
 
@@ -289,15 +259,14 @@ module Pione
       # command lifecycle: execution phase
       #
 
-      # mode "process_job"
-      execute :process_job => :job_terminator
-      execute :process_job => :messenger
-      execute :process_job => :logger
-      execute :process_job => :input_generator
-      execute :process_job => :tuple_space_provider
-      execute :process_job => :task_worker
-      execute :process_job => :job_manager
-      execute :process_job => :check_rehearsal_result
+      execute :job_terminator
+      execute :messenger
+      execute :logger
+      execute :input_generator
+      execute :tuple_space_provider
+      execute :task_worker
+      execute :job_manager
+      execute :check_rehearsal_result
 
       def execute_job_terminator
         @job_terminator = Agent::JobTerminator.start(@tuple_space) do |status|
@@ -311,7 +280,16 @@ module Pione
 
       # Start a messenger agent.
       def execute_messenger
-        @messenger = Agent::Messenger.start(@tuple_space)
+        # select receiver
+        if option[:parent_front] and option[:parent_front][:message_log_receiver]
+          # delegate parent's receiver
+          receiver = option[:parent_front][:message_log_receiver]
+        else
+          # CUI receiver
+          receiver = Log::CUIMessageLogReceiver.new
+        end
+
+        @messenger = Agent::Messenger.new(@tuple_space, receiver).start
       end
 
       # Start a logger agent.
@@ -338,7 +316,11 @@ module Pione
               end
               @tuple_space_provider = spawner.child_front
             rescue SpawnError => e
-              abort(e.message)
+              if termination?
+                Log::Debug.system(e.message)
+              else
+                abort(e.message)
+              end
             end
           end
           @spawner_threads.add(thread)
@@ -358,7 +340,11 @@ module Pione
               begin
                 Command::PioneTaskWorker.spawn(Global.features, @tuple_space.uuid)
               rescue SpawnError => e
-                abort(e.message)
+                if termination?
+                  Log::Debug.system(e.message)
+                else
+                  abort(e.message)
+                end
               end
             end
           end

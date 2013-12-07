@@ -23,7 +23,7 @@ module Pione
 
       use_option :color
       use_option :debug
-      use_option :my_ip_address
+      use_option :communication_address
       use_option :parent_front
       use_option :features
 
@@ -100,10 +100,14 @@ module Pione
 
       # Setup base location.
       def setup_base_location
-        if @tuple_space.base_location.kind_of?(Location::DropboxLocation)
-          Location::Dropbox.init(@tuple_space)
-          unless Location::Dropbox.ready?
-            abort("You aren't ready to access Dropbox.")
+        base_location = @tuple_space.base_location
+
+        # enable Dropbox location
+        if base_location.kind_of?(Location::DropboxLocation)
+          begin
+            Location::DropboxLocation.enable(@tuple_space)
+          rescue Location::DropboxLocationUnavailable => e
+            abort("Base location \"%s\" is on Dropbox, but it is not ready." % base_location.address)
           end
         end
       end

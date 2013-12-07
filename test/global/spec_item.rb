@@ -1,6 +1,6 @@
 require "pione/test-helper"
 
-describe do
+describe Pione::Global do
   it "should define an external item" do
     item = Global.define_external_item(:test_external_item) do |item|
       item.desc = "test external item"
