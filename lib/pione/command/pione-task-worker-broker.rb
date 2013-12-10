@@ -1,19 +1,19 @@
 module Pione
   module Command
-    # PioneBroker is a command that starts activity of broker agent. This
-    # command will spawn +pione-task-worker+ and +pione-tuple-space-receiver+
-    # commands.
-    class PioneBroker < BasicCommand
+    # `PioneTaskWorkerBroker` is a command that starts activity of task worker
+    # broker agent. This command will spawn +pione-task-worker+ and
+    # +pione-tuple-space-receiver+ commands.
+    class PioneTaskWorkerBroker < BasicCommand
       #
       # basic informations
       #
 
       toplevel true
-      command_name("pione-broker") do |cmd|
+      command_name("pione-task-worker-broker") do |cmd|
         "front: %s, task_worker: %s" % [Global.front.uri, cmd.option[:task_worker]]
       end
       command_banner "Run broker agent to launch task workers."
-      command_front Front::BrokerFront
+      command_front Front::TaskWorkerBrokerFront
 
       #
       # options
@@ -48,7 +48,7 @@ module Pione
 
       # Create a broker agent.
       def setup_agent
-        @agent = Agent::Broker.new(task_worker_resource: option[:task_worker])
+        @agent = Agent::TaskWorkerBroker.new(task_worker_resource: option[:task_worker])
       end
 
       # Spawn a pione-tuple-space-receiver process.
@@ -73,10 +73,10 @@ module Pione
 
       # Declare pione-broker start.
       def execute_start_banner
-        Log::SystemLog.info "pione-broker starts the activity (#%s)" % Process.pid
+        Log::SystemLog.info "pione-task-worker-broker starts the activity (#%s)" % Process.pid
       end
 
-      # Start broker agent activity and wait it to be terminated.
+      # Start task worker broker agent activity and wait it to be terminated.
       def execute_agent
         @agent.start
         @agent.wait_until_terminated(nil)
@@ -98,7 +98,7 @@ module Pione
 
       # Declare pione-broker end.
       def terminate_end_banner
-        Log::SystemLog.info "pione-broker ends the activity (status: %s, #%s)" % [Global.exit_status, Process.pid]
+        Log::SystemLog.info "pione-task-worker-broker ends the activity (status: %s, #%s)" % [Global.exit_status, Process.pid]
       end
     end
   end

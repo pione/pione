@@ -120,16 +120,16 @@ then
     }
 
     #
-    # `pione-broker` command
+    # `pione-task-worker-broker` command
     #
 
-    complete -F _pione-broker pione-broker
+    complete -F _pione-task-worker-broker pione-task-worker-broker
 
-    _pione-broker() {
-        _pione-broker_options
+    _pione-task-worker-broker() {
+        _pione-task-worker-broker_options
     }
 
-    _pione-broker_options() {
+    _pione-task-worker-broker_options() {
         COMPREPLY=($(compgen -W "--[no-]color --communication-address=ADDRESS --daemon --debug[=TYPE] --features=FEATURES --task-worker=N" -- "${COMP_WORDS[COMP_CWORD]}"));
     }
 

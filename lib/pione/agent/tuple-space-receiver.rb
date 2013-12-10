@@ -83,7 +83,11 @@ module Pione
           end
         end
       rescue DRb::DRbConnError, Timeout::Error => e
-        Log::SystemLog.fatal("tuple space receiver failed to connect pione-broker: %s" % e.message)
+        Log::SystemLog.fatal do
+          msg = e.message
+          destination = @broker_front.uri
+          "Tuple space receiver has failed to connect %s: %s" % [destination, msg]
+        end
         raise ConnectionError.new
       end
 

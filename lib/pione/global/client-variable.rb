@@ -14,7 +14,7 @@ module Pione
 
     # This is port range for client's front.
     define_computed_item(:client_front_port_range, [:client_front_port_range_begin, :client_front_port_range_end]) do |item|
-      item.desc = "port range of broker front"
+      item.desc = "port range of client front"
       item.define_updater do
         Range.new(
           Global.client_front_port_range_begin,

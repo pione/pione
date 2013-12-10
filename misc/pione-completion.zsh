@@ -120,16 +120,16 @@ then
     }
 
     #
-    # `pione-broker` command
+    # `pione-task-worker-broker` command
     #
 
-    compdef _pione-broker pione-broker
+    compdef _pione-task-worker-broker pione-task-worker-broker
 
-    _pione-broker() {
-        _pione-broker_options
+    _pione-task-worker-broker() {
+        _pione-task-worker-broker_options
     }
 
-    _pione-broker_options() {
+    _pione-task-worker-broker_options() {
         _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--daemon[turn on daemon mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--features=FEATURES[set features]" "--task-worker=N[set task worker number that this process creates]" '*:file:_files' && return 0;
     }
 

@@ -4,7 +4,7 @@ describe "Pione::Agent::TupleSpaceReceiver" do
   before do
     @tuple_space = TestHelper::TupleSpace.create(self)
     Global.expressional_features = Util.parse_features("*")
-    @broker = Agent::Broker.start(task_worker_resource: 5, spawn_task_worker: false)
+    @broker = Agent::TaskWorkerBroker.start(task_worker_resource: 5, spawn_task_worker: false)
     @provider_front = Front::TupleSpaceProviderFront.new(@tuple_space)
   end
 

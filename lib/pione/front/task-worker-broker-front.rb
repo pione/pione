@@ -1,9 +1,9 @@
 module Pione
   module Front
-    # BrokerFront is a front class for pione-broker command.
-    class BrokerFront < BasicFront
+    # `TaskWorkerBrokerFront` is a front class for `pione-task-worker-broker` command.
+    class TaskWorkerBrokerFront < BasicFront
       def initialize
-        super(Global.broker_front_port_range)
+        super(Global.task_worker_broker_front_port_range)
       end
 
       def get_tuple_space(tuple_space_id)

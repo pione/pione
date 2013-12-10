@@ -1,6 +1,6 @@
 require 'pione/test-helper'
 
-describe "Pione::Agent::Broker" do
+describe Pione::Agent::TaskWorkerBroker do
   before do
     # setup language environment
     @env = TestHelper::Lang.env
@@ -11,9 +11,9 @@ describe "Pione::Agent::Broker" do
     @space3 = TupleSpaceServer.new({task_worker_resource: 3}, false)
     [@space1, @space2, @space3].each {|space| space.write(TupleSpace::EnvTuple.new(obj: @env))}
 
-    # setup broker
+    # setup task worker broker
     Global.expressional_features = Util.parse_features("*")
-    @broker = Agent::Broker.new(spawn_task_worker: false, task_worker_resource: 5)
+    @broker = Agent::TaskWorkerBroker.new(spawn_task_worker: false, task_worker_resource: 5)
   end
 
   after do

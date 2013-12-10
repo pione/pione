@@ -14,7 +14,8 @@ module Pione
 
       command_banner(Util::Indentation.cut(<<-TEXT))
         Run a task worker process. This command assumes to be launched by
-        pione-client or pione-broker, so you should not execute this by hand.
+        pione-client or pione-task-worker-broker, so you should not execute this
+        by hand.
       TEXT
 
       command_front Front::TaskWorkerFront
