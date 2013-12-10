@@ -1,24 +1,21 @@
+require 'pione/command/pione-action'
+require 'pione/command/pione-clean'
+require 'pione/command/pione-config'
+require 'pione/command/pione-log'
+require 'pione/command/pione-package'
+require 'pione/command/pione-val'
+
+
 module Pione
   module Command
     # PioneCommand is a facade command for PIONE's various functions.
     class PioneCommand < BasicCommand
-      # subcommand table
-      @subcommand = {}
-
-      class << self
-        attr_reader :subcommand
-
-        # Add the subcommand.
-        def add_subcommand(name, command)
-          @subcommand[name] = command
-        end
-      end
-
       #
       # basic informations
       #
 
       option_parser_mode :order!
+      toplevel true
       command_name "pione"
       command_banner "PIONE is a rule-based workflow engine."
 
@@ -26,20 +23,12 @@ module Pione
       # options
       #
 
-      #
-      # command lifecycle: execution phase
-      #
-
-      execute :subcommand
-
-      def execute_subcommand
-        name = @argv.first
-        if cmd = self.class.subcommand[name]
-          cmd.run(@argv.drop(1))
-        else
-          abort("no such subcommand: %s" % name)
-        end
-      end
+      define_subcommand("action", PioneAction)
+      define_subcommand("clean", PioneClean)
+      define_subcommand("config", PioneConfig)
+      define_subcommand("log", PioneLog)
+      define_subcommand("package", PionePackage)
+      define_subcommand("val", PioneVal)
     end
   end
 end

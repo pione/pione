@@ -14,9 +14,11 @@ module Pione
         attr_reader :execution_actions
         attr_reader :termination_actions
         attr_reader :exception_handler
+        attr_reader :subcommand
 
         def inherited(subclass)
           subclass.instance_eval do
+            @subcommand = {}
             @phase_option = {:init => {}, :setup => {}, :execution => {}, :termination => {}}
             @option_definition = OptionDefinition.new
             @command_name = nil
@@ -29,6 +31,7 @@ module Pione
             @execution_actions = Array.new
             @termination_actions = Array.new
             @exception_handler = {:init => {}, :setup => {}, :execution => {}, :termination => {}}
+            @toplevel = false
 
             # define init phase actions
             init :process_name
@@ -41,6 +44,15 @@ module Pione
 
         def option_parser_mode(mode)
           @option_definition.parser_mode = mode
+        end
+
+        # Set toplvel command.
+        def toplevel(b)
+          @toplevel = b
+        end
+
+        def toplevel?
+          @toplevel
         end
 
         # Set progaram name or return the name.
@@ -70,6 +82,10 @@ module Pione
           else
             @command_front
           end
+        end
+
+        def define_subcommand(name, subclass)
+          @subcommand[name] = subclass
         end
 
         forward :@option_definition, :use, :use_option
@@ -160,7 +176,7 @@ module Pione
       attr_accessor :action_type
 
       forward! :class, :option_definition, :command_name, :command_name_block
-      forward! :class, :command_banner, :command_front, :command_front_block
+      forward! :class, :command_banner, :command_front, :command_front_block, :subcommand
 
       def initialize(argv)
         @argv = argv
@@ -184,6 +200,22 @@ module Pione
 
       # Run 4 phase lifecycle of the command. This fires actions in each phase.
       def run
+        # check subcommand
+        if subcommand.size > 0
+          if name = @argv.first
+            if subcommand.has_key?(name)
+              return subcommand[name].run(@argv.drop(1))
+            else
+              unless name[0] == "-"
+                abort("no such subcommand: %s" % name)
+              end
+            end
+          else
+            abort("require a subcommand name")
+          end
+        end
+
+        # run this command
         @running_thread = Thread.current
         enter_phase(:init)
         enter_phase(:setup)

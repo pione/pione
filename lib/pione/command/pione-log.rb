@@ -8,7 +8,6 @@ module Pione
 
       command_name "pione-log"
       command_banner "View and convert PIONE log."
-      PioneCommand.add_subcommand("log", self)
 
       #
       # options

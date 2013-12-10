@@ -1,15 +1,13 @@
 module Pione
   module Command
-    # PioneUpdatePackageInfo is a command definition of "pione
-    # update-package-info".
-    class PioneUpdatePackageInfo < BasicCommand
+    # `PionePackageUpdate` is a subcommand that updates PIONE package.
+    class PionePackageUpdate < BasicCommand
       #
       # basic informations
       #
 
-      command_name "pione update-package-info"
-      command_banner "update package info files"
-      PioneCommand.add_subcommand("update-package-info", self)
+      command_name "pione package update"
+      command_banner "update the package to package database"
 
       #
       # options
@@ -42,7 +40,7 @@ module Pione
 
       execute :update
 
-      # Update pacakge info files.
+      # Update update info files.
       def execute_update
         Package::PackageHandler.write_info_files(Location[@target], force: option[:force])
       rescue Package::InvalidScenario => e

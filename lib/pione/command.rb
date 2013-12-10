@@ -17,14 +17,5 @@ require 'pione/command/pione-tuple-space-viewer'
 require 'pione/command/pione-relay'
 require 'pione/command/pione-relay-client-db'
 require 'pione/command/pione-relay-account-db'
-require 'pione/command/pione-clean'               # pione clean
 require 'pione/command/pione-syntax-checker'
-require 'pione/command/pione-log'                 # pione log
-require 'pione/command/pione-val'                 # pione-val
-require 'pione/command/pione-package'
 require 'pione/command/pione-compiler'
-require 'pione/command/pione-update-package-info' # pione update-package-info
-require 'pione/command/pione-action'              # pione action
-require 'pione/command/pione-action-list'         # pione action:list
-require 'pione/command/pione-list-param'          # pione list-param
-require 'pione/command/pione-config'

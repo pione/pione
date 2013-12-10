@@ -103,11 +103,8 @@ module Pione
 
       def fail
         _args = args
-        _base = base
         context.it(template % title) do
-          TestHelper::Command.fail do
-            Pione::Command::PioneClient.run(_args)
-          end
+          TestHelper::Command.fail(Pione::Command::PioneClient, _args)
         end
       end
 

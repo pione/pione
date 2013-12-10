@@ -7,6 +7,8 @@ module Pione
       # basic informations
       #
 
+      toplevel true
+
       command_name "pione-tuple-space-receiver" do |cmd|
         "front: %s, parent: %s" % [Global.front.uri, cmd.option[:parent_front].uri]
       end

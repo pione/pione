@@ -8,6 +8,7 @@ module Pione
       # basic informations
       #
 
+      toplevel true
       command_name("pione-broker") do |cmd|
         "front: %s, task_worker: %s" % [Global.front.uri, cmd.option[:task_worker]]
       end

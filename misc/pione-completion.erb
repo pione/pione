@@ -1,0 +1,50 @@
+if type <%= completion_command %> 1>/dev/null 2>&1;
+then
+
+<%- toplevel_commands(Pione::Command).each do |key1, cmd1| -%>
+    #
+    # `<%= key1 %>` command
+    #
+
+    <%= completion_exec %> _<%= key1 %> <%= key1 %>
+
+    _<%= key1 %>() {
+  <%- if cmd1.subcommand.empty? -%>
+        _<%= key1 %>_options
+  <%- else -%>
+	local name2="<%= name2 %>"
+	local name3="<%= name3 %>"
+
+	case $name2 in
+    <%- cmd1.subcommand.each do |key2, cmd2| -%>
+      <%- if cmd2.subcommand.empty? -%>
+	    <%= key2 %>) _<%= key1 %>_<%= key2 %>_options;;
+      <%- else -%>
+	    <%= key2 %>)
+		case $name3 in
+        <%- cmd2.subcommand.each do |key3, cmd3| -%>
+		    <%= key3 %>) _<%= key1 %>_<%= key2 %>_<%= key3 %>_options;;
+        <%- end -%>
+		    *) _<%= key1 %>_<%= key2 %>_subcommands;;
+		esac;;
+      <%- end -%>
+    <%- end -%>
+	    *) _<%= key1 %>_subcommands;;
+	esac
+  <%- end -%>
+    }
+
+  <%- descendants([key1], cmd1).each do |keys, cmd| -%>
+    <%- if cmd.subcommand.empty? -%>
+    _<%= keys.join("_") %>_options() {
+        <%= fun_options(cmd) %>
+    }
+    <%- else -%>
+    _<%= keys.join("_") %>_subcommands() {
+        <%= fun_subcommands(cmd) %>
+    }
+    <%- end -%>
+
+  <%- end -%>
+<%- end -%>
+fi

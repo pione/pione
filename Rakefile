@@ -87,3 +87,25 @@ task "man" do
   generate_man("doc/man/pione-action-list.md", "man/pione-action-list.1")
   generate_man("doc/man/pione-list-param.md", "man/pione-list-param.1")
 end
+
+#
+# Completion
+#
+
+desc "generate bash completion file"
+task "completion:bash" do
+  require 'pione/util/completion'
+  misc = Pione::Location[File.dirname(__FILE__)] + "misc"
+  source = misc + "pione-completion.erb"
+  target = misc + "pione-completion.bash"
+  Pione::Util::BashCompletion.compile(source, target)
+end
+
+desc "generate zsh completion file"
+task "completion:zsh" do
+  require 'pione/util/completion'
+  misc = Pione::Location[File.dirname(__FILE__)] + "misc"
+  source = misc + "pione-completion.erb"
+  target = misc + "pione-completion.zsh"
+  Pione::Util::ZshCompletion.compile(source, target)
+end

@@ -41,6 +41,7 @@ module Pione
 
     # OptionDefinition is a class for holding option definitions.
     class OptionDefinition
+      attr_reader :items
       attr_accessor :parser_mode
 
       # Creata a command option context.
@@ -64,11 +65,28 @@ module Pione
         OptionParser.new do |opt|
           # set banner
           opt.banner = "Usage: %s [options]" % cmd.command_name
-          opt.banner << "\n\n" + cmd.command_banner + "\n" if cmd.command_banner
+          opt.banner << "\n" + cmd.command_banner + "\n" if cmd.command_banner
 
           # set version
           opt.program_name = cmd.command_name
           opt.version = Pione::VERSION
+
+          if cmd.subcommand.size > 0
+            size = cmd.subcommand.keys.max_by{|key| key.size}.size
+
+            # show subcommand banner
+            opt.separator("")
+            opt.separator("Subcommands:")
+
+            # show subcommand list
+            cmd.subcommand.each do |key, val|
+              opt.separator(opt.summary_indent + ("%-#{size}s" % key) + opt.summary_indent + val.command_banner)
+            end
+          end
+
+          # show options banner
+          opt.separator("")
+          opt.separator("Options:")
 
           # default values
           @items.each {|item| data[item.name] = item.default if item.default}
@@ -76,6 +94,10 @@ module Pione
 
           # setup option parser
           @items.sort{|a,b| a.long <=> b.long}.each {|item| setup_item(cmd, opt, data, item)}
+
+          # show default options
+          opt.on("--help", "show this help") { puts opt.help; cmd.terminate }
+          opt.on("--version", "show PIONE version") { puts opt.version; cmd.terminate }
         end.send(@parser_mode, argv)
 
         # check option's validness

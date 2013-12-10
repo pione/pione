@@ -1,8 +1,8 @@
 require 'pione/test-helper'
 
-describe Pione::Command::PioneUpdatePackageInfo do
+describe Pione::Command::PionePackageUpdate do
   before do
-    @cmd = Pione::Command::PioneUpdatePackageInfo
+    @cmd = Pione::Command::PionePackageUpdate
 
     # package
     @location = Location[Temppath.mkdir]

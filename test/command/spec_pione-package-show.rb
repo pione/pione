@@ -1,14 +1,31 @@
 require 'pione/test-helper'
 
 TestHelper.scope do |this|
+  this::P1 = Location[File.dirname(__FILE__)] + ".." + "command" + "data" + "PionePackageP1"
+  this::P2 = Location[File.dirname(__FILE__)] + ".." + "command" + "data" + "PionePackageP2"
+  this::P3 = Location[File.dirname(__FILE__)] + ".." + "command" + "data" + "PionePackageP3"
+  this::P4 = Location[File.dirname(__FILE__)] + ".." + "command" + "data" + "PionePackageP4"
   this::DIR = Location[File.dirname(__FILE__)] + "data" + "pione-list-param"
 
-  describe Pione::Command::PioneListParam do
+  describe Pione::Command::PionePackage do
+    before do
+      @cmd = Pione::Command::PionePackageShow
+      @orig_database = Global.package_database_location
+      Global.package_database_location = Location[Temppath.create]
+    end
+
+    after do
+      Global.package_database_location = @orig_database
+    end
+
+    it "should show parameters list of the package" do
+      res = TestHelper::Command.succeed(@cmd, ["example/HelloWorld/HelloWorld.pione"])
+      res.stdout.string.size.should > 0
+    end
+
     it "should show basic parameters" do
       args = [(this::DIR + "BasicParameters.pione").path.to_s]
-      res = TestHelper::Command.succeed do
-        Command::PioneListParam.run(args)
-      end
+      res = TestHelper::Command.succeed(@cmd, args)
       out = res.stdout.string
       out.should.include "B1"
       out.should.include "B2"
@@ -23,9 +40,7 @@ TestHelper.scope do |this|
 
     it "should show basic parameters only without `--advanced` option" do
       args = [(this::DIR + "AdvancedParameters.pione").path.to_s]
-      res = TestHelper::Command.succeed do
-        Command::PioneListParam.run(args)
-      end
+      res = TestHelper::Command.succeed(@cmd, args)
       out = res.stdout.string
       out.should.include "B1"
       out.should.not.include "B2"
@@ -40,9 +55,7 @@ TestHelper.scope do |this|
 
     it "should show advanced parameters with `--advanced` option" do
       args = [(this::DIR + "AdvancedParameters.pione").path.to_s, "--advanced"]
-      res = TestHelper::Command.succeed do
-        Command::PioneListParam.run(args)
-      end
+      res = TestHelper::Command.succeed(@cmd, args)
       out = res.stdout.string
       out.should.include "B1"
       out.should.include "B2"
@@ -56,3 +69,4 @@ TestHelper.scope do |this|
     end
   end
 end
+

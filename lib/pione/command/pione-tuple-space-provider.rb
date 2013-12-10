@@ -6,6 +6,8 @@ module Pione
       # command info
       #
 
+      toplevel true
+
       command_name "pione-tuple-space-provider" do |cmd|
         "front: %s, parent: %s" % [Global.front.uri, cmd.option[:parent_front].uri]
       end

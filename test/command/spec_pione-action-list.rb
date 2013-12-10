@@ -13,5 +13,11 @@ TestHelper.scope do |this|
       res = TestHelper::Command.succeed(@cmd, args)
       res.stdout.string.chomp.should == "Name1\nName2"
     end
+
+    it "should show action names in compact form" do
+      args = ["--compact", (this::DIR + "D1.md").path.to_s]
+      res = TestHelper::Command.succeed(@cmd, args)
+      res.stdout.string.chomp.should == "Name1 Name2"
+    end
   end
 end

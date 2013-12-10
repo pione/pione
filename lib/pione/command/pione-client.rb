@@ -8,6 +8,7 @@ module Pione
       # basic informations
       #
 
+      toplevel true
       command_name("pione-client") {|cmd| "front: %s" % Global.front.uri}
       command_banner "Process PIONE document."
       command_front Front::ClientFront

@@ -7,15 +7,21 @@ module Pione
       # basic informations
       #
 
-      command_name "pione action:list"
-      command_banner "show list of action names in document"
-      PioneCommand.add_subcommand("action:list", self)
+      command_name "pione action list"
+      command_banner "list action names in document"
 
       #
       # options
       #
 
       use_option :color
+
+      define_option(:compact) do |item|
+        item.long = "--compact"
+        item.desc = "one line list"
+        item.default = false
+        item.value = lambda {|b| b}
+      end
 
       #
       # command lifecycle: setup phase
@@ -41,7 +47,11 @@ module Pione
         if names.empty?
           abort("no action names in %s" % @location.address)
         else
-          names.each {|name| puts name}
+          if option[:compact]
+            puts names.join(" ")
+          else
+            names.each {|name| puts name}
+          end
         end
       end
     end

@@ -50,12 +50,6 @@ TestHelper.scope do |this|
       TestHelper::Command.fail(@cmd, args)
     end
 
-    it "should show parameters list of package" do
-      args = ["example/HelloWorld/HelloWorld.pione", "--list-params"]
-      res = TestHelper::Command.succeed(@cmd, args)
-      res.stdout.string.size.should > 0
-    end
-
     describe "example/Fib" do
       TestHelper::PioneClientRunner.test(self) do |runner|
         runner.title = "should get a result with no parameters (default fib(3))"

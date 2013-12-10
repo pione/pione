@@ -1,13 +1,12 @@
 module Pione
   module Command
-    class PioneListParam < BasicCommand
+    class PionePackageShow < BasicCommand
       #
       # basic informations
       #
 
-      command_name "pione list-param"
-      command_banner "Show a list of parameters in the document or package."
-      PioneCommand.add_subcommand("list-param", self)
+      command_name "pione package show"
+      command_banner "show the package informations"
 
       #
       # options

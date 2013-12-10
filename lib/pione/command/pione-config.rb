@@ -8,7 +8,6 @@ module Pione
 
       command_name "pione-config"
       command_banner "config PIONE global variables"
-      PioneCommand.add_subcommand("config", self)
 
       #
       # options
