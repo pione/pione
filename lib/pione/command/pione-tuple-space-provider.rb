@@ -13,9 +13,9 @@ module Pione
       end
 
       command_banner(Util::Indentation.cut(<<-TXT))
-        Run tuple space provider process for sending tuple space presence
-        notifier. This command assumes to be launched by other processes like
-        pione-client or pione-relay.
+        Run tuple space provider process for sending notification package. This
+        command assumes to be launched by other processes like pione-client or
+        pione-relay.
       TXT
 
       command_front Pione::Front::TupleSpaceProviderFront do |cmd|
@@ -30,7 +30,7 @@ module Pione
       use_option :debug
       use_option :communication_address
       use_option :parent_front
-      use_option :presence_notification_address
+      use_option :notification_address
 
       #
       # class methods
@@ -45,13 +45,13 @@ module Pione
         spawner.option("--debug=ignored_exception") if Global.debug_ignored_exception
         spawner.option("--debug=rule_engine") if Global.debug_rule_engine
         spawner.option("--debug=communication") if Global.debug_communication
-        spawner.option("--debug=presence_notification") if Global.debug_presence_notification
+        spawner.option("--debug=notification") if Global.debug_notification
 
         # requisite options
         spawner.option("--parent-front", Global.front.uri)
         spawner.option("--communication-address", Global.communication_address)
-        Global.presence_notification_addresses.each do |address|
-          spawner.option("--presence-notification-address", address.to_s)
+        Global.notification_addresses.each do |address|
+          spawner.option("--notification-address", address.to_s)
         end
 
         # optionals

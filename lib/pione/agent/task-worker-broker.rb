@@ -133,7 +133,7 @@ module Pione
               end
 
               timeout(1) do
-                Log::Debug.presence_notification do
+                Log::Debug.notification do
                   "Task worker broker agent updated tuple space table: %s" % [@tuple_space.values.map{|space| space.__drburi}]
                 end
               end

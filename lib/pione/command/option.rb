@@ -190,7 +190,7 @@ module Pione
 
       define(:debug) do |item|
         item.long = '--debug[=TYPE]'
-        item.desc = "turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)"
+        item.desc = "turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)"
         item.action = proc {|cmd, _, type|
           Global.system_logger.level = :debug
           case type
@@ -198,8 +198,8 @@ module Pione
             Global.debug_system = true
           when "rule_engine"
             Global.debug_rule_engine = true
-          when "presence_notification"
-            Global.debug_presence_notification = true
+          when "notification"
+            Global.debug_notification = true
           when "communication"
             Global.debug_communication = true
           when "ignored_exception"
@@ -247,22 +247,22 @@ module Pione
         end
       end
 
-      define(:presence_notification_address) do |item|
-        item.long = "--presence-notification-address=255.255.255.255:%s" % Global.presence_port
-        item.desc = "set the address for sending presence notifier"
+      define(:notification_address) do |item|
+        item.long = "--notification-address=255.255.255.255:%s" % Global.notification_port
+        item.desc = "set the address for sending notification packet"
         item.action = proc do |_, _, address|
           # clear addresses at first time
           unless @__option_notifier_address__
             @__option_notifier_address__ = true
-            Global.presence_notification_addresses = []
+            Global.notification_addresses = []
           end
 
           # add the address
           address = address =~ /^broadcast/ ? address : "broadcast://%s" % address
           uri = URI.parse(address)
           uri.host = "255.255.255.255" if uri.host.nil?
-          uri.port = Global.presence_port if uri.port.nil?
-          Global.presence_notification_addresses << uri
+          uri.port = Global.notification_port if uri.port.nil?
+          Global.notification_addresses << uri
         end
       end
 

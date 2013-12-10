@@ -4,9 +4,9 @@ module Pione
     # provider & receiver
     #
 
-    # presence port
-    define_external_item(:presence_port) do |item|
-      item.desc = "presence port number"
+    # notification port
+    define_external_item(:notification_port) do |item|
+      item.desc = "notification port number"
       item.type = :integer
       item.init = 56000
     end
@@ -46,9 +46,9 @@ module Pione
       end
     end
 
-    # presence notification address
-    define_external_item(:presence_notification_addresses) do |item|
-      item.desc = "presence notification addresses"
+    # notification address
+    define_external_item(:notification_addresses) do |item|
+      item.desc = "notification addresses"
       item.init = ["255.255.255.255:56000"]
       item.define_updater do |vals|
         vals.map {|val| val.is_a?(String) ? URI.parse("broadcast://%s" % val) : val}

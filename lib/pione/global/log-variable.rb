@@ -87,9 +87,9 @@ module Pione
       item.init = false
     end
 
-    # This is debug flag that shows presence notifications.
-    define_internal_item(:debug_presence_notification) do |item|
-      item.desc = "debug flag that shows presence notifications"
+    # This is debug flag that shows notifications.
+    define_internal_item(:debug_notification) do |item|
+      item.desc = "debug flag that shows notifications"
       item.type = :boolean
       item.init = false
     end

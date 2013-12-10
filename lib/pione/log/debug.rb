@@ -1,11 +1,11 @@
 module Pione
   module Log
     # Debug is a log utility module for showing debug messages. Messages are
-    # shown when according debug flags (system, rule_engine,
-    # presence_notification, communication, ignored_exception) are available. 
+    # shown when according debug flags (system, rule_engine, notification,
+    # communication, ignored_exception) are available.
     module Debug
       # Show a debug message about PIONE system activity. This message is
-      # visible when +Global.debug_system+ is true.
+      # visible when `Global.debug_system` is true.
       def self.system(msg_or_exc=nil, pos=caller(1).first, &b)
         if Global.debug_system
           print(:system, msg_or_exc, pos, &b)
@@ -13,18 +13,18 @@ module Pione
       end
 
       # Show a debug message about rule engine activity. This message is visible
-      # when +Global.debug_rule_engine+ is true in client side.
+      # when `Global.debug_rule_engine` is true in client side.
       def self.rule_engine(msg_or_exc=nil, pos=caller(1).first, &b)
         if Global.debug_rule_engine
           print(:rule_engine, msg_or_exc, pos, &b)
         end
       end
 
-      # Show a debug message about presence notifier. This message is visible
-      # when +Global.debug_presence_notification+ is true.
-      def self.presence_notification(msg_or_exc=nil, pos=caller(1).first, &b)
-        if Global.debug_presence_notification
-          print(:presence_notifier, msg_or_exc, pos, &b)
+      # Show a debug message about notification. This message is visible when
+      # `Global.debug_notification` is true.
+      def self.notification(msg_or_exc=nil, pos=caller(1).first, &b)
+        if Global.debug_notification
+          print(:notification, msg_or_exc, pos, &b)
         end
       end
 

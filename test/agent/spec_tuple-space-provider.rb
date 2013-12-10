@@ -4,12 +4,12 @@ describe 'Pione::Agent::TupleSpaceProvider' do
   before do
     @tuple_space = TestHelper::TupleSpace.create(self)
     @front = Front::TupleSpaceProviderFront.new(@tuple_space)
-    @orig = Global.presence_notification_addresses
+    @orig = Global.notification_addresses
   end
 
   after do
     @front.terminate
-    Global.presence_notification_addresses = @orig
+    Global.notification_addresses = @orig
   end
 
   it 'should start activity' do

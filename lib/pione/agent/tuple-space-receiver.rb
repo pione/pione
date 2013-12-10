@@ -44,24 +44,24 @@ module Pione
 
       # Receive tuple space servers and update the table.
       def transit_to_receive_packet
-        # receive a presence notification
+        # receive a notification
         data, addr = @socket.recvfrom(1024)
         ip_address = addr[3]
         port = Marshal.load(data).to_i
 
         # handle the notification in new thread
         thread = Util::FreeThreadGenerator.generate do
-          handle_presence_notification(ip_address, port)
+          handle_notification(ip_address, port)
         end
         @notification_handlers.add(thread)
       rescue IOError => e
-        Log::Debug.presence_notification("receiver agent received bad data from %s, so it ignored and reopen socket" % ip_address)
+        Log::Debug.notification("receiver agent received bad data from %s, so it ignored and reopen socket" % ip_address)
         reopen_socket
       end
 
       # Close receiver socket.
       def transit_to_terminate
-        # kill threads of presence notification handler
+        # kill threads of notification handler
         @notification_handlers.list.each {|thread| thread.kill.join}
         # close socket
         @socket.close unless @socket.closed?
@@ -104,7 +104,7 @@ module Pione
       # Open a receiver socket.
       def open_socket
         socket = UDPSocket.open
-        socket.bind(Socket::INADDR_ANY, Global.presence_port)
+        socket.bind(Socket::INADDR_ANY, Global.notification_port)
         socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
         return socket
       end
@@ -114,7 +114,7 @@ module Pione
         @socket = open_socket
       end
 
-      def handle_presence_notification(ip_address, port)
+      def handle_notification(ip_address, port)
         # build a reference to provider front
         provider_front = DRbObject.new_with_uri("druby://%s:%s" % [ip_address, port])
 
@@ -125,16 +125,16 @@ module Pione
           @tuple_space[provider_front.tuple_space] = Time.now
         end
 
-        Log::Debug.presence_notification do
-          "receiver agent received a presence notification from provider \"%s\"" % provider_front.__drburi
+        Log::Debug.notification do
+          "receiver agent received a notification from provider \"%s\"" % provider_front.__drburi
         end
       rescue Timeout::Error
-        Log::Debug.presence_notification do
+        Log::Debug.notification do
           "receiver agent ignored the provider \"%s\" that seems to be something bad " % provider_front.__drburi
         end
       rescue DRb::DRbConnError, DRbPatch::ReplyReaderError => e
         reopen_socket
-        Log::Debug.presence_notification("tuple space receiver disconnected: %s" % e)
+        Log::Debug.notification("tuple space receiver disconnected: %s" % e)
       end
     end
   end

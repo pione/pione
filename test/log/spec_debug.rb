@@ -12,7 +12,7 @@ describe "Pione::Log::Debug" do
     Global.debug_system = false
     Global.debug_rule_engine = false
     Global.debug_communication = false
-    Global.debug_presence_notification = false
+    Global.debug_notification = false
     Global.debug_ignored_exception = false
   end
 
@@ -37,9 +37,9 @@ describe "Pione::Log::Debug" do
     @out.string.should.include("XYZ")
   end
 
-  it "should print presence_notification debug message" do
-    Global.debug_presence_notification = true
-    Log::Debug.presence_notification("XYZ")
+  it "should print notification debug message" do
+    Global.debug_notification = true
+    Log::Debug.notification("XYZ")
     sleep 0.1 while Global.system_logger.queued?
     @out.string.should.include("XYZ")
   end

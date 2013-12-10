@@ -50,7 +50,7 @@ module Pione
         spawner.option("--debug=ignored_exception") if Global.debug_ignored_exception
         spawner.option("--debug=rule_engine") if Global.debug_rule_engine
         spawner.option("--debug=communication") if Global.debug_communication
-        spawner.option("--debug=presence_notification") if Global.debug_presence_notification
+        spawner.option("--debug=notification") if Global.debug_notification
 
         # requisite options
         spawner.option("--parent-front", Global.front.uri)

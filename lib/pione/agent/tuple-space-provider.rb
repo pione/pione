@@ -41,17 +41,17 @@ module Pione
       # helper methods
       #
 
-      # Send presence notification packets to tuple space receivers.
+      # Send notification packets to tuple space receivers.
       def send_packet
         # open a UDP socket
         socket = UDPSocket.open
         socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
 
         # send broadcast packets
-        Global.presence_notification_addresses.each do |address|
+        Global.notification_addresses.each do |address|
           begin
-            Log::Debug.presence_notification do
-              "provider sends presence notification packet from %s to %s" % [@front.uri, address, Time.now]
+            Log::Debug.notification do
+              "provider sends notification packet from %s to %s" % [@front.uri, address, Time.now]
             end
             socket.send(@reference, 0, address.host, address.port)
           rescue => e

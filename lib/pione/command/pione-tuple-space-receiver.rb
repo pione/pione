@@ -14,9 +14,9 @@ module Pione
       end
 
       command_banner(Util::Indentation.cut(<<-TXT))
-        Run tuple space receiver process for receiving tuple space presence
-        notifier. This command is launched by other processes like pione-broker
-        normally, but you can force to start by calling with --no-parent option.
+        Run tuple space receiver process for receiving notification packet.
+        This command is launched by other processes like pione-broker normally,
+        but you can force to start by calling with --no-parent option.
       TXT
 
       command_front Front::TupleSpaceReceiverFront
@@ -30,11 +30,11 @@ module Pione
       use_option :communication_address
       use_option :parent_front
 
-      define_option(:presence_port) do |item|
-        item.long = "--presence-port=PORT"
-        item.desc = "set presence port number"
+      define_option(:notification_port) do |item|
+        item.long = "--notification-port=PORT"
+        item.desc = "set notification port number"
         item.action = lambda do |_, _, port|
-          Global.presence_port = port.to_i
+          Global.notification_port = port.to_i
         end
       end
 
@@ -51,12 +51,12 @@ module Pione
         spawner.option("--debug=ignored_exception") if Global.debug_ignored_exception
         spawner.option("--debug=rule_engine") if Global.debug_rule_engine
         spawner.option("--debug=communication") if Global.debug_communication
-        spawner.option("--debug=presence_notification") if Global.debug_presence_notification
+        spawner.option("--debug=notification") if Global.debug_notification
 
         # requisite options
         spawner.option("--parent-front", Global.front.uri)
         spawner.option("--communication-address", Global.communication_address)
-        spawner.option("--presence-port", Global.presence_port.to_s)
+        spawner.option("--notification-port", Global.notification_port.to_s)
 
         # optionals
         spawner.option("--color") if Global.color_enabled
