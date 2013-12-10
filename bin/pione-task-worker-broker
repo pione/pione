@@ -2,4 +2,4 @@
 # -*- ruby -*-
 
 require 'pione'
-Pione::Command::PioneBroker.run(ARGV)
+Pione::Command::PioneTaskWorkerBroker.run(ARGV)
