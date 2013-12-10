@@ -10,6 +10,7 @@ gems
 log.txt
 nohup.out
 test-report.txt
+*.log
 
 /input
 /output
