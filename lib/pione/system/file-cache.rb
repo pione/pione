@@ -10,13 +10,24 @@ module Pione
         @klass || SimpleCacheMethod
       end
 
-      # Set a file cache class.
+      # Set a file cache method.
       #
       # @param klass [Class]
       #   CacheMethod class
       # @return [void]
-      def self.set_cache_method(klass)
-        @klass = klass
+      def self.set_cache_method(file_cache_method)
+        case file_cache_method
+        when Symbol
+          if klass = @file_cache_method[file_cache_method]
+            @klass = klass
+          else
+            raise ArgumentError.new(file_cache_method)
+          end
+        when Class
+          @klass = file_cache_method
+        else
+          raise ArgumentError.new(file_cache_method)
+        end
       end
 
       # Return the singleton.
@@ -74,8 +85,35 @@ module Pione
         instance.clear
       end
 
+      # Register the file cache method with the name.
+      #
+      # @param name [Symbol]
+      #   the name of file cache method
+      # @param klass [FileCacheMethod]
+      #   file cache method class
+      # @return [void]
+      def self.register_file_cache_method(name, klass)
+        (@file_cache_method ||= {})[name] = klass
+      end
+
       # FileCache is an interface class of cache methods.
       class FileCacheMethod
+        # Name the file cache method class.
+        #
+        # @param name [String]
+        #   cache mtehod name
+        def self.set_name(name)
+          @name = name
+          FileCache.register_file_cache_method(name, self)
+        end
+
+        # Return the name.
+        #
+        # @return [String] the name
+        def self.name
+          @name
+        end
+
         # Get the cache path of the location.
         #
         # @param location [BasicLocation]
@@ -126,6 +164,8 @@ module Pione
 
       # SimpleCacheMethod is a simple cache method implementation.
       class SimpleCacheMethod < FileCacheMethod
+        set_name :simple
+
         # Creates a method.
         def initialize
           @table = {}
@@ -162,6 +202,31 @@ module Pione
 
         def clear
           @table.clear
+        end
+      end
+
+      # NoCacheMethod is a cache method for disabling file caching.
+      class NoCacheMethod < FileCacheMethod
+        set_name :no_cache
+
+        def get(location)
+          location
+        end
+
+        def put(src, location)
+          # do nothing
+        end
+
+        def sync(old_location, new_location)
+          # do nothing
+        end
+
+        def cached?(location)
+          false
+        end
+
+        def clear
+          # do nothing
         end
       end
     end

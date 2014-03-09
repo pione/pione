@@ -22,6 +22,8 @@ module Pione
       use_option :presence_notification_address
       use_option :task_worker
       use_option :features
+      use_option :file_cache_method
+      use_option :no_file_sliding
 
       option_default(:action_mode, :process_job)
 

@@ -26,6 +26,8 @@ module Pione
       use_option :my_ip_address
       use_option :parent_front
       use_option :features
+      use_option :file_cache_method
+      use_option :no_file_sliding
 
       define_option(:tuple_space_id) do |item|
         item.long = '--tuple-space-id=UUID'
@@ -54,8 +56,10 @@ module Pione
         spawner.option("--tuple-space-id", tuple_space_id)
         spawner.option("--features", features) if features
 
-        # optionals
+        # others
         spawner.option("--color") if Global.color_enabled
+        spawner.option("--file-cache-method", System::FileCache.cache_method.name.to_s)
+        spawner.option("--no-file-sliding") if Global.no_file_sliding
 
         spawner.spawn # this method returns child front
       end

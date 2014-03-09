@@ -24,6 +24,8 @@ module Pione
       use_option :features
       use_option :my_ip_address
       use_option :task_worker
+      use_option :file_cache_method
+      use_option :no_file_sliding
 
       validate_option do |option|
         unless option[:task_worker] > 0
