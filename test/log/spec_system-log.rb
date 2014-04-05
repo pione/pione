@@ -1,6 +1,6 @@
 require 'pione/test-helper'
 
-class TestLogger < Log::SystemLogger
+class TestLogger < Log::PioneSystemLogger
   forward :@out, :puts, :fatal
   forward :@out, :puts, :error
   forward :@out, :puts, :warn
@@ -71,6 +71,7 @@ describe "Pione::Log::PioneSystemLogger" do
   before do
     @out = StringIO.new
     @logger = Log::PioneSystemLogger.new(@out)
+    @logger.level = :debug
   end
 
   after do
@@ -83,7 +84,8 @@ end
 describe "Pione::Log::RubyStandardSystemLogger" do
   before do
     @out = StringIO.new
-    @logger = Log::RubyStandardSystemLogger.new(@out)
+    @logger = Rootage::RubyStandardLogger.new(@out)
+    @logger.level = :debug
   end
 
   behaves_like "system logger"
@@ -112,7 +114,7 @@ Logger::Syslog.const_set :SYSLOG, MockSyslog
 describe "Pione::Log::SyslogSystemLogger" do
   before do
     @out = MockSyslog.out
-    @logger = Log::SyslogSystemLogger.new
+    @logger = Rootage::SyslogLogger.new
   end
 
   after do

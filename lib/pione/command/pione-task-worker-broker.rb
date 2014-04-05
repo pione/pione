@@ -1,104 +1,85 @@
 module Pione
   module Command
     # `PioneTaskWorkerBroker` is a command that starts activity of task worker
-    # broker agent. This command will spawn +pione-task-worker+ and
-    # +pione-tuple-space-receiver+ commands.
+    # broker agent. This command will spawn `pione-task-worker`.
     class PioneTaskWorkerBroker < BasicCommand
       #
-      # basic informations
+      # informations
       #
 
-      toplevel true
-      command_name("pione-task-worker-broker") do |cmd|
-        "front: %s, task_worker: %s" % [Global.front.uri, cmd.option[:task_worker]]
-      end
-      command_banner "Run broker agent to launch task workers."
-      command_front Front::TaskWorkerBrokerFront
+      define(:toplevel, true)
+      define(:name, "pione-task-worker-broker")
+      define(:desc, "run task worker broker agent to launch task workers")
+      define(:front, Front::TaskWorkerBrokerFront)
+      define(:model, Model::TaskWorkerBrokerModel)
+      define(:notification_recipient, Notification::TaskWorkerBrokerRecipient) {|cmd, model|
+        [model, Global.notification_listener]
+      }
 
       #
       # options
       #
 
-      use_option :color
-      use_option :daemon
-      use_option :debug
-      use_option :features
-      use_option :communication_address
-      use_option :task_worker
-
-      validate_option do |option|
-        unless option[:task_worker] > 0
-          abort("error: no task worker resources")
-        end
+      option(CommonOption.color)
+      option(CommonOption.debug)
+      option(CommonOption.features)
+      option(CommonOption.communication_address)
+      option(CommonOption.task_worker_size) do |item|
+        item.type = :positive_integer
       end
-
-      #
-      # instance method
-      #
-
-      attr_reader :agent
 
       #
       # command lifecycle: setup phase
       #
 
-      setup_phase :timeout => 10
-      setup :agent
-      setup :tuple_space_receiver
-
-      # Create a broker agent.
-      def setup_agent
-        @agent = Agent::TaskWorkerBroker.new(task_worker_resource: option[:task_worker])
+      phase(:setup) do |item|
+        item.configure(:timeout => 10)
+        item << :task_worker_broker_agent
       end
 
-      # Spawn a pione-tuple-space-receiver process.
-      def setup_tuple_space_receiver
-        spawner = PioneTupleSpaceReceiver.spawn
-        spawner.when_terminated do
-          unless termination?
-            abort("%s is terminated because child tuple space receiver is dead." % command_name)
-          end
+      setup(:task_worker_broker_agent) do |item|
+        item.desc = "Create a task worker broker agent"
+
+        item.assign(:task_worker_broker_agent) do
+          Agent::TaskWorkerBroker.new(model)
         end
-        @tuple_space_receiver = spawner.child_front
-      rescue SpawnError =>e
-        abort(e.message)
       end
 
       #
-      # command lifecycle: action phase
+      # command lifecycle: execution phase
       #
 
-      execute :start_banner
-      execute :agent
-
-      # Declare pione-broker start.
-      def execute_start_banner
-        Log::SystemLog.info "pione-task-worker-broker starts the activity (#%s)" % Process.pid
+      phase(:execution) do |item|
+        item << :task_worker_broker_agent
       end
 
-      # Start task worker broker agent activity and wait it to be terminated.
-      def execute_agent
-        @agent.start
-        @agent.wait_until_terminated(nil)
+      execution(:task_worker_broker_agent) do |item|
+        item.desc = "Start agent activity of task worker broker"
+
+        item.process do
+          model[:task_worker_broker_agent].start!
+        end
       end
 
       #
       # command lifecycle: termination phase
       #
 
-      termination_phase :timeout => 15
-      terminate :child_process, :module => CommonCommandAction
-      terminate :agent
-      terminate :end_banner
-
-      # Terminate broker agent.
-      def terminate_agent
-        @agent.terminate if @agent and not(@agent.terminated?)
+      phase(:termination) do |item|
+        item.configure(:timeout => 15)
+        item << ProcessAction.terminate_children
+        item << :task_worker_broker_agent
       end
 
-      # Declare pione-broker end.
-      def terminate_end_banner
-        Log::SystemLog.info "pione-task-worker-broker ends the activity (status: %s, #%s)" % [Global.exit_status, Process.pid]
+      termination(:task_worker_broker_agent) do |item|
+        item.desc = "Terminate the agent"
+
+        item.process do
+          test(model[:task_worker_broker_agent])
+          test(not(model[:task_worker_broker_agent].terminated?))
+
+          model[:task_worker_broker_agent].terminate
+        end
       end
     end
   end

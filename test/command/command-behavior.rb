@@ -1,11 +1,7 @@
 shared "command" do
   it "should show a help message" do
-    res = TestHelper::Command.succeed(@cmd, ["--help"])
-    res.stdout.string.should.start_with "Usage"
-  end
-
-  it "should show a version message" do
-    res = TestHelper::Command.succeed(@cmd, ["--version"])
-    res.stdout.string.should.include Pione::VERSION
+    cmd = @cmd.new(["--help"])
+    res = Rootage::ScenarioTest.succeed(cmd)
+    res.stdout.string.size.should > 0
   end
 end

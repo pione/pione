@@ -1,23 +1,20 @@
 require 'pione/test-helper'
 
-TestHelper.scope do |this|
-  this::DIR = Location[File.dirname(__FILE__)] + ".." + "literate-action" + "data"
+describe Pione::Command::PioneActionList do
+  before do
+    @cmd = Pione::Command::PioneActionList
+    @dir = Location[File.dirname(__FILE__)] + ".." + "literate-action" + "data"
+  end
 
-  describe Pione::Command::PioneActionList do
-    before do
-      @cmd = Pione::Command::PioneActionList
-    end
+  it "should show action names" do
+    cmd = @cmd.new([(@dir + "D1.md").path.to_s])
+    res = Rootage::ScenarioTest.succeed(cmd)
+    res.stdout.string.chomp.should == "Name1\nName2"
+  end
 
-    it "should show action names" do
-      args = [(this::DIR + "D1.md").path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
-      res.stdout.string.chomp.should == "Name1\nName2"
-    end
-
-    it "should show action names in compact form" do
-      args = ["--compact", (this::DIR + "D1.md").path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
-      res.stdout.string.chomp.should == "Name1 Name2"
-    end
+  it "should show action names in compact form" do
+    cmd = @cmd.new(["--compact", (@dir + "D1.md").path.to_s])
+    res = Rootage::ScenarioTest.succeed(cmd)
+    res.stdout.string.chomp.should == "Name1 Name2"
   end
 end

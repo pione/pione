@@ -110,83 +110,83 @@ TestHelper.scope do |this|
 
     it "should remove all type files" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed(@cmd, [])
+      Rootage::ScenarioTest.succeed(@cmd.new([]))
       fset.temporary.size.should == 0
       fset.file_cache.size.should == 0
       fset.package_cache.size.should == 0
       fset.profile.size.should == 0
     end
 
-    it "should remove old than 1 days" do
+    it "should remove older files than 1 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed(@cmd, ["--older", "1"])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", "1"]))
       fset.temporary.size.should == 0
       fset.file_cache.size.should == 0
       fset.package_cache.size.should == 0
       fset.profile.size.should == 0
     end
 
-    it "should remove old than 2 days" do
+    it "should remove older files than 2 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed(@cmd, ["--older", "2"])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", "2"]))
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
       fset.profile.size.should == 1
     end
 
-    it "should remove old than 30 days" do
+    it "should remove older files than 30 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed(@cmd, ["--older", "30"])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", "30"]))
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
       fset.profile.size.should == 1
     end
 
-    it "should remove old than 31 days" do
+    it "should remove older files than 31 days" do
       fset = this::FakeFileSet.new
-      TestHelper::Command.succeed(@cmd, ["--older", "31"])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", "31"]))
       fset.temporary.size.should == 8
       fset.file_cache.size.should == 4
       fset.package_cache.size.should == 4
       fset.profile.size.should == 2
     end
 
-    it "should remove older than 1 days with iso8601 format" do
+    it "should remove older files than 1 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(1)
-      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", date.iso8601]))
       fset.temporary.size.should == 0
       fset.file_cache.size.should == 0
       fset.package_cache.size.should == 0
       fset.profile.size.should == 0
     end
 
-    it "should remove older than 2 days with iso8601 format" do
+    it "should remove older files than 2 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(2)
-      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", date.iso8601]))
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
       fset.profile.size.should == 1
     end
 
-    it "should remove older than 30 days with iso8601 format" do
+    it "should remove older files than 30 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(30)
-      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", date.iso8601]))
       fset.temporary.size.should == 4
       fset.file_cache.size.should == 2
       fset.package_cache.size.should == 2
       fset.profile.size.should == 1
     end
 
-    it "should remove older than 31 days with iso8601 format" do
+    it "should remove older files than 31 days with iso8601 format" do
       fset = this::FakeFileSet.new
       date = this.days_before(31)
-      TestHelper::Command.succeed(@cmd, ["--older", date.iso8601])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--older", date.iso8601]))
       fset.temporary.size.should == 8
       fset.file_cache.size.should == 4
       fset.package_cache.size.should == 4
@@ -194,7 +194,7 @@ TestHelper.scope do |this|
     end
 
     it "should remove temporary files" do
-      TestHelper::Command.succeed(@cmd, ["--type", "temporary"]) do |cmd, args|
+      Rootage::ScenarioTest.succeed(@cmd, ["--type", "temporary"]) do |cmd, args|
         fset = this::FakeFileSet.new
         cmd.run(args)
         fset.temporary.size.should == 0
@@ -205,7 +205,7 @@ TestHelper.scope do |this|
     end
 
     it "should remove file cache files" do
-      TestHelper::Command.succeed(@cmd, ["--type", "file-cache"]) do |cmd, args|
+      Rootage::ScenarioTest.succeed(@cmd, ["--type", "file-cache"]) do |cmd, args|
         fset = this::FakeFileSet.new
         cmd.run(args)
         fset.temporary.size.should == 8
@@ -216,7 +216,7 @@ TestHelper.scope do |this|
     end
 
     it "should remove package cache files" do
-      TestHelper::Command.succeed(@cmd, ["--type", "package-cache"]) do |cmd, args|
+      Rootage::ScenarioTest.succeed(@cmd, ["--type", "package-cache"]) do |cmd, args|
         fset = this::FakeFileSet.new
         cmd.run(args)
         fset.temporary.size.should == 8
@@ -227,7 +227,7 @@ TestHelper.scope do |this|
     end
 
     it "should remove profile files" do
-      TestHelper::Command.succeed(@cmd, ["--type", "profile"]) do |cmd, args|
+      Rootage::ScenarioTest.succeed(@cmd, ["--type", "profile"]) do |cmd, args|
         fset = this::FakeFileSet.new
         cmd.run(args)
         fset.temporary.size.should == 8

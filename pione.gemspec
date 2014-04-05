@@ -53,6 +53,8 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "lettercase", "~> 0.0.3"
   gem.add_runtime_dependency "rubyzip", "~> 1.0.0"
   gem.add_runtime_dependency "kramdown", "~> 1.2.0"
+  gem.add_runtime_dependency "os", "~> 0.9.6"
+  gem.add_runtime_dependency "sys-proctable", "~> 0.9.3"
 
   # for locations
   gem.add_runtime_dependency "dropbox-sdk", "~> 1.6.2"

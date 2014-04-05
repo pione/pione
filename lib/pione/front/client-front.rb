@@ -3,8 +3,8 @@ module Pione
     # ClientFront is a front interface for +pione-client+ command.
     class ClientFront < BasicFront
       # Create a new front.
-      def initialize
-        super(Global.client_front_port_range)
+      def initialize(cmd)
+        super(cmd, Global.client_front_port_range)
       end
 
       def set_tuple_space(tuple_space)

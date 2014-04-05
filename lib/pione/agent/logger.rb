@@ -9,8 +9,8 @@ module Pione
       attr_reader :output_location # output location
 
       # Create a logger agent.
-      def initialize(space, location)
-        super(space)
+      def initialize(tuple_space, location)
+        super(tuple_space)
         @log_id = Time.now.iso8601(3)
         @log_location = location.directory? ? location + "pione-process.log" : location
         @output_location = get_output_location

@@ -35,13 +35,13 @@ module Pione
       forward :@generator, :stream?
 
       # Initialize the agent.
-      def initialize(space, generator_name, input_location, stream)
-        super(space)
+      def initialize(tuple_space, generator_name, input_location, stream)
+        super(tuple_space)
         @base_location = base_location
 
         # generator method
         if generator_method = InputGenerator.generator_method[generator_name]
-          @generator = generator_method.new(space, input_location, stream)
+          @generator = generator_method.new(tuple_space, input_location, stream)
         else
           raise UnknownInputGeneratorMethod.new(generator_name)
         end

@@ -11,6 +11,7 @@ require 'pione/location/local-scheme'
 require 'pione/location/dropbox-scheme'
 require 'pione/location/broadcast-scheme'
 require 'pione/location/myftp-scheme'
+require 'pione/location/notification-scheme'
 
 # storage
 require 'pione/location/basic-location'

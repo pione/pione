@@ -5,8 +5,8 @@ module Pione
     class JobTerminator < TupleSpaceClient
       set_agent_type :job_terminator, self
 
-      def initialize(space, &b)
-        super(space)
+      def initialize(tuple_space, &b)
+        super(tuple_space)
         @action = b
       end
 

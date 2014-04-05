@@ -8,156 +8,187 @@ module Pione
       # basic informations
       #
 
-      toplevel true
-      command_name("pione-client") {|cmd| "front: %s" % Global.front.uri}
-      command_banner "Process PIONE document."
-      command_front Front::ClientFront
+      define(:toplevel, true)
+      define(:name, "pione-client")
+      define(:desc, "Process PIONE document")
+      define(:front, Front::ClientFront)
+
+      #
+      # arguments
+      #
+
+      argument(:location) do |item|
+        item.type     = :location
+        item.key_name = :package_location
+        item.desc     = "package location"
+        item.missing  = "There are no PIONE documents or packages."
+      end
 
       #
       # options
       #
 
-      use_option :debug
-      use_option :color
-      use_option :communication_address
-      use_option :notification_address
-      use_option :task_worker
-      use_option :features
-      use_option :parent_front, :requisite => false
+      option_pre(:prepare_model) do |item|
+        item.desc = "Prepare model"
+        item.assign(:params) {Lang::ParameterSetSequence.new}
+      end
 
-      define_option(:input_location) do |item|
-        item.short = '-i LOCATION'
-        item.long = '--input=LOCATION'
-        item.desc = 'set input directory'
-        item.value = proc do |uri|
-          begin
-            Location[uri]
-          rescue ArgumentError
-            raise OptionError.new("input location '%s' is bad" % uri)
+      option(CommonOption.debug)
+      option(CommonOption.color)
+      option(CommonOption.communication_address)
+      option(CommonOption.task_worker_size)
+      option(CommonOption.parent_front) do |item|
+        item.requisite = false
+      end
+      option(CommonOption.features) do |item|
+        item.default = Global.features + "& ^Interactive"
+      end
+      option(NotificationOption.notification_targets)
+      option(NotificationOption.notification_receivers)
+
+      option(:input_location) do |item|
+        item.type  = :location
+        item.short = '-i'
+        item.long  = '--input'
+        item.arg   = 'LOCATION'
+        item.desc  = 'Set input directory'
+      end
+
+      option(:output_location) do |item|
+        item.type  = :location
+        item.short = '-o'
+        item.long  = '--output'
+        item.arg   = 'LOCATION'
+        item.desc  = 'Set output directory'
+        item.init  = "local:./output/"
+
+        item.process do |location|
+          model[:output_location] = location
+          if location.scheme == "myftp"
+            model[:myftp] = URI.parse(uri).normalize
           end
+        end
+
+        item.exception(ArgumentError) do |e, val|
+          raise OptionError.new(cmd, "output location '%s' is bad in %s" % [uri, cmd.name])
         end
       end
 
-      define_option(:output_location) do |item|
-        item.short = '-o LOCATION'
-        item.long = '--output=LOCATION'
-        item.desc = 'set output directory'
-        item.default = Location["local:./output/"]
-        item.action = proc do |cmd, option, uri|
-          begin
-            option[:output_location] = Location[uri]
-            if URI.parse(uri).scheme == "myftp"
-              option[:myftp] = URI.parse(uri).normalize
-            end
-          rescue ArgumentError
-            raise OptionError.new("output location '%s' is bad in %s" % [uri, cmd.command_name])
-          end
-        end
+      option(:stream) do |item|
+        item.type    = :boolean
+        item.long    = '--stream'
+        item.arg     = '[BOOLEAN]'
+        item.desc    = 'Turn on/off stream mode'
+        item.init    = false
+        item.default = true
       end
 
-      define_option(:stream) do |item|
-        item.long = '--stream'
-        item.desc = 'turn on stream mode'
-        item.default = false
-        item.value = true
+      option(:request_task_worker) do |item|
+        item.type = :integer
+        item.long = '--request-task-worker'
+        item.arg  = 'N'
+        item.desc = 'Set request number of task workers'
+        item.init = 1
       end
 
-      define_option(:request_task_worker) do |item|
-        item.long = '--request-task-worker=N'
-        item.desc = 'set request number of task workers'
-        item.default = 1
-        item.value = proc {|n| n.to_i}
-      end
-
-      define_option(:params) do |item|
+      option(:params) do |item|
+        item.type = :param_set
         item.long = '--params="{Var:1,...}"'
-        item.desc = "set user parameters"
-        item.default = Lang::ParameterSetSequence.new
-        item.action = proc do |cmd, option, str|
-          begin
-            option[:params] = option[:params].merge(Util.parse_param_set(str))
-          rescue Parslet::ParseFailed => e
-            raise OptionError.new("invalid parameters \"%s\" in %s" % [str, cmd.command_name])
-          end
+        item.desc = "Set user parameters"
+
+        item.assign do |str|
+          model[:params].merge(Util.parse_param_set(str))
+        end
+
+        item.exception(Parslet::ParseFailed) do |e, str|
+          arg = {str: str, name: cmd.name, reason: e.message}
+          raise OptionError.new(cmd, 'Invalid parameters "%{str}" in %{name}: %{reason}' % arg)
         end
       end
 
-      define_option(:stand_alone) do |item|
-        item.long = '--stand-alone'
-        item.desc = 'turn on stand alone mode'
-        item.default = false
-        item.action = proc do |_, option|
-          option[:stand_alone] = true
-          option[:without_tuple_space_provider] = true
+      option(:stand_alone) do |item|
+        item.type    = :boolean
+        item.long    = '--stand-alone'
+        item.desc    = 'Turn on stand alone mode'
+        item.init    = false
+        item.default = true
+
+        item.process do |val|
+          model[:without_tuple_space_provider] = val
         end
       end
 
-      define_option(:dry_run) do |item|
-        item.long = '--dry-run'
-        item.desc = 'turn on dry run mode'
-        item.default = false
-        item.value = true
+      option(:dry_run) do |item|
+        item.long    = '--dry-run'
+        item.desc    = 'Turn on dry run mode'
+        item.type    = :boolean
+        item.init    = false
+        item.default = true
       end
 
-      option_item(:features).default = Global.features + "& ^Interactive"
-
-      define_option(:relay) do |item|
-        item.long = '--relay=URI'
-        item.desc = 'turn on relay mode and set relay address'
-        item.default = nil
-        item.value = proc {|uri| uri}
-      end
-
-      define_option(:rehearse) do |item|
-        item.long = '--rehearse [SCENARIO]'
+      option(:rehearse) do |item|
+        item.type = :string
+        item.long = '--rehearse'
+        item.arg  = '[SCENARIO]'
         item.desc = 'rehearse the scenario'
-        item.value = proc {|scenario_name| scenario_name || :anything}
+
+        item.assign {|val| val.size != 0 ? val : :anything}
       end
 
-      define_option(:timeout) do |item|
-        item.long = '--timeout SEC'
+      option(:timeout) do |item|
+        item.type = :positive_integer
+        item.long = '--timeout'
+        item.arg  = 'SEC'
         item.desc = 'timeout processing after SEC'
-        item.value = proc {|sec| sec.to_i}
       end
 
-      validate_option do |option|
-        unless option[:task_worker] > 0 or
-            (not(option[:stand_alone]) and option[:task_worker] == 0)
-          raise OptionError.new("option error: invalid resource size '%s'" % option[:task_worker])
-        end
-
-        if option[:stream] and option[:input_location].nil?
-          raise OptionError.new("option error: no input URI on stream mode")
+      option_post(:validate_task_worker_size) do |item|
+        item.desc = "Validate task worker size"
+        item.process do
+          test(model[:task_worker_size] == 0)
+          test(model[:stand_alone])
+          raise Rootage::OptionError.new(cmd, "option error: invalid task worker size '%s'" % model[:task_worker])
         end
       end
 
-      #
-      # instance methods
-      #
-
-      attr_reader :task_worker
-      attr_reader :tuple_space # client's tuple space
+      option_post(:stream_location) do |item|
+        item.desc = "Validate stream location"
+        item.process do
+          test(model[:stream])
+          test(model[:input_location].nil?)
+          raise Rootage::OptionError.new(cmd, "option error: no input URI on stream mode")
+        end
+      end
 
       #
       # command lifecycle: setup phase
       #
 
       # setup_phase :timeout => 20 # because of setup for dropbox...
-      setup :parent_process_connection, :module => CommonCommandAction
-      setup :variable
-      setup :ftp_server
-      setup :tuple_space
-      setup :output_location
-      setup :lang_environment
-      setup :package
-
-      def setup_variable
-        @spawner_threads = ThreadGroup.new
+      phase(:setup) do |seq|
+        seq << ProcessAction.connect_parent
+        seq << :spawner_thread_group
+        seq << :ftp_server
+        seq << :tuple_space
+        seq << :output_location
+        seq << :lang_environment
+        seq << :package
+        seq << :scenario
       end
 
-      # Setup FTP server with the URI.
-      def setup_ftp_server
-        if uri = option[:myftp]
+      setup(:spawner_thread_group) do |item|
+        item.desc = "Make a spawner thread group"
+
+        item.assign(:spawner_threads) {ThreadGroup.new}
+      end
+
+      setup(:ftp_server) do |item|
+        item.desc = "Setup FTP server with the URI"
+
+        item.process do
+          test(model[:myftp])
+
+          uri = model[:myftp]
           location = Location[uri.path]
           location.path.mkdir unless location.exist?
           if uri.userinfo
@@ -170,227 +201,316 @@ module Pione
         end
       end
 
-      def setup_output_location
+      setup(:tuple_space) do |item|
+        item.desc = "Make a tuple space"
+
+        item.assign(:tuple_space) do
+          TupleSpace::TupleSpaceServer.new(task_worker_resource: model[:request_task_worker])
+        end
+
+        item.process do
+          model[:front].set_tuple_space(model[:tuple_space])
+
+          # write tuples
+          model[:tuple_space].write(TupleSpace::ProcessInfoTuple.new('standalone', 'Standalone'))
+          model[:tuple_space].write(TupleSpace::DryRunTuple.new(model[:dry_run]))
+        end
+      end
+
+      setup(:output_location) do |item|
+        item.desc = "Setup output location"
+
         # setup location
-        case option[:output_location]
-        when Location::LocalLocation
-          option[:output_location] = Location[option[:output_location].path.expand_path]
-          option[:output_location].path.mkpath
-        when Location::DropboxLocation
-          Location::DropboxLocation.setup_for_cui_client(tuple_space_server)
+        item.process do
+          case model[:output_location]
+          when Location::LocalLocation
+            model[:output_location] = Location[model[:output_location].path.expand_path]
+            model[:output_location].path.mkpath
+          when Location::DropboxLocation
+            Location::DropboxLocation.setup_for_cui_client(tuple_space_server)
+          end
         end
 
         # mkdir
-        if not(option[:output_location].exist?)
-          option[:output_location].mkdir
+        item.process do
+          test(not(model[:output_location].exist?))
+          model[:output_location].mkdir
         end
 
         # set base location into tuple space
-        @tuple_space.set_base_location(option[:output_location])
-      end
-
-      def setup_tuple_space
-        # run tuple space server
-        @tuple_space = TupleSpace::TupleSpaceServer.new(task_worker_resource: option[:request_task_worker])
-        set_tuple_space(@tuple_space)
-        Global.front.set_tuple_space(@tuple_space)
-
-        # write tuples
-        write(TupleSpace::ProcessInfoTuple.new('standalone', 'Standalone'))
-        write(TupleSpace::DryRunTuple.new(option[:dry_run]))
-      end
-
-      def setup_lang_environment
-        @env = Lang::Environment.new
-      end
-
-      # Read a PIONE package. This setups package sharing and secnario handling also.
-      def setup_package
-        # package is not found
-        if @argv.first.nil?
-          abort("There are no PIONE documents or packages.")
+        item.process do
+          model[:tuple_space].set_base_location(model[:output_location])
         end
+      end
+
+      setup(:lang_environment) do |item|
+        item.desc = "Make an environment"
+
+        item.assign(:env) do
+          Lang::Environment.new
+        end
+      end
+
+      # This setups package sharing and secnario handling also.
+      setup(:package) do |item|
+        item.desc = "Read a PIONE package"
 
         # read package
-        @package_handler = Package::PackageReader.read(Location[@argv.first])
-        @env = @package_handler.eval(@env)
+        item.assign(:package_handler) do
+          Package::PackageReader.read(model[:package_location])
+        end
+
+        # merge the package into environment
+        item.assign(:env) do
+          model[:package_handler].eval(model[:env])
+        end
 
         # upload the package
-        @package_handler.upload(option[:output_location] + "package")
-
-        # check rehearse scenario
-        if option[:rehearse] and not(@package_handler.info.scenarios.empty?)
-          if @scenario_handler = @package_handler.find_scenario(option[:rehearse])
-            option[:input_location] = @scenario_handler.input
-          else
-            abort "the scenario not found: %s" % option[:rehearse]
-          end
+        item.process do
+          model[:package_handler].upload(model[:output_location] + "package")
         end
-      rescue Package::InvalidPackage => e
-        abort("Package error: " + e.message)
-      rescue Lang::ParserError => e
-        abort("Pione syntax error: " + e.message)
-      rescue Lang::LangError => e
-        abort("Pione language error: %s(%s)" % [e.message, e.class.name])
+
+        item.exception(Package::InvalidPackage) do |e|
+          cmd.abort("Package error: " + e.message)
+        end
+
+        item.exception(Lang::ParserError) do |e|
+          cmd.abort("Pione syntax error: " + e.message)
+        end
+
+        item.exception(Lang::LangError) do |e|
+          cmd.abort("Pione language error: %s(%s)" % [e.message, e.class.name])
+        end
       end
 
-      # Connect relay server.
-      def start_relay_connection
-        Global.relay_tuple_space_server = @tuple_space
-        @relay_ref = DRbObject.new_with_uri(option[:relay])
-        @relay_ref.__connect
-        if Global.show_communication
-          puts "you connected the relay: %s" % option[:relay]
+      setup(:scenario) do |item|
+        item.desc = "Read a scenario"
+
+        item.condition do
+          test(model[:rehearse])
+          test(not(model[:package_handler].info.scenarios.empty?))
         end
-        # watchdog for the relay server
-        Thread.start do
-          Global.relay_receiver.thread.join
-          abort("relay server disconnected: %s" % @relay_ref.__drburi)
+
+        item.assign(:scenario_handler) do
+          model[:package_handler].find_scenario(model[:rehearse])
         end
-      rescue DRb::DRbConnError => e
-        puts "You couldn't connect the relay server: %s" % @relay_ref.__drburi
-        puts "%s: %s" % [e.class, e.message]
-        caller.each {|line| puts "    %s" % line}
-        abort
-      rescue Relay::RelaySocket::AuthError
-        abort("You failed authentication to connect the relay server: %s" % @relay_ref.__drburi)
+
+        item.assign(:input_location) do
+          if model[:scenario_handler]
+            model[:scenario_handler].input
+          else
+            cmd.abort("the scenario not found: %s" % model[:rehearse])
+          end
+        end
       end
 
       #
       # command lifecycle: execution phase
       #
 
-      execute :job_terminator
-      execute :messenger
-      execute :logger
-      execute :input_generator
-      execute :tuple_space_provider
-      execute :task_worker
-      execute :job_manager
-      execute :check_rehearsal_result
-
-      def execute_job_terminator
-        @job_terminator = Agent::JobTerminator.start(@tuple_space) do |status|
-          if status.error?
-            abort("pione-client catched the error: %s" % status.message)
-          else
-            terminate
-          end
-        end
+      phase(:execution) do |seq|
+        seq << :job_terminator
+        seq << :messenger
+        seq << :logger
+        seq << :input_generator
+        seq << :tuple_space_provider
+        seq << :task_worker
+        seq << :job_manager
+        seq << :check_rehearsal_result
       end
 
-      # Start a messenger agent.
-      def execute_messenger
-        # select receiver
-        if option[:parent_front] and option[:parent_front][:message_log_receiver]
-          # delegate parent's receiver
-          receiver = option[:parent_front][:message_log_receiver]
-        else
-          # CUI receiver
-          receiver = Log::CUIMessageLogReceiver.new
-        end
+      execution(:job_terminator) do |item|
+        item.desc = "Start a job terminator"
 
-        @messenger = Agent::Messenger.new(@tuple_space, receiver).start
-      end
-
-      # Start a logger agent.
-      def execute_logger
-        @logger = Agent::Logger.start(@tuple_space, option[:output_location])
-      end
-
-      # Start an input generator agent.
-      def execute_input_generator
-        @input_generator =
-          Agent::InputGenerator.start(@tuple_space, :dir, option[:input_location], option[:stream])
-      end
-
-      # Spawn a tuple space provider.
-      def execute_tuple_space_provider
-        unless option[:without_tuple_space_provider]
-          thread = Thread.new do
-            begin
-              spawner = Command::PioneTupleSpaceProvider.spawn
-              spawner.when_terminated do
-                unless termination?
-                  abort("%s is terminated because child tuple space provider is maybe dead." % command_name)
-                end
-              end
-              @tuple_space_provider = spawner.child_front
-            rescue SpawnError => e
-              if termination?
-                Log::Debug.system(e.message)
-              else
-                abort(e.message)
-              end
-            end
-          end
-          @spawner_threads.add(thread)
-        end
-      end
-
-      # Start task workers. Task worker agents are in the process if the client
-      # is stand-alone mode, otherwise they are in new processes.
-      def execute_task_worker
-        @task_workers = [] # this is available in stand alone mode
-        option[:task_worker].times do
-          # we don't wait workers start up because of performance
-          thread = Thread.new do
-            if option[:stand_alone]
-              @task_workers << Agent::TaskWorker.start(@tuple_space, Global.expressional_features, @env)
+        item.assign(:job_terminator) do
+          Agent::JobTerminator.start(model[:tuple_space]) do |status|
+            if status.error?
+              cmd.abort("pione-client catched the error: %s" % status.message)
             else
-              begin
-                Command::PioneTaskWorker.spawn(Global.features, @tuple_space.uuid)
-              rescue SpawnError => e
-                if termination?
-                  Log::Debug.system(e.message)
-                else
-                  abort(e.message)
-                end
-              end
+              cmd.terminate
             end
           end
-          @spawner_threads.add(thread)
         end
       end
 
-      # Start a job manager agent.
-      def execute_job_manager
-        param_set = Lang::ParameterSet.new
+      execution(:messenger) do |item|
+        item.desc = "Start a messenger agent"
 
-        # use paramerter set on command option
-        if option[:params] and not(option[:params].pieces.empty?)
-          param_set = option[:params].pieces.first
-        end
+        item.assign(:messenger) do
+          # select receiver
+          if model[:parent_front] and model[:parent_front][:message_log_receiver]
+            # delegate parent's receiver
+            receiver = model[:parent_front][:message_log_receiver]
+          else
+            # CUI receiver
+            receiver = Log::CUIMessageLogReceiver.new
+          end
 
-        # use parameter set on scenario
-        if not(@scenario_handler.nil?) and @scenario_handler.info.textual_param_sets
-          param_set = Util.parse_param_set(@scenario_handler.info.textual_param_sets).pieces.first
+          Agent::Messenger.new(model[:tuple_space], receiver).start
         end
-
-        # start
-        @job_manager =
-          Agent::JobManager.start(@tuple_space, @env, @package_handler, param_set, option[:stream])
-        Timeout::timeout(option[:timeout]) do
-          @job_manager.wait_until_terminated(nil)
-        end
-      rescue Agent::JobError => e
-        abort(e.message)
-      rescue Timeout::Error => e
-        abort("Job timed out after %s sec." % option[:timeout])
       end
 
-      # Check rehearsal result.
-      def execute_check_rehearsal_result
-        return unless option[:rehearse] and not(@package_handler.info.scenarios.empty?)
-        return unless scenario = @package_handler.find_scenario(option[:rehearse])
+      # Launch a logger agent.
+      execution(:logger) do |item|
+        item.desc = "Start a logger agent"
 
-        errors = scenario.validate(option[:output_location])
-        if errors.empty?
-          Log::SystemLog.info "Rehearsal Result: Succeeded"
-        else
-          puts "Rehearsal Result: Failed"
-          errors.each {|error| puts "- %s" % error.to_s}
-          Global.exit_status = false
+        item.assign(:logger) do
+          Agent::Logger.start(model[:tuple_space], model[:output_location])
+        end
+      end
+
+      execution(:input_generator) do |item|
+        item.desc = "Start an input generator agent"
+
+        item.assign(:input_generator) do
+          Agent::InputGenerator.start(
+            model[:tuple_space], :dir, model[:input_location], model[:stream]
+          )
+        end
+      end
+
+      execution(:tuple_space_provider_spawner) do |item|
+        item.desc = "Spawn a tuple space provider"
+
+        item.assign(:tuple_space_provider) do
+          spawner = Command::PioneTupleSpaceProvider.spawn(cmd)
+          spawner.when_terminated do
+            if cmd.current_phase == :execution
+              cmd.abort("%s is terminated because child tuple space provider is maybe dead." % cmd.name)
+            end
+          end
+          spawner.child_front
+        end
+
+        item.exception(SpawnError) do |e|
+          if cmd.current_phase == :termination
+            Log::Debug.system(e.message)
+          else
+            cmd.abort(e)
+          end
+        end
+      end
+
+      execution(:tuple_space_provider) do |item|
+        item.desc = "Spawn a tuple space provider"
+
+        item.process do
+          test(not(model[:without_tuple_space_provider]))
+
+          thread = Thread.new do
+            cmd.phase(:execution).find_item(:tuple_space_provider_spawner).execute(cmd)
+          end
+          model[:spawner_threads].add(thread)
+        end
+      end
+
+      # Spawn a task worker command. This is used from `task_worker` action.
+      execution(:task_worker_spawner) do |item|
+        item.desc = "Spawn a task worker"
+
+        item.process do
+          Command::PioneTaskWorker.spawn(model, Global.features, model[:tuple_space].uuid)
+        end
+
+        item.exception(SpawnError) do |e|
+          if cmd.current_phase == :termination
+            # ignore the exception if the command is terminating
+            Log::Debug.system(e.message)
+          else
+            cmd.abort(e)
+          end
+        end
+      end
+
+      # Launch task worker agents in the client side. If the client is
+      # stand-alone mode, they are in this thread. Otherwise, in other OS
+      # process.
+      execution(:task_worker) do |item|
+        item.desc = "Start task workers"
+
+        item.assign(:task_workers) {Array.new}
+
+        # stand-alone mode
+        item.process do
+          test(model[:stand_alone])
+
+          # start task worker agents in this command
+          model[:task_worker_size].times do
+            model[:task_workers] << Agent::TaskWorker.start(
+              model[:tuple_space], Global.expressional_features, model[:env]
+            )
+          end
+        end
+
+        # distribution mode
+        item.process do
+          test(not(model[:stand_alone]))
+
+          # spawn task worker commands
+          model[:task_worker_size].times do
+            # we don't wait workers start up because of performance
+            thread = Thread.new do
+              cmd.phase(:execution).find_item(:task_worker_spawner).execute(cmd)
+            end
+            model[:spawner_threads].add(thread)
+          end
+        end
+      end
+
+      execution(:job_manager) do |item|
+        item.desc = "Start a job manager agent"
+
+        item.assign(:job_manager) do
+          param_set = Lang::ParameterSet.new
+
+          # from option
+          if model[:params] and not(model[:params].pieces.empty?)
+            param_set = model[:params].pieces.first
+          end
+
+          # from scenario
+          if not(model[:scenario_handler].nil?) and model[:scenario_handler].info.textual_param_sets
+            param_set = Util.parse_param_set(model[:scenario_handler].info.textual_param_sets).pieces.first
+          end
+
+          # start
+          Agent::JobManager.start(
+            model[:tuple_space], model[:env], model[:package_handler], param_set, model[:stream]
+          )
+        end
+
+        item.process do
+          Timeout::timeout(model[:timeout]) do
+            model[:job_manager].wait_until_terminated(nil)
+          end
+        end
+
+        item.exception(Agent::JobError) do |e|
+          cmd.abort(e)
+        end
+
+        item.exception(Timeout::Error) do |e|
+          cmd.abort("Job timed out after %{number} sec." % {number: model[:timeout]})
+        end
+      end
+
+      execution(:check_rehearsal_result) do |item|
+        item.desc = "Check rehearsal result"
+
+        item.process do
+          test(model[:rehearse])
+          test(not(model[:package_handler].info.scenarios.empty?))
+
+          pscenario = test(model[:package_handler].find_scenario(model[:rehearse]))
+
+          errors = pscenario.validate(model[:output_location])
+          if errors.empty?
+            Log::SystemLog.info "Rehearsal Result: Succeeded"
+          else
+            puts "Rehearsal Result: Failed"
+            errors.each {|error| puts "- %s" % error.to_s}
+            cmd.exit_status = false
+          end
         end
       end
 
@@ -398,73 +518,107 @@ module Pione
       # command lifecycle: termination phase
       #
 
-      termination_phase :timeout => 10
-      # kill task worker bootstrap threads before terminate child processes
-      terminate :process_job => :spawner_thread
-      terminate :child_process, :module => CommonCommandAction
-      terminate :process_job => :job_manager
-      terminate :process_job => :job_terminator
-      terminate :process_job => :task_worker
-      terminate :process_job => :input_generator
-      terminate :process_job => :logger
-      terminate :process_job => :messenger
-      terminate :process_job => :tuple_space
+      phase(:termination) do |seq|
+        seq.configure(:timeout => 10)
 
-      # Terminate spawner threads. This is needed for the case that requested
-      # job reaches end before task worker processes finish to be spawned.
-      def terminate_spawner_thread
-        @spawner_threads.list.each {|thread| thread.kill}
+        seq << :spawner_thread
+        seq << ProcessAction.terminate_children
+        seq << :job_manager
+        seq << :job_terminator
+        seq << :task_worker
+        seq << :input_generator
+        seq << :logger
+        seq << :messenger
+        seq << :tuple_space
+        seq << ProcessAction.disconnect_parent
       end
 
-      # Terminate job manager agent. Be careful that main thread of
-      # `pione-client` command waits to stop the job manager's chain thread, so
-      # pione-client has cannot terminate until the agent has terminated. we
-      # need to terminate it after job manager terminated.
-      def terminate_job_manager
-        if @job_manager and not(@job_manager.terminated?)
-          @job_manager.terminate
+      # This action is required for the case that the requested job reaches end
+      # before task workers finish to be spawned.
+      termination(:spawner_thread) do |item|
+        item.desc = "Terminate spawner threads"
+
+        item.process do
+          model[:spawner_threads].list.each {|thread| thread.kill}
         end
       end
 
-      # Terminate job terminator agent.
-      def terminate_job_terminator
-        if @job_terminator and not(@job_terminator.terminated?)
-          @job_terminator.terminate
+      # Be careful that main thread of `pione-client` command waits to stop the
+      # job manager's chain thread, so pione-client cannot terminate until the
+      # thread terminated.
+      termination(:job_manager) do |item|
+        item.desc = "Terminate job manager agent"
+
+        item.process do
+          test(model[:job_manager])
+          test(not(model[:job_manager].terminated?))
+
+          model[:job_manager].terminate
         end
       end
 
-      # Terminate task worker agents.
-      def terminate_task_worker
-        if option[:stand_alone] and @task_workers
-          @task_workers.each {|task_worker| task_worker.terminate}
+      termination(:job_terminator) do |item|
+        item.desc = "Terminate job terminator agent"
+
+        item.process do
+          test(model[:job_terminator])
+          test(not(model[:job_terminator].terminated?))
+
+          model[:job_terminator].terminate
         end
       end
 
-      # Terminate input generator agent.
-      def terminate_input_generator
-        if @input_generator and not(@input_generator.terminated?)
-          @input_generator.terminate
+      termination(:task_worker) do |item|
+        item.desc = "Terminate task worker agents"
+
+        item.process do
+          test(model[:stand_alone])
+          test(model[:task_workers])
+
+          model[:task_workers].each {|task_worker| task_worker.terminate}
         end
       end
 
-      # Terminate logger agent.
-      def terminate_logger
-        if @logger and not(@logger.terminated?)
-          @logger.terminate
+      termination(:input_generator) do |item|
+        item.desc = "Terminate input generator agent"
+
+        item.process do
+          test(model[:input_generator])
+          test(not(model[:input_generator].terminated?))
+
+          model[:input_generator].terminate
         end
       end
 
-      # Terminate messenger agent.
-      def terminate_messenger
-        if @messenger and not(@messenger.terminated?)
-          @messenger.terminate
+      termination(:logger) do |item|
+        item.desc = "Terminate logger agent"
+
+        item.process do
+          test(model[:logger])
+          test(not(model[:logger].terminated?))
+
+          model[:logger].terminate
         end
       end
 
-      # Terminate tuple space agent.
-      def terminate_tuple_space
-        if @tuple_space
-          @tuple_space.terminate
+      termination(:messenger) do |item|
+        item.desc = "Terminate messenger agent"
+
+        item.process do
+          test(model[:messenger])
+          test(not(model[:messenger].terminated?))
+
+          model[:messenger].terminate
+        end
+      end
+
+      termination(:tuple_space) do |item|
+        item.desc = "Terminate tuple space agent"
+
+        item.process do
+          test(model[:tuple_space])
+
+          model[:tuple_space].terminate
         end
       end
     end

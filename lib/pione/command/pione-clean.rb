@@ -7,77 +7,81 @@ module Pione
       # basic informations
       #
 
-      command_name "pione-clean"
-      command_banner "remove PIONE's temporary files, cache, and etc."
+      define(:name, "pione-clean")
+      define(:desc, "Remove PIONE's temporary files, cache, and etc")
 
       #
       # options
       #
 
-      use_option :debug
+      option CommonOption.debug
 
-      # --older option
-      define_option(:older) do |item|
-        item.long = '--older=DATE'
+      option(:older) do |item|
+        item.type = :string
+        item.long = '--older'
+        item.arg  = 'DATE'
         item.desc = 'remove file older than the date'
-        item.default = false
-        item.value = proc do |str|
-          begin
-            Date.iso8601(str)
-          rescue ArgumentError
-            begin
-              Date.today - str.to_i
-            rescue
-              abort("invalid value of older option: %s" % str)
-            end
-          end
-        end
       end
 
-      # --type option
-      define_option(:type) do |item|
-        item.long = '--type=NAME'
+      option(:type) do |item|
+        item.type = :string
+        item.range = ["all", "temporary", "file-cache", "package-cache", "profile"]
+        item.long = '--type NAME'
         item.desc = 'remove only files of the type'
-        item.default = false
-        item.value = proc do |name|
-          case name
-          when "temporary"
-            :temporary
-          when "file-cache"
-            :file_cache
-          when "package-cache"
-            :package_cache
-          when "profile"
-            :profile
-          else
-            abort("unknown type: %s" % str)
-          end
-        end
+        item.init = "all"
       end
 
       #
       # command lifecycle: setup phase
       #
 
-      setup :package_database
+      phase(:setup) do |item|
+        item << :older_date
+        item << :package_database
+      end
 
-      def setup_package_database
-        @db = Package::Database.load
+      setup(:older_date) do |item|
+        item.desc = "Setup older date"
+
+        item.assign(:older) do
+          Rootage::Normalizer.normalize(:date, model[:older])
+        end
+
+        item.exception do |e|
+          begin
+            model[:older] = Date.today - model[:older].to_i
+          rescue
+            cmd.abort("invalid value of older option: %s" % str)
+          end
+        end
+      end
+
+      setup(:package_database) do |item|
+        item.desc = "Load pakcage database"
+
+        item.assign(:db) do
+          Package::Database.load
+        end
       end
 
       #
       # command lifecycle: execution phase
       #
 
-      execute :remove_temporary
-      execute :remove_file_cache
-      execute :remove_package_cache
-      execute :remove_profile
+      phase(:execution) do |item|
+        item << :remove_temporary
+        item << :remove_file_cache
+        item << :remove_package_cache
+        item << :remove_profile
+      end
 
-      # Remove temporary files. This removes working files based on temporary
-      # directory's mtime.
-      def execute_remove_temporary
-        if type?(:temprary)
+      # This removes working files based on temporary directory's mtime.
+      execution(:remove_temporary) do |item|
+        item.desc = "Remove temporary files"
+
+        item.process do
+          test(type?("temprary"))
+
           Location[Global.my_temporary_directory].each_entry do |entry|
             if delete?(entry)
               FileUtils.remove_entry_secure(entry.path)
@@ -86,9 +90,13 @@ module Pione
         end
       end
 
-      # Remove file cache files. This removes it base on cache directory's mtime.
-      def execute_remove_file_cache
-        if type?(:file_cache)
+      # This removes file caches base on cache directory's mtime.
+      execution(:remove_file_cache) do |item|
+        item.desc = "Remove file cache files"
+
+        item.process do
+          test(type?("file-cache"))
+
           Location[Global.my_file_cache_directory].each_entry do |entry|
             if delete?(entry)
               FileUtils.remove_entry_secure(entry.path)
@@ -97,21 +105,28 @@ module Pione
         end
       end
 
-      # Remove package cache files.
-      def execute_remove_package_cache
-        if type?(:package_cache)
-          # remove PPG package
+      execution(:remove_package_cache) do |item|
+        item.desc = "Remove package cache files"
+
+        item.condition do
+          test(type?("package-cache"))
+        end
+
+        # remove PPG packages
+        item.process do
           Global.ppg_package_cache_directory.each_entry do |entry|
-            unless @db.has_digest?(Package::PackageFilename.parse(entry.basename).digest)
+            unless model[:db].has_digest?(Package::PackageFilename.parse(entry.basename).digest)
               if delete?(entry)
                 entry.delete
               end
             end
           end
+        end
 
-          # remove directory package
+        # remove directory packages
+        item.process do
           Global.directory_package_cache_directory.each_entry do |entry|
-            unless @db.has_digest?(entry.basename)
+            unless model[:db].has_digest?(entry.basename)
               if delete?(entry)
                 entry.delete
               end
@@ -120,9 +135,12 @@ module Pione
         end
       end
 
-      # Remove profile reports.
-      def execute_remove_profile
-        if type?(:profile)
+      execution(:remove_profile) do |item|
+        item.desc = "Remove profile reports"
+
+        item.process do
+          test(type?("profile"))
+
           Location[Global.profile_report_directory].each_entry do |entry|
             if delete?(entry)
               entry.delete
@@ -130,20 +148,23 @@ module Pione
           end
         end
       end
+    end
 
-      #
-      # helper methods
-      #
-
-      # Return true if the entry has the type.
+    # `PioneCleanContext` is a process context for `pione-clean-context`.
+    class PioneCleanContext < Rootage::CommandContext
+      # Return true if the type is matched.
       def type?(type)
-        option[:type].nil? or option[:type] == type
+        model[:type] == "all" or model[:type] == type
       end
 
       # Return true if the entry should be removed.
       def delete?(entry)
-        option[:older].nil? or option[:older] >= entry.mtime.to_date
+        not(entry.exist?) or model[:older].nil? or model[:older] >= entry.mtime.to_date
       end
     end
+
+    PioneClean.define(:process_context_class, PioneCleanContext)
+
+    PioneCommand.define_subcommand("clean", PioneClean)
   end
 end

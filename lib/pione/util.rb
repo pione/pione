@@ -25,4 +25,4 @@ require 'pione/util/free-thread-generator'   # generate threads free from thread
 require 'pione/util/parslet-extension'       # parslet extension
 require 'pione/util/pnml-compiler'           # toy compiler from PNML to PIONE
 require 'pione/util/last-time'               # get last time of locations
-
+require 'pione/util/boolean-value'           # object -> boolean

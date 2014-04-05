@@ -19,8 +19,8 @@ TestHelper.scope do |this|
 
     it "should build PIONE package with the package name" do
       output_location = Location[Temppath.mkdir]
-      args = ["-o", output_location.path.to_s, this::P1.path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new(["-o", output_location.path.to_s, this::P1.path.to_s])
+      res = Rootage::ScenarioTest.succeed(cmd)
       pkg = output_location + "P1.ppg"
       pkg.should.exist
       pkg.size.should > 0
@@ -28,8 +28,8 @@ TestHelper.scope do |this|
 
     it "should build PIONE package with the tag" do
       output_location = Location[Temppath.mkdir]
-      args = ["-o", output_location.path.to_s, this::P2.path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new(["-o", output_location.path.to_s, this::P2.path.to_s])
+      res = Rootage::ScenarioTest.succeed(cmd)
       pkg = output_location + "P2+v0.1.0.ppg"
       pkg.should.exist
       pkg.size.should > 0
@@ -37,8 +37,8 @@ TestHelper.scope do |this|
 
     it "should build PIONE package with the editor" do
       output_location = Location[Temppath.mkdir]
-      args = ["-o", output_location.path.to_s, this::P3.path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new(["-o", output_location.path.to_s, this::P3.path.to_s])
+      res = Rootage::ScenarioTest.succeed(cmd)
       pkg = output_location + "P3(keita.yamaguchi@gmail.com).ppg"
       pkg.should.exist
       pkg.size.should > 0
@@ -46,8 +46,8 @@ TestHelper.scope do |this|
 
     it "should build PIONE package with full name" do
       output_location = Location[Temppath.mkdir]
-      args = ["-o", output_location.path.to_s, this::P4.path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new(["-o", output_location.path.to_s, this::P4.path.to_s])
+      res = Rootage::ScenarioTest.succeed(cmd)
       pkg = output_location + "P4(keita.yamaguchi@gmail.com)+v0.1.0.ppg"
       pkg.should.exist
       pkg.size.should > 0

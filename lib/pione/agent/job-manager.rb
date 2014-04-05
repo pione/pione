@@ -10,13 +10,13 @@ module Pione
 
       attr_reader :package
 
-      def initialize(space, env, package, param_set, stream)
+      def initialize(tuple_space, env, package, param_set, stream)
         unless env.rule_get!(Lang::RuleExpr.new("Main"))
           raise JobError.new("Rule `Main` not found in the package.")
         end
 
-        super(space)
-        @space = space
+        super(tuple_space)
+        @tuple_space = tuple_space
         @env = env
         @package = package
         @param_set = param_set
@@ -61,7 +61,7 @@ module Pione
       end
 
       def transit_to_run
-        finder = RuleEngine::DataFinder.new(@space, 'root')
+        finder = RuleEngine::DataFinder.new(@tuple_space, 'root')
         list = Enumerator.new(finder, :find, :input, @rule_condition.inputs, @env).to_a
         if list.empty?
           user_message "error: no inputs"
@@ -70,7 +70,7 @@ module Pione
           # call root rule of the current package
           list.each do |env, inputs|
             package_id = @env.current_package_id
-            handler = RuleEngine.make(@space, @env, package_id, "Root", inputs, Lang::ParameterSet.new, 'root', nil)
+            handler = RuleEngine.make(@tuple_space, @env, package_id, "Root", inputs, Lang::ParameterSet.new, 'root', nil)
             handler.handle
           end
         end

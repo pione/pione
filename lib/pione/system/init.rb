@@ -25,6 +25,9 @@ module Pione
         unless Global.file_cache_directory.exist?
           Global.file_cache_directory.mkdir(0777)
         end
+
+        # create system logger for starting on free context
+        Global.system_logger
       end
     end
   end

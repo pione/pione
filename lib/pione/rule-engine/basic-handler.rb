@@ -57,9 +57,9 @@ module Pione
         # save domain log
         Log::DomainLog.new(self).save
 
-        # save domain info
-        domain_info_location = @working_directory ? @working_directory :@domain_location
-        System::DomainInfo.new(env.dumpable).write(domain_info_location)
+        # save a domain dump file
+        domain_dump_location = @working_directory ? @working_directory :@domain_location
+        System::DomainDump.new(env.dumpable).write(domain_dump_location)
 
         # execute the rule
         outputs = execute

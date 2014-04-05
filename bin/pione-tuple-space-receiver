@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-# -*- ruby -*-
-
-require 'pione'
-Pione::Command::PioneTupleSpaceReceiver.run(ARGV)

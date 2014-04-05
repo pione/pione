@@ -7,7 +7,7 @@ TestHelper.scope do |this|
     end
 
     it "should abort with no subcommands" do
-      TestHelper::Command.fail(@cmd, [])
+      Rootage::ScenarioTest.fail(@cmd.new([]))
     end
   end
 end

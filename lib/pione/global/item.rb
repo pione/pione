@@ -103,6 +103,7 @@ module Pione
         @init = nil
         @type = nil
         @updater = Proc.new {|val| val}
+        @post_action = nil
         @orig = nil
         @record = false
       end
@@ -158,10 +159,17 @@ module Pione
         @updater = b
       end
 
+      def post(&b)
+        @post_action = b
+      end
+
       # Update the item with the value.
       def update(val)
         @orig = val
         @value = @updater.call(ValueConverter.convert(@type, val))
+        if @post_action
+          @post_action.call(@value)
+        end
       end
     end
 

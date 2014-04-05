@@ -124,7 +124,7 @@ module Pione
         @__wait_until_after_cv__ = Hash.new {|h, k| h[k] = ConditionVariable.new}
       end
 
-      # Start agent activity.
+      # Start the agent activity.
       def start
         unless @chain_threads.list.empty?
           raise TerminationError.new(self, states)
@@ -138,6 +138,12 @@ module Pione
         @chain_threads.enclose
 
         return self
+      end
+
+      # Start the agent activity and wait the termination.
+      def start!
+        start
+        wait_until_terminated(nil)
       end
 
       # Fire the transtion with inputs.
@@ -278,9 +284,9 @@ module Pione
               end
             end
           rescue Exception => e
-            # throw the exception to command's runnning thread
-            if Global.command and Global.command.running_thread and Global.command.running_thread.alive?
-              Global.command.running_thread.raise e
+            # throw the exception to owner thread
+            if @__owner_thread__ and @__owner_thread__.alive?
+              @__owner_thread__.raise e
             else
               raise e
             end

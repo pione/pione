@@ -22,10 +22,22 @@ module Pione
       end
     end
 
-    define_external_item(:task_worker_balancer) do |item|
-      item.desc = "balancer method of `task-worker-broker`"
-      item.init = "Pione::Agent::EasyTaskWorkerBalancer"
+    define_external_item(:task_worker_provider) do |item|
+      item.desc = "provider method of `task-worker-broker`"
+      item.init = "Pione::TaskWorkerBroker::EasyProvider"
       item.define_updater {|val| eval(val)}
+    end
+
+    define_external_item(:task_worker_broker_short_sleep_time) do |item|
+      item.desc = "short sleep time for task worker broker"
+      item.init = 1
+      item.type = :positive_integer
+    end
+
+    define_external_item(:task_worker_broker_long_sleep_time) do |item|
+      item.desc = "long sleep time for task worker broker"
+      item.init = 3
+      item.type = :positive_integer
     end
   end
 end

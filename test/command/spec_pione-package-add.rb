@@ -18,35 +18,35 @@ TestHelper.scope do |this|
     end
 
     it "should add package with name to database" do
-      TestHelper::Command.succeed(@cmd, [this::P1.path.to_s])
+      Rootage::ScenarioTest.succeed(@cmd.new([this::P1.path.to_s]))
       db = Package::Database.load
       digest = db.find("P1", nil, nil)
       digest.size.should > 0
     end
 
     it "should add package with tag to database" do
-      res = TestHelper::Command.succeed(@cmd, [this::P2.path.to_s])
+      res = Rootage::ScenarioTest.succeed(@cmd.new([this::P2.path.to_s]))
       db = Package::Database.load
       digest = db.find("P2", nil, "v0.1.0")
       digest.size.should > 0
     end
 
     it "should add package with editor to database" do
-      res = TestHelper::Command.succeed(@cmd, [this::P3.path.to_s])
+      res = Rootage::ScenarioTest.succeed(@cmd.new([this::P3.path.to_s]))
       db = Package::Database.load
       digest = db.find("P3", "keita.yamaguchi@gmail.com", nil)
       digest.size.should > 0
     end
 
     it "should add package with full name to database" do
-      TestHelper::Command.succeed(@cmd, [this::P4.path.to_s])
+      Rootage::ScenarioTest.succeed(@cmd.new([this::P4.path.to_s]))
       db = Package::Database.load
       digest = db.find("P4", "keita.yamaguchi@gmail.com", "v0.1.0")
       digest.size.should > 0
     end
 
     it "should add tag alias" do
-      TestHelper::Command.succeed(@cmd, ["--tag", "TEST", this::P4.path.to_s])
+      Rootage::ScenarioTest.succeed(@cmd.new(["--tag", "TEST", this::P4.path.to_s]))
       db = Package::Database.load
       digest = db.find("P4", "keita.yamaguchi@gmail.com", "TEST")
       digest.size.should > 0

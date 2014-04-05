@@ -7,99 +7,117 @@ module Pione
       # basic informations
       #
 
-      command_name "pione-tuple-space-viewer"
-      command_banner "Show and search tuples in tuple spaces."
+      define(:name, "pione-tuple-space-viewer")
+      define(:desc, "Show and search tuples in tuple spaces")
 
       #
-      # command options
+      # requirements
       #
 
-      use_option :color
-      use_option :debug
+      require :pp
 
-      define_option(:identifiers) do |item|
+      #
+      # arguments
+      #
+
+      argument(:address) do |item|
+        item.type = :location
+        item.desc = "Tuple space address"
+        item.missing = "You should set tuple space address"
+      end
+
+      #
+      # options
+      #
+
+      option CommonOption.color
+      option CommonOption.debug
+
+      option(:identifiers) do |item|
+        item.type  = :string
         item.short = '-i'
-        item.long = '--identifier=NAME'
-        item.desc = 'show tuples that have the identifier'
-        item.default = []
-        item.values = lambda {|name| name}
+        item.long  = '--identifier'
+        item.arg   = 'NAME'
+        item.desc  = 'show tuples that have the identifier'
+
+        item.assign do |val|
+          (model[:identifiers] || []) << val
+        end
       end
 
-      define_option(:exclusions) do |item|
+      option(:exclusions) do |item|
+        item.type = :string
         item.short = '-e'
-        item.long = '--exclude=NAME'
+        item.long = '--exclude'
+        item.arg  = 'NAME'
         item.desc = 'exclude the tuple identifier'
-        item.default = []
-        item.values = lambda {|name| name}
+
+        item.assign do |val|
+          (model[:exclusions] || []) << val
+        end
       end
 
-      define_option(:package) do |item|
-        item.long = '--package=NAME'
+      option(:package) do |item|
+        item.type = :string
+        item.long = '--package'
+        item.arg  = 'NAME'
         item.desc = 'show tuples which domain has the package name'
-        item.value = lambda {|name| name}
       end
 
-      define_option(:rule) do |item|
-        item.long = '--rule=NAME'
+      option(:rule) do |item|
+        item.type = :string
+        item.long = '--rule'
+        item.arg  = 'NAME'
         item.desc = 'show tuples which domain has the rule name'
-        item.value = lambda {|name| name}
       end
 
-      define_option(:rule_path) do |item|
-        item.long = '--rule-path=NAME'
+      option(:rule_path) do |item|
+        item.type = :string
+        item.long = '--rule-path'
+        item.arg  = 'NAME'
         item.desc = 'show tuples which domain has the rule path'
-        item.value = lambda {|path| path}
       end
 
-      define_option(:data_name) do |item|
-        item.long = '--data-name=NAME'
+      option(:data_name) do |item|
+        item.type = :string
+        item.long = '--data-name'
+        item.arg  = 'NAME'
         item.desc = 'show tuples that has the the name'
-        item.value = lambda {|name| name}
       end
 
-      define_option(:bag_type) do |item|
-        item.long = '--type=TYPE'
+      option(:bag_type) do |item|
+        item.type = :symbol
+        item.long = '--type'
+        item.arg  = 'TYPE'
         item.desc = 'show the bag which has the type("bag", "read_waiter", or "take_waiter")'
-        item.value = lambda {|bag_type| bag_type.to_sym}
       end
 
-      define_option(:address) do |item|
-        item.long = '--client=ADDRESS'
+      option(:address) do |item|
+        item.type = :string
+        item.long = '--client '
+        item.arg  = 'ADDRESS'
         item.desc = 'druby address of target client process'
-        item.value = lambda {|address| address}
-      end
-
-      #
-      # instance methods
-      #
-
-      def initialize(*argv)
-        super
-        @tuple_spaces = []
       end
 
       #
       # command lifecycle: setup phase
       #
 
-      setup :pp
-      setup :tuple_space
-
-      def setup_pp
-        require 'pp'
+      phase(:setup) do |item|
+        item << :tuple_space
       end
 
-      def setup_tuple_space
-        unless @argv.size > 0
-          abort("you should set tuple space address")
+      setup(:tuple_space) do |item|
+        item.desc = "Setup tuple space"
+
+        item.assign(:tuple_space) do
+          get_tuple_space(model[:address])
         end
 
-        address = @argv.first
-        @tuple_spaces = get_tuple_space(address)
-
         # the tuple space not found
-        if @tuple_spaces.empty?
-          abort("No tuple space servers.")
+        item.process do
+          test(model[:tuple_spaces].empty?)
+          cmd.abort("No tuple space servers.")
         end
       end
 
@@ -107,40 +125,42 @@ module Pione
       # command lifecycle: execution phase
       #
 
-      execute :print_bag
-
-      def execute_print_bag
-        @tuple_spaces.each do |address, tuple_space_server|
-          puts "TupleSpaceServer: %s" % address.color(:red)
-          puts "-"*78
-          if option[:bag_type] == :bag or option[:bag_type].nil?
-            puts "*** bag ***"
-            show_bag(tuple_space_server, :bag)
-          end
-          if option[:bag_type] == :read_waiter or option[:bag_type].nil?
-            puts "*** read waiter ***"
-            show_bag(tuple_space_server, :read_waiter)
-          end
-          if option[:bag_type] == :take_waiter or option[:bag_type].nil?
-            puts "*** take waiter ***"
-            show_bag(tuple_space_server, :take_waiter)
-          end
-
-          # summary
-          puts "*** summary ***"
-          puts "task: %s" % tuple_space_server.task_size
-          puts "working: %s" % tuple_space_server.working_size
-          puts "finished: %s" % tuple_space_server.finished_size
-          puts "data: %s" % tuple_space_server.data_size
-        end
+      phase(:execution) do |item|
+        item << :print_bag
       end
 
-      #
-      # helper methods
-      #
+      execution(:print_bag) do |item|
+        item.desc = "Print tuples in bag"
 
-      private
+        item.process do
+          model[:tuple_spaces].each do |address, tuple_space_server|
+            puts "TupleSpaceServer: %s" % address.color(:red)
+            puts "-"*78
+            if option[:bag_type] == :bag or option[:bag_type].nil?
+              puts "*** bag ***"
+              show_bag(tuple_space_server, :bag)
+            end
+            if option[:bag_type] == :read_waiter or option[:bag_type].nil?
+              puts "*** read waiter ***"
+              show_bag(tuple_space_server, :read_waiter)
+            end
+            if option[:bag_type] == :take_waiter or option[:bag_type].nil?
+              puts "*** take waiter ***"
+              show_bag(tuple_space_server, :take_waiter)
+            end
 
+            # summary
+            puts "*** summary ***"
+            puts "task: %s" % tuple_space_server.task_size
+            puts "working: %s" % tuple_space_server.working_size
+            puts "finished: %s" % tuple_space_server.finished_size
+            puts "data: %s" % tuple_space_server.data_size
+          end
+        end
+      end
+    end
+
+    class PioneTupleSpaceViewerContext < Rootage::CommandContext
       # Get a tuple space from the address.
       def get_tuple_space(address)
         ref = DRbObject.new_with_uri(address)
@@ -183,6 +203,8 @@ module Pione
           puts res
         end
       end
+
+      PioneTupleSpaceViewer.define(:process_context_class, PioneTupleSpaceViewerContext)
     end
   end
 end

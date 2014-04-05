@@ -30,8 +30,8 @@ describe Pione::Command::PionePackageUpdate do
   end
 
   it "should update package info files" do
-    args = [@location.path.to_s]
-    TestHelper::Command.succeed(@cmd, args)
+    cmd = @cmd.new([@location.path.to_s])
+    Rootage::ScenarioTest.succeed(cmd)
     (@location + "pione-package.json").should.exist
     (@location + "pione-package.json").size.should > 0
     (@location + "scenario" + "pione-scenario.json").should.exist
@@ -42,8 +42,8 @@ describe Pione::Command::PionePackageUpdate do
     ptime = (@location + "pione-package.json").write("").mtime
     stime = (@location + "scenario" + "pione-scenario.json").write("").mtime
 
-    args = [@location.path.to_s]
-    TestHelper::Command.succeed(@cmd, args)
+    cmd = @cmd.new([@location.path.to_s])
+    Rootage::ScenarioTest.succeed(cmd)
 
     (@location + "pione-package.json").mtime.should == ptime
     (@location + "scenario" + "pione-scenario.json").mtime.should == stime
@@ -56,8 +56,8 @@ describe Pione::Command::PionePackageUpdate do
     # make sure mtime is different
     sleep 1
 
-    args = [@location.path.to_s, "--force"]
-    TestHelper::Command.succeed(@cmd, args)
+    cmd = @cmd.new([@location.path.to_s, "--force"])
+    Rootage::ScenarioTest.succeed(cmd)
 
     (@location + "pione-package.json").mtime.should > ptime
     (@location + "scenario" + "pione-scenario.json").mtime.should > stime

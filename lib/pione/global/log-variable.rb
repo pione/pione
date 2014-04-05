@@ -15,10 +15,11 @@ module Pione
     define_computed_item(:system_logger, [:system_logger_type]) do |item|
       item.desc = "system logger object"
       item.define_updater do |val|
-        if val.kind_of?(Log::SystemLogger)
+        case val
+        when Rootage::Logger
           val
         else
-          Log::SystemLogger.of(Global.system_logger_type).new
+          Rootage::Logger.of(Global.system_logger_type).new
         end
       end
     end

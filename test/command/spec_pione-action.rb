@@ -6,6 +6,6 @@ describe Pione::Command::PioneAction do
   end
 
   it "should fail with no subcommands" do
-    TestHelper::Command.fail(@cmd, [])
+    Rootage::ScenarioTest.fail(@cmd.new([]))
   end
 end

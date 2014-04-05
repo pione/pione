@@ -1,6 +1,7 @@
 module Pione
   module Agent
-    # TupleSpaceProvider is an agent that provides tuple space.
+    # TupleSpaceProvider is an agent that provides a URI of tuple space as
+    # notification messages.
     class TupleSpaceProvider < BasicAgent
       set_agent_type :tuple_space_provider, self
 
@@ -8,58 +9,39 @@ module Pione
       # instance methods
       #
 
-      def initialize(front)
+      # @param provider [URI]
+      #   URI of the tuple space
+      # @param targets [Array<URI>]
+      #   target URIs
+      def initialize(uri, targets=Global.notification_targets)
         super()
-        @front = front
-        @reference = Marshal.dump(/druby:\/\/(.*):(\d+)/.match(@front.uri)[2].to_i)
+        @targets = targets
+        @notification = Notification::Message.new(
+          "TUPLE_SPACE_PROVIDER", "TUPLE_SPACE", {"front" => uri}
+        )
       end
 
       #
       # agent activities
       #
 
-      define_transition :send_packet
+      define_transition :send_message
       define_transition :sleep
 
-      chain :init => :send_packet
-      chain :send_packet => :sleep
-      chain :sleep => :send_packet
+      chain :init => :send_message
+      chain :send_message => :sleep
+      chain :sleep => :send_message
 
       #
       # transitions
       #
 
-      def transit_to_send_packet
-        send_packet
+      def transit_to_send_message
+        Notification::Transmitter.transmit(@notification, @targets)
       end
 
       def transit_to_sleep
         sleep 5
-      end
-
-      #
-      # helper methods
-      #
-
-      # Send notification packets to tuple space receivers.
-      def send_packet
-        # open a UDP socket
-        socket = UDPSocket.open
-        socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1)
-
-        # send broadcast packets
-        Global.notification_addresses.each do |address|
-          begin
-            Log::Debug.notification do
-              "provider sends notification packet from %s to %s" % [@front.uri, address, Time.now]
-            end
-            socket.send(@reference, 0, address.host, address.port)
-          rescue => e
-            Log::SystemLog.warn("tuple space provider agent failed to send a packet: %s" % e.message)
-          end
-        end
-      ensure
-        socket.close
       end
     end
   end

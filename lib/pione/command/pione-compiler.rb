@@ -6,51 +6,70 @@ module Pione
       # basic informations
       #
 
-      command_name "pione-compiler"
-      command_banner "pione-compiler translates from PNML to PIONE document."
+      define(:name, "pione-compiler")
+      define(:desc, "translate from PNML to PIONE document")
+
+      #
+      # arguments
+      #
+
+      argument(:source) do |item|
+        item.type = :location
+        item.desc = "source PNML file"
+      end
 
       #
       # options
       #
 
-      use_option :debug
+      option CommonOption.debug
 
-      define_option(:name) do |item|
-        item.long = '--name=NAME'
-        item.desc = 'set package name'
-        item.value = proc {|val| val}
+      option(:name) do |item|
+        item.type = :string
+        item.long = '--name'
+        item.arg  = 'NAME'
+        item.desc = 'Set package name'
       end
 
-      define_option(:editor) do |item|
-        item.long = '--editor=NAME'
-        item.desc = 'set package editor'
-        item.value = proc {|val| val}
+      option(:editor) do |item|
+        item.type = :string
+        item.long = '--editor'
+        item.arg  = 'NAME'
+        item.desc = 'Set package editor'
       end
 
-      define_option(:tag) do |item|
-        item.long = '--tag=NAME'
-        item.desc = 'set package tag'
-        item.value = proc {|val| val}
-      end
-
-      #
-      # command lifecycle: execution phase
-      #
-
-      setup :source
-
-      def setup_source
-        @source = @argv.first
+      option(:tag) do |item|
+        item.type = :string
+        item.long = '--tag'
+        item.arg  = 'NAME'
+        item.desc = 'Set package tag'
       end
 
       #
       # command lifecycle: execution phase
       #
 
-      execute :compile_to_pnml
+      phase(:execution) do |item|
+        item << :compile_pnml
+        item << :print
+      end
 
-      def execute_compile_to_pnml
-        print Util::PNMLCompiler.new(Location[@source], option[:name], option[:editor], option[:tag]).compile
+      execution(:compile_pnml) do |item|
+        item.desc = "Compile from PNML to PIONE"
+
+        item.assign(:result) do
+          Util::PNMLCompiler.new(
+            model[:source], model[:name], model[:editor], model[:tag]
+          ).compile
+        end
+      end
+
+      execution(:print) do |item|
+        item.desc = "Print the PIONE document"
+
+        item.process do
+          print model[:result]
+        end
       end
     end
   end

@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+
+require 'pione'
+require 'pione/command/pione-interactive'
+Pione::Command::PioneInteractive.run(ARGV)

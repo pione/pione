@@ -115,7 +115,7 @@ class TestExceptionTransition < Agent::BasicAgent
   end
 end
 
-describe 'Pione::Agent::BasicAgent' do
+describe Pione::Agent::BasicAgent do
   describe 'agent type' do
     it 'should get the agent type' do
       TestAgentType.agent_type.should == :test_agent_type

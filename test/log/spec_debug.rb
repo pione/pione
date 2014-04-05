@@ -5,6 +5,7 @@ describe "Pione::Log::Debug" do
     @out = StringIO.new
     @orig = Global.system_logger
     Global.system_logger = Log::PioneSystemLogger.new(@out)
+    Global.system_logger.level = :debug
   end
 
   after do

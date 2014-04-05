@@ -1,0 +1,31 @@
+<%= cmd.name %> - <%= cmd.desc %>
+
+Usage:
+<%- if cmd.has_subcommands? -%>
+    <%= cmd.name %> <command>
+<%- else -%>
+    <%= cmd.name %> [options] <%= argument_list %>
+<%- end -%>
+<%- if not(cmd.has_subcommands?) and not(arguments.empty?) -%>
+
+Arguments:
+  <%- arguments.each do |arg| -%>
+    <%= argument_heading(arg).ljust(argument_heading_width) %>    <%= arg.desc %>
+  <%- end -%>
+<%- end -%>
+<%- if cmd.has_subcommands? -%>
+
+Commands:
+  <%- cmd.subcommand.each do |key, subcmd| -%>
+    <%= key.ljust(subcommand_heading_width) %>    <%= subcmd.desc %>
+  <%- end -%>
+<%- end -%>
+<%- if not(options.empty?) -%>
+
+Options:
+  <%- options.each do |opt| -%>
+    <%= option_heading(opt).ljust(option_heading_width) %>    <%= opt.desc %>
+  <%- end -%>
+<%- end -%>
+
+PIONE version <%= Pione::VERSION %>

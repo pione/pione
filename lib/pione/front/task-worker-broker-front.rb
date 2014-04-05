@@ -1,21 +1,18 @@
 module Pione
   module Front
-    # `TaskWorkerBrokerFront` is a front class for `pione-task-worker-broker` command.
+    # `TaskWorkerBrokerFront` is a front interface for
+    # `pione-task-worker-broker` command.
     class TaskWorkerBrokerFront < BasicFront
-      def initialize
-        super(Global.task_worker_broker_front_port_range)
+      # this receives notification messages
+      include NotificationRecipientInterface
+
+      def initialize(cmd)
+        super(cmd, Global.task_worker_broker_front_port_range)
+        set_recipient(Notification::TaskWorkerBrokerRecipient.new(cmd.model, uri, Global.notification_listener))
       end
 
       def get_tuple_space(tuple_space_id)
-        Global.command.agent.get_tuple_space(tuple_space_id)
-      end
-
-      def set_tuple_space_receiver(uri)
-        Global.set_tuple_space_receiver_uri(uri)
-      end
-
-      def update_tuple_space_list(list)
-        Global.command.agent.update_tuple_space_list(list)
+        @cmd.model.get_tuple_space(tuple_space_id)
       end
     end
   end

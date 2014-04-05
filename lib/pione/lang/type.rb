@@ -72,7 +72,7 @@ module Pione
       # @return [void]
       def check(data)
         unless match(data)
-          raise PioneTypeError.new(data, self)
+          raise LangTypeError.new(data, self)
         end
       end
 

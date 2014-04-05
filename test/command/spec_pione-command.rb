@@ -9,10 +9,10 @@ describe Pione::Command::PioneCommand do
   behaves_like "command"
 
   it "should call subcommand" do
-    TestHelper::Command.succeed(@cmd, ["val", "1 + 1"])
+    Rootage::ScenarioTest.succeed(@cmd.new(["val", "1 + 1"]))
   end
 
   it "should fail with unknown subcommand name" do
-    TestHelper::Command.fail(@cmd, ["abcdefghijk"])
+    Rootage::ScenarioTest.fail(@cmd.new(["abcdefghijk"]))
   end
 end

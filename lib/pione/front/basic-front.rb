@@ -8,8 +8,9 @@ module Pione
       attr_reader :uri   # front server's URI string
 
       # Creates a front server as druby's service.
-      def initialize(port)
-        @uri = start_service(port, {}) # port is number or range
+      def initialize(cmd, port)
+        @cmd = cmd
+        @uri = URI.parse(start_service(port, {})) # port is number or range
         @attr = {}
         @child = {}
         @child_lock = Mutex.new
@@ -38,7 +39,7 @@ module Pione
       #   child process's front URI
       # @return [void]
       def register_child(pid, front_uri)
-        unless Global.command.current_phase == :termination
+        unless @cmd.current_phase == :termination
           # register child's PID
           @child_lock.synchronize {@child[pid] = front_uri}
 
@@ -91,6 +92,10 @@ module Pione
         @child[pid]
       end
 
+      def system_logger
+        Log::SystemLog.logger
+      end
+
       # Terminate the front server. This method assumes to be not called from
       # other processes. Note that front servers have no responsibility of
       # killing child processes.
@@ -102,7 +107,7 @@ module Pione
       # process cannot tell its termination to caller, so it returns true
       # immediately.
       def terminate_command
-        Thread.new {Global.command.terminate}
+        Thread.new {@cmd.terminate}
         return true
       end
 
@@ -126,6 +131,12 @@ module Pione
         return DRb.uri
       rescue => e
         raise FrontServerError.new(self, e)
+      end
+
+      # This provides non blocking API.
+      def non_blocking(&b)
+        Thread.new {b.call}
+        return nil
       end
 
       # Build front server URI. Note that the address is configured by

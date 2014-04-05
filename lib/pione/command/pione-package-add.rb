@@ -4,57 +4,134 @@ module Pione
     # database in your system.
     class PionePackageAdd < BasicCommand
       #
-      # basic informations
+      # informations
       #
 
-      command_name "pione package add"
-      command_banner "add the package to package database"
+      define(:name, "add")
+      define(:desc, "Add the package to package database")
+
+      #
+      # arguments
+      #
+
+      argument(:target) do |item|
+        item.type = :location
+        item.desc = "the package to add in package database"
+        item.missing = "There are no PIONE documents or packages."
+      end
 
       #
       # options
       #
 
-      define_option(:tag) do |item|
-        item.long = "--tag=NAME"
-        item.desc = "specify tag name"
-        item.value = :as_is
+      option(:tag) do |item|
+        item.type = :string
+        item.long = "--tag"
+        item.arg  = "NAME"
+        item.desc = "Specify tag name"
       end
 
       #
       # command lifecycle: setup phase
       #
 
-      setup :target
+      phase(:setup) do |seq|
+        seq << :handler
+        seq << :db
+      end
 
-      # Check archiver target location.
-      def setup_target
-        abort("There are no PIONE documents or packages.")  if @argv.first.nil?
-        @target = @argv.first
+      setup(:handler) do |item|
+        item.desc = "Create a package handler and get informations"
+
+        # create a package handler
+        item.assign(:handler) do
+          Package::PackageReader.read(model[:target])
+        end
+
+        # get package name
+        item.assign(:name) do
+          model[:handler].info.name
+        end
+
+        # get package editor
+        item.assign(:editor) do
+          model[:handler].info.editor
+        end
+
+        # get package tag
+        item.assign(:tag) do
+          test(not(model[:tag]))
+          model[:handler].info.tag
+        end
+
+        # get package digest
+        item.assign(:digest) do
+          model[:handler].digest
+        end
+      end
+
+      setup(:db) do |item|
+        item.desc = "Setup package database"
+
+        item.assign(:db) do
+          Package::Database.load
+        end
       end
 
       #
       # command lifecycle: execution phase
       #
 
-      execute :add_package
+      phase(:execution) do |seq|
+        seq << :add_package
+        seq << :show
+      end
 
-      # Add the package to package database.
-      def execute_add_package
-        handler = Package::PackageReader.read(Location[@target])
-        tag = option[:tag] || handler.info.tag
-        db = Package::Database.load
-        db.add(name: handler.info.name, editor: handler.info.editor, tag: tag, digest: handler.digest)
-        db.save
+      execution(:add_package) do |item|
+        item.desc = "Add the package to package database"
+
+        item.process do
+          model[:db].add(
+            name:   model[:name],
+            editor: model[:editor],
+            tag:    model[:tag],
+            digest: model[:digest]
+          )
+          model[:db].save
+        end
+      end
+
+      execution(:show) do |item|
+        item.desc = "Show the result"
+
+        item.assign(:additions) do
+          Array.new
+        end
+
+        item.process do
+          test(model[:editor])
+          model[:additions] << "editor: %s" % model[:editor]
+        end
+
+        item.process do
+          test(model[:tag])
+          model[:additions] << "tag: %s" % model[:tag]
+        end
+
+        item.assign(:info) do
+          model[:additions].size > 0 ? "(" + model[:additions].join(", ") + ")" : ""
+        end
 
         # show log
-        args = []
-        args << "editor: " + handler.info.editor if handler.info.editor
-        args << "tag: " + handler.info.tag if handler.info.tag
-        _args = args.size > 0 ? "(" + args.join(", ") + ")" : ""
-        Log::SystemLog.info(
-          "package \"%s\"%s was added to package database" % [handler.info.name, _args]
-        )
+        item.process do
+          arg = {name: model[:name], info: model[:info]}
+          Log::SystemLog.info(
+            'Package "%{name}"%{info} was added to package database' % arg
+          )
+        end
       end
     end
+
+    PionePackage.define_subcommand("add", PionePackageAdd)
   end
 end

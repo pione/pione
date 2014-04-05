@@ -1,118 +1,33 @@
 module Pione
   module Log
-    module SystemLog
-      # Log the fatal message. This level is used when system will go to shutdown.
-      def self.fatal(msg, pos=caller(1).first)
-        Global.system_logger.fatal(msg, pos)
-      end
+    SystemLog = Rootage::Log
+    SystemLog.set_logger_block {Global.system_logger}
 
-      # Log the error message.
-      def self.error(msg, pos=caller(1).first)
-        Global.system_logger.error(msg, pos)
-      end
+    # `Log::PioneSystemLogger` is a PIONE original logger. This generates very
+    # colorful message for identifiability and detailed informations.
+    class PioneSystemLogger < Rootage::Logger
+      include DRbUndumped
 
-      # Log the warn message.
-      def self.warn(msg, pos=caller(1).first)
-        Global.system_logger.warn(msg, pos)
-      end
-
-      # Log the info message.
-      def self.info(msg, pos=caller(1).first)
-        Global.system_logger.info(msg, pos)
-      end
-
-      # Log the debug message.
-      def self.debug(msg, pos=caller(1).first)
-        Global.system_logger.debug(msg, pos)
-      end
-
-      def self.terminate
-        Global.system_logger.terminate
-      end
-    end
-
-    # SystemLogger is a interface for system logger implementations.
-    class SystemLogger
-      @logger = {} # logger class table
-
-      # Return logger class of the type.
-      def self.of(type)
-        @logger[type]
-      end
-
-      # Register the logger class with the type.
-      def self.register(type, logger_class)
-        @logger[type] = logger_class
-      end
-
-      # Return the log level.
-      def level
-        raise NotImplementedError
-      end
-
-      # Set the log level.
-      def level=(level)
-        raise NotImplementedError
-      end
-
-      # Log the fatal message.
-      def fatal(msg, pos=caller(1).first)
-        raise NotImplementedError
-      end
-
-      # Log the error message.
-      def error(msg, pos=caller(1).first)
-        raise NotImplementedError
-      end
-
-      # Log the warn message.
-      def warn(msg, pos=caller(1).first)
-        raise NotImplementedError
-      end
-
-      # Log the info message.
-      def info(msg, pos=caller(1).first)
-        raise NotImplementedError
-      end
-
-      # Log the debug message.
-      def debug(msg, pos=caller(1).first)
-        raise NotImplementedError
-      end
-
-      # Terminate the logger.
-      def terminate
-        raise NotImplementedError
-      end
-
-      # Return true if some messages are queued.
-      def queued?
-        raise NotImplementedError
-      end
-    end
-
-    # PioneSystemLogger is a PIONE original logger. This generates very colorful
-    # message for identifiability and detailed informations.
-    class PioneSystemLogger < SystemLogger
       attr_accessor :level
 
-      def initialize(out = $stdout)
+      def initialize(out = nil)
         @queue = Queue.new
         @thread = make_writer_thread
         @level = :info
+        @lock = Mutex.new
         @out = out
       end
 
-      def fatal(msg, pos=caller(1).first); push(:fatal, msg, pos); end
-      def error(msg, pos=caller(1).first); push(:error, msg, pos); end
-      def warn (msg, pos=caller(1).first); push(:warn , msg, pos); end
-      def info (msg, pos=caller(1).first); push(:info , msg, pos); end
-      def debug(msg, pos=caller(1).first); push(:debug, msg, pos); end
+      def fatal(msg, pos=caller(1).first, pid=Process.pid); push(:fatal, msg, pos, pid); end
+      def error(msg, pos=caller(1).first, pid=Process.pid); push(:error, msg, pos, pid); end
+      def warn (msg, pos=caller(1).first, pid=Process.pid); push(:warn , msg, pos, pid); end
+      def info (msg, pos=caller(1).first, pid=Process.pid); push(:info , msg, pos, pid); end
+      def debug(msg, pos=caller(1).first, pid=Process.pid); push(:debug, msg, pos, pid); end
 
       def terminate
         timeout(3) do
           while @thread.alive?
-            if @queue.empty?
+            if @queue.empty? and not(@lock.locked?)
               @thread.kill.join
               break
             else
@@ -121,11 +36,11 @@ module Pione
           end
         end
       rescue Timeout::Error
+        # don't use logger here because it is dead at this time
+        $stdout.puts("*** system logger has been terminated unsafety, some messages maybe lost ***")
+      ensure
         # kill writer thread
         @thread.kill if @thread.alive?
-
-        # don't use logger because it is dead at this time
-        @out.puts("*** system logger has been terminated unsafety, some messages maybe lost ***")
       end
 
       def queued?
@@ -134,75 +49,83 @@ module Pione
 
       private
 
+      def level_to_i(level)
+        case level
+        when :fatal; 0
+        when :error; 1
+        when :warn ; 2
+        when :info ; 3
+        when :debug; 4
+        end
+      end
+
       def make_writer_thread
         Thread.new do
           while true do
-            level, msg, pos, time = @queue.pop
-            print(level, msg, pos, time)
+            level, msg, pos, pid, time = @queue.pop
+            @lock.synchronize {print(level, msg, pos, pid, time)}
           end
         end
       end
 
-      def push(level, msg, pos)
-        @queue.push([level, msg, pos, Time.now])
+      def push(level, msg, pos, pid)
+        if level_to_i(@level) >= level_to_i(level)
+          @queue.push([level, msg, pos, pid, Time.now])
+        end
       end
 
       def color_of(level)
         Global.send("pione_system_logger_%s" % level)
       end
 
-      def print(level, msg, pos, time)
+      def print(level, msg, pos, pid, time)
+        out = @out || $stdout
         if level == :info
-          @out.puts "%s: %s" % [level.to_s.color(color_of(level)), msg]
+          out.puts "%s: %s" % [level.to_s.color(color_of(level)), msg]
         else
-          @out.puts "%s: %s [%s] (%s, #%s)" % [level.to_s.color(color_of(level)), msg, pos, time.iso8601(3), Process.pid]
+          out.puts "%s: %s [%s] (%s, #%s)" % [level.to_s.color(color_of(level)), msg, pos, time.iso8601(3), pid]
         end
       end
     end
 
-    # StandardSystemLogger is a logger using Ruby standard Logger.
-    class RubyStandardSystemLogger < SystemLogger
-      forward! :@logger, :level, :level=
+    class DelegatableLogger < Rootage::Logger
+      include DRbUndumped
 
-      def initialize(out = $stdout)
-        @logger = Logger.new(out)
+      def initialize(logger)
+        @logger = logger
       end
 
-      def fatal(msg, pos=caller(1).first); @logger.fatal(msg); end
-      def error(msg, pos=caller(1).first); @logger.error(msg); end
-      def warn (msg, pos=caller(1).first); @logger.warn(msg) ; end
-      def info (msg, pos=caller(1).first); @logger.info(msg) ; end
-      def debug(msg, pos=caller(1).first); @logger.debug(msg); end
+      def fatal(msg, pos=caller(1).first, pid=Process.pid)
+        send_message(msg, pos, pid) {@logger.fatal(msg, pos, pid)}
+      end
+
+      def error(msg, pos=caller(1).first, pid=Process.pid)
+        send_message(msg, pos, pid) {@logger.error(msg, pos, pid)}
+      end
+
+      def warn(msg, pos=caller(1).first, pid=Process.pid)
+        send_message(msg, pos, pid) {@logger.warn(msg, pos, pid)}
+      end
+
+      def info(msg, pos=caller(1).first, pid=Process.pid)
+        send_message(msg, pos, pid) {@logger.info(msg, pos, pid)}
+      end
+
+      def debug(msg, pos=caller(1).first, pid=Process.pid)
+        send_message(msg, pos, pid) {@logger.debug(msg, pos, pid)}
+      end
 
       def terminate
-        # ignore
+        @logger = nil
       end
 
-      def queued?
-        false
-      end
-    end
+      private
 
-    # SyslogSystemLogger is a logger using syslog("syslog-logger" gem).
-    class SyslogSystemLogger < SystemLogger
-      forward! :@logger, :level, :level=
-
-      def initialize
-        @logger = Logger::Syslog.new('pione')
-      end
-
-      def fatal(msg, pos=caller(1).first); @logger.fatal(msg); end
-      def error(msg, pos=caller(1).first); @logger.error(msg); end
-      def warn (msg, pos=caller(1).first); @logger.warn(msg) ; end
-      def info (msg, pos=caller(1).first); @logger.info(msg) ; end
-      def debug(msg, pos=caller(1).first); @logger.debug(msg); end
-
-      def terminate
-        # ignore
-      end
-
-      def queued?
-        false
+      def send_message(msg, pos, pid, &block)
+        block.call
+      rescue Exception
+        # print stdout directly if the logger fails
+        $stdout.puts("%s (%s) #%s" % [msg, pos, pid])
       end
     end
 
@@ -210,8 +133,6 @@ module Pione
     # register loggers
     #
 
-    SystemLogger.register(:pione, PioneSystemLogger)
-    SystemLogger.register(:ruby, RubyStandardSystemLogger)
-    SystemLogger.register(:syslog, SyslogSystemLogger)
+    Rootage::Logger.register(:pione, PioneSystemLogger)
   end
 end

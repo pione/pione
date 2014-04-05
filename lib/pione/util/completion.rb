@@ -14,7 +14,7 @@ module Pione
       def toplevel_commands(mod)
         mod.constants.map{|c| mod.const_get(c)}.select do |c|
           c.is_a?(Class) and c < Command::BasicCommand and c.toplevel?
-        end.map {|cmd| [cmd.command_name, cmd]}
+        end.map {|cmd| [cmd.name, cmd]}
       end
 
       def context
@@ -64,7 +64,7 @@ module Pione
       end
 
       def make_options(cmd)
-        items = cmd.option_definition.items
+        items = cmd.option_definition.table.values
         items.sort{|a, b| a.long <=> b.long}.map{|item| item.long}.join(" ")
       end
     end
@@ -96,11 +96,11 @@ module Pione
       end
 
       def make_subcommands(cmd)
-        cmd.subcommand.map{|key, val| '%s:"%s"' % [key, val.command_banner]}.join(" ")
+        cmd.subcommand.map{|key, val| '%s:"%s"' % [key, val.desc]}.join(" ")
       end
 
       def make_options(cmd)
-        items = cmd.option_definition.items
+        items = cmd.option_definition.table.values
         items.sort{|a, b| a.long <=> b.long}.map do |item|
           name = item.long.gsub("[", "\\[").gsub("]", "\\]")
           "\"%s[%s]\"" % [name, item.desc]

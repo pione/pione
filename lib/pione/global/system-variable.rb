@@ -14,20 +14,12 @@ module Pione
     # PIONE's process model
     #
 
-    # This is the command object of this process.
-    define_internal_item(:command) do |item|
-      item.desc = "command object of this process"
+    define_internal_item(:parent) do |item|
+      item.desc = "front of parent process"
     end
 
-    # This is the front server of this process.
-    define_internal_item(:front) do |item|
-      item.desc = "front object of this process"
-    end
-
-    # This process exits with this status.
-    define_internal_item(:exit_status) do |item|
-      item.desc = "exit status of this process"
-      item.init = true
+    define_internal_item(:notification_recipient) do |item|
+      item.desc = "notification recipient of this process"
     end
 
     #
@@ -37,6 +29,9 @@ module Pione
     define_external_item(:color_enabled) do |item|
       item.desc = "availability of color mode"
       item.init = true
+      item.post do |val|
+        Sickill::Rainbow.enabled = val
+      end
     end
 
     #

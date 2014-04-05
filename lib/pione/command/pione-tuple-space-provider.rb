@@ -1,44 +1,14 @@
 module Pione
   module Command
-    # PioneTupleSpaceProvider is for +pione-tuple-space-provider+ command.
+    # `PioneTupleSpaceProvider` is for `pione-tuple-space-provider` command.
     class PioneTupleSpaceProvider < BasicCommand
-      #
-      # command info
-      #
-
-      toplevel true
-
-      command_name "pione-tuple-space-provider" do |cmd|
-        "front: %s, parent: %s" % [Global.front.uri, cmd.option[:parent_front].uri]
-      end
-
-      command_banner(Util::Indentation.cut(<<-TXT))
-        Run tuple space provider process for sending notification package. This
-        command assumes to be launched by other processes like pione-client or
-        pione-relay.
-      TXT
-
-      command_front Pione::Front::TupleSpaceProviderFront do |cmd|
-        [cmd.option[:parent_front].get_tuple_space(nil)]
-      end
-
-      #
-      # options
-      #
-
-      use_option :color
-      use_option :debug
-      use_option :communication_address
-      use_option :parent_front
-      use_option :notification_address
-
       #
       # class methods
       #
 
       # Create a new process of tuple space provider command.
-      def self.spawn
-        spawner = Spawner.new(command_name)
+      def self.spawn(cmd)
+        spawner = Spawner.new(cmd.model, "pione-tuple-space-provider")
 
         # debug options
         spawner.option("--debug=system") if Global.debug_system
@@ -48,56 +18,92 @@ module Pione
         spawner.option("--debug=notification") if Global.debug_notification
 
         # requisite options
-        spawner.option("--parent-front", Global.front.uri)
-        spawner.option("--communication-address", Global.communication_address)
-        Global.notification_addresses.each do |address|
-          spawner.option("--notification-address", address.to_s)
+        spawner.option("--parent-front", cmd.model[:front].uri.to_s)
+        spawner.option("--communication-address", Global.communication_address.to_s)
+        Global.notification_targets.each do |address|
+          spawner.option("--notification-target", address.to_s)
         end
 
         # optionals
-        spawner.option("--color") if Global.color_enabled
+        spawner.option("--color", Global.color_enabled)
 
         spawner.spawn
       end
 
       #
-      # instance methods
+      # informations
       #
 
-      attr_reader :agent
+      define(:toplevel, true)
+      define(:name, "pione-tuple-space-provider")
+      define(:desc, "run tuple space provider agent")
+      define(:front, Pione::Front::TupleSpaceProviderFront)
+
+      #
+      # options
+      #
+
+      option CommonOption.color
+      option CommonOption.debug
+      option CommonOption.communication_address
+      option CommonOption.parent_front
+      option NotificationOption.notification_targets
 
       #
       # command lifecycle: setup phase
       #
 
-      setup_phase :timeout => 5
-      setup :parent_process_connection, :module => CommonCommandAction
+      phase(:setup) do |item|
+        item.configure(:timeout => 5)
+
+        item << ProcessAction.connect_parent
+      end
 
       #
       # command lifecycle: execution phase
       #
 
-      execute :agent
+      phase(:execution) do |item|
+        item << :start_agent
+        item << :wait_agent
+      end
 
-      # Start agent activity and wait the termination.
-      def execute_agent
-        @agent = Agent::TupleSpaceProvider.start(Global.front)
-        @agent.wait_until_terminated(nil)
+      execution(:start_agent) do |item|
+        item.desc = "Start an agent activity"
+
+        item.assign(:agent) do
+          Agent::TupleSpaceProvider.start(model[:front].uri)
+        end
+      end
+
+      execution(:wait_agent) do |item|
+        item.desc = "Wait agent to terminate"
+
+        item.process do
+          model[:agent].wait_until_terminated(nil)
+        end
       end
 
       #
       # command lifecycle: termination phase
       #
 
-      termination_phase :timeout => 5
-      terminate :agent
-      terminate :parent_process_connection, :module => CommonCommandAction
+      phase(:termination) do |seq|
+        seq.configure(:timeout => 5)
 
-      # Terminate agent.
-      def terminate_agent
-        if @agent and not(@agent.terminated?)
-          @agent.terminate
-          @agent.wait_until_terminated(nil)
+        seq << :agent
+        seq << ProcessAction.disconnect_parent
+      end
+
+      termination(:agent) do |item|
+        item.desc = "Terminate the agent"
+
+        item.process do
+          test(model[:agent])
+          test(model[:agent].terminated?)
+
+          model[:agent].terminate
+          model[:agent].wait_until_terminated(nil)
         end
       end
     end

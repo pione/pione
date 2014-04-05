@@ -3,6 +3,9 @@
 require 'bacon'
 require 'erb'
 require 'pione'
+require 'rootage/test-helper'
+
+Pione::Command.load_all
 
 Pione::Global.git_package_directory = Pione::Location[Temppath.mkdir]
 

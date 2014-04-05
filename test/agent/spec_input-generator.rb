@@ -60,7 +60,7 @@ describe "Pione::Agent::InputGenerator" do
         (dir + "3.c").create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start(tuple_space_server, :dir, dir, true)
+        generator = Agent[:input_generator].start(@tuple_space, :dir, dir, true)
         generator.should.stream
         generator.terminate
       end
@@ -78,7 +78,7 @@ describe "Pione::Agent::InputGenerator" do
         (dir + "3.c").create("33")
 
         # make generator and wait to finish it's job
-        generator = Agent[:input_generator].start(tuple_space_server, :dir, dir, true)
+        generator = Agent[:input_generator].start(@tuple_space, :dir, dir, true)
         generator.wait_until_before(:sleep)
 
         # check exceptions

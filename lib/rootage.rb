@@ -1,0 +1,20 @@
+require 'stringio'
+require 'erb'
+require 'timeout'
+require 'logger'
+
+require 'sys/proctable'
+require 'forwardablex'
+require 'structx'
+
+require 'rootage/exception'
+require 'rootage/log'
+require 'rootage/normalizer'
+require 'rootage/core'
+require 'rootage/action'
+require 'rootage/scenario'
+require 'rootage/argument'
+require 'rootage/option'
+require 'rootage/command'
+require 'rootage/help'
+

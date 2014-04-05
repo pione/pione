@@ -9,27 +9,27 @@ TestHelper.scope do |this|
     end
 
     it "should compile from PNML to PIONE document" do
-      TestHelper::Command.succeed(@cmd, [this::PNML1.path.to_s])
+      Rootage::ScenarioTest.succeed(@cmd.new([this::PNML1.path.to_s]))
     end
 
     it "should compile with package name" do
-      res = TestHelper::Command.succeed(@cmd, [this::PNML1.path.to_s, "--name", "Sequence"])
+      res = Rootage::ScenarioTest.succeed(@cmd.new([this::PNML1.path.to_s, "--name", "Sequence"]))
       res.stdout.string.should.include "@ PackageName :: \"Sequence\""
       res.stdout.string.should.not.include "@ Editor ::"
       res.stdout.string.should.not.include "@ Tag ::"
     end
 
     it "should compile with package name and editor" do
-      args = [this::PNML1.path.to_s, "--name", "Sequence", "--editor", "yamaguchi"]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new([this::PNML1.path.to_s, "--name", "Sequence", "--editor", "yamaguchi"])
+      res = Rootage::ScenarioTest.succeed(cmd)
       res.stdout.string.should.include "@ PackageName :: \"Sequence\""
       res.stdout.string.should.include "@ Editor :: \"yamaguchi\""
       res.stdout.string.should.not.include "@ Tag ::"
     end
 
     it "should compile with package name, editor, and tag" do
-      args = [this::PNML1.path.to_s, "--name", "Sequence", "--editor", "yamaguchi", "--tag", "test"]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new([this::PNML1.path.to_s, "--name", "Sequence", "--editor", "yamaguchi", "--tag", "test"])
+      res = Rootage::ScenarioTest.succeed(cmd)
       res.stdout.string.should.include "@ PackageName :: \"Sequence\""
       res.stdout.string.should.include "@ Editor :: \"yamaguchi\""
       res.stdout.string.should.include "@ Tag :: \"test\""

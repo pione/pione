@@ -7,53 +7,67 @@ module Pione
       # basic informations
       #
 
-      command_name "pione action list"
-      command_banner "list action names in document"
+      define(:name, "list")
+      define(:desc, "List action names in document")
+
+      #
+      # arguments
+      #
+
+      argument(:location) do |item|
+        item.type    = :location
+        item.desc    = "Location of literate action document"
+        item.missing = "There is no action document."
+      end
 
       #
       # options
       #
 
-      use_option :color
+      option CommonOption.color
 
-      define_option(:compact) do |item|
-        item.long = "--compact"
-        item.desc = "one line list"
+      option(:compact) do |item|
+        item.type    = :boolean
+        item.long    = "--compact"
+        item.desc    = "one-line list"
         item.default = false
-        item.value = lambda {|b| b}
-      end
-
-      #
-      # command lifecycle: setup phase
-      #
-
-      setup :target
-
-      # Setup location of literate action document and action name.
-      def setup_target
-        abort("There are no literate action documents or packages.")  if @argv[0].nil?
-        @location = Location[@argv[0]]
       end
 
       #
       # command lifecycle: execution phase
       #
 
-      execute :show_list
+      phase(:execution) do |item|
+        item << :get_names
+        item << :show_list
+      end
 
-      # Show list of action names.
-      def execute_show_list
-        names = LiterateAction::Document.load(@location).action_names.sort
-        if names.empty?
-          abort("no action names in %s" % @location.address)
-        else
-          if option[:compact]
-            puts names.join(" ")
+      execution(:get_names) do |item|
+        item.desc = "Get all action names"
+
+        item.assign(:names) do
+          LiterateAction::Document.load(model[:location]).action_names.sort
+        end
+
+        item.process do
+          test(model[:names].empty?)
+          cmd.abort("There are no action names in %{location}" % {location: model[:location]})
+        end
+      end
+
+      execution(:show_list) do |item|
+        item.desc = "Show list of action names"
+
+        item.process do
+          if model[:compact]
+            puts model[:names].join(" ")
           else
-            names.each {|name| puts name}
+            model[:names].each {|name| puts name}
           end
         end
       end
     end
+
+    PioneAction.define_subcommand("list", PioneActionList)
   end
 end

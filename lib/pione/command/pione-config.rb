@@ -1,129 +1,61 @@
 module Pione
   module Command
-    # PioneConfig is a command for configurating PIONE global variables.
+    # `PioneConfig` is a utility set for PIONE global variables.
     class PioneConfig < BasicCommand
       #
-      # basic informations
+      # informations
       #
 
-      command_name "pione-config"
-      command_banner "config PIONE global variables"
+      define(:name, "config")
+      define(:desc, "Configure PIONE global variables")
 
       #
-      # options
+      # requirements
       #
 
-      use_option :debug
+      require 'pione/command/pione-config-get'
+      require 'pione/command/pione-config-list'
+      require 'pione/command/pione-config-set'
+      require 'pione/command/pione-config-unset'
+    end
 
-      define_option(:get) do |item|
-        item.long = "--get NAME"
-        item.desc = "get the item value"
-        item.action = Proc.new {|cmd, option, name|
-          cmd.action_type = :get
-          option[:name] = name
-        }
-      end
+    # `PioneConfigOption` is a set of common options for `pione config`
+    # subcommands.
+    module PioneConfigOption
+      extend Rootage::OptionCollection
 
-      define_option(:list) do |item|
-        item.long = "--list"
-        item.desc = "list all"
-        item.action = Proc.new {|cmd, option, _|
-          cmd.action_type = :list
-        }
-      end
-
-      define_option(:set) do |item|
-        item.long = "--set NAME VALUE"
-        item.desc = "set the item"
-        item.action = Proc.new {|cmd, option, name|
-          cmd.action_type = :set
-          option[:name] = name
-        }
-      end
-
-      define_option(:unset) do |item|
-        item.long = "--unset NAME VALUE"
-        item.desc = "set the item"
-        item.action = Proc.new {|cmd, option, name|
-          cmd.action_type = :unset
-          option[:name] = name
-        }
-      end
-
-      define_option(:file) do |item|
+      define(:file) do |item|
         item.short = "-f"
-        item.long = "--file PATH"
-        item.desc = "config file path"
+        item.long = "--file"
+        item.arg  = "PATH"
+        item.desc = "path of config file"
+        item.type = :path
         item.default = Global.config_path
-        item.value = lambda {|filepath| Pathname.new(filepath)}
       end
+    end
 
-      #
-      # command lifecycle: execution phase
-      #
+    # `PioneConfigAction` is a set of common actions for `pione config`
+    # subcommands.
+    module PioneConfigAction
+      extend Rootage::ActionCollection
 
-      execute :get => :get_item
-      execute :list => :list_all
-      execute :set => :set_item
-      execute :unset => :unset_item
+      define(:load_config) do |item|
+        item.desc = "Load PIONE configuration"
 
-      def execute_get_item
-        name = option[:name]
-
-        if name
-          config = Global::Config.new(option[:file])
-          puts config.get(name)
-        else
-          abort("`--get` option requires an item name")
-        end
-      rescue Global::UnconfigurableVariableError
-        abort("'%s' is not a configurable item name." % name)
-      end
-
-      def execute_list_all
-        table = Hash.new
-
-        Global.item.each do |key, item|
-          if item.configurable?
-            table[key] = item.init
-          end
-        end
-
-        Global::Config.new(option[:file]).each do |name, value|
-          table[name] = value
-        end
-
-        table.keys.sort.each do |name|
-          puts "%s: %s" % [name, table[name]]
+        item.assign(:config) do
+          Global::Config.new(model[:file])
         end
       end
 
-      def execute_set_item
-        name = option[:name]
-        value = @argv.first
+      define(:save_config) do |item|
+        item.desc = "Save the configuration"
 
-        if name
-          config = Global::Config.new(option[:file])
-          config.set(name, value)
-          config.save(option[:file])
-        else
-          abort("`--set` option requires an item name")
-        end
-      rescue Global::UnconfigurableVariableError
-        abort("'%s' is not a configurable item name." % name)
-      end
-
-      def execute_unset_item
-        name = option[:name]
-
-        if name
-          global = Global::Config.new(option[:file])
-          global.unset(name)
-          global.save(option[:file])
-        else
-          abort("`--unset` option requires an item name")
+        item.process do
+          model[:config].save(model[:file])
         end
       end
     end
+
+    PioneCommand.define_subcommand("config", PioneConfig)
   end
 end

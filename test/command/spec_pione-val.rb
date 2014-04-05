@@ -1,4 +1,5 @@
 require 'pione/test-helper'
+require 'pione/command/pione-val'
 require_relative 'command-behavior'
 
 describe Pione::Command::PioneVal do
@@ -9,14 +10,15 @@ describe Pione::Command::PioneVal do
   behaves_like "command"
 
   it "should get value" do
-    res = TestHelper::Command.succeed(@cmd, ["1 + 1"])
+    cmd = @cmd.new(["1 + 1"])
+    res = Rootage::ScenarioTest.succeed(cmd)
     res.stdout.string.chomp.should == "2"
   end
 
   it "should get variable from domain info" do
     domain_info = Location[File.dirname(__FILE__)] + "data" + "pione-val.domain.dump"
-    args = ["$O[1]", "--domain-info", domain_info.path.to_s]
-    res = TestHelper::Command.succeed(@cmd, args)
+    cmd = @cmd.new(["$O[1]", "--domain-dump", domain_info.path.to_s])
+    res = Rootage::ScenarioTest.succeed(cmd)
     res.stdout.string.chomp.should == "message.txt"
   end
 end

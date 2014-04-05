@@ -19,13 +19,13 @@ TestHelper.scope do |this|
     end
 
     it "should show parameters list of the package" do
-      res = TestHelper::Command.succeed(@cmd, ["example/HelloWorld/HelloWorld.pione"])
+      res = Rootage::ScenarioTest.succeed(@cmd.new(["example/HelloWorld/HelloWorld.pione"]))
       res.stdout.string.size.should > 0
     end
 
     it "should show basic parameters" do
-      args = [(this::DIR + "BasicParameters.pione").path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new([(this::DIR + "BasicParameters.pione").path.to_s])
+      res = Rootage::ScenarioTest.succeed(cmd)
       out = res.stdout.string
       out.should.include "B1"
       out.should.include "B2"
@@ -39,8 +39,8 @@ TestHelper.scope do |this|
     end
 
     it "should show basic parameters only without `--advanced` option" do
-      args = [(this::DIR + "AdvancedParameters.pione").path.to_s]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new([(this::DIR + "AdvancedParameters.pione").path.to_s])
+      res = Rootage::ScenarioTest.succeed(cmd)
       out = res.stdout.string
       out.should.include "B1"
       out.should.not.include "B2"
@@ -54,8 +54,8 @@ TestHelper.scope do |this|
     end
 
     it "should show advanced parameters with `--advanced` option" do
-      args = [(this::DIR + "AdvancedParameters.pione").path.to_s, "--advanced"]
-      res = TestHelper::Command.succeed(@cmd, args)
+      cmd = @cmd.new([(this::DIR + "AdvancedParameters.pione").path.to_s, "--advanced"])
+      res = Rootage::ScenarioTest.succeed(cmd)
       out = res.stdout.string
       out.should.include "B1"
       out.should.include "B2"

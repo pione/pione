@@ -3,9 +3,9 @@ require 'pione/test-helper'
 describe Pione::Agent::Messenger do
   before do
     @io = StringIO.new("", "w+")
-    tuple_space_server = TestHelper::TupleSpace.create(self)
+    tuple_space = TestHelper::TupleSpace.create(self)
     receiver = Log::CUIMessageLogReceiver.new(@io)
-    @messenger = Agent::Messenger.new(tuple_space_server, receiver)
+    @messenger = Agent::Messenger.new(tuple_space, receiver)
   end
 
   after do

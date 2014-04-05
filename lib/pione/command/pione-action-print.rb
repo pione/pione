@@ -6,65 +6,74 @@ module Pione
       # basic informations
       #
 
-      command_name "pione action print"
-      command_banner "print action contents"
+      define(:name, "print")
+      define(:desc, "Print action contents")
+
+      #
+      # arguments
+      #
+
+      argument(:location) do |item|
+        item.type    = :location
+        item.missing = "There are no action documents or packages."
+      end
+
+      argument(:name) do |item|
+        item.type    = :string
+        item.missing = "There is no action name."
+      end
 
       #
       # options
       #
 
-      use_option :color
-
-      define_option(:domain) do |item|
-        item.long = "--domain"
-        item.desc = "use the domain information file"
-        item.default = Location["./domain.dump"]
-        item.value = lambda {|b| b}
-      end
+      option CommonOption.color
+      option CommonOption.debug
+      option CommonOption.domain_dump_location
 
       #
       # command lifecycle: setup phase
       #
 
-      setup :source
-      setup :action_name
-      setup :domain
-
-      # Setup source location.
-      def setup_source
-        abort("There are no literate action documents or packages.")  if @argv[0].nil?
-        @location = Location[@argv[0]]
-      end
-
-      # Setup action name.
-      def setup_action_name
-        abort("There is no action name.") if @argv[1].nil?
-        @name = @argv[1]
-      end
-
-      # Load a domain information file.
-      def setup_domain
-        if option[:domain].exist?
-          @domain_info = System::DomainInfo.read(option[:domain])
-        end
+      phase(:setup) do |seq|
+        seq << CommonAction.load_domain_dump
       end
 
       #
       # command lifecycle: execution phase
       #
 
-      execute :print
+      phase(:execution) do |seq|
+        seq << :find_action
+        seq << :print
+      end
 
-      # Print the action contents.
-      def execute_print
-        if action = LiterateAction::Document.load(@location).find(@name)
-          puts action.textize(@domain_info)
-        else
-          abort("The action not found.")
+      execution(:find_action) do |item|
+        item.desc = "Find the action from the document"
+
+        item.assign(:action) do
+          LiterateAction::Document.load(model[:location]).find(model[:name])
         end
-      rescue Location::NotFound => e
-        abot(e.message)
+
+        item.process do
+          test(not(model[:action]))
+          cmd.abort("Action not found.")
+        end
+
+        item.exception(Location::NotFound) do |e|
+          cmd.abort(e)
+        end
+      end
+
+      execution(:print) do |item|
+        item.desc = "Print the action contents"
+
+        item.process do
+          puts model[:action].textize(model[:domain_dump])
+        end
       end
     end
+
+    PioneAction.define_subcommand("print", PioneActionPrint)
   end
 end

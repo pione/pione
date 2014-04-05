@@ -21,6 +21,11 @@ then
 		esac;;
 	    clean) _pione_clean_options;;
 	    config) _pione_config_options;;
+	    diagnosis)
+		case $name3 in
+		    notification) _pione_diagnosis_notification_options;;
+		    *) _pione_diagnosis_subcommands;;
+		esac;;
 	    log) _pione_log_options;;
 	    package)
 		case $name3 in
@@ -36,7 +41,7 @@ then
     }
 
     _pione_subcommands() {
-        list=(action:"execute an action in literate action document" clean:"remove PIONE's temporary files, cache, and etc." config:"config PIONE global variables" log:"View and convert PIONE log." package:"PIONE package utility." val:"Get the evaluation result value of the PIONE expression.") _describe -t common-commands 'common commands' list;
+        list=(action:"execute an action in literate action document" clean:"remove PIONE's temporary files, cache, and etc." config:"config PIONE global variables" diagnosis:"PIONE diagnosis tools" log:"View and convert PIONE log." package:"PIONE package utility." val:"Get the evaluation result value of the PIONE expression.") _describe -t common-commands 'common commands' list;
     }
 
     _pione_action_subcommands() {
@@ -44,7 +49,7 @@ then
     }
 
     _pione_action_exec_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--directory PATH[execute in the PATH]" "--domain[use the domain information file]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--directory PATH[execute in the PATH]" "--domain[use the domain information file]" '*:file:_files' && return 0;
     }
 
     _pione_action_list_options() {
@@ -56,15 +61,23 @@ then
     }
 
     _pione_clean_options() {
-        _arguments -s -S "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--older=DATE[remove file older than the date]" "--type=NAME[remove only files of the type]" '*:file:_files' && return 0;
+        _arguments -s -S "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--older=DATE[remove file older than the date]" "--type=NAME[remove only files of the type]" '*:file:_files' && return 0;
     }
 
     _pione_config_options() {
-        _arguments -s -S "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--file PATH[config file path]" "--get NAME[get the item value]" "--list[list all]" "--set NAME VALUE[set the item]" "--unset NAME VALUE[set the item]" '*:file:_files' && return 0;
+        _arguments -s -S "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--file PATH[config file path]" "--get NAME[get the item value]" "--list[list all]" "--set NAME VALUE[set the item]" "--unset NAME VALUE[set the item]" '*:file:_files' && return 0;
+    }
+
+    _pione_diagnosis_subcommands() {
+        list=(notification:"a diagnosis tool for notification") _describe -t common-commands 'common commands' list;
+    }
+
+    _pione_diagnosis_notification_options() {
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--notification-receiver ADDR[receiver address that notifications are received at]" "--notification-target ADDR[target address that notifications are sent to]" "--timeout N[timeout after N second]" "--type NAME[sender, receiver, or both]" '*:file:_files' && return 0;
     }
 
     _pione_log_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--agent-activity\[=TYPE\][output only agent activity log]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--format=(XES|JSON|HTML)[set format type]" "--location=LOCATION[set log location of PIONE process]" "--log-id=ID[target log id]" "--rule-process[generate rule process log]" "--task-process[generate task process log]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--agent-activity\[=TYPE\][output only agent activity log]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--format=(XES|JSON|HTML)[set format type]" "--location=LOCATION[set log location of PIONE process]" "--log-id=ID[target log id]" "--rule-process[generate rule process log]" "--task-process[generate task process log]" '*:file:_files' && return 0;
     }
 
     _pione_package_subcommands() {
@@ -76,19 +89,19 @@ then
     }
 
     _pione_package_build_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--hash-id=HASH[specify git hash id]" "--output=LOCATION[output file or directory location]" "--tag=NAME[specify tag name]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--hash-id=HASH[specify git hash id]" "--output=LOCATION[output file or directory location]" "--tag=NAME[specify tag name]" '*:file:_files' && return 0;
     }
 
     _pione_package_show_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--advanced[show advanced parameters]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--advanced[show advanced parameters]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" '*:file:_files' && return 0;
     }
 
     _pione_package_update_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--force[update pacakge info files]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--force[update pacakge info files]" '*:file:_files' && return 0;
     }
 
     _pione_val_options() {
-        _arguments -s -S "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--domain-info=LOCATION[location of Domain info file]" '*:file:_files' && return 0;
+        _arguments -s -S "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--domain-info=LOCATION[location of Domain info file]" '*:file:_files' && return 0;
     }
 
     #
@@ -102,7 +115,7 @@ then
     }
 
     _pione-client_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--dry-run[turn on dry run mode]" "--features=FEATURES[set features]" "--input=LOCATION[set input directory]" "--output=LOCATION[set output directory]" "--params="{Var:1,...}"[set user parameters]" "--parent-front=URI[set parent front URI]" "--presence-notification-address=255.255.255.255:56000[set the address for sending presence notifier]" "--rehearse \[SCENARIO\][rehearse the scenario]" "--relay=URI[turn on relay mode and set relay address]" "--request-task-worker=N[set request number of task workers]" "--stand-alone[turn on stand alone mode]" "--stream[turn on stream mode]" "--task-worker=N[set task worker number that this process creates]" "--timeout SEC[timeout processing after SEC]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--dry-run[turn on dry run mode]" "--features=FEATURES[set features]" "--input=LOCATION[set input directory]" "--notification-address=ADDRESS[set the address for sending notification packet]" "--output=LOCATION[set output directory]" "--params="{Var:1,...}"[set user parameters]" "--parent-front=URI[set parent front URI]" "--rehearse \[SCENARIO\][rehearse the scenario]" "--relay=URI[turn on relay mode and set relay address]" "--request-task-worker=N[set request number of task workers]" "--stand-alone[turn on stand alone mode]" "--stream[turn on stream mode]" "--task-worker=N[set task worker number that this process creates]" "--timeout SEC[timeout processing after SEC]" '*:file:_files' && return 0;
     }
 
     #
@@ -116,7 +129,7 @@ then
     }
 
     _pione-task-worker_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--features=FEATURES[set features]" "--parent-front=URI[set parent front URI]" "--tuple-space-id=UUID[tuple space id that the worker joins]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--features=FEATURES[set features]" "--parent-front=URI[set parent front URI]" "--tuple-space-id=UUID[tuple space id that the worker joins]" '*:file:_files' && return 0;
     }
 
     #
@@ -130,7 +143,7 @@ then
     }
 
     _pione-task-worker-broker_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--daemon[turn on daemon mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--features=FEATURES[set features]" "--task-worker=N[set task worker number that this process creates]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--daemon[turn on daemon mode]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--features=FEATURES[set features]" "--task-worker=N[set task worker number that this process creates]" '*:file:_files' && return 0;
     }
 
     #
@@ -144,7 +157,7 @@ then
     }
 
     _pione-tuple-space-provider_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--parent-front=URI[set parent front URI]" "--presence-notification-address=255.255.255.255:56000[set the address for sending presence notifier]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--notification-address=ADDRESS[set the address for sending notification packet]" "--parent-front=URI[set parent front URI]" '*:file:_files' && return 0;
     }
 
     #
@@ -158,7 +171,7 @@ then
     }
 
     _pione-tuple-space-receiver_options() {
-        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / presence_notifier / communication)]" "--parent-front=URI[set parent front URI]" "--presence-port=PORT[set presence port number]" '*:file:_files' && return 0;
+        _arguments -s -S "--\[no-\]color[turn on/off color mode]" "--communication-address=ADDRESS[set IP address for interprocess communication]" "--debug\[=TYPE\][turn on debug mode about the type(system / rule_engine / ignored_exception / notifier / communication)]" "--notification-port=PORT[set notification port number]" "--parent-front=URI[set parent front URI]" '*:file:_files' && return 0;
     }
 
 fi
