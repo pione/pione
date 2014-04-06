@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pione:interactive type="Browser" xmlns:pione="https://github.com/pione/pione">
+  <pione:content type="text/html">
+    <button id="yes">YES</button>
+    <button id="no">NO</button>
+  </pione:content>
+  <pione:script type="text/javascript">
+    var sendEvent = function (res) {
+      event = document.createEvent("HTMLEvents");
+      event.initEvent("pione-interactive-result", true, false);
+      event.result = res;
+      document.dispatchEvent(event);
+    };
+
+    document.getElementById("yes").addEventListener("click", function () {
+      sendEvent("yes");
+    });
+
+    document.getElementById("no").addEventListener("click", function () {
+      sendEvent("no");
+    });
+  </pione:script>
+</pione:interactive>
