@@ -95,6 +95,7 @@ require 'pione/agent'           # agent system
 require 'pione/front'           # command front interface
 require 'pione/command'         # command definitions
 require 'pione/literate-action' # literate action
+require 'pione/pnml'            # PNML compiler
 
 #
 # other settings

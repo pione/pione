@@ -23,6 +23,5 @@ require 'pione/util/positionable'            # source position handler
 require 'pione/util/embeded-expr-expander'   # expand text embeded PIONE expression
 require 'pione/util/free-thread-generator'   # generate threads free from thread group
 require 'pione/util/parslet-extension'       # parslet extension
-require 'pione/util/pnml-compiler'           # toy compiler from PNML to PIONE
 require 'pione/util/last-time'               # get last time of locations
 
