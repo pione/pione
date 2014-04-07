@@ -1,0 +1,78 @@
+module Pione
+  module PNML
+    # `InputMergeComplement` is a net rewriting rule. This rule complements the
+    # name of input-merged empty place. For example, the net like the following
+    #
+    #     'p1' --> empty transition --+
+    #                                 |
+    #     'p2' --> empty transition --+--> empty place -> A
+    #                                 |
+    #     'p3' --> empty transition --+
+    #
+    # is rewritten as the following.
+    #
+    #     'p1' --> empty transition --+
+    #                                 |
+    #     'p2' --> empty transition --+--> 'p1' or 'p2' or 'p3' -> A
+    #                                 |
+    #     'p3' --> empty transition --+
+    #
+    module InputMergeComplement
+      # Find subjects(source transitions and target palce) of this rule from the
+      # net. The conditions are followings:
+      #
+      # - There is an empty target place.
+      # - There are more than 2 empty source transitions.
+      # - Each source transition has only one named place as the input condition.
+      # - There are arcs that connect sources and the target.
+      #
+      # @param net [PNML::Net]
+      #   rewriting target net
+      # @return [Array]
+      #   source transitions and target place
+      def self.find_subjects(net)
+        net.places.each do |place|
+          # target place should have no names
+          next unless place.empty_name?
+
+          # collect transitions
+          transitions = net.find_all_transitions_by_target_id(place.id).select do |transition|
+            arcs = net.find_all_arcs_by_target_id(transition.id)
+            if arcs.size == 1
+              _place = net.find_place(arcs.first.source_id)
+              transition.empty_name? and PioneElement.file?(_place)
+            end
+          end
+
+          # there should be more than 2 transitions
+          next unless transitions.size > 1
+
+          return [transitions, place]
+        end
+
+        return nil
+      end
+
+      # Rewrite subject place's name by using subject transitions.
+      #
+      # @param net [PNML::Net]
+      #   rewriting target net
+      # @param subjects [Array]
+      #   source transitions and target place
+      # @return [void]
+      def self.rewrite(net, subjects)
+        transitions, place = subjects
+
+        # build a new name
+        new_name = transitions.map do |transition|
+          arcs = net.find_all_arcs_by_target_id(transition.id)
+          _place = net.find_place(arcs.first.source_id)
+          PioneElement.normalize_data_name(_place.name)
+        end.sort.join(" or ")
+
+        # update the place name
+        place.name = "%s%s" % [PioneElement.modifier(place.name), new_name]
+      end
+    end
+  end
+end
