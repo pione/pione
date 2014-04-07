@@ -27,6 +27,8 @@ module Pione
       option(CommonOption.task_worker_size) do |item|
         item.type = :positive_integer
       end
+      option CommonOption.file_cache_method
+      option CommonOption.no_file_sliding
 
       #
       # command lifecycle: setup phase

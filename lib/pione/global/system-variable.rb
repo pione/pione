@@ -47,5 +47,10 @@ module Pione
       item.desc = "expression of features for this system"
       item.define_updater {Util.parse_features(Global.features)}
     end
+
+    define_external_item(:no_file_sliding) do |item|
+      item.desc = "Disable to slide files in file server"
+      item.init = false
+    end
   end
 end

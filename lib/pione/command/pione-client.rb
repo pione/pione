@@ -43,6 +43,9 @@ module Pione
       option(CommonOption.features) do |item|
         item.default = Global.features + "& ^Interactive"
       end
+      option(CommonOption.file_cache_method)
+      option(CommonOption.no_file_sliding)
+
       option(NotificationOption.notification_targets)
       option(NotificationOption.notification_receivers)
 

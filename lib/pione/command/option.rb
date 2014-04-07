@@ -128,6 +128,22 @@ module Pione
           end
         end
       end
+
+      define(:file_cache_method) do |item|
+        item.long = '--file-cache-method NAME'
+        item.desc = 'use NAME as a file cache method'
+        item.action = proc do |command_name, option, name|
+          System::FileCache.set_cache_method(name.to_sym)
+        end
+      end
+
+      define(:no_file_sliding) do |item|
+        item.long = '--no-file-sliding'
+        item.desc = 'Disable to slide files in file server'
+        item.action = proc do |command_name, option|
+          Global.no_file_sliding = true
+        end
+      end
     end
 
     # `NotificationOption` provides for notification options.

@@ -22,8 +22,10 @@ module Pione
         spawner.option("--tuple-space-id", tuple_space_id)
         spawner.option("--features", features) if features
 
-        # optionals
-        spawner.option("--color", Global.color_enabled)
+        # others
+        spawner.option("--color") if Global.color_enabled
+        spawner.option("--file-cache-method", System::FileCache.cache_method.name.to_s)
+        spawner.option("--no-file-sliding") if Global.no_file_sliding
 
         spawner.spawn # this method returns child front
       end
@@ -46,6 +48,8 @@ module Pione
       option CommonOption.communication_address
       option CommonOption.parent_front
       option CommonOption.features
+      option CommonOption.file_cache_method
+      option CommonOption.no_file_sliding
 
       option(:tuple_space_id) do |item|
         item.type = :string
