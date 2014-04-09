@@ -38,7 +38,7 @@ module Pione
 
           # transition should have only one named input
           input_places = net.find_all_places_by_target_id(transition.id)
-          unless input_places.size == 1 and PioneElement.file?(input_places.first)
+          unless input_places.size == 1 and Perspective.file?(input_places.first)
             next
           end
 
@@ -67,7 +67,7 @@ module Pione
 
         # rewrite names of target places
         target_places.each do |place|
-          place.name = PioneElement.normalize_data_name(input_place.name)
+          place.name = Perspective.normalize_data_name(input_place.name)
         end
       end
     end

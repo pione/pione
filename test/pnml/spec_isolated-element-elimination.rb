@@ -3,12 +3,12 @@ require 'pione/test-helper'
 TestHelper.scope do |this|
   this::DOC = Location[__FILE__].dirname + "data" + "IsolatedElementElimination.pnml"
 
-  describe Pione::PNML::FloatingElementElimination do
+  describe Pione::PNML::IsolatedElementElimination do
     it "should elminate floating elements" do
       net = PNML::Reader.read(this::DOC)
 
       # apply floating element elimination
-      PNML::FloatingElementElimination.apply(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::IsolatedElementElimination}.rewrite(net)
 
       # test
       net.find_transition_by_name("A").should.not.nil

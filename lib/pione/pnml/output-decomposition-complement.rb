@@ -67,10 +67,10 @@ module Pione
 
         # component places' names
         names = component_places.map do |component_place|
-          PioneElement.normalize_data_name(component_place.name)
+          Perspective.normalize_data_name(component_place.name)
         end
 
-        place.name = "%s%s" % [PioneElement.modifier(place.name), names.sort.join(" or ")]
+        place.name = "%s%s" % [Perspective.modifier(place.name), names.sort.join(" or ")]
       end
     end
   end

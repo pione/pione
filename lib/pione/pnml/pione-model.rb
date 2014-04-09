@@ -152,14 +152,14 @@ module Pione
       # @option option [Integer] :level
       #   indentation level, this should be non-negative integer
       def indent(str, option)
-        src.lines.each do |line|
-          ("  " * (opeion[:level] || 0)) + line
-        end.join("\n")
+        str.lines.map do |line|
+          ("  " * (option[:level] || 0)) + line
+        end.join
       end
     end
 
     # `ConstituentRule` is a class represents PIONE's constituent rule.
-    class ConstituentRule < PioneElement
+    class ConstituentRule < Perspective
       attr_reader :type
       attr_reader :name
       attr_reader :params
@@ -202,7 +202,7 @@ module Pione
     end
 
     # `DataCondition` is a class represents PIONE's input and output data condition.
-    class DataCondition < PioneElement
+    class DataCondition < Perspective
       attr_reader :data_expr
       attr_accessor :input_distribution
       attr_accessor :output_distribution
@@ -265,7 +265,7 @@ module Pione
     end
 
     # `Param` is a class represents PIONE's paramter declaration.
-    class Param < PioneElement
+    class Param < Perspective
       attr_reader :name
       attr_reader :default_expr
 
@@ -285,7 +285,7 @@ module Pione
 
     # ConditionalBranch is a class represents PIONE's conditional branch
     # declaration.
-    class ConditionalBranch < PioneElement
+    class ConditionalBranch < Perspective
       attr_reader :condition
       attr_reader :table
 
@@ -309,7 +309,7 @@ module Pione
       TXT
     end
 
-    class RuleDefinition < PioneElement
+    class RuleDefinition < Perspective
       attr_reader :name
       attr_reader :outputs
       attr_reader :conditions
@@ -317,20 +317,31 @@ module Pione
 
       def initialize(name)
         @name = name
+        @inputs = []
         @outputs = []
+        @params = []
         @conditions = []
         @flow_elements = []
       end
 
       def textize
-        Util::Indentation.cut(FLOW_RULE_TEMPLATE) % [@name]
+        option = {
+          :name => @name,
+          :inputs => @inputs,
+          :outputs => @outputs,
+          :params => @params,
+          :flow_elements => @flow_elements
+        }
+        Util::Indentation.cut(FLOW_RULE_TEMPLATE) % option
       end
 
       FLOW_RULE_TEMPLATE = <<-RULE
-        Rule %s
-        %s
+        Rule %{name}
+        %{inputs}
+        %{outputs}
+        %{params}
         Flow
-        %s
+        %{flow_elements}
         End
       RULE
 

@@ -1,7 +1,7 @@
 require 'pione/test-helper'
 
 TestHelper.scope do |this|
-  this::OUTPUT_REDUCTION_SIMPLE = Location[__FILE__].dirname + "data" + "OutputReduction_simple.pnml"
+  this::OUTPUT_REDUCTION_SIMPLE = Location[__FILE__].dirname + "data" + "OutputReductionSimple.pnml"
 
   describe Pione::PNML::Reader do
     it "should read a PNML file" do

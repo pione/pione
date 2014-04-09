@@ -2,8 +2,8 @@ require 'pione/test-helper'
 
 TestHelper.scope do |this|
   this::DIR = Location[__FILE__].dirname + "data"
-  this::SIMPLE = this::DIR + "OutputDecompositionSimple.pnml"
-  this::COMPLEX = this::DIR + "OutputDecompositionComplex.pnml"
+  this::SIMPLE = this::DIR + "OutputDecompositionComplementSimple.pnml"
+  this::COMPLEX = this::DIR + "OutputDecompositionComplementComplex.pnml"
 
   describe Pione::PNML::OutputDecompositionComplement do
     it "should complement the name of source place in simple case" do

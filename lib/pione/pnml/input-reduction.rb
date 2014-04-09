@@ -2,7 +2,7 @@ module Pione
   module PNML
     # `InputReduction` is a net rewriting rule. This rule removes unnecessary
     # input nodes of transitions by following criteria. For example, the net
-    # likes the following
+    # likes the following(A and B are transitions)
     #
     #     A --> place --> empty transition --> empty place --> B
     #
@@ -18,17 +18,19 @@ module Pione
       # - There is an empty target place. It is an input of named transition.
       # - There is an arc that connects the source and the target.
       def self.find_subjects(net)
-        net.transitions.each do |transition|
-          # source transition has empty name
-          next unless Perspective.named?(transition)
+        net.transitions.each do |rule|
+          # rule has its name
+          next unless Perspective.named?(rule)
 
-          net.find_all_places_by_source_id(transition.id).each do |place|
-            # target place has empty name
+          # find source places
+          net.find_all_places_by_target_id(rule.id).each do |place|
+            # the source place has empty name
             next unless Perspective.empty?(place)
 
-            # target place should be an output of named transition
-            net.find_all_transitions_by_source_id(place.id).each do |rule|
-              if Perspective.named?(rule)
+            # find transtions that generates the source place
+            net.find_all_transitions_by_target_id(place.id).each do |transition|
+              # the transition has empty name
+              if Perspective.empty?(transition)
                 return [transition, place, net.find_arc(transition.id, place.id)]
               end
             end

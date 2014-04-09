@@ -24,9 +24,16 @@ module Pione
 
       option CommonOption.debug
 
-      option(:name) do |item|
+      option(:flow_name) do |item|
         item.type = :string
-        item.long = '--name'
+        item.long = '--flow-name'
+        item.arg  = 'NAME'
+        item.desc = 'Set flow name'
+      end
+
+      option(:package_name) do |item|
+        item.type = :string
+        item.long = '--package-name'
         item.arg  = 'NAME'
         item.desc = 'Set package name'
       end
@@ -58,9 +65,14 @@ module Pione
         item.desc = "Compile from PNML to PIONE"
 
         item.assign(:result) do
-          Util::PNMLCompiler.new(
-            model[:source], model[:name], model[:editor], model[:tag]
-          ).compile
+          net = PNML::Reader.read(model[:source])
+          option = {
+            :flow_name => model[:flow_name],
+            :package_name => model[:package_name],
+            :editor => model[:editor],
+            :tag => model[:tag]
+          }
+          PNML::Compiler.new(net, option).compile
         end
       end
 

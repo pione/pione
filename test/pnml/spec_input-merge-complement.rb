@@ -2,8 +2,8 @@ require 'pione/test-helper'
 
 TestHelper.scope do |this|
   this::DIR = Location[__FILE__].dirname + "data"
-  this::SIMPLE = this::DIR + "InputMergeMergeSimple.pnml"
-  this::COMPLEX = this::DIR + "InputMergeMergeComplex.pnml"
+  this::SIMPLE = this::DIR + "InputMergeComplementSimple.pnml"
+  this::COMPLEX = this::DIR + "InputMergeComplementComplex.pnml"
 
   describe Pione::PNML::InputMergeComplement do
     it "should name by `input merge` in simple case" do

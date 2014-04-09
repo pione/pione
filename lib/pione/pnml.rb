@@ -26,18 +26,10 @@ require 'pione/pnml/io-expansion'
 require 'pione/pnml/invalid-arc-elimination'
 
 #
-# translating rules
-#
-
-# require 'pione/pnml/translational-rule' # base
-# require 'pione/pnml/input-parallelization'
-# require 'pione/pnml/output-parallelization'
-# require 'pione/pnml/input-merge'
-# require 'pione/pnml/output-merge'
-
-#
 # utility
 #
 
+require 'pione/pnml/annotation-extractor'
 require 'pione/pnml/reader'
+require 'pione/pnml/compiler'
 

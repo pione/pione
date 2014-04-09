@@ -40,7 +40,7 @@ module Pione
             arcs = net.find_all_arcs_by_target_id(transition.id)
             if arcs.size == 1
               _place = net.find_place(arcs.first.source_id)
-              transition.empty_name? and PioneElement.file?(_place)
+              transition.empty_name? and Perspective.file?(_place)
             end
           end
 
@@ -67,11 +67,11 @@ module Pione
         new_name = transitions.map do |transition|
           arcs = net.find_all_arcs_by_target_id(transition.id)
           _place = net.find_place(arcs.first.source_id)
-          PioneElement.normalize_data_name(_place.name)
+          Perspective.normalize_data_name(_place.name)
         end.sort.join(" or ")
 
         # update the place name
-        place.name = "%s%s" % [PioneElement.modifier(place.name), new_name]
+        place.name = "%s%s" % [Perspective.modifier(place.name), new_name]
       end
     end
   end

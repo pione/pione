@@ -38,7 +38,7 @@ module Pione
 
           # the transition should have only one output place
           synchronized_places = net.find_all_places_by_source_id(transition.id).select do |place|
-            PioneElement.file?(place)
+            Perspective.file?(place)
           end
           next unless synchronized_places.size == 1
 
