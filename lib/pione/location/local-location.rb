@@ -189,7 +189,7 @@ module Pione
       end
 
       def turn(dest)
-        if not(Global.no_file_sliding) and dest.kind_of?(LocalLocation)
+        if Global.file_sliding and dest.kind_of?(LocalLocation)
           move(dest)
           link(dest)
         else

@@ -130,18 +130,25 @@ module Pione
       end
 
       define(:file_cache_method) do |item|
-        item.long = '--file-cache-method NAME'
+        item.type = :symbol
+        item.long = '--file-cache-method'
+        item.arg  = 'NAME'
         item.desc = 'use NAME as a file cache method'
-        item.action = proc do |command_name, option, name|
-          System::FileCache.set_cache_method(name.to_sym)
+
+        item.process do |name|
+          System::FileCache.set_cache_method(name)
         end
       end
 
-      define(:no_file_sliding) do |item|
-        item.long = '--no-file-sliding'
-        item.desc = 'Disable to slide files in file server'
-        item.action = proc do |command_name, option|
-          Global.no_file_sliding = true
+      define(:file_sliding) do |item|
+        item.type    = :boolean
+        item.long    = '--file-sliding'
+        item.arg     = '[BOOLEAN]'
+        item.desc    = 'Enable/disable to slide files in file server'
+        item.default = true
+
+        item.process do |val|
+          Global.file_sliding = val
         end
       end
     end

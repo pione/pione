@@ -28,7 +28,7 @@ module Pione
         item.type = :positive_integer
       end
       option CommonOption.file_cache_method
-      option CommonOption.no_file_sliding
+      option CommonOption.file_sliding
 
       #
       # command lifecycle: setup phase
