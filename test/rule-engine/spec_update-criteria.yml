@@ -88,8 +88,8 @@ RemoveAB:
       no_output_conditions: false
       not_exist_output_data: false
       exist_output_data: true
-      exist_newer_input_data: true
-    order: "force"
+      exist_newer_input_data: false
+    order: "weak"
 
 Touch:
   case1:
@@ -310,8 +310,7 @@ OutputAorBorNull:
       no_output_conditions: false
       not_exist_output_data: false
       exist_output_data: false
-      exist_newer_input_data: true
-    order: "force"
+      exist_newer_input_data: false
   case9:
     inputs:
       - "t2.c"
@@ -321,8 +320,7 @@ OutputAorBorNull:
       no_output_conditions: false
       not_exist_output_data: false
       exist_output_data: false
-      exist_newer_input_data: true
-    order: "force"
+      exist_newer_input_data: false
   case10:
     inputs:
       - "t1.c"
