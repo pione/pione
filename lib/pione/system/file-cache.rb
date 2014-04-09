@@ -175,9 +175,15 @@ module Pione
         def get(location)
           # cache if record doesn't exist
           unless @table.has_key?(location)
-            cache_location = Location[Global.file_cache_path_generator.create]
-            location.turn(cache_location)
-            @table[location] = cache_location
+            if not(location.local?)
+              # create a cache and copy the location data to it
+              cache_location = Location[Global.file_cache_path_generator.create]
+              location.copy(cache_location)
+              @table[location] = cache_location
+            else
+              # refer directly if the location is in local
+              @table[location] = location
+            end
           end
           unless @table[location].exist?
             location.turn(@table[location])
@@ -186,13 +192,19 @@ module Pione
         end
 
         def put(src, dest)
-          # make cache from source and link between cache and destination
-          @table[dest] = get(src).tap{|cache_location| cache_location.turn(dest)}
+          cache_location = @table[dest]
+
+          # update cache if
+          if cache_location.nil? or src.mtime > cache_location.mtime
+            cache_location = Location[Global.file_cache_path_generator.create]
+            src.copy(cache_location)
+            @table[dest] = cache_location
+          end
         end
 
         def sync(old_location, new_location)
-          if cache_location = @table[old_location]
-            @table[new_location] = cache_location
+          if cached?(old_location)
+            @table[new_location] = @table[old_location]
           end
         end
 

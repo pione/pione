@@ -177,6 +177,8 @@ module Pione
           src = @working_directory + output.name
           dest = output.location
           System::FileCache.put(src, dest)
+          # copy the data to the caller's domain in file server
+          src.copy(dest)
         end
       end
 

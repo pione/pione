@@ -52,7 +52,11 @@ module Pione
           unless new_location == old_location or lifted.include?(old_location)
             if old_location.exist?
               # move data from old to new
-              old_location.move(new_location)
+              begin
+                old_location.turn(new_location)
+              rescue ArgumentError
+                # ignore the error because this is the case that old and new is same file
+              end
               # sync cache if the old is cached in this machine
               System::FileCache.sync(old_location, new_location)
               # write lift tuple
@@ -459,25 +463,18 @@ module Pione
       def import_outputs_of_task(task, finished)
         finished.outputs.each_with_index do |output, i|
           data_expr = task.rule_condition.outputs[i].eval(task.env)
+          output = [output] unless output.kind_of?(Array)
+
           case data_expr.operation
           when :write
-            if output.kind_of?(Array)
-              output.each {|o| copy_data_into_domain(o, domain_id)}
-            else
-              copy_data_into_domain(output, domain_id)
-            end
+            output.each {|o| copy_data_into_domain(o, domain_id)}
           when :remove
-            if output.kind_of?(Array)
-              output.each {|o| remove_data_from_domain(o, domain_id)}
-            else
-              remove_data_from_domain(output, domain_id)
-            end
+            output.each {|o| remove_data_from_domain(o, domain_id)}
           when :touch
-            if output.kind_of?(Array)
-              output.each {|o| touch_data_in_domain(o, domain_id)}
-            else
-              touch_data_in_domain(output, domain_id)
-            end
+            output.each {|o| touch_data_in_domain(o, domain_id)}
+          else
+            # here is unreached
+            raise RuleExecutionError.new(self)
           end
         end
       end
