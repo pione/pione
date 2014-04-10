@@ -66,8 +66,7 @@ module Pione
           outputs = outputs.select.with_index do |output, i|
             rule_condition.outputs[i].eval(env).update_criteria == :care
           end
-          # output_oldest_time = outputs.flatten.map{|output| output.time}.sort.first
-          output_last_time = outputs.flatten.map{|output| output.time}.sort.last
+          output_oldest_time = outputs.flatten.map{|output| output.time}.sort.first
 
           # get input last time
           inputs = inputs.select.with_index do |input, i|
@@ -86,11 +85,9 @@ module Pione
           end
 
           # criteria
-          #return false unless output_oldest_time
-          return false unless output_last_time
+          return false unless output_oldest_time
           return false unless input_last_time
-          #return output_oldest_time < input_last_time
-          return output_last_time < input_last_time
+          return output_oldest_time < input_last_time
         end
 
         # Return update order name if we need to update.
