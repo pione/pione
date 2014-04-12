@@ -2,8 +2,10 @@ module Pione
   module Location
     class HTTPSLocation < HTTPLocation
       set_scheme "https"
-      set_real_appendable false
-      set_writable false
+
+      define(:need_caching, true)
+      define(:real_appendable, false)
+      define(:writable, false)
 
       # Send a request HTTPS Get and evaluate the block with the response.
       def http_get(&b)

@@ -13,21 +13,18 @@ describe 'System::FileCache' do
     cache_location.read.should == "A"
     cache_location.path.ftype.should == "file"
     orig_location.read.should == "A"
-    orig_location.path.ftype.should == "link"
+    orig_location.path.ftype.should == "file"
   end
 
   it 'should put source into destination' do
     src = Location[Temppath.create].tap{|x| x.create("A")}
-    dest = Location[Temppath.create]
+    dest = Location["http://example.com/abc"]
     System::FileCache.put(src, dest)
-    src.should.cached
+    cache = System::FileCache.get(dest)
+
+    # check caching status
     dest.should.cached
-    System::FileCache.get(src).read.should == "A"
-    System::FileCache.get(dest).read.should == "A"
-    System::FileCache.get(src).should == System::FileCache.get(dest)
-    src.path.ftype == "link"
-    dest.path.ftype == "file"
-    System::FileCache.get(src).path.ftype == "link"
+    cache.read.should == src.read
   end
 
   it 'should cached' do

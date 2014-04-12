@@ -3,7 +3,10 @@ module Pione
     # FTPLocation represents locations on FTP server.
     class FTPLocation < DataLocation
       set_scheme "ftp"
-      set_real_appendable false
+
+      define(:need_caching, true)
+      define(:real_appendable, false)
+      define(:writable, true)
 
       # for myftp scheme
       SCHEMES["myftp"] = self

@@ -3,6 +3,8 @@ module Pione
     class DataLocation < BasicLocation
       location_type :data
 
+      KNOWN_ATTRS = [:need_caching, :real_appendable, :writable]
+
       class << self
         # @return [String]
         #   location's scheme name
@@ -17,16 +19,27 @@ module Pione
           SCHEMES[name] = self
         end
 
-        def set_real_appendable(b)
-          @appendable = b
+
+        # Define a location's attribute.
+        #
+        # - need_caching : whether the location needs to be cached or not
+        # - real_appendable : whether the location can appendable or not
+        # - writable : whether the location is writable or not
+        def define(name, val)
+          if DataLocation::KNOWN_ATTRS.include?(name)
+            (@attr ||= Hash.new)[name] = val
+          else
+            raise ArgumentError.new(name)
+          end
+        end
+
+        # Return true if the location needs caching.
+        def need_caching?
+          @attr[:need_caching]
         end
 
         def real_appendable?
-          @appendable
-        end
-
-        def set_writable(b)
-          @writable = b
+          @attr[:appendable]
         end
 
         def writable?
@@ -34,7 +47,7 @@ module Pione
         end
       end
 
-      forward! :class, :scheme, :real_appendable?, :writable?
+      forward! :class, :scheme, :real_appendable?, :writable?, :need_caching?
       forward :@uri, :host
 
       # @return [URI]
@@ -164,7 +177,7 @@ module Pione
       #   data content
       # @return [void]
       def append(data)
-        if @real_appendable
+        if real_appendable?
           raise NotImplmentedError
         else
           _local = local

@@ -3,7 +3,10 @@ module Pione
     # LocalLocation represents local disk locations.
     class LocalLocation < DataLocation
       set_scheme "local"
-      set_real_appendable true
+
+      define(:need_caching, false)
+      define(:real_appendable, true)
+      define(:writable, true)
 
       def initialize(uri)
         super(uri.absolute)

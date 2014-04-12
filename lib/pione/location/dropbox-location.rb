@@ -4,6 +4,10 @@ module Pione
     class DropboxLocation < DataLocation
       set_scheme "dropbox"
 
+      define(:need_caching, true)
+      define(:real_appendable, false)
+      define(:writable, true)
+
       class << self
         attr_reader :client
 

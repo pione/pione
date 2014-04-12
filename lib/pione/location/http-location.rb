@@ -2,8 +2,10 @@ module Pione
   module Location
     class HTTPLocation < DataLocation
       set_scheme "http"
-      set_real_appendable false
-      set_writable false
+
+      define(:need_caching, true)
+      define(:real_appendable, false)
+      define(:writable, false)
 
       def read
         http_get {|res| res.body}

@@ -38,12 +38,14 @@ module Pione
         @instance ||= cache_method.new
       end
 
-      # Get cached data path from the uri resource.
+      # Get cached data location of the location. If the location is not cached
+      # and needs to be cached, create the cache and return it. If not, return
+      # the location as is.
       #
       # @param location [BasicLocation]
       #   data location
-      # @return [Pathname]
-      #   cached path
+      # @return [BasicLocation]
+      #   cached location
       def self.get(location)
         instance.get(location)
       end
