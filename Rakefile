@@ -94,6 +94,7 @@ end
 
 desc "generate bash completion file"
 task "completion:bash" do
+  Pione::Command.load_all
   require 'pione/util/completion'
   misc = Pione::Location[File.dirname(__FILE__)] + "misc"
   source = misc + "pione-completion.erb"
@@ -103,6 +104,7 @@ end
 
 desc "generate zsh completion file"
 task "completion:zsh" do
+  Pione::Command.load_all
   require 'pione/util/completion'
   misc = Pione::Location[File.dirname(__FILE__)] + "misc"
   source = misc + "pione-completion.erb"

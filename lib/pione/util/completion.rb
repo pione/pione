@@ -14,7 +14,7 @@ module Pione
       def toplevel_commands(mod)
         mod.constants.map{|c| mod.const_get(c)}.select do |c|
           c.is_a?(Class) and c < Command::BasicCommand and c.toplevel?
-        end.map {|cmd| [cmd.name, cmd]}
+        end.map {|cmd| [cmd.scenario_name, cmd]}
       end
 
       def context
