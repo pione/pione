@@ -175,7 +175,7 @@ module Pione
       def initialize(handler)
         super(handler)
         @data_finder = DataFinder.new(tuple_space_server, domain_id)
-        @finished = [] # finished tuple cache
+        @finished = Set.new # finished tuple cache
       end
 
       # Apply input data to rules.
@@ -187,7 +187,14 @@ module Pione
         Util::Profiler.profile(Util::RuleApplicationProfileReport.new(digest)) do
           # rule application loop
           while tasks = find_tasks(rules) do
+            # save previous finished tuples's number
+            size = @finished.size
+
+            # distribute tasks
             distribute_tasks(tasks)
+
+            # check whether tasks have been processed
+            break unless size < @finished.size
           end
         end
 
@@ -423,7 +430,9 @@ module Pione
             return false
           end
           if finished = read!(template)
-            @finished << finished
+            unless @finished.any? {|t| t.uuid == finished.uuid}
+              @finished << finished
+            end
             return false
           end
         end
@@ -444,6 +453,9 @@ module Pione
           # wait to finish the distributed task, note that finished tuple is in
           # the task domain
           finished = read(TupleSpace::FinishedTuple.new(domain: task.domain_id))
+          unless @finished.any? {|t| t.uuid == finished.uuid}
+            @finished << finished
+          end
 
           ### task completion processing ###
           # copy write operation data tuple from the task domain to this domain

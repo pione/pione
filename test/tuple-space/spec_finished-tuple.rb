@@ -12,7 +12,7 @@ describe 'Pione::TupleSpace::FinishedTuple' do
     data = TupleSpace::DataTuple.new(@domain, name, location, time)
 
     @outputs = [data]
-    @tuple = TupleSpace::FinishedTuple.new(@domain, @status, @outputs)
+    @tuple = TupleSpace::FinishedTuple.new(@domain, Util::UUID.generate, @status, @outputs)
   end
 
   behaves_like "tuple"

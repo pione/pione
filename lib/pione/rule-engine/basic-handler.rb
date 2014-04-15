@@ -67,9 +67,9 @@ module Pione
         # publish outputs and finished
         begin
           outputs.flatten.compact.each {|output| write(output)}
-          write(TupleSpace::FinishedTuple.new(@domain_id, :succeeded, outputs))
+          write(TupleSpace::FinishedTuple.new(@domain_id, Util::UUID.generate, :succeeded, outputs))
         rescue Rinda::RedundantTupleError
-          write(TupleSpace::FinishedTuple.new(@domain_id, :error, outputs))
+          write(TupleSpace::FinishedTuple.new(@domain_id, Util::UUID.generate, :error, outputs))
         end
 
         # show end message

@@ -68,12 +68,10 @@ ExceptionTuple:
 # FinishedTuple represents task finished notifier.
 FinishedTuple:
   - finished
-  - domain:  # task domain
-      String
-  - status:  # status of the task processing
-      Symbol
-  - outputs: # outputs
-      Array
+  - domain : String # task domain
+  - uuid   : String # UUID
+  - status : Symbol # status of the task processing
+  - outputs: Array  # outputs
 
 # ForegroundTuple represents the task is active (rule engine is processing it now).
 ForegroundTuple:
