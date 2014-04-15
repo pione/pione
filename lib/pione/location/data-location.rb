@@ -39,7 +39,7 @@ module Pione
         end
 
         def real_appendable?
-          @attr[:appendable]
+          @attr[:real_appendable]
         end
 
         def writable?
