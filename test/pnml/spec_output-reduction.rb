@@ -12,7 +12,7 @@ TestHelper.scope do |this|
 
       # save elements
       transition_A = net.find_transition_by_name("A")
-      place_i1 = net.find_place_by_name("'i1'")
+      place_i1 = net.find_place_by_name("<'i1'")
       place_o1 = net.find_place_by_name(">'o1'")
       arc_i1_A = net.find_arc(place_i1.id, transition_A.id)
 
@@ -39,7 +39,7 @@ TestHelper.scope do |this|
 
       # save net elements
       transition_A = net.transitions.find {|transition| transition.name == "A"}
-      place_i1 = net.find_place_by_name("'i1'")
+      place_i1 = net.find_place_by_name("<'i1'")
       place_o1 = net.find_place_by_name(">'o1'")
       place_o2 = net.find_place_by_name(">'o2'")
       place_o3 = net.find_place_by_name(">'o3'")
@@ -72,7 +72,7 @@ TestHelper.scope do |this|
 
       # save elements
       transition_A = net.transitions.find {|transition| transition.name == "A"}
-      place_i1 = net.find_place_by_name("'i1'")
+      place_i1 = net.find_place_by_name("<'i1'")
       place_o1 = net.find_place_by_name(">'o1'")
       arc_i1_A = net.find_arc(place_i1.id, transition_A.id)
 

@@ -5,7 +5,7 @@ module Pione
         @net = net
         @flow_name = option[:flow_name] || "Main"
         @package_name = option[:package_name]
-        @editior = option[:editor]
+        @editor = option[:editor]
         @tag = option[:tag]
       end
 

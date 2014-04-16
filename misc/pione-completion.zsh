@@ -22,6 +22,7 @@ then
           *) _pione_action_subcommands;;
         esac;;
       clean) _pione_clean_options;;
+      compile) _pione_compile_options;;
       config)
         case $name3 in
           get) _pione_config_get_options;;
@@ -59,7 +60,7 @@ then
   }
 
   _pione_subcommands() {
-     list=(action:"execute an action in literate action document" clean:"Remove PIONE's temporary files, cache, and etc" config:"Configure PIONE global variables" diagnosis:"PIONE diagnosis tools" lang:"PIONE language utilities" log:"Log utilities" package:"PIONE package utility") _describe -t common-commands 'common commands' list;
+     list=(action:"execute an action in literate action document" clean:"Remove PIONE's temporary files, cache, and etc" compile:"translate from PNML to PIONE document" config:"Configure PIONE global variables" diagnosis:"PIONE diagnosis tools" lang:"PIONE language utilities" log:"Log utilities" package:"PIONE package utility") _describe -t common-commands 'common commands' list;
   }
 
   _pione_action_subcommands() {
@@ -80,6 +81,10 @@ then
 
   _pione_clean_options() {
     _arguments -s -S "--debug[Turn on debug mode about the type]" "--older[remove file older than the date]" "--type NAME[remove only files of the type]" '*:file:_files' && return 0;
+  }
+
+  _pione_compile_options() {
+    _arguments -s -S "--debug[Turn on debug mode about the type]" "--editor[Set package editor]" "--flow-name[Set flow name]" "--package-name[Set package name]" "--tag[Set package tag]" '*:file:_files' && return 0;
   }
 
   _pione_config_subcommands() {

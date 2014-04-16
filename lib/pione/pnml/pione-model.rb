@@ -36,10 +36,13 @@ module Pione
       def self.file?(node)
         # files should be represented as a place
         return false unless node.is_a?(Place)
+        return false if node.name.nil?
 
         # normalize
         name = node.name.strip
-        name = name.sub(/[<>]/, "") if "<>".include?(name[0])
+        if name.size > 0 and "<>".include?(name[0])
+          name = name.sub(/[<>]/, "")
+        end
 
         # test
         return (name.size > 0 and name[0] == "'")
@@ -68,15 +71,16 @@ module Pione
       # @return [Boolean]
       #   true if the node is a parameter
       def self.param?(node)
-        # parameters should be represented as a place
+        # parameter node should be represented as a place
         return false unless node.is_a?(Place)
 
-        # normalize
-        name = node.name.strip
-        name = name.sub(/[<>]/, "") if "<>".include?(name[0])
-
-        # test
-        return (name.size > 0 and name[0] == "$")
+        # parameter node should be parsed as param sentence
+        begin
+          Lang::DocumentParser.new.param_sentence.parse(name)
+          return true
+        rescue
+          return false
+        end
       end
 
       # Return true if the node is a rule.
@@ -91,10 +95,17 @@ module Pione
 
         name = node.name.strip
 
+        # keywords
+        if ["if", "else", "then"].include?(name)
+          return false
+        end
+
         return name.size > 0
       end
 
       def self.normalize_data_name(name)
+        return nil if name.nil?
+
         name = name.strip
         name = remove_comment(name)
         if name.size > 0 and name[0] == "<" or name[0] == ">"
@@ -289,20 +300,51 @@ module Pione
       attr_reader :condition
       attr_reader :table
 
-      def initialize(condition)
+      def initialize(type, condition)
+        @type = type
         @condition = condition
         @table = Hash.new {|h,k| h[k] = []}
       end
 
       def as_declaration(option={})
-        branches = @table.each_with_object([]) do |(val, rules), list|
-          list << "when %s" % val
-          list.concat(rules.map{|rule| "  %s" % rule.as_declaration})
-        end.join("\n")
-        indent(Util::Indentation.cut(TEMPLATE) % [@condition, branches], option)
+        case @type
+        when :"if"
+          branch_then = @table[:then].map do |rule|
+            "  rule %s" % Perspective.normalize_data_name(rule.name)
+          end.join("\n")
+
+          if @table[:else].empty?
+            indent(Util::Indentation.cut(TEMPLATE_IF) % [@condition, branch_then], option)
+          else
+            branch_else = @table[:else].map do |rule|
+              "  rule %s" % Perspective.normalize_data_name(rule.name)
+            end.join("\n")
+            indent(Util::Indentation.cut(TEMPLATE_IF_ELSE) % [@condition, branch_then, branch_else], option)
+          end
+        when :"case"
+          branches = @table.each_with_object([]) do |(val, rules), list|
+            list << ((val == :else) ? "else" : "when %s" % val)
+            list.concat(rules.map{|rule| "  rule %s" % rule.name})
+          end.join("\n")
+          indent(Util::Indentation.cut(TEMPLATE_CASE) % [@condition, branches], option)
+        end
       end
 
-      TEMPLATE = <<-TXT
+      TEMPLATE_IF = <<-TXT
+        if %s
+        %s
+        end
+      TXT
+
+      TEMPLATE_IF_ELSE = <<-TXT
+        if %s
+        %s
+        else
+        %s
+        end
+      TXT
+
+      TEMPLATE_CASE = <<-TXT
         case %s
         %s
         end
@@ -310,62 +352,66 @@ module Pione
     end
 
     class RuleDefinition < Perspective
-      attr_reader :name
-      attr_reader :outputs
-      attr_reader :conditions
-      attr_reader :flow_elements
+      attr_accessor :name
+      attr_accessor :inputs
+      attr_accessor :outputs
+      attr_accessor :params
+      attr_accessor :conditions
+      attr_accessor :flow_elements
 
-      def initialize(name)
+      def initialize(name, option={})
         @name = name
-        @inputs = []
-        @outputs = []
-        @params = []
-        @conditions = []
-        @flow_elements = []
+        @inputs = option[:inputs] || []
+        @outputs = option[:outputs] || []
+        @params = option[:params] || []
+        @conditions = option[:conditions] || []
+        @flow_elements = option[:flow_elements] || []
       end
 
       def textize
-        option = {
-          :name => @name,
-          :inputs => @inputs,
-          :outputs => @outputs,
-          :params => @params,
-          :flow_elements => @flow_elements
-        }
-        Util::Indentation.cut(FLOW_RULE_TEMPLATE) % option
+        if flow_elements.empty?
+          template = Util::Indentation.cut(ACTION_RULE_TEMPLATE)
+        else
+          template = Util::Indentation.cut(FLOW_RULE_TEMPLATE)
+        end
+        ERB.new(template, nil, "-").result(binding)
       end
 
       FLOW_RULE_TEMPLATE = <<-RULE
-        Rule %{name}
-        %{inputs}
-        %{outputs}
-        %{params}
+        Rule <%= @name %>
+          <%- @inputs.each do |input| -%>
+          input <%= input %>
+          <%- end -%>
+          <%- @outputs.each do |output| -%>
+          output <%= output %>
+          <%- end -%>
+          <%- @params.each do |param| -%>
+          <%= param.as_declaration %>
+          <%- end -%>
         Flow
-        %{flow_elements}
+          <%- @flow_elements.each do |element| -%>
+          <%- if element.is_a?(RuleDefinition) -%>
+          rule <%= element.name %>
+          <%- else -%>
+        <%= element.as_declaration(level: 1) %>
+          <%- end -%>
+          <%- end -%>
         End
       RULE
 
       ACTION_RULE_TEMPLATE = <<-RULE
-        Rule %s
-        %s
-        Action
-        %s
+        Rule <%= @name %>
+          <%- @inputs.each do |input| -%>
+          input <%= input %>
+          <%- end -%>
+          <%- @outputs.each do |output| -%>
+          output (<%= output %>).touch
+          <%- end -%>
+          <%- @params.each do |param| -%>
+          <%= param.as_declaration %>
+          <%- end -%>
         End
       RULE
-
-      private
-
-      def textize_conditions
-        @conditions.map do |condition|
-          condition.as_declaration(level: 1)
-        end.join("\n")
-      end
-
-      def textize_flow_elements
-        @flow_elements.map do |flow_element|
-          flow_element.as_declaration(level: 1)
-        end.join("\n")
-      end
     end
   end
 end

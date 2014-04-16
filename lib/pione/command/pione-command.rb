@@ -22,6 +22,7 @@ module Pione
       require 'pione/command/pione-log'
       require 'pione/command/pione-package'
       require 'pione/command/pione-val'
+      require 'pione/command/pione-compile'
     end
   end
 end

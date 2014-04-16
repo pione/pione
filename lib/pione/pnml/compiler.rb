@@ -36,20 +36,20 @@ module Pione
         @net_rewriter.rewrite(@net)
 
         # build rules
-        cdefs = build_constituent_rule_definitions
-        build_flow_rule_definition(@option[:flow_rule_name] || "Main", cdefs)
+        rules, flow_elements = build_constituent_rule_definitions
+        definition_main = build_flow_rule_definition(@option[:flow_rule_name] || "Main", flow_elements)
 
         # textize
-        [*annotations, "", flow_rule_definition.textize, *constituent.map {|c| c.textize}].join("\n")
+        [*annotations, "", definition_main.textize, *rules.map {|rule| rule.textize}].join("\n")
       end
 
       private
 
       # Build constituent rule definitions by transitions in the net.
       def build_constituent_rule_definitions
-        definition = @net.transitions.each_with_object(Hash.new) do |transition, table|
+        definition = @net.transitions.each_with_object({}) do |transition, table|
           if Perspective.rule?(transition)
-            rule = RuleDefinition.new(nil, transition.name)
+            rule = RuleDefinition.new(transition.name)
 
             # inputs
             @net.find_all_places_by_target_id(transition.id).each do |place|
@@ -66,48 +66,110 @@ module Pione
 
               # params
               if Perspective.param?(place)
-                rule.params << Param.new(place)
+                rule.params << Param.new(place.name, nil)
               end
             end
 
-            table[transition.id] = rule.as_defintion
+            table[transition.id] = rule
           end
         end
 
-        # setup rule's inputs by arcs which have the direction from place to
-        # transition
-        @net.pt_arcs.each do |arc|
-          if data_condition = data_expr.has_key?(arc.source_id)
-            definition[arc.target_id].add_input_condition(data_condition)
+        # save all inner rules
+        rules = definition.values.compact
+        flow_elements = definition.values.compact
+
+        # conditional branch
+        @net.transitions.each do |transition|
+          places = @net.find_all_places_by_target_id(transition.id)
+          inputs = places.select {|place| Perspective.file?(place)}
+          inputs = inputs.map {|input| Perspective.normalize_data_name(input.name)}
+
+          case Perspective.normalize_data_name(transition.name)
+          when "if"
+            # if-branch
+            condition = @net.find_place_by_source_id(transition.id)
+
+            keywords = @net.find_all_transitions_by_source_id(condition.id)
+            key_then = keywords.find{|key| Perspective.compact(key.name) == "then"}
+            key_else = keywords.find{|key| Perspective.compact(key.name) == "else"}
+
+            branch = ConditionalBranch.new(:if, condition.name)
+
+            find_next_rules(key_then).each do |transition|
+              rule = definition[transition.id]
+              rule.inputs += inputs
+              flow_elements.delete(rule)
+              branch.table[:then] << rule
+            end
+
+            find_next_rules(key_else).each do |transition|
+              rule = definition[transition.id]
+              rule.inputs += inputs
+              flow_elements.delete(rule)
+              branch.table[:else] << rule
+            end
+
+            flow_elements << branch
+          when "case"
+            expr = @net.find_place_by_source_id(transition.id)
+
+            keywords = @net.find_all_transtions_by_source_id(expr.id)
+            keys_when = keywords.select{|key| Perspective.compact(key.name) == "then"}
+            key_else = keywords.find{|key| Perspective.compact(key.name) == "else"}
+
+            branch = ConditionalBranch.new(:case, expr.name)
+
+            keys_when.each do |key|
+              find_next_rules(key).each do |transition|
+                rule = definition[transition.id]
+                rule.inputs += inputs
+                flow_elements.delete(rule)
+                branch.table[key.name] << rule
+              end
+            end
+
+            find_next_rules(key_else).each do |transition|
+              rule = definition[transition.id]
+              rule.inputs += inputs
+              flow_elements.delete(rule)
+              branch.table[:else] << rule
+            end
+
+            flow_elements << branch
           end
         end
 
-        # setup rule's output puts by arcs which have the direction from place to
-        # transition
-        @net.tp_arcs.each do |arc|
-          if data_condition = data_expr.has_key?(arc.target_id)
-            definition[arc.source_id].add_output_condition(data_condition)
-          end
-        end
-
-        return definition.values.compact.sort
+        return [rules, flow_elements]
       end
 
       # Make a main rule.
       def build_flow_rule_definition(name, flow_elements)
-        params = @net.places.select {|place| this_flow_input?(place) and Perspective.param?(palce)}
-        inputs = @net.places.select {|place| this_flow_input?(place) and Perspective.file?(place)}
-        outputs = @net.places.select {|place| this_flow_output?(palce) and Perspective.file?(place)}
+        inputs = @net.places.select {|place| Perspective.file?(place) and Perspective.net_input?(place)}
+        inputs = inputs.map {|input| Perspective.normalize_data_name(input.name)}
 
-        RuleDefinition.new(name, inputs, outputs, params, flow_elements)
+        outputs = @net.places.select {|place| Perspective.file?(place) and Perspective.net_output?(place)}
+        outputs = outputs.map {|output| Perspective.normalize_data_name(output.name)}
+
+        option = {
+          :inputs => inputs,
+          :outputs => outputs,
+          :params => @net.places.select {|place| Perspective.param?(place) and Perspective.net_input?},
+          :flow_elements => flow_elements,
+        }
+
+        RuleDefinition.new(name, option)
       end
 
-      def this_flow_input?(node)
-        node.is_a?(Place) and node.name.strip[0] == "<"
-      end
-
-      def this_flow_output?(node)
-        node.is_a?(Place) and node.name.strip[0] == ">"
+      def find_next_rules(base_rule)
+        @net.find_all_places_by_source_id(base_rule.id).each_with_object([]) do |place, res|
+          @net.find_all_transitions_by_source_id(place.id).each do |transition|
+            if Perspective.rule?(transition)
+              res << transition
+            else
+              find_next_rules(transition)
+            end
+          end
+        end
       end
     end
   end

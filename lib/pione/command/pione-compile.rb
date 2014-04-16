@@ -1,12 +1,12 @@
 module Pione
   module Command
-    # PionePackage is a command body of "pione-package".
-    class PioneCompiler < BasicCommand
+    # PioneCompile is a subcommand body of "pione compile".
+    class PioneCompile < BasicCommand
       #
       # basic informations
       #
 
-      define(:name, "pione-compiler")
+      define(:name, "pione compile")
       define(:desc, "translate from PNML to PIONE document")
 
       #
@@ -22,7 +22,7 @@ module Pione
       # options
       #
 
-      option CommonOption.debug
+      option(CommonOption.debug)
 
       option(:flow_name) do |item|
         item.type = :string
@@ -84,5 +84,7 @@ module Pione
         end
       end
     end
+
+    PioneCommand.define_subcommand("compile", PioneCompile)
   end
 end

@@ -8,9 +8,9 @@ TestHelper.scope do |this|
       @net = PNML::Reader.read(this::SAMPLE_NET)
       @transition_A = @net.find_transition_by_name("A")
       @transition_B = @net.find_transition_by_name("B")
-      @place_i1 = @net.find_place_by_name("'i1'")
-      @place_i2 = @net.find_place_by_name("'i2'")
-      @place_i3 = @net.find_place_by_name("'i3'")
+      @place_i1 = @net.find_place_by_name("<'i1'")
+      @place_i2 = @net.find_place_by_name("<'i2'")
+      @place_i3 = @net.find_place_by_name("<'i3'")
       @place_p1 = @net.find_place_by_name("'p1'")
       @place_o1 = @net.find_place_by_name(">'o1'")
       @place_o2 = @net.find_place_by_name(">'o2'")
@@ -228,9 +228,9 @@ TestHelper.scope do |this|
     end
 
     it "should find a place by name" do
-      @net.find_place_by_name("'i1'").should == @place_i1
-      @net.find_place_by_name("'i2'").should == @place_i2
-      @net.find_place_by_name("'i3'").should == @place_i3
+      @net.find_place_by_name("<'i1'").should == @place_i1
+      @net.find_place_by_name("<'i2'").should == @place_i2
+      @net.find_place_by_name("<'i3'").should == @place_i3
       @net.find_place_by_name("'p1'").should == @place_p1
       @net.find_place_by_name(">'o1'").should == @place_o1
       @net.find_place_by_name(">'o2'").should == @place_o2
@@ -239,17 +239,17 @@ TestHelper.scope do |this|
     end
 
     it "should find all places by name" do
-      @net.find_all_places_by_name("'i1'").tap do |places|
+      @net.find_all_places_by_name("<'i1'").tap do |places|
         places.size.should == 1
         places.should.include @place_i1
       end
 
-      @net.find_all_places_by_name("'i2'").tap do |places|
+      @net.find_all_places_by_name("<'i2'").tap do |places|
         places.size.should == 1
         places.should.include @place_i2
       end
 
-      @net.find_all_places_by_name("'i3'").tap do |places|
+      @net.find_all_places_by_name("<'i3'").tap do |places|
         places.size.should == 1
         places.should.include @place_i3
       end
@@ -333,9 +333,9 @@ TestHelper.scope do |this|
       @net = PNML::Reader.read(this::SAMPLE_NET)
       @transition_A = @net.find_transition_by_name("A")
       @transition_B = @net.find_transition_by_name("B")
-      @place_i1 = @net.find_place_by_name("'i1'")
-      @place_i2 = @net.find_place_by_name("'i2'")
-      @place_i3 = @net.find_place_by_name("'i3'")
+      @place_i1 = @net.find_place_by_name("<'i1'")
+      @place_i2 = @net.find_place_by_name("<'i2'")
+      @place_i3 = @net.find_place_by_name("<'i3'")
       @place_p1 = @net.find_place_by_name("'p1'")
       @place_o1 = @net.find_place_by_name(">'o1'")
       @place_o2 = @net.find_place_by_name(">'o2'")

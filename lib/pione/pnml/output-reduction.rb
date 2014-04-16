@@ -31,11 +31,19 @@ module Pione
             Perspective.named?(transition)
           end.empty?
 
-          net.find_all_transitions_by_source_id(place.id).each do |transition|
-            # target transition should be empty
-            next unless Perspective.empty?(transition)
+          transitions = net.find_all_transitions_by_source_id(place.id)
 
-            return [place, transition, net.find_arc(place.id, transition.id)]
+          # only one transition
+          if transitions.size == 1
+            transition = transitions.first
+
+            # the transtion is connected to only one place at source side
+            if net.find_all_places_by_target_id(transition.id).size == 1
+              # target transition should be empty
+              next unless Perspective.empty?(transition)
+
+              return [place, transition, net.find_arc(place.id, transition.id)]
+            end
           end
         end
 

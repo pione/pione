@@ -65,7 +65,7 @@ Created with Workflow PetriNet Designer Version 1.0 (woped.org)-->
     </place>
     <place id="p1">
       <name>
-        <text>'i1'</text>
+        <text>&lt;'i1'</text>
         <graphics>
           <offset x="50" y="170"/>
         </graphics>

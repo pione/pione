@@ -22,6 +22,7 @@ then
           *) _pione_action_subcommands;;
         esac;;
       clean) _pione_clean_options;;
+      compile) _pione_compile_options;;
       config)
         case $name3 in
           get) _pione_config_get_options;;
@@ -59,7 +60,7 @@ then
   }
 
   _pione_subcommands() {
-     COMPREPLY=($(compgen -W "action clean config diagnosis lang log package" -- "${COMP_WORDS[COMP_CWORD]}"));
+     COMPREPLY=($(compgen -W "action clean compile config diagnosis lang log package" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   _pione_action_subcommands() {
@@ -80,6 +81,10 @@ then
 
   _pione_clean_options() {
     COMPREPLY=($(compgen -W "--debug --older --type NAME" -- "${COMP_WORDS[COMP_CWORD]}"));
+  }
+
+  _pione_compile_options() {
+    COMPREPLY=($(compgen -W "--debug --editor --flow-name --package-name --tag" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   _pione_config_subcommands() {

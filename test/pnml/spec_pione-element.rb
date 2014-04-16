@@ -97,7 +97,7 @@ end
 
 describe Pione::PNML::ConditionalBranch do
   it "should get declaration string" do
-    PNML::ConditionalBranch.new("$x").tap do |cb|
+    PNML::ConditionalBranch.new(:case, "$x").tap do |cb|
       cb.table["true"] << PNML::ConstituentRule.new(:action, "R1")
       cb.table["false"] << PNML::ConstituentRule.new(:action, "R2")
       cb.as_declaration.should == Util::Indentation.cut(<<-PIONE)
@@ -110,7 +110,7 @@ describe Pione::PNML::ConditionalBranch do
       PIONE
     end
 
-    PNML::ConditionalBranch.new("$x").tap do |cb|
+    PNML::ConditionalBranch.new(:case, "$x").tap do |cb|
       cb.table["true"] << PNML::ConstituentRule.new(:action, "R1")
       cb.table["true"] << PNML::ConstituentRule.new(:action, "R2")
       cb.table["true"] << PNML::ConstituentRule.new(:action, "R3")
@@ -131,7 +131,7 @@ describe Pione::PNML::ConditionalBranch do
       PIONE
     end
 
-    PNML::ConditionalBranch.new("$x").tap do |cb|
+    PNML::ConditionalBranch.new(:case, "$x").tap do |cb|
       cb.table["true"] << PNML::ConstituentRule.new(:action, "R1")
       cb.as_declaration.should == Util::Indentation.cut(<<-PIONE)
         case $x

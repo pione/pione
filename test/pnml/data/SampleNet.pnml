@@ -5,7 +5,7 @@ Created with Workflow PetriNet Designer Version 1.0 (woped.org)-->
   <net type="http://www.informatik.hu-berlin.de/top/pntd/ptNetb" id="noID">
     <place id="p7">
       <name>
-        <text>'i3'</text>
+        <text>&lt;'i3'</text>
         <graphics>
           <offset x="90" y="250"/>
         </graphics>
@@ -68,7 +68,7 @@ Created with Workflow PetriNet Designer Version 1.0 (woped.org)-->
     </place>
     <place id="p2">
       <name>
-        <text>'i1'</text>
+        <text>&lt;'i1'</text>
         <graphics>
           <offset x="90" y="100"/>
         </graphics>
@@ -83,7 +83,7 @@ Created with Workflow PetriNet Designer Version 1.0 (woped.org)-->
     </place>
     <place id="p1">
       <name>
-        <text>'i2'</text>
+        <text>&lt;'i2'</text>
         <graphics>
           <offset x="90" y="170"/>
         </graphics>

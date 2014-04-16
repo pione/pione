@@ -7,6 +7,7 @@ module Pione
       require 'pione/command/pione-action-list'
       require 'pione/command/pione-action-print'
       require 'pione/command/pione-clean'
+      require 'pione/command/pione-compile'
       require 'pione/command/pione-config'
       require 'pione/command/pione-config-get'
       require 'pione/command/pione-config-list'
@@ -41,5 +42,4 @@ require 'pione/command/pione-task-worker-broker'
 require 'pione/command/pione-tuple-space-provider'
 require 'pione/command/pione-notification-listener'
 require 'pione/command/pione-tuple-space-viewer'
-require 'pione/command/pione-compiler'
 

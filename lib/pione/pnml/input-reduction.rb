@@ -28,10 +28,18 @@ module Pione
             next unless Perspective.empty?(place)
 
             # find transtions that generates the source place
-            net.find_all_transitions_by_target_id(place.id).each do |transition|
-              # the transition has empty name
-              if Perspective.empty?(transition)
-                return [transition, place, net.find_arc(transition.id, place.id)]
+            transitions = net.find_all_transitions_by_target_id(place.id)
+
+            # only one transtion
+            if transitions.size == 1
+              transition = transitions.first
+
+              # the transition is connected to only one place at target side
+              if net.find_all_places_by_source_id(transition.id).size == 1
+                # the transition has empty name
+                if Perspective.empty?(transition)
+                  return [transition, place, net.find_arc(transition.id, place.id)]
+                end
               end
             end
           end
