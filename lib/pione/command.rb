@@ -42,4 +42,5 @@ require 'pione/command/pione-task-worker-broker'
 require 'pione/command/pione-tuple-space-provider'
 require 'pione/command/pione-notification-listener'
 require 'pione/command/pione-tuple-space-viewer'
+require 'pione/command/pione-val'
 
