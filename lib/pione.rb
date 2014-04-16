@@ -110,6 +110,8 @@ require 'pione/pnml'            # PNML compiler
 # other settings
 #
 
+Version = Pione::VERSION
+
 module Pione
   # expand name spaces
   include Relay
