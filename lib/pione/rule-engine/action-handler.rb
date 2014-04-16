@@ -78,6 +78,8 @@ module Pione
       # Write the action into a shell script.
       def write_shell_script(&b)
         file = @working_directory + "__pione-action__.sh"
+        content = @rule_definition.action_context.eval(@env).content
+        sh = Util::EmbededExprExpander.expand(@env, content)
 
         # write the action
         if @dry_run
@@ -85,9 +87,8 @@ module Pione
             file.create("touch %s" % output.eval(@env).name)
           end
         else
-          # apply offside rule
-          content = @rule_definition.action_context.eval(@env).content
-          file.create(Util::EmbededExprExpander.expand(@env, content))
+          file.create(sh)
+
           # chmod 700
           if @working_directory.scheme == "local"
             FileUtils.chmod(0700, file.path)
@@ -95,8 +96,7 @@ module Pione
         end
 
         # message
-        lines = @rule_definition.action_context.eval(@env).content.split("\n")
-        user_message(["-"*60, lines, "-"*60].flatten, 0, "SH")
+        user_message(["-"*60, sh.split("\n"), "-"*60].flatten, 0, "SH")
 
         return b.call(file.path)
       end
