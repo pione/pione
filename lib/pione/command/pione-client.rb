@@ -542,7 +542,9 @@ module Pione
         item.desc = "Terminate spawner threads"
 
         item.process do
-          model[:spawner_threads].list.each {|thread| thread.kill}
+          if model[:spawner_threads]
+            model[:spawner_threads].list.each {|thread| thread.kill}
+          end
         end
       end
 
