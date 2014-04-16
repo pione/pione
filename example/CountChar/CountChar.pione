@@ -46,7 +46,7 @@ Action
 #!/usr/bin/env ruby
 # coding: utf-8
   table = {}
-  "{$I[1]}".split(":").each do |path|
+  "{$I[1]}".split(" ").each do |path|
     File.read(path).split("\n").map do |line|
       c, number = line.split(":")
       table[c] = (table.has_key?(c) ? table[c] : 0) + number.to_i
