@@ -1,5 +1,19 @@
 # History
 
+## 0.4.0(2014/4/17)
+
+* Added new PNML compiler(`pione compile`).
+* Added experimental `pione-interactive` command.
+* Modified continuation condition for rule application.
+* Changed to stop processing when action rules cause errors.
+* Refined notification system, and added `pione diagnosis notification`.
+* Renamed broker as `pione-task-worker-broker`.
+* Added a new option `--file-sliding`.
+* Added a new option `--file-cache-method`.
+* Introduced `pione-notification-listener`.
+* Fixed SpawnRetry problem with many task workers.
+* Fixed data cache problem.
+
 ## 0.3.2(2013/11/05)
 
 * Added literate action document.
