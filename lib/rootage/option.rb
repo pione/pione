@@ -47,8 +47,13 @@ module Rootage
     #   command object
     # @return [void]
     def setup(opt, cmd)
+      if not(arg.nil?) and type.nil?
+        raise OptionError.new(cmd, "Option type is undefined for the option " + inspect)
+      end
+
       # build OptionParser#on arguments
       args = [short_for_optparse, long_for_optparse, desc].compact
+
       # call #on with the argument
       opt.on(*args) {|val| specify(cmd, val)}
     end
@@ -79,13 +84,15 @@ module Rootage
       end
 
       # normalization
-      _val = Normalizer.normalize(type, val)
+      if val
+        val = Normalizer.normalize(type, val)
+      end
 
-      if range.nil? or range.include?(_val)
+      if range.nil? or range.include?(val)
         if processes.empty?
-          cmd.model.specify(key, _val)
+          cmd.model.specify(key, val)
         else
-          execute(cmd, _val)
+          execute(cmd, val)
         end
       else
         arg = {value: _val, range: range}

@@ -135,7 +135,7 @@ module Pione
         item.arg  = '[SCENARIO]'
         item.desc = 'rehearse the scenario'
 
-        item.assign {|val| val.size != 0 ? val : :anything}
+        item.assign {|val| not(val.nil?) and val.size != 0 ? val : :anything}
       end
 
       option(:timeout) do |item|

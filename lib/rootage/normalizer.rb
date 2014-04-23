@@ -23,6 +23,10 @@ module Rootage
       # @return [Object]
       #   the normalized value
       def normalize(type, val)
+        if type.nil?
+          raise ArgumentError.new("Normalization type should not be nil.")
+        end
+
         if respond_to?(type, true)
           send(type, val)
         else
