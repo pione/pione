@@ -7,11 +7,6 @@ module Pione
 
       require 'rexml/document'
 
-      # debug mode only
-      unless ENV["PIONE_JOB_ID"]
-        require 'webrick'
-      end
-
       #
       # informations
       #
@@ -60,7 +55,21 @@ module Pione
       #
 
       phase(:setup) do |seq|
+        seq << :session_id
         seq << :ui_definition
+      end
+
+      setup(:session_id) do |item|
+        item.desc = "Setup session ID"
+        item.process do
+          if ENV["PIONE_SESSION_ID"]
+            model[:session_id] = ENV["PIONE_SESSION_ID"]
+            model[:request_from] = ENV["PIONE_REQUEST_FROM"]
+          else
+            # debug mode only
+            require 'webrick'
+          end
+        end
       end
 
       setup(:ui_definition) do |item|
@@ -91,18 +100,25 @@ module Pione
       #
 
       phase(:execution) do |seq|
-        if ENV["PIONE_JOB_ID"]
-          seq << :connect_webclient
-        else
-          # debug mode
-          seq << :debug_mode
-          seq << :print_result
-        end
+        seq << :connect_webclient
+        seq << :print_result
       end
 
-      execution(:debug_mode) do |item|
-        item.desc = "Launch a debug server"
+      execution(:connect_webclient) do |item|
+        item.desc = "Connect webclient"
+
         item.process do
+          test(model[:session_id])
+          test(model[:request_from])
+
+          webclient = DRb::DRbObject.new_with_uri(model[:request_from])
+          result = webclient.request_interactive_operation(model[:session_id], model[:content], model[:script])
+          model[:result] = result
+        end
+
+        item.process do
+          test(not(model[:session_id] and model[:request_from]))
+
           begin
             template = <<HTML
 <!DOCTYPE html>

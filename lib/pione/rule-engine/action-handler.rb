@@ -8,8 +8,8 @@ module Pione
 
       attr_reader :working_directory
 
-      def initialize(*args)
-        super(*args)
+      def initialize(param)
+        super(param)
         @working_directory = Location[Global.working_directory_generator.mkdir]
         @env.variable_set(
           Lang::Variable.new("__WORKING_DIRECTORY__"),
@@ -22,7 +22,7 @@ module Pione
         # prepare input files
         setup_working_directory
         # prepare shell script
-        write_shell_script {|path| call_shell_script(path) }
+        write_shell_script {|path| call_shell_script(path)}
         # collect outputs
         outputs = collect_outputs
         # write output data
@@ -77,7 +77,7 @@ module Pione
 
       # Write the action into a shell script.
       def write_shell_script(&b)
-        file = @working_directory + "__pione-action__.sh"
+        file = @working_directory + "__pione__.sh"
         content = @rule_definition.action_context.eval(@env).content
         sh = Util::EmbededExprExpander.expand(@env, content)
 
@@ -113,7 +113,17 @@ module Pione
         err = ".stderr"
 
         # execute command
-        `cd #{@working_directory.path}; PATH=#{(@working_directory + "bin").path}:$PATH ; ./#{scriptname} > #{out} 2> #{err}`
+        # `cd #{}; PATH=#{(@working_directory + "bin").path}:$PATH; ./#{scriptname} > #{out} 2> #{err}`
+        callee_env = {
+          "PATH" => (@working_directory + "bin").path.to_s + ";" + ENV["PATH"],
+          "PIONE_SESSION_ID" => @session_id,
+          "PIONE_REQUEST_FROM" => @request_from.to_s,
+          "PIONE_CLIENT_UI" => @client_ui.to_s
+        }
+        command = "./#{scriptname} > #{out} 2> #{err}"
+        options = {:chdir => @working_directory.path.to_s}
+
+        system(callee_env, command, options)
 
         # the case the script has errored
         unless $?.success?

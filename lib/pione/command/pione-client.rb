@@ -49,6 +49,9 @@ module Pione
       option(NotificationOption.notification_targets)
       option(NotificationOption.notification_receivers)
 
+      option(SessionOption.request_from)
+      option(SessionOption.session_id)
+
       option(:input_location) do |item|
         item.type  = :location
         item.short = '-i'
@@ -145,6 +148,13 @@ module Pione
         item.desc = 'timeout processing after SEC'
       end
 
+      option(:client_ui) do |item|
+        item.type = :string
+        item.long = "--client-ui"
+        item.arg  = "TYPE"
+        item.desc = "Type of the client's user interface"
+      end
+
       option_post(:validate_task_worker_size) do |item|
         item.desc = "Validate task worker size"
         item.process do
@@ -217,6 +227,20 @@ module Pione
           # write tuples
           model[:tuple_space].write(TupleSpace::ProcessInfoTuple.new('standalone', 'Standalone'))
           model[:tuple_space].write(TupleSpace::DryRunTuple.new(model[:dry_run]))
+
+          if model[:request_from]
+            model[:tuple_space].write(TupleSpace::AttributeTuple.new("request_from", model[:request_from]))
+          end
+
+          if model[:session_id]
+            model[:tuple_space].write(TupleSpace::AttributeTuple.new("session_id", model[:session_id]))
+          end
+
+          if model[:client_ui]
+            model[:tuple_space].write(TupleSpace::AttributeTuple.new("client_ui", model[:client_ui]))
+          else
+            model[:tuple_space].write(TupleSpace::AttributeTuple.new("client_ui", "GUI"))
+          end
         end
       end
 
@@ -412,7 +436,12 @@ module Pione
         item.desc = "Spawn a task worker"
 
         item.process do
-          Command::PioneTaskWorker.spawn(model, Global.features, model[:tuple_space].uuid)
+          param = {
+            :features => Global.features,
+            :tuple_space_id => model[:tuple_space].uuid
+          }
+
+          Command::PioneTaskWorker.spawn(model, param)
         end
 
         item.exception(SpawnError) do |e|

@@ -54,6 +54,11 @@ module Pione
 
         # share my environment
         write(TupleSpace::EnvTuple.new(@env.dumpable)) # need to be dumpable
+
+        # collect tuple space attributes
+        @request_from = @tuple_space.attribute("request_from")
+        @session_id = @tuple_space.attribute("session_id")
+        @client_ui = @tuple_space.attribute("client_ui")
       end
 
       def transit_to_sleep
@@ -69,9 +74,20 @@ module Pione
         else
           # call root rule of the current package
           list.each do |env, inputs|
-            package_id = @env.current_package_id
-            handler = RuleEngine.make(@tuple_space, @env, package_id, "Root", inputs, Lang::ParameterSet.new, 'root', nil)
-            handler.handle
+            engine_param = {
+              :tuple_space  => @tuple_space,
+              :env          => @env,
+              :package_id   => @env.current_package_id,
+              :rule_name    => "Root",
+              :inputs       => inputs,
+              :param_set    => Lang::ParameterSet.new,
+              :domain_id    => 'root',
+              :caller_id    => nil,
+              :request_from => @request_from,
+              :session_id   => @session_id,
+              :client_ui    => @client_ui
+            }
+            RuleEngine.make(engine_param).handle
           end
         end
 

@@ -43,7 +43,18 @@ describe 'Pione::RuleHandler::EmptyHandler' do
 
       write(@tuple_a)
 
-      @handler = RuleEngine.make(@space, env, package_id, 'TestTouch', @inputs, param_set, domain_id, 'root')
+      engine_param = {
+        :tuple_space => @space,
+        :env => env,
+        :package_id => package_id,
+        :rule_name => 'TestTouch',
+        :inputs => inputs,
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      @handler = RuleEngine.make(engine_param)
     end
 
     after do
@@ -96,7 +107,18 @@ describe 'Pione::RuleHandler::EmptyHandler' do
       write(@tuple_a)
       write(@tuple_b)
 
-      @handler = RuleEngine.make(@space, env, package_id, 'TestTouch', @inputs, param_set, domain_id, 'root')
+      engine_param = {
+        :tuple_space => @space,
+        :env => env,
+        :package_id => package_id,
+        :rule_name => 'TestTouch',
+        :inputs => inputs,
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      @handler = RuleEngine.make(engine_param)
     end
 
     after do
@@ -148,7 +170,18 @@ describe 'Pione::RuleHandler::EmptyHandler' do
       write(@tuple_a)
       write(@tuple_b)
 
-      @handler = RuleEngine.make(@space, env, package_id, 'TestRemove', @inputs, param_set, domain_id, 'root')
+      engine_param = {
+        :tuple_space => @space,
+        :env => env,
+        :package_id => package_id,
+        :rule_name => 'TestRemove',
+        :inputs => inputs,
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      @handler = RuleEngine.make(engine_param)
     end
 
     after do

@@ -10,9 +10,8 @@ AgentTuple:
 
 AttributeTuple:
   - attribute
-  - key:  # attribute name
-      "String"
-  - value # attribute value
+  - key: String # attribute name
+  - value       # attribute value
 
 BaseLocationTuple:
   - base_location

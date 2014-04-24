@@ -40,9 +40,19 @@ TestHelper.scope do |this|
         tuple_b.domain = domain_id
         inputs.each {|t| write(t) }
 
-        @handler_sh1 = RuleEngine.make(@ts, env, package_id, 'Shell1', inputs, param_set, domain_id, 'root')
-        @handler_sh2 = RuleEngine.make(@ts, env, package_id, 'Shell2', inputs, param_set, domain_id, 'root')
-        @handler_ruby = RuleEngine.make(@ts, env, package_id, 'Ruby', inputs, param_set, domain_id, 'root')
+        engine_param = {
+          :tuple_space => @ts,
+          :env => env,
+          :package_id => package_id,
+          :inputs => inputs,
+          :param_set => param_set,
+          :domain_id => domain_id,
+          :caller_id => 'root'
+        }
+
+        @handler_sh1 = RuleEngine.make(engine_param.merge(rule_name: 'Shell1'))
+        @handler_sh2 = RuleEngine.make(engine_param.merge(rule_name: 'Shell2'))
+        @handler_ruby = RuleEngine.make(engine_param.merge(rule_name: 'Ruby'))
       end
 
       after do
@@ -130,8 +140,18 @@ TestHelper.scope do |this|
         tuple_a.domain = domain_id
         inputs.each {|t| write(t) }
 
-        @handler1 = RuleEngine.make(@ts, env, package_id, 'R1', inputs, param_set, domain_id, 'root')
-        @handler2 = RuleEngine.make(@ts, env, package_id, 'R2', inputs, param_set, domain_id, 'root')
+        engine_param = {
+          :tuple_space => @ts,
+          :env => env,
+          :package_id => package_id,
+          :inputs => inputs,
+          :param_set => param_set,
+          :domain_id => domain_id,
+          :caller_id => 'root'
+        }
+
+        @handler1 = RuleEngine.make(engine_param.merge(rule_name: 'R1'))
+        @handler2 = RuleEngine.make(engine_param.merge(rule_name: 'R2'))
       end
 
       after do

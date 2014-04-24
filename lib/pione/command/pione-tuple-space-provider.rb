@@ -11,17 +11,17 @@ module Pione
         spawner = Spawner.new(cmd.model, "pione-tuple-space-provider")
 
         # debug options
-        spawner.option("--debug=system") if Global.debug_system
-        spawner.option("--debug=ignored_exception") if Global.debug_ignored_exception
-        spawner.option("--debug=rule_engine") if Global.debug_rule_engine
-        spawner.option("--debug=communication") if Global.debug_communication
-        spawner.option("--debug=notification") if Global.debug_notification
+        spawner.option_if(Global.debug_system, "--debug=system")
+        spawner.option_if(Global.debug_ignored_exception, "--debug=ignored_exception")
+        spawner.option_if(Global.debug_rule_engine, "--debug=rule_engine")
+        spawner.option_if(Global.debug_communication, "--debug=communication")
+        spawner.option_if(Global.debug_notification, "--debug=notification")
 
         # requisite options
-        spawner.option("--parent-front", cmd.model[:front].uri.to_s)
-        spawner.option("--communication-address", Global.communication_address.to_s)
+        spawner.option("--parent-front", cmd.model[:front].uri)
+        spawner.option("--communication-address", Global.communication_address)
         Global.notification_targets.each do |address|
-          spawner.option("--notification-target", address.to_s)
+          spawner.option("--notification-target", address)
         end
 
         # optionals

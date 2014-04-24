@@ -49,9 +49,36 @@ module Pione
         end
       end
 
-      # Append arguments to the command.
+      # Add arguments as command arguments.
       def option(*argv)
         @argv += argv.map {|val| val.to_s}
+      end
+
+      # Add arguments if the condition is true.
+      def option_if(cond, *args)
+        if cond
+          option(*args)
+        end
+      end
+
+      # Add the option name and the value as command arguments. If the value
+      # doesn't exist in the table or the value is `nil`, no options are
+      # added. This is useful for the case a caller's command option passes
+      # callee's.
+      #
+      # @param [Hash] table
+      #   value table
+      # @param [Symbol] key
+      #   key of the value table
+      # @param [String] option_name
+      #   option name
+      # @return [void]
+      def option_from(table, key, option_name, converter=nil)
+        if table[key]
+          val = table[key]
+          val = converter.call(val) if converter
+          option(option_name, val)
+        end
       end
 
       # Register the block that is executed when the spawned process is terminated.

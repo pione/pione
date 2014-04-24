@@ -207,5 +207,23 @@ module Pione
         end
       end
     end
+
+    module SessionOption
+      extend Rootage::OptionCollection
+
+      define(:request_from) do |item|
+        item.type = :uri
+        item.long = "--request-from"
+        item.arg  = "URI"
+        item.desc = "URI that the client requested the job from"
+      end
+
+      define(:session_id) do |item|
+        item.type = :string
+        item.long = "--session-id"
+        item.arg  = "ID"
+        item.desc = "Session id of the job"
+      end
+    end
   end
 end

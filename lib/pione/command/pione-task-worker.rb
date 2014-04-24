@@ -7,24 +7,31 @@ module Pione
       #
 
       # Create a new process of `pione-task-worker` command.
-      def self.spawn(model, features, tuple_space_id)
+      #
+      # @param [Rootage::Model] model
+      # @param [Hash] param
+      # @option param [Array<String>] :features
+      #   list of features that the task worker has
+      # @option param [String] :tuple_space_id
+      #   ID of tuple space that the task worker works in
+      def self.spawn(model, param={})
         spawner = Spawner.new(model, "pione-task-worker")
 
         # debug options
-        spawner.option("--debug=system") if Global.debug_system
-        spawner.option("--debug=ignored_exception") if Global.debug_ignored_exception
-        spawner.option("--debug=rule_engine") if Global.debug_rule_engine
-        spawner.option("--debug=communication") if Global.debug_communication
-        spawner.option("--debug=notification") if Global.debug_notification
+        spawner.option_if(Global.debug_system, "--debug=system")
+        spawner.option_if(Global.debug_ignored_exception, "--debug=ignored_exception")
+        spawner.option_if(Global.debug_rule_engine, "--debug=rule_engine")
+        spawner.option_if(Global.debug_communication, "--debug=communication")
+        spawner.option_if(Global.debug_notification, "--debug=notification")
 
         # requisite options
-        spawner.option("--parent-front", model[:front].uri.to_s)
-        spawner.option("--tuple-space-id", tuple_space_id)
-        spawner.option("--features", features) if features
+        spawner.option_from(model, :front, "--parent-front", lambda {|val| val.uri})
+        spawner.option_from(param, :tuple_space_id, "--tuple-space-id")
+        spawner.option_from(param, :features, "--features")
 
         # others
         spawner.option("--color", Global.color_enabled)
-        spawner.option("--file-cache-method", System::FileCache.cache_method.name.to_s)
+        spawner.option("--file-cache-method", System::FileCache.cache_method.name)
         spawner.option("--file-sliding", Global.file_sliding)
 
         spawner.spawn # this method returns child front
@@ -50,6 +57,9 @@ module Pione
       option CommonOption.features
       option CommonOption.file_cache_method
       option CommonOption.file_sliding
+
+      option(SessionOption.request_from)
+      option(SessionOption.session_id)
 
       option(:tuple_space_id) do |item|
         item.type = :string
@@ -99,6 +109,9 @@ module Pione
             cmd.abort('"%{name}" cannot connect to tuple space.' % {name: cmd.name})
           end
         end
+
+        item.assign(:request_from) {model[:tuple_space].attribute("request_from")}
+        item.assign(:session_id) {model[:tuple_space].attribute("session_id")}
       end
 
       setup(:task_worker_agent) do |item|

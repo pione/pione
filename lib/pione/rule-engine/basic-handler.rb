@@ -22,26 +22,32 @@ module Pione
       attr_reader :caller_id        # from domain
 
       # Create a new handler for rule.
-      def initialize(space, env, package_id, rule_name, rule_definition, inputs, param_set, domain_id, caller_id)
+      #
+      # @param [Hash] param
+      #   see `RuleEngine.make`
+      def initialize(param)
         ### set tuple space server
-        set_tuple_space(space)
+        set_tuple_space(param[:tuple_space])
 
         ### set informations
-        @plain_env = env
-        @env = setup_env(env, param_set)
-        @package_id = package_id
-        @rule_name = rule_name
-        @rule_definition = rule_definition
-        @rule_condition = rule_definition.rule_condition_context.eval(@env)
-        @inputs = inputs
+        @plain_env = param[:env]
+        @env = setup_env(param[:env], param[:param_set])
+        @package_id = param[:package_id]
+        @rule_name = param[:rule_name]
+        @rule_definition = param[:rule_definition]
+        @rule_condition = @rule_definition.rule_condition_context.eval(@env)
+        @inputs = param[:inputs]
         @outputs = []
-        @param_set = param_set
-        @digest = Util::TaskDigest.generate(package_id, rule_name, inputs, param_set)
+        @param_set = param[:param_set]
+        @digest = Util::TaskDigest.generate(@package_id, @rule_name, @inputs, @param_set)
         @base_location = read!(TupleSpace::BaseLocationTuple.any).location
         @dry_run = begin read!(TupleSpace::DryRunTuple.any).availability rescue false end
-        @domain_id = domain_id
+        @domain_id = param[:domain_id]
         @domain_location = make_location("", @domain_id)
-        @caller_id = caller_id
+        @caller_id = param[:caller_id]
+        @request_from = param[:request_from]
+        @session_id = param[:session_id]
+        @client_ui = param[:client_ui]
       end
 
       # Handle the rule and return the outputs.

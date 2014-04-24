@@ -191,6 +191,14 @@ module Pione
         end
       end
 
+      def attribute(name)
+        if tuple = read!(TupleSpace::AttributeTuple.new(key: name))
+          return tuple.value
+        else
+          return nil
+        end
+      end
+
       def inspect
         "#<Pione::TupleSpace::TupleSpaceServer:%s>" % object_id
       end

@@ -12,6 +12,17 @@ module Pione
       attr_reader :execution_thread
       attr_accessor :once # the agent will be killed at task completion if true
 
+      # @param [Pione::TupleSpace::TupleSpaceServer] tuple_space
+      #   tuple space
+      # @param [String] features
+      #   features that the task worker has
+      # @param [Hash] option
+      # @option option [] :env
+      #   a environment object
+      # @option option [String] :session_id
+      #   session ID
+      # @option option [URI] :request_from
+      #   URI that a client requested from
       def initialize(tuple_space, features, env=nil)
         super(tuple_space)
         @tuple_space = tuple_space
@@ -42,6 +53,12 @@ module Pione
       #
       # transitions
       #
+
+      def transit_to_init
+        @request_from = @tuple_space.attribute("request_from")
+        @session_id = @tuple_space.attribute("session_id")
+        @client_ui = @tuple_space.attribute("client_ui")
+      end
 
       # Take a task and turn it to foreground.
       def transit_to_take_task
@@ -122,16 +139,21 @@ module Pione
 
       # Make an engine from the task.
       def make_engine(task)
-        RuleEngine.make(
-          @tuple_space,
-          @env,
-          task.package_id,
-          task.rule_name,
-          task.inputs,
-          task.param_set,
-          task.domain_id,
-          task.caller_id
-        )
+        param = {
+          :tuple_space  => @tuple_space,
+          :env          => @env,
+          :package_id   => task.package_id,
+          :rule_name    => task.rule_name,
+          :inputs       => task.inputs,
+          :param_set    => task.param_set,
+          :domain_id    => task.domain_id,
+          :caller_id    => task.caller_id,
+          :request_from => @request_from,
+          :session_id   => @session_id,
+          :client_ui    => @client_ui
+        }
+
+        RuleEngine.make(param)
       end
 
       # Spawn child task worker. This method repeats to create a child agent

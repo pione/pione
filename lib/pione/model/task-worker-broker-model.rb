@@ -35,8 +35,14 @@ module Pione
 
           # spawn a new process of pione-task-worker command
           if self[:spawn_task_worker]
+            # make task worker's parameters
+            param = {
+              :features => Global.features,
+              :tuple_space_id => tuple_space.uuid
+            }
+
             begin
-              spawner = Command::PioneTaskWorker.spawn(self, Global.features, tuple_space.uuid)
+              spawner = Command::PioneTaskWorker.spawn(self, param)
               @task_workers << spawner.child_front
               spawner.when_terminated {delete_task_worker(spawner.child_front)}
             rescue Command::SpawnError => e

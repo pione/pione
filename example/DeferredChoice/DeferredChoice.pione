@@ -13,14 +13,21 @@ End
 
 Rule UserSelect
   output 'a.txt' or 'b.txt' or 'c.txt'
-  feature +Interactive
 Action
-  if [ "{$DIALOG}" = "zenity" ]
-  then
-    zenity --list --title "select action" --column rule "rule A" "rule B" "rule C" > rule.txt
-  else
-    xmessage -print -center -buttons "rule A,rule B,rule C" "select action" > rule.txt
-  fi
+  case "$PIONE_CLIENT_UI" in
+    "Browser")
+      pione-interactive --ui Browser bin/ui.xml > rule.txt ;;
+    "GUI")
+      if [ "{$DIALOG}" = "zenity" ]
+      then
+        zenity --list --title "select action" --column rule "rule A" "rule B" "rule C" > rule.txt
+      else
+        xmessage -print -center -buttons "rule A,rule B,rule C" "select action" > rule.txt
+      fi ;;
+    *)
+      echo "rule A" > rule.txt
+  esac
+
   RULE=`cat rule.txt`
   case "$RULE" in
     "rule A") touch a.txt ;;

@@ -30,7 +30,18 @@ describe 'Pione::RuleHandler::FlowRule' do
       tuple_b.domain = domain_id
       inputs.each {|t| write(t) }
 
-      @handler = RuleEngine.make(@ts, env, @package_id, @rule_name, inputs, param_set, domain_id, 'root')
+      engine_param = {
+        :tuple_space => @ts,
+        :env => env,
+        :package_id => @package_id,
+        :rule_name => @rule_name,
+        :inputs => inputs,
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      @handler = RuleEngine.make(engine_param)
     end
 
     after do
@@ -103,7 +114,19 @@ describe 'Pione::RuleHandler::FlowRule' do
     it "should unify redundant tasks" do
       param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate('Unification', 'R1', [], param_set)
-      handler = RuleEngine.make(@space, @env, 'Unification', 'R1', [], param_set, domain_id, 'root')
+
+      engine_param = {
+        :tuple_space => @space,
+        :env => @env,
+        :package_id => 'Unification',
+        :rule_name => 'R1',
+        :inputs => [],
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      handler = RuleEngine.make(engine_param)
 
       # start the handler
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
@@ -170,7 +193,19 @@ describe 'Pione::RuleHandler::FlowRule' do
     it "should execute a flow" do
       param_set = Lang::ParameterSet.new(table: {"F" => Lang::BooleanSequence.of("true")})
       domain_id = Util::DomainID.generate(@env.current_package_id, 'Main', [], param_set)
-      handler = RuleEngine.make(@space, @env, @env.current_package_id, 'Main', [], param_set, domain_id, 'root')
+
+      engine_param = {
+        :tuple_space => @space,
+        :env => @env,
+        :package_id => @env.current_package_id,
+        :rule_name => 'Main',
+        :inputs => [],
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      handler = RuleEngine.make(engine_param)
 
       # start the handler
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
@@ -232,7 +267,19 @@ describe 'Pione::RuleHandler::FlowRule' do
     it "should override parent rule by child" do
       param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate('Child', 'R1', [], param_set)
-      handler = RuleEngine.make(@space, @env, 'Child', 'R1', [], param_set, domain_id, 'root')
+
+      engine_param = {
+        :tuple_space => @space,
+        :env => @env,
+        :package_id => 'Child',
+        :rule_name => 'R1',
+        :inputs => [],
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      handler = RuleEngine.make(engine_param)
 
       # start the handler
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
@@ -289,7 +336,19 @@ describe 'Pione::RuleHandler::FlowRule' do
     it "should get concrete rule" do
       param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate('Concrete', 'R1', [], param_set)
-      handler = RuleEngine.make(@space, @env, 'Concrete', 'R1', [], param_set, domain_id, 'root')
+
+      engine_param = {
+        :tuple_space => @space,
+        :env => @env,
+        :package_id => 'Concrete',
+        :rule_name => 'R1',
+        :inputs => [],
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      handler = RuleEngine.make(engine_param)
 
       # start the handler
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
@@ -340,7 +399,19 @@ describe 'Pione::RuleHandler::FlowRule' do
     it "should distribute tasks by parameter" do
       param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate(@env.current_package_id, 'R1', [], param_set)
-      handler = RuleEngine.make(@space, @env, @env.current_package_id, 'R1', [], param_set, domain_id, 'root')
+
+      engine_param = {
+        :tuple_space => @space,
+        :env => @env,
+        :package_id => @env.current_package_id,
+        :rule_name => 'R1',
+        :inputs => [],
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      handler = RuleEngine.make(engine_param)
 
       # start the handler
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
@@ -395,7 +466,19 @@ describe 'Pione::RuleHandler::FlowRule' do
     it "should make recursion by using parameter" do
       param_set = Lang::ParameterSet.new
       domain_id = Util::DomainID.generate(@env.current_package_id, 'R1', [], param_set)
-      handler = RuleEngine.make(@space, @env, @env.current_package_id, 'R1', [], param_set, domain_id, 'root')
+
+      engine_param = {
+        :tuple_space => @space,
+        :env => @env,
+        :package_id => @env.current_package_id,
+        :rule_name => 'R1',
+        :inputs => [],
+        :param_set => param_set,
+        :domain_id => domain_id,
+        :caller_id => 'root'
+      }
+
+      handler = RuleEngine.make(engine_param)
 
       # start the handler
       thread = Thread.new { Thread.current[:outputs] = handler.execute }
