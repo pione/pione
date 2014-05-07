@@ -1,3 +1,6 @@
+require 'pione/global/interactive-variable'
+require 'pione/front/interactive-front'
+
 module Pione
   module Command
     class PioneInteractive < BasicCommand
@@ -14,16 +17,13 @@ module Pione
       define(:toplevel, true)
       define(:name, "pione-interactive")
       define(:desc, "interactive action handler")
+      define(:front, Front::InteractiveFront)
 
       #
       # arguments
       #
 
-      argument(:xml) do |item|
-        item.type    = :location
-        item.desc    = "UI definition file"
-        item.missing = "There are no definition file."
-      end
+      # pione-interactive has no arguments
 
       #
       # options
@@ -36,17 +36,42 @@ module Pione
         item.desc = "User interface name"
       end
 
+      option(:type) do |item|
+        item.desc = "View type"
+        item.type = :symbol_downcase
+        item.long = "--type"
+        item.arg  = "NAME"
+      end
+
+      option(:public) do |item|
+        item.desc = "public directory for interactive operation pages"
+        item.type = :location
+        item.long = "--public"
+        item.arg  = "DIR"
+        item.init = "./public"
+      end
+
+      option(:definition) do |item|
+        item.desc = "UI definition file"
+        item.type = :location
+        item.long = "--definition"
+        item.arg  = "FILE"
+      end
+
+      option(:output) do |item|
+        item.desc  = "Output file"
+        item.type  = :location
+        item.long  = "--output"
+        item.short = "-o"
+        item.arg   = "FILE"
+      end
+
       option_post(:validate_ui) do |item|
         item.desc = "Validate UI name"
 
         item.process do
           test(model[:ui].nil?)
           raise Rootage::OptionError.new(cmd, "No UI name")
-        end
-
-        item.process do
-          test(model[:ui] != :browser)
-          raise Rootage::OptionError.new(cmd, "Unknown UI name: %s" % model[:ui])
         end
       end
 
@@ -75,10 +100,12 @@ module Pione
       setup(:ui_definition) do |item|
         item.desc = "Extract informations from UI definition"
         item.process do
+          test(model[:definition])
+
           fm = REXML::Formatters::Default.new
 
           # create a document
-          doc = REXML::Document.new(model[:xml].read)
+          doc = REXML::Document.new(model[:definition].read)
 
           # get the prefix of root element(e.g. "pione")
           prefix = doc.root.prefix
@@ -100,24 +127,32 @@ module Pione
       #
 
       phase(:execution) do |seq|
-        seq << :connect_webclient
+        seq << :render
         seq << :print_result
       end
 
-      execution(:connect_webclient) do |item|
-        item.desc = "Connect webclient"
+      execution(:render) do |item|
+        item.desc = "Render a widget"
 
+        # this is called from webclient
         item.process do
           test(model[:session_id])
           test(model[:request_from])
 
           webclient = DRb::DRbObject.new_with_uri(model[:request_from])
-          result = webclient.request_interactive_operation(model[:session_id], model[:content], model[:script])
+          case model[:type]
+          when :page
+            result = webclient.request_interactive_operation(model[:session_id], :page, {:front => model[:front].uri.to_s})
+          else # when :dialog
+            result = webclient.request_interactive_operation(model[:session_id], :dialog, {:content => model[:content], :script => model[:script]})
+          end
           model[:result] = result
         end
 
+        # this is called from the exception of webclient
         item.process do
           test(not(model[:session_id] and model[:request_from]))
+          test(model[:definition])
 
           begin
             template = <<HTML
@@ -190,13 +225,58 @@ HTML
             end
           end
         end
+
+        # this is called from the exception of webclient
+        item.process do
+          test(not(model[:session_id] and model[:request_from]))
+          test(model[:type] == :page)
+
+          begin
+            model[:debug_server] = WEBrick::HTTPServer.new(
+              :Port => 8080, :Logger => WEBrick::Log.new($stderr)
+            )
+
+            # page handler on '/'
+            model[:debug_server].mount("/", WEBrick::HTTPServlet::FileHandler, model[:public].path.to_s)
+
+            # finish
+            model[:debug_server].mount_proc("/finish") do |req, res|
+              model[:result] = req.query["result"]
+              model[:debug_server].shutdown
+            end
+
+            # shutdown handler on '/shutdown'
+            model[:debug_server].mount_proc("/shutdown") do |req, res|
+              model[:result] = req.body
+              model[:debug_server].shutdown
+            end
+
+            # `Kernel.trap` can take multiple INT handlers
+            trap("INT") { model[:debug_server].shutdown }
+
+            # show the location
+            $stderr.puts "See http://localhost:8080"
+
+            # start the debug server
+            model[:debug_server].start
+          ensure
+            if model[:debug_server]
+              model[:debug_server].shutdown
+            end
+          end
+
+        end
       end
 
       # Print a result string of interactive action to stdout.
       execution(:print_result) do |item|
         item.desc = "Print a result string."
         item.process do
-          $stdout.print model[:result]
+          if model[:output]
+            model[:output].write model[:result]
+          else
+            $stdout.print model[:result]
+          end
         end
       end
     end

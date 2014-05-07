@@ -1,6 +1,4 @@
-.@ PackageName :: "DefferredChoice"
-
-param $DIALOG := "zenity"
+.@ PackageName :: "DefferredChoiceWithPage"
 
 Rule Main
   output 'result.txt'
@@ -14,20 +12,14 @@ End
 Rule UserSelect
   output 'a.txt' or 'b.txt' or 'c.txt'
 Action
-  case "$PIONE_CLIENT_UI" in
-    "Browser")
-      pione-interactive --ui Browser --type dialog --definition bin/ui.xml -o rule.txt ;;
-    "GUI")
-      if [ "{$DIALOG}" = "zenity" ]
-      then
-        zenity --list --title "select action" --column rule "rule A" "rule B" "rule C" > rule.txt
-      else
-        xmessage -print -center -buttons "rule A,rule B,rule C" "select action" > rule.txt
-      fi ;;
-    *)
-      echo "rule A" > rule.txt
-  esac
+  # build public directory for pione-interactive
+  mkdir public
+  cp bin/index.html public/index.html
 
+  # start interactive operation
+  pione-interactive --ui Browser --type page --public ./public -o rule.txt
+
+  # generate an output
   RULE=`cat rule.txt`
   case "$RULE" in
     "rule A") touch a.txt ;;

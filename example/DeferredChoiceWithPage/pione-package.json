@@ -1,0 +1,16 @@
+{
+  "PackageName": "DefferredChoiceWithPage",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "DeferredChoiceWithPage.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+    "bin/index.html",
+    "bin/ui.xml"
+  ]
+}
