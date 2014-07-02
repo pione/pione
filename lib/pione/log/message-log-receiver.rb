@@ -12,7 +12,9 @@ module Pione
       #   message header
       # @param color [String]
       #   message color
-      def receiver(message, level, header, color)
+      # @param session_id [String]
+      #   session_id
+      def receiver(message, level, header, color, session_id)
         raise NotImplementedError.new
       end
     end
@@ -24,7 +26,7 @@ module Pione
         @out = out
       end
 
-      def receive(message, level, header, color)
+      def receive(message, level, header, color, session_id)
         @out.puts "%s%s %s" % ["  "*level, ("%5s" % header).color(color), message]
       end
     end

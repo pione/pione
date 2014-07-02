@@ -373,7 +373,7 @@ module Pione
             receiver = Log::CUIMessageLogReceiver.new
           end
 
-          Agent::Messenger.new(model[:tuple_space], receiver).start
+          Agent::Messenger.new(model[:tuple_space], receiver, model[:session_id]).start
         end
       end
 

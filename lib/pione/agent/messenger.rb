@@ -8,11 +8,12 @@ module Pione
       #   tuple space
       # @param receiver [Log::MessageLogReceiver]
       #   message log receiver
-      def initialize(tuple_space, receiver)
+      def initialize(tuple_space, receiver, session_id)
         super(tuple_space)
 
         # message log receiver
         @receiver = receiver
+        @session_id = session_id
       end
 
       #
@@ -34,7 +35,7 @@ module Pione
         tuples.sort{|a,b| a.timestamp <=> b.timestamp}.each do |tuple|
           tuple.contents.tap do |contents|
             (contents.kind_of?(String) ? [contents] : contents).each do |msg|
-              @receiver.receive(msg, tuple.level, tuple.head, tuple.color)
+              @receiver.receive(msg, tuple.level, tuple.head, tuple.color, @session_id)
             end
           end
         end
