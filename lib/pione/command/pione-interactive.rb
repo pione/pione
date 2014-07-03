@@ -97,6 +97,11 @@ module Pione
         end
       end
 
+      setup(:interaction_id) do |item|
+        item.desc = "Setup interaction ID"
+        item.assign { Util::UUID.generate }
+      end
+
       setup(:ui_definition) do |item|
         item.desc = "Extract informations from UI definition"
         item.process do
@@ -142,9 +147,9 @@ module Pione
           webclient = DRb::DRbObject.new_with_uri(model[:request_from])
           case model[:type]
           when :page
-            result = webclient.request_interactive_operation(model[:session_id], :page, {:front => model[:front].uri.to_s})
+            result = webclient.request_interaction(model[:session_id], model[:interaction_id], :page, {:front => model[:front].uri.to_s})
           else # when :dialog
-            result = webclient.request_interactive_operation(model[:session_id], :dialog, {:content => model[:content], :script => model[:script]})
+            result = webclient.request_interaction(model[:session_id], model[:interaction_id], :dialog, {:content => model[:content], :script => model[:script]})
           end
           model[:result] = result
         end
