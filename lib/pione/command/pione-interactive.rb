@@ -23,25 +23,14 @@ module Pione
       # arguments
       #
 
-      # pione-interactive has no arguments
+      argument(:type) do |item|
+        item.type = :symbol_downcase
+        item.desc = "View type"
+      end
 
       #
       # options
       #
-
-      option(:ui) do |item|
-        item.type = :symbol_downcase
-        item.long = "--ui"
-        item.arg  = "NAME"
-        item.desc = "User interface name"
-      end
-
-      option(:type) do |item|
-        item.desc = "View type"
-        item.type = :symbol_downcase
-        item.long = "--type"
-        item.arg  = "NAME"
-      end
 
       option(:public) do |item|
         item.desc = "public directory for interactive operation pages"
@@ -49,13 +38,7 @@ module Pione
         item.long = "--public"
         item.arg  = "DIR"
         item.init = "./public"
-      end
-
-      option(:definition) do |item|
-        item.desc = "UI definition file"
-        item.type = :location
-        item.long = "--definition"
-        item.arg  = "FILE"
+        item.default = "./"
       end
 
       option(:output) do |item|
@@ -66,22 +49,13 @@ module Pione
         item.arg   = "FILE"
       end
 
-      option_post(:validate_ui) do |item|
-        item.desc = "Validate UI name"
-
-        item.process do
-          test(model[:ui].nil?)
-          raise Rootage::OptionError.new(cmd, "No UI name")
-        end
-      end
-
       #
       # command lifecycle: setup phase
       #
 
       phase(:setup) do |seq|
         seq << :session_id
-        seq << :ui_definition
+        seq << :interaction_id
       end
 
       setup(:session_id) do |item|
@@ -100,31 +74,6 @@ module Pione
       setup(:interaction_id) do |item|
         item.desc = "Setup interaction ID"
         item.assign { Util::UUID.generate }
-      end
-
-      setup(:ui_definition) do |item|
-        item.desc = "Extract informations from UI definition"
-        item.process do
-          test(model[:definition])
-
-          fm = REXML::Formatters::Default.new
-
-          # create a document
-          doc = REXML::Document.new(model[:definition].read)
-
-          # get the prefix of root element(e.g. "pione")
-          prefix = doc.root.prefix
-          prefix = prefix ? prefix + ":" : ""
-
-          # get embeded contents
-          content = REXML::XPath.first(doc, "/#{prefix}interactive/#{prefix}content")
-          model[:content] = ""
-          content.elements.each {|e| fm.write(e, model[:content])}
-
-          # get embeded script
-          script = REXML::XPath.first(doc, "/#{prefix}interactive/#{prefix}script")
-          model[:script] = script.text
-        end
       end
 
       #
@@ -146,10 +95,18 @@ module Pione
 
           webclient = DRb::DRbObject.new_with_uri(model[:request_from])
           case model[:type]
-          when :page
-            result = webclient.request_interaction(model[:session_id], model[:interaction_id], :page, {:front => model[:front].uri.to_s})
+          when :web
+            result = webclient.request_interaction(
+              model[:session_id],
+              model[:interaction_id],
+              :page,
+              {:front_address => model[:front].uri.to_s})
           else # when :dialog
-            result = webclient.request_interaction(model[:session_id], model[:interaction_id], :dialog, {:content => model[:content], :script => model[:script]})
+            result = webclient.request_interaction(
+              model[:session_id],
+              model[:interaction_id],
+              :dialog,
+              {:content => model[:content], :script => model[:script]})
           end
           model[:result] = result
         end

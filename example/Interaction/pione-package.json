@@ -1,0 +1,19 @@
+{
+  "PackageName": "Interaction",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Interaction.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+    "bin/get-files.html",
+    "bin/delete-files.html",
+    "bin/index.html",
+    "bin/create-files.html",
+    "bin/list-files.html"
+  ]
+}

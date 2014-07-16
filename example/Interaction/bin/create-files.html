@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Interaction Example: Create files</title>
+  </head>
+  <body>
+    <h1>POST Method Examples</h1>
+
+    <section>
+      <h2>Create by input text</h2>
+      <form action="output1.txt" method="POST">
+	<input type="hidden" name="action" value="create" />
+	<input type="text" name="content" />
+	<button type="submit">Create output1.txt</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Create by select box</h2>
+      <form action="output2.txt" method="POST">
+	<input type="hidden" name="action" value="create" />
+	<select name="content">
+	  <option value="A">A</option>
+	  <option value="B">B</option>
+	  <option value="C">C</option>
+	</select>
+	<button type="submit">Create output2.txt</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Create by radio button</h2>
+      <form action="output3.txt" method="POST">
+	<input type="hidden" name="action" value="create" />
+	<input type="radio" name="content" value="1" checked="checked" />1
+	<input type="radio" name="content" value="2" />2
+	<input type="radio" name="content" value="3" />3
+	<button type="submit">Create output3.txt</button>
+      </form>
+    </section>
+  </body>
+</html>

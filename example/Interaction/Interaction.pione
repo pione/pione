@@ -1,0 +1,20 @@
+.@ PackageName :: "Interaction"
+
+Rule Main
+  output 'output*.txt'.all
+Flow
+  rule Interaction
+End
+
+Rule Interaction
+  output 'output*.txt'.all
+Action
+  # build public directory for pione-interactive
+  mkdir public
+  cp bin/* public
+
+  # start interactive operation
+  pione-interactive web --public public
+
+  cp public/* .
+End

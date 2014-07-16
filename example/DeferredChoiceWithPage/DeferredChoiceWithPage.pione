@@ -17,7 +17,7 @@ Action
   cp bin/index.html public/index.html
 
   # start interactive operation
-  pione-interactive --ui Browser --type page --public ./public -o rule.txt
+  pione-interactive web -o rule.txt --public ./public
 
   # generate an output
   RULE=`cat rule.txt`

@@ -12,7 +12,11 @@ module Pione
       # @param [String] path
       #   relative path from public directory
       def get(path)
-        (@cmd.model[:public] + path).read
+        begin
+          (@cmd.model[:public] + path).read
+        rescue
+          return nil
+        end
       end
 
       # Create a file with the content. Thie operation returns true only if the
