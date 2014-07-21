@@ -11,11 +11,18 @@ module Pione
       #
       # @param [String] path
       #   relative path from public directory
-      def get(path)
-        begin
-          (@cmd.model[:public] + path).read
-        rescue
-          return nil
+      # @param [Hash] params
+      #   parameters to pass to the CGI program
+      def get(path, cgi_info)
+        local_file = (@cmd.model[:public] + path)
+        if local_file.path.executable?
+          return Util::CGI.new(path, cgi_info).exec
+        else
+          begin
+            (@cmd.model[:public] + path).read
+          rescue
+            return nil
+          end
         end
       end
 
