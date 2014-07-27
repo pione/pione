@@ -16,7 +16,7 @@ module Pione
       def get(path, cgi_info)
         local_file = (@cmd.model[:public] + path)
         if local_file.path.executable?
-          return Util::CGI.new(path, cgi_info).exec
+          return Util::CGIExecutor.new(path, cgi_info, @cmd.model[:public]).exec
         else
           begin
             (@cmd.model[:public] + path).read
