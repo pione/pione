@@ -62,24 +62,28 @@ module Pione
       # HTTP specific variable table
       attr_accessor :http_header
 
+      # request body
+      attr_accessor :body
+
       def initialize
         @auth_type = nil
         @content_length = nil
         @content_type = nil
         @gateway_interface = "CGI/1.1"
         @path_info = nil
-        @path_translated = nil # not supported
+        @path_translated = nil
         @query_string = nil
         @remote_addr = nil
-        @remote_host = nil # (SHOULD) not supported
-        @remote_ident = nil # (MAY)
-        @remote_user = nil # pione-webclient's user name
-        @request_method = nil # (MUST) "GET" | "POST" | "HEAD"
-        @script_name = nil # (MUST)
-        @server_name = nil # (MUST)
-        @server_port = nil # (MUST)
+        @remote_host = nil
+        @remote_ident = nil
+        @remote_user = nil
+        @request_method = nil
+        @script_name = nil
+        @server_name = nil
+        @server_port = nil
         @server_protocol = "HTTP/1.1"
         @server_software = "PIONE/%s" % Pione::VERSION
+        @body = nil
       end
 
       # Create environment variables.
@@ -134,12 +138,14 @@ module Pione
       #   path of the CGI program
       # @param [CGIInfo] cgi_info
       #   various informations for CGI program
-      def initialize(cgi_path, cgi_info, chdir)
+      def initialize(cgi_path, cgi_info, chdir, timeout)
         @cgi_path = cgi_path
         @cgi_info = cgi_info
         @chdir = chdir
+        @timeout = timeout
         @umask = 077
-        @tempfile = Temppath.new
+        @cgi_stdin = Temppath.new
+        @cgi_stdout = Temppath.new
         @pid = nil
       end
 
@@ -153,18 +159,109 @@ module Pione
         options = create_options
         args = @cgi_info.create_arguments
 
-        @pid = Kernel.spawn(env, @cgi_path, *args, options)
-        exit_code = Process.waitpid(@pid)
-        return Location[@tempfile].read
+        Timeout.timeout(@timeout) do
+          @pid = Kernel.spawn(env, @cgi_path, *args, options)
+          Process.waitpid(@pid)
+          return analyze_response(Location[@cgi_stdout].read)
+        end
+      rescue Timeout::Error
+        if @pid
+          begin
+            Process.kill(15, @pid)
+          rescue
+          end
+        end
       end
 
       private
+
+      def nph?
+        Pathname.new(@cgi_path).basename.start_with?("nph-")
+      end
 
       def create_options
         options = Hash.new
         options[:chdir] = @chdir
         options[:umask] = @umask
-        options[:out] = @tempfile.path
+        if @cgi_info.body
+          Location[@cgi_in].write(@cgi_info.body)
+          options[:in] = @cgi_stdin.path
+        end
+        options[:out] = @cgi_stdout.path
+      end
+
+      def analyze_response(stdout)
+        cgi_response = new CGIResponse
+
+        if nph?
+          cgi_response.nph = true
+          cgi_response.body = stdout
+        else
+          cgi_response.nph = false
+
+          # parse headers
+          headers, body = stdout.split(/(\r\n\r\n|\r\r|\n\n)/, 2)
+          header = headers.split(/(\r\n|\r|\n)/).each_with_object(Hash.new) do |line, table|
+            name, value = line.split(/:[\s\t]*/, 2)
+            if name.nil? or name.size == 0 or /\s/.match?(name) or value.nil?
+              raise CGIError.invalid_response_header(line)
+            else
+              table[name.downcase] = value
+            end
+          end
+
+          # content-type
+          if header.has_key?("content-type")
+            cgi_response.content_type = header["content-type"]
+          else
+            raise CGIError.content_type_not_found
+          end
+
+          # location
+          if header["location"]
+            begin
+              uri = URI.parse(header["location"])
+              cgi_response.location = header["location"]
+            rescue
+              raise CGIError.invalid_location(header["location"])
+            end
+          end
+
+          # status
+          if header["status"]
+            code, reason_phrase = status.split(/\s+/, 2)
+            if /\d\d\d/.match(code)
+              cgi_response.status_code = code
+              cgi_response.reason_phrase = reason_phrase
+            else
+              raise CGIError.invalid_status(code)
+            end
+          end
+        end
+
+        return cgi_response
+      end
+    end
+
+    class CGIResponse
+      attr_accessor :nph
+      attr_accessor :content_type
+      attr_accessor :location
+      attr_accessor :status_code
+      attr_accessor :reason_phrase
+      attr_accessor :body
+
+      def initialize
+        @nph = false
+        @content_type = nil
+        @location = nil
+        @status_code = 200
+        @reason_phrase = nil
+        @response_body = nil
+      end
+
+      def valid?
+        not(@content_type.nil?)
       end
     end
 
@@ -176,6 +273,22 @@ module Pione
 
       def self.failed_to_decode(string)
         new("Failed to decode the string as URL: %s" % string)
+      end
+
+      def self.invalid_response_header(line)
+        new("Inlivad CGI response header has found: \"%s\"" % line)
+      end
+
+      def self.content_type_not_found
+        new("Requisite CGI response header \"Content-Type\" has not found.")
+      end
+
+      def self.invalid_location(value)
+        new("Invalid location has found: \"%s\"" % value)
+      end
+
+      def self.invalid_status(code)
+        new("Invalid status code has found: \"%s\"" % code)
       end
     end
   end

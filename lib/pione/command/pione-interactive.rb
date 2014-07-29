@@ -49,6 +49,13 @@ module Pione
         item.arg   = "FILE"
       end
 
+      option(:timeout) do |item|
+        item.desc = "timeout after the second"
+        item.type = :integer
+        item.long = "--timeout"
+        item.arg  = "SEC"
+      end
+
       #
       # command lifecycle: setup phase
       #
