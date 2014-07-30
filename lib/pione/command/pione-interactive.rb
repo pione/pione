@@ -103,20 +103,27 @@ module Pione
 
           webclient = DRb::DRbObject.new_with_uri(model[:request_from])
           case model[:type]
-          when :web
-            result = webclient.request_interaction(
+          when :browser
+            result, status = webclient.request_interaction(
               model[:session_id],
               model[:interaction_id],
-              :page,
+              :browser,
               {:front_address => model[:front].uri.to_s})
-          else # when :dialog
-            result = webclient.request_interaction(
+          when :dialog
+            result, status = webclient.request_interaction(
               model[:session_id],
               model[:interaction_id],
               :dialog,
               {:content => model[:content], :script => model[:script]})
+          else
+            cmd.abort('Type "%s" is unknown.' % model[:type])
           end
           model[:result] = result
+
+          # command fails if the status is "failure"
+          if status == "failure"
+            self.exit_status = false
+          end
         end
 
         # this is called from the exception of webclient

@@ -8,8 +8,27 @@
     <h1>POST Method Example</h1>
 
     <section>
+      <h2>List with no options</h2>
       <form action="./" method="POST">
 	<input type="hidden" name="pione-action" value="list" />
+	<button type="submit">List files</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>List with pione-show-all=true</h2>
+      <form action="./" method="POST">
+	<input type="hidden" name="pione-action" value="list" />
+	<input type="hidden" name="pione-show-all" value="true" />
+	<button type="submit">List files</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>List with pione-show-all=false</h2>
+      <form action="./" method="POST">
+	<input type="hidden" name="pione-action" value="list" />
+	<input type="hidden" name="pione-show-all" value="false" />
 	<button type="submit">List files</button>
       </form>
     </section>

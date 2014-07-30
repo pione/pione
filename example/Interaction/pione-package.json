@@ -15,6 +15,7 @@
   "Files": [
     "file/get-files.html",
     "file/delete-files.html",
+    "file/.hidden-file.txt",
     "file/cgi.html",
     "file/index.html",
     "file/create-files.html",

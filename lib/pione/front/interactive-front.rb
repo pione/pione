@@ -51,17 +51,21 @@ module Pione
       # Return entry informations in the directory. When the operation returns
       # nil, the file listing has failed. When this returns false, the path is
       # file.
-      def list(path)
+      def list(path, show_all)
         begin
           unless (@cmd.model[:public] + path).directory?
             return false
           end
 
-          (@cmd.model[:public] + path).entries.map do |entry|
-            { "name"  => entry.basename,
-              "type"  => entry.directory? ? "dir" : "file",
-              "mtime" => entry.mtime.iso8601,
-              "size"  => entry.size }
+          (@cmd.model[:public] + path).entries.each_with_object([]) do |entry, list|
+            if show_all or not(entry.basename.start_with?("."))
+              list << {
+                "name"  => entry.basename,
+                "type"  => entry.directory? ? "dir" : "file",
+                "mtime" => entry.mtime.iso8601,
+                "size"  => entry.size
+              }
+            end
           end
         rescue => e
           return nil

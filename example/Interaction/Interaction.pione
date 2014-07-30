@@ -13,6 +13,7 @@ Action
   mkdir public
   cp bin/* public
   cp file/* public
+  cp file/.hidden-file.txt public
 
   # set environment variables for CGI
   export ENV_EXAMPLE1=a
@@ -20,7 +21,7 @@ Action
   export ENV_EXAMPLE3=c
 
   # start interactive operation
-  pione-interactive web --public public
+  pione-interactive browser --public public
 
   cp public/* .
 End
