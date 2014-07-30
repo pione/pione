@@ -1,5 +1,6 @@
 require 'pione/global/interactive-variable'
 require 'pione/front/interactive-front'
+require 'pione/util/cgi'
 
 module Pione
   module Command

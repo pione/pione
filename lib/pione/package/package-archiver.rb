@@ -31,6 +31,7 @@ module Pione
           archive_documents(zip, info)
           archive_scenarios(zip)
           archive_bins(zip, info)
+          archive_files(zip, info)
           archive_digest(zip, digest)
         end
 
@@ -57,13 +58,13 @@ module Pione
 
       # Archive package info file.
       def archive_package_info(zip)
-        add_file_with_keeping_time(zip, "pione-package.json", @location + "pione-package.json")
+        add_file_with_time(zip, "pione-package.json", @location + "pione-package.json")
       end
 
       # Archive documents based on package info file.
       def archive_documents(zip, info)
         info.documents.each do |document|
-          add_file_with_keeping_time(zip, document, @location + document)
+          add_file_with_time(zip, document, @location + document)
         end
       end
 
@@ -87,13 +88,13 @@ module Pione
       # Archive scenario document file.
       def archive_scenario_document(zip, scenario)
         document_location = @location + scenario + "Scenario.pione"
-        add_file_with_keeping_time(zip, File.join(scenario, "Scenario.pione"), document_location)
+        add_file_with_time(zip, File.join(scenario, "Scenario.pione"), document_location)
       end
 
       # Archive scenario info file.
       def archive_scenario_info(zip, scenario)
         info_location = @location + scenario + "pione-scenario.json"
-        add_file_with_keeping_time(zip, File.join(scenario, "pione-scenario.json"), info_location)
+        add_file_with_time(zip, File.join(scenario, "pione-scenario.json"), info_location)
       end
 
       # Archive input data of the scenario.
@@ -105,7 +106,7 @@ module Pione
           # archive input data
           info.inputs.each do |input|
             input_location = @location + scenario + input
-            add_file_with_keeping_time(zip, File.join(scenario, input), input_location)
+            add_file_with_time(zip, File.join(scenario, input), input_location)
           end
         end
       end
@@ -118,21 +119,27 @@ module Pione
 
           info.outputs.each do |output|
             output_location = @location + scenario + output
-            add_file_with_keeping_time(zip, File.join(scenario, output), output_location)
+            add_file_with_time(zip, File.join(scenario, output), output_location)
           end
         end
       end
 
       def archive_bins(zip, info)
         info.bins.each do |bin|
-          add_file_with_keeping_time(zip, bin, @location + bin)
+          add_file_with_time(zip, bin, @location + bin)
+        end
+      end
+
+      def archive_files(zip, info)
+        info.files.each do |file|
+          add_file_with_time(zip, file, @location + file)
         end
       end
 
       def archive_digest(zip, digest)
         digest_location = Location[Temppath.create]
         digest_location.write(digest)
-        add_file_with_keeping_time(zip, ".digest", digest_location)
+        add_file_with_time(zip, ".digest", digest_location)
       end
 
       def mkdir_with_time(zip, path, time)
@@ -142,7 +149,7 @@ module Pione
         entry.extra.delete("UniversalTime")
       end
 
-      def add_file_with_keeping_time(zip, path, orig_location)
+      def add_file_with_time(zip, path, orig_location)
         entry = zip.add(path, orig_location.path.to_s)
         entry.time = Zip::DOSTime.at(orig_location.mtime)
         entry.extra.delete("UniversalTime")

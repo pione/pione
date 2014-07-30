@@ -10,10 +10,14 @@
 
   ],
   "Bins": [
-    "bin/get-files.html",
-    "bin/delete-files.html",
-    "bin/index.html",
-    "bin/create-files.html",
-    "bin/list-files.html"
+    "bin/show-environment.cgi"
+  ],
+  "Files": [
+    "file/get-files.html",
+    "file/delete-files.html",
+    "file/cgi.html",
+    "file/index.html",
+    "file/create-files.html",
+    "file/list-files.html"
   ]
 }

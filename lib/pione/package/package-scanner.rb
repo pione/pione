@@ -18,10 +18,17 @@ module Pione
           name, editor, tag, parents = scan_annotations(documents)
           scenarios = scan_scenarios(@package_location)
           bins = scan_bins(@package_location)
+          files = scan_files(@package_location)
 
           return PackageInfo.new(
-            name: name, editor: editor, tag: tag, parents: parents,
-            documents: documents, scenarios: scenarios, bins: bins
+            name: name,
+            editor: editor,
+            tag: tag,
+            parents: parents,
+            documents: documents,
+            scenarios: scenarios,
+            bins: bins,
+            files: files
           )
         else
           # the case for single document package
@@ -120,6 +127,19 @@ module Pione
       def scan_bins(location)
         if (location + "bin").exist?
           (location + "bin").entries.each_with_object([]) do |entry, list|
+            if entry.file?
+              list << entry.path.relative_path_from(@package_location.path).to_s
+            end
+          end
+        else
+          return []
+        end
+      end
+
+      # Scan attached files.
+      def scan_files(location)
+        if (location + "file").exist?
+          (location + "file").entries.each_with_object([]) do |entry, list|
             if entry.file?
               list << entry.path.relative_path_from(@package_location.path).to_s
             end

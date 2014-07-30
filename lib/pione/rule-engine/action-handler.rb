@@ -68,8 +68,22 @@ module Pione
           bin.entries.each do |entry|
             dest = @working_directory + "bin" + entry.basename
             unless dest.exist?
+              # copy and set executable flag
               entry.copy(dest)
               dest.path.chmod(0700)
+            end
+          end
+        end
+
+        # FIXME: should not copy files in the package each time
+        file_dir = @base_location + "package" + "file"
+        if file_dir.exist?
+          file_dir.entries.each do |entry|
+            dest = @working_directory + "file" + entry.basename
+            unless dest.exist?
+              # copy and unset executable flag
+              entry.copy(dest)
+              dest.path.chmod(0600)
             end
           end
         end

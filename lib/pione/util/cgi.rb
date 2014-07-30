@@ -84,6 +84,7 @@ module Pione
         @server_protocol = "HTTP/1.1"
         @server_software = "PIONE/%s" % Pione::VERSION
         @body = nil
+        @http_header = Hash.new
       end
 
       # Create environment variables.
@@ -115,6 +116,8 @@ module Pione
         @http_header.each do |key, val|
           env["HTTP_%s" % key] = val
         end
+
+        return env
       end
 
       def create_arguments
@@ -144,14 +147,14 @@ module Pione
         @chdir = chdir
         @timeout = timeout
         @umask = 077
-        @cgi_stdin = Temppath.new
-        @cgi_stdout = Temppath.new
+        @cgi_stdin = Temppath.create
+        @cgi_stdout = Temppath.create
         @pid = nil
       end
 
       # Execute the CGI program.
       def exec
-        unless cgi_path.exist?
+        unless @cgi_path.exist?
           raise CGIError.not_exist(@cgi_path)
         end
 
@@ -160,38 +163,47 @@ module Pione
         args = @cgi_info.create_arguments
 
         Timeout.timeout(@timeout) do
-          @pid = Kernel.spawn(env, @cgi_path, *args, options)
+          @pid = Kernel.spawn(env, @cgi_path.to_s, *args, options)
           Process.waitpid(@pid)
-          return analyze_response(Location[@cgi_stdout].read)
+          if @cgi_stdout.exist?
+            return analyze_response(Location[@cgi_stdout].read)
+          else
+            raise CGIError.response_not_found
+          end
         end
       rescue Timeout::Error
         if @pid
           begin
             Process.kill(15, @pid)
           rescue
+          ensure
+            CGIError.timeouted
           end
         end
+      rescue Errno::EACCES => e
+        CGIError.cannot_execute_cgi(@cgi_path)
       end
 
       private
 
       def nph?
-        Pathname.new(@cgi_path).basename.start_with?("nph-")
+        Pathname.new(@cgi_path).basename.to_s.start_with?("nph-")
       end
 
       def create_options
         options = Hash.new
-        options[:chdir] = @chdir
+        options[:chdir] = @chdir.path.to_s
         options[:umask] = @umask
         if @cgi_info.body
-          Location[@cgi_in].write(@cgi_info.body)
-          options[:in] = @cgi_stdin.path
+          Location[@cgi_stdin].write(@cgi_info.body)
+          options[:in] = @cgi_stdin.to_s
         end
-        options[:out] = @cgi_stdout.path
+        options[:out] = @cgi_stdout.to_s
+        return options
       end
 
       def analyze_response(stdout)
-        cgi_response = new CGIResponse
+        cgi_response = CGIResponse.new
 
         if nph?
           cgi_response.nph = true
@@ -200,10 +212,10 @@ module Pione
           cgi_response.nph = false
 
           # parse headers
-          headers, body = stdout.split(/(\r\n\r\n|\r\r|\n\n)/, 2)
-          header = headers.split(/(\r\n|\r|\n)/).each_with_object(Hash.new) do |line, table|
+          headers, body = stdout.split(/\r\n\r\n|\r\r|\n\n/, 2)
+          header = headers.split(/\r\n|\r|\n/).each_with_object(Hash.new) do |line, table|
             name, value = line.split(/:[\s\t]*/, 2)
-            if name.nil? or name.size == 0 or /\s/.match?(name) or value.nil?
+            if name.nil? or name.size == 0 or /\s/.match(name) or value.nil?
               raise CGIError.invalid_response_header(line)
             else
               table[name.downcase] = value
@@ -237,6 +249,9 @@ module Pione
               raise CGIError.invalid_status(code)
             end
           end
+
+          # body
+          cgi_response.body = body
         end
 
         return cgi_response
@@ -257,7 +272,11 @@ module Pione
         @location = nil
         @status_code = 200
         @reason_phrase = nil
-        @response_body = nil
+        @body = nil
+      end
+
+      def nph?
+        @nph
       end
 
       def valid?
@@ -289,6 +308,18 @@ module Pione
 
       def self.invalid_status(code)
         new("Invalid status code has found: \"%s\"" % code)
+      end
+
+      def self.response_not_found
+        "No CGI response."
+      end
+
+      def self.cannot_execute_cgi(cgi_path)
+        "Cannot execute the CGI: %s" % cgi_path.to_s
+      end
+
+      def self.timeouted
+        "CGI exectuion has been timeouted."
       end
     end
   end

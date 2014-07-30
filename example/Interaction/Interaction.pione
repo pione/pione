@@ -12,6 +12,12 @@ Action
   # build public directory for pione-interactive
   mkdir public
   cp bin/* public
+  cp file/* public
+
+  # set environment variables for CGI
+  export ENV_EXAMPLE1=a
+  export ENV_EXAMPLE2=b
+  export ENV_EXAMPLE3=c
 
   # start interactive operation
   pione-interactive web --public public

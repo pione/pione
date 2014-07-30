@@ -9,6 +9,7 @@ module Pione
       member :documents, default: lambda { Array.new }
       member :scenarios, default: lambda { Array.new }
       member :bins, default: lambda { Array.new }
+      member :files, default: lambda { Array.new }
 
       # Read package information from the string.
       def self.read(str)
@@ -21,6 +22,7 @@ module Pione
         args[:documents] = data["Documents"]
         args[:scenarios] = data["Scenarios"]
         args[:bins] = data["Bins"]
+        args[:files] = data["Files"]
         new(args)
       end
 
@@ -29,6 +31,7 @@ module Pione
         list = []
         list += documents
         list += bins
+        list += files
         return list
       end
 
@@ -42,6 +45,7 @@ module Pione
         data["Documents"] = documents
         data["Scenarios"] = scenarios
         data["Bins"] = bins
+        data["Files"] = files
         data.to_json(*args)
       end
     end

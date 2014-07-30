@@ -69,7 +69,13 @@ module Pione
 
       # Upload the package files to the location.
       def upload(dest)
+        # upload bins
         @info.bins.each do |entry|
+          (@location + entry).copy(dest + entry)
+        end
+
+        # upload files
+        @info.files.each do |entry|
           (@location + entry).copy(dest + entry)
         end
       end

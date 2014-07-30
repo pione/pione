@@ -121,7 +121,7 @@ module Pione
         (@location + "pione-package.json").copy(local_location + "pione-package.json")
 
         # documents
-        (info.documents + info.bins).each do |path|
+        (info.documents + info.bins + info.files).each do |path|
           (@location + path).copy(local_location + path)
         end
 

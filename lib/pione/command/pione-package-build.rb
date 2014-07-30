@@ -89,12 +89,12 @@ module Pione
         item.process do
           model[:source_locations].each do |location|
             if ppg = try_to_archive(location)
-              Log::SystemLog.info("Package build suceeded: %s" % ppg.address)
+              Log::SystemLog.info("Package build process has succeeded: %s" % ppg.address)
               cmd.terminate
             end
           end
 
-          cmd.abort("Package build has failed to archive.")
+          cmd.abort("Package build process has failed.")
         end
       end
     end
@@ -111,7 +111,7 @@ module Pione
         # archive
         return archiver.archive(model[:output], false)
       rescue => e
-        Log::Debug.system("PIONE failed to archive %s: %s" % [location, e.message])
+        Log::Debug.system("PIONE has failed to archive %s: %s" % [location, e.message])
       end
     end
 

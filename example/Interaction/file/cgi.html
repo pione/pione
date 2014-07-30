@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CGI Execution Examples</title>
+  </head>
+  <body>
+    <h1>CGI Execution Examples</h1>
+    <section>
+      <h2>Call CGI Script with No Parameters</h2>
+      <a href="show-environment.cgi">show-environment.cgi</a>
+    </section>
+
+    <section>
+      <h2>Call CGI Script with Arguments</h2>
+      <a href="show-environment.cgi?a+b+c">show-environment.cgi?a+b+c</a>
+    </section>
+
+    <section>
+      <h2>Call CGI Script with application/x-www-form-urlencoded</h2>
+      <a href="show-environment.cgi?a=1&b=2&c=3">show-environment.cgi?a=1&b=2&c=3</a>
+    </section>
+
+    <section>
+      <h2>Call CGI Script by POST</h2>
+      <form action="show-environment.cgi">
+	<input type="hidden" name="pione-action" value="get"/>
+	<input type="hidden" name="a" value="1"/>
+	<input type="hidden" name="b" value="2"/>
+	<input type="hidden" name="c" value="3"/>
+	<button type="submit">Call by POST</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Call CGI Script with multipart/form-data</h2>
+      <form action="show-environment.cgi" method="POST" enctype="multipart/form-data">
+	<input type="hidden" name="pione-action" value="get"/>
+	<input type="hidden" name="a" value="1"/>
+	<input type="hidden" name="b" value="2"/>
+	<input type="hidden" name="c" value="3"/>
+	<input type="file" name="testfile"/>
+	<button type="submit">Call by POST</button>
+      </form>
+    </section>
+  </body>
+</html>
