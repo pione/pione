@@ -16,7 +16,7 @@ TestHelper.scope do |this|
       tuple_space_server = TestHelper::TupleSpace.create(self)
       receiver = Log::CUIMessageLogReceiver.new(@io)
       @ts = tuple_space_server
-      @messenger = Agent::Messenger.new(tuple_space_server, receiver)
+      @messenger = Agent::Messenger.new(tuple_space_server, receiver, "fake session id")
       @sender = TestSender.new(@ts)
     end
 

@@ -48,7 +48,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
         :env => env,
         :package_id => package_id,
         :rule_name => 'TestTouch',
-        :inputs => inputs,
+        :inputs => @inputs,
         :param_set => param_set,
         :domain_id => domain_id,
         :caller_id => 'root'
@@ -112,7 +112,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
         :env => env,
         :package_id => package_id,
         :rule_name => 'TestTouch',
-        :inputs => inputs,
+        :inputs => @inputs,
         :param_set => param_set,
         :domain_id => domain_id,
         :caller_id => 'root'
@@ -175,7 +175,7 @@ describe 'Pione::RuleHandler::EmptyHandler' do
         :env => env,
         :package_id => package_id,
         :rule_name => 'TestRemove',
-        :inputs => inputs,
+        :inputs => @inputs,
         :param_set => param_set,
         :domain_id => domain_id,
         :caller_id => 'root'

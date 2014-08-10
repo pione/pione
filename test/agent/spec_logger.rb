@@ -27,7 +27,6 @@ describe "Pione::Agent::Logger" do
 
   it "should get locations" do
     @logger.log_location.should == @location
-    @logger.output_location.should == @location
   end
 
   it "should log messages" do

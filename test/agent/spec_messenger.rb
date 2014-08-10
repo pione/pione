@@ -5,7 +5,7 @@ describe Pione::Agent::Messenger do
     @io = StringIO.new("", "w+")
     tuple_space = TestHelper::TupleSpace.create(self)
     receiver = Log::CUIMessageLogReceiver.new(@io)
-    @messenger = Agent::Messenger.new(tuple_space, receiver)
+    @messenger = Agent::Messenger.new(tuple_space, receiver, "fake session id")
   end
 
   after do

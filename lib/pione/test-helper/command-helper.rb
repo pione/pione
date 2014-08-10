@@ -11,7 +11,7 @@ module Pione
       def self.test(context, &b)
         # with client mode
         new(context: context).tap do |runner|
-          runner.default_arguments = ["-o", runner.base.path.to_s]
+          runner.default_arguments = ["--base", runner.base.path.to_s]
           b.call(runner)
         end
       end

@@ -13,7 +13,7 @@ TestHelper.scope do |this|
 
     it "should execute a PIONE document" do
       path = Temppath.create
-      cmd = @cmd.new(["example/HelloWorld/HelloWorld.pione", "-o", path.to_s])
+      cmd = @cmd.new(["example/HelloWorld/HelloWorld.pione", "--base", path.to_s])
       res = Rootage::ScenarioTest.succeed(cmd)
       Location[path + "message.txt"].should.exist
       Location[path + "message.txt"].read.should.start_with "Hello, world!"
@@ -21,7 +21,7 @@ TestHelper.scope do |this|
 
     it "should execute a PIONE document with stand alone mode" do
       path = Temppath.create
-      cmd = @cmd.new(["example/HelloWorld/HelloWorld.pione", "-o", path.to_s, "--stand-alone"])
+      cmd = @cmd.new(["example/HelloWorld/HelloWorld.pione", "--base", path.to_s, "--stand-alone"])
       Rootage::ScenarioTest.succeed(cmd)
       Location[path + "message.txt"].should.exist
       Location[path + "message.txt"].read.should.start_with "Hello, world!"
@@ -37,7 +37,7 @@ TestHelper.scope do |this|
 
     it "should execute a PIONE package with stand alone mode" do
       path = Temppath.create
-      cmd = @cmd.new(["example/HelloWorld/", "-o", path.to_s, "--stand-alone"])
+      cmd = @cmd.new(["example/HelloWorld/", "--base", path.to_s, "--stand-alone"])
       Rootage::ScenarioTest.succeed(cmd)
       Location[path + "message.txt"].should.exist
       Location[path + "message.txt"].read.should.start_with "Hello, world!"
@@ -46,7 +46,7 @@ TestHelper.scope do |this|
     it "should fail with action error" do
       doc = (this::DIR + "ActionError.pione").path.to_s
       path = Temppath.create
-      cmd = @cmd.new([doc, "-o", path.to_s, "--stand-alone"])
+      cmd = @cmd.new([doc, "--base", path.to_s, "--stand-alone"])
       Rootage::ScenarioTest.fail(cmd)
     end
 
