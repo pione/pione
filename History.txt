@@ -1,5 +1,12 @@
 # History
 
+## 0.4.1(2014/8/11)
+
+* Work with new PIONE webclient.
+* Improved interactive operations(file API and CGI).
+* Changed layouts of base directory. Output files exist in directory `output`.
+* Changed base directory option as `--base LOCATION`.
+
 ## 0.4.0(2014/4/17)
 
 * Added new PNML compiler(`pione compile`).
