@@ -12,8 +12,8 @@ Action
   # build public directory for pione-interactive
   mkdir public
   cp bin/* public
-  cp file/* public
-  cp file/.hidden-file.txt public
+  cp etc/* public
+  cp etc/.hidden-file.txt public
 
   # set environment variables for CGI
   export ENV_EXAMPLE1=a

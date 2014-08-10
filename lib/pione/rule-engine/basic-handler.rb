@@ -60,12 +60,14 @@ module Pione
         user_message(@digest, 0, "==>")
         debug_message("caller: %s" % @caller_id)
 
-        # save domain log
-        Log::DomainLog.new(self).save
+        unless @domain_id == "root"
+          # save domain log
+          Log::DomainLog.new(self).save
 
-        # save a domain dump file
-        domain_dump_location = @working_directory ? @working_directory :@domain_location
-        System::DomainDump.new(env.dumpable).write(domain_dump_location)
+          # save a domain dump file
+          domain_dump_location = @working_directory ? @working_directory :@domain_location
+          System::DomainDump.new(env.dumpable).write(domain_dump_location)
+        end
 
         # execute the rule
         outputs = execute
@@ -102,7 +104,7 @@ module Pione
       #   the location
       def make_location(name, domain_id)
         if domain_id == "root"
-          return @base_location + "./%s" % name
+          return @base_location + "./output/%s" % name
         else
           # make relative path
           pakcage_id, rule_name, task_id = domain_id.split(":")

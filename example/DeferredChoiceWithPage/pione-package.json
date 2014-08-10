@@ -10,7 +10,9 @@
 
   ],
   "Bins": [
-    "bin/index.html",
-    "bin/ui.xml"
+
+  ],
+  "Etcs": [
+    "etc/index.html"
   ]
 }

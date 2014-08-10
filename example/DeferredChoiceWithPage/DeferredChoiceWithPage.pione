@@ -12,12 +12,8 @@ End
 Rule UserSelect
   output 'a.txt' or 'b.txt' or 'c.txt'
 Action
-  # build public directory for pione-interactive
-  mkdir public
-  cp bin/index.html public/index.html
-
   # start interactive operation
-  pione-interactive web -o rule.txt --public ./public
+  pione-interactive browser -o rule.txt --public ./etc
 
   # generate an output
   RULE=`cat rule.txt`

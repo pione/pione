@@ -74,8 +74,8 @@ module Pione
           (@location + entry).copy(dest + entry)
         end
 
-        # upload files
-        @info.files.each do |entry|
+        # upload etc files
+        @info.etcs.each do |entry|
           (@location + entry).copy(dest + entry)
         end
       end

@@ -76,10 +76,10 @@ module Pione
         end
 
         # FIXME: should not copy files in the package each time
-        file_dir = @base_location + "package" + "file"
+        file_dir = @base_location + "package" + "etc"
         if file_dir.exist?
           file_dir.entries.each do |entry|
-            dest = @working_directory + "file" + entry.basename
+            dest = @working_directory + "etc" + entry.basename
             unless dest.exist?
               # copy and unset executable flag
               entry.copy(dest)

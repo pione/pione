@@ -12,13 +12,13 @@
   "Bins": [
     "bin/show-environment.cgi"
   ],
-  "Files": [
-    "file/get-files.html",
-    "file/delete-files.html",
-    "file/.hidden-file.txt",
-    "file/cgi.html",
-    "file/index.html",
-    "file/create-files.html",
-    "file/list-files.html"
+  "Etcs": [
+    "etc/create-files.html",
+    "etc/list-files.html",
+    "etc/get-files.html",
+    "etc/index.html",
+    "etc/delete-files.html",
+    "etc/cgi.html",
+    "etc/.hidden-file.txt"
   ]
 }

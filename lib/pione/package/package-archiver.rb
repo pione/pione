@@ -31,7 +31,7 @@ module Pione
           archive_documents(zip, info)
           archive_scenarios(zip)
           archive_bins(zip, info)
-          archive_files(zip, info)
+          archive_etcs(zip, info)
           archive_digest(zip, digest)
         end
 
@@ -130,8 +130,8 @@ module Pione
         end
       end
 
-      def archive_files(zip, info)
-        info.files.each do |file|
+      def archive_etcs(zip, info)
+        info.etcs.each do |file|
           add_file_with_time(zip, file, @location + file)
         end
       end

@@ -114,14 +114,12 @@ module Pione
         # make temporary directory
         local_location = Location[Temppath.create]
 
-        # copy files to local
-
         # pione-package.json
         info = PackageInfo.read((@location + "pione-package.json").read)
         (@location + "pione-package.json").copy(local_location + "pione-package.json")
 
-        # documents
-        (info.documents + info.bins + info.files).each do |path|
+        # copy files
+        (info.documents + info.bins + info.etcs).each do |path|
           (@location + path).copy(local_location + path)
         end
 

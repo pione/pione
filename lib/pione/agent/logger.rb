@@ -5,15 +5,15 @@ module Pione
     class Logger < TupleSpaceClient
       set_agent_type :logger, self
 
-      attr_reader :log_location    # location of log file
-      attr_reader :output_location # output location
+      attr_reader :log_location       # location of log file
+      attr_reader :temporary_location # temporary location
 
       # Create a logger agent.
       def initialize(tuple_space, location)
         super(tuple_space)
         @log_id = Time.now.iso8601(3)
         @log_location = location.directory? ? location + "pione-process.log" : location
-        @output_location = get_output_location
+        @temporary_location = get_temporary_location
       end
 
       #
@@ -40,7 +40,7 @@ module Pione
         end
       end
 
-      # Copy from output to log when log and output are different.
+      # Copy from temporary location to log location.
       def transit_to_terminate
         begin
           write_records(take_all!(TupleSpace::ProcessLogTuple.any))
@@ -48,8 +48,8 @@ module Pione
           # logger is terminated at last in termination processes, so tuple space may be closed
           Log::SystemLog.warn("logger agent failed to take process logs.", self, e)
         end
-        if @log_location != @output_location
-          @output_location.copy(@log_location)
+        if @log_location != @temporary_location
+          @temporary_location.copy(@log_location)
         end
         super
       end
@@ -63,13 +63,13 @@ module Pione
       # Write records with sorting.
       def write_records(tuples)
         tuples.sort{|a,b| a.timestamp <=> b.timestamp}.each do |tuple|
-          @output_location.append tuple.message.format(@log_id) + "\n"
+          @temporary_location.append tuple.message.format(@log_id) + "\n"
         end
       end
 
-      # Get the output location. If the log location is not suportted append
+      # Get the temporary location. If the log location doesn't suport append
       # writing, output location is in local filesystem.
-      def get_output_location
+      def get_temporary_location
         if @log_location.real_appendable?
           @log_location
         else

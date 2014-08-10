@@ -14,6 +14,7 @@ test-report.txt
 
 /input
 /output
+/process
 /result
 /html
 /vendor

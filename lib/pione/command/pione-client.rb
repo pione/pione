@@ -60,23 +60,23 @@ module Pione
         item.desc  = 'Set input directory'
       end
 
-      option(:output_location) do |item|
+      option(:base_location) do |item|
         item.type  = :location
-        item.short = '-o'
-        item.long  = '--output'
+        item.short = '-b'
+        item.long  = '--base'
         item.arg   = 'LOCATION'
-        item.desc  = 'Set output directory'
-        item.init  = "local:./output/"
+        item.desc  = 'Set process base location'
+        item.init  = "local:./process/"
 
         item.process do |location|
-          model[:output_location] = location
+          model[:base_location] = location
           if location.scheme == "myftp"
             model[:myftp] = URI.parse(uri).normalize
           end
         end
 
         item.exception(ArgumentError) do |e, val|
-          raise OptionError.new(cmd, "output location '%s' is bad in %s" % [uri, cmd.name])
+          raise OptionError.new(cmd, "base location '%s' is bad in %s" % [uri, cmd.name])
         end
       end
 
@@ -183,7 +183,7 @@ module Pione
         seq << :spawner_thread_group
         seq << :ftp_server
         seq << :tuple_space
-        seq << :output_location
+        seq << :base_location
         seq << :lang_environment
         seq << :package
         seq << :scenario
@@ -244,15 +244,15 @@ module Pione
         end
       end
 
-      setup(:output_location) do |item|
-        item.desc = "Setup output location"
+      setup(:base_location) do |item|
+        item.desc = "Setup base location"
 
         # setup location
         item.process do
-          case model[:output_location]
+          case model[:base_location]
           when Location::LocalLocation
-            model[:output_location] = Location[model[:output_location].path.expand_path]
-            model[:output_location].path.mkpath
+            model[:base_location] = Location[model[:base_location].path.expand_path]
+            model[:base_location].path.mkpath
           when Location::DropboxLocation
             Location::DropboxLocation.setup_for_cui_client(tuple_space_server)
           end
@@ -260,13 +260,13 @@ module Pione
 
         # mkdir
         item.process do
-          test(not(model[:output_location].exist?))
-          model[:output_location].mkdir
+          test(not(model[:base_location].exist?))
+          model[:base_location].mkdir
         end
 
         # set base location into tuple space
         item.process do
-          model[:tuple_space].set_base_location(model[:output_location])
+          model[:tuple_space].set_base_location(model[:base_location])
         end
       end
 
@@ -294,7 +294,7 @@ module Pione
 
         # upload the package
         item.process do
-          model[:package_handler].upload(model[:output_location] + "package")
+          model[:package_handler].upload(model[:base_location] + "package")
         end
 
         item.exception(Package::InvalidPackage) do |e|
@@ -382,7 +382,7 @@ module Pione
         item.desc = "Start a logger agent"
 
         item.assign(:logger) do
-          Agent::Logger.start(model[:tuple_space], model[:output_location])
+          Agent::Logger.start(model[:tuple_space], model[:base_location])
         end
       end
 
@@ -535,7 +535,7 @@ module Pione
 
           pscenario = test(model[:package_handler].find_scenario(model[:rehearse]))
 
-          errors = pscenario.validate(model[:output_location])
+          errors = pscenario.validate(model[:base_location])
           if errors.empty?
             Log::SystemLog.info "Rehearsal Result: Succeeded"
           else
