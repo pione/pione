@@ -39,6 +39,15 @@ module Pione
         rules, flow_elements = build_constituent_rule_definitions
         definition_main = build_flow_rule_definition(@option[:flow_rule_name] || "Main", flow_elements)
 
+        # merge literate actions
+        rules.each do |rule|
+          if @option[:literate_action]
+            if action = @option[:literate_action][rule.name]
+              rule.action_content = action[:content]
+            end
+          end
+        end
+
         # textize
         [*annotations, "", definition_main.textize, *rules.map {|rule| rule.textize}].join("\n")
       end

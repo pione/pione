@@ -52,13 +52,31 @@ module Pione
         item.desc = 'Set package tag'
       end
 
+      option(:literate_action_document) do |item|
+        item.type = :string
+        item.long = '--action'
+        item.arg  = 'LOCATION'
+        item.desc = 'Set a literate action document'
+      end
+
       #
       # command lifecycle: execution phase
       #
 
       phase(:execution) do |item|
+        item << :literate_action
         item << :compile_pnml
         item << :print
+      end
+
+      execution(:literate_action) do |item|
+        item.desc = "Parse a literate action document."
+
+        item.assign(:literate_action) do
+          if document = model[:literate_action_document]
+            LiterateAction::Parser.parse(Location[document].read)
+          end
+        end
       end
 
       execution(:compile_pnml) do |item|
@@ -70,7 +88,8 @@ module Pione
             :flow_name => model[:flow_name],
             :package_name => model[:package_name],
             :editor => model[:editor],
-            :tag => model[:tag]
+            :tag => model[:tag],
+            :literate_action => model[:literate_action]
           }
           PNML::Compiler.new(net, option).compile
         end

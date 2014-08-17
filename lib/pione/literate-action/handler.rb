@@ -1,5 +1,6 @@
 module Pione
   module LiterateAction
+    # Handler is action rule handler.
     class Handler
       def initialize(action)
         @lang = action[:lang]

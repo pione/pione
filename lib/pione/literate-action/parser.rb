@@ -34,18 +34,22 @@ module Pione
 
       private
 
-      # Find a rule name from the element.
+      # Find a rule name from the document element.
       def find_rule_name(elt)
         if elt.type == :header and elt.options[:level] == 2
           elt.options[:raw_text]
         end
       end
 
-      # Find an action from the element.
+      # Find an action from the document element.
       def find_action(elt)
         if elt.type == :codeblock
           if elt.attr["class"] and elt.attr["class"].start_with?("language-")
+            # with language
             return [elt.attr["class"].sub("language-", ""), elt.value]
+          else
+            # without language
+            return [nil, elt.value]
           end
         end
       end

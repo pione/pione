@@ -358,6 +358,7 @@ module Pione
       attr_accessor :params
       attr_accessor :conditions
       attr_accessor :flow_elements
+      attr_accessor :action_content
 
       def initialize(name, option={})
         @name = name
@@ -366,11 +367,16 @@ module Pione
         @params = option[:params] || []
         @conditions = option[:conditions] || []
         @flow_elements = option[:flow_elements] || []
+        @action_content = nil
       end
 
       def textize
         if flow_elements.empty?
-          template = Util::Indentation.cut(ACTION_RULE_TEMPLATE)
+          if @action_content
+            template = Util::Indentation.cut(LITERATE_ACTION_RULE_TEMPLATE)
+          else
+            template = Util::Indentation.cut(ACTION_RULE_TEMPLATE)
+          end
         else
           template = Util::Indentation.cut(FLOW_RULE_TEMPLATE)
         end
@@ -410,6 +416,22 @@ module Pione
           <%- @params.each do |param| -%>
           <%= param.as_declaration %>
           <%- end -%>
+        End
+      RULE
+
+      LITERATE_ACTION_RULE_TEMPLATE = <<-RULE
+        Rule <%= @name %>
+          <%- @inputs.each do |input| -%>
+          input <%= input %>
+          <%- end -%>
+          <%- @outputs.each do |output| -%>
+          output <%= output %>
+          <%- end -%>
+          <%- @params.each do |param| -%>
+          <%= param.as_declaration %>
+          <%- end -%>
+        Action
+        <%= Util::Indentation.indent(@action_content, 2) -%>
         End
       RULE
     end
