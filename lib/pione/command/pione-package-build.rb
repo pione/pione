@@ -89,12 +89,12 @@ module Pione
         item.process do
           model[:source_locations].each do |location|
             if ppg = try_to_archive(location)
-              Log::SystemLog.info("Package build process has succeeded: %s" % ppg.address)
+              Log::SystemLog.info('Package %s has been built successfully.' % ppg.address)
               cmd.terminate
             end
           end
 
-          cmd.abort("Package build process has failed.")
+          cmd.abort("Package build has failed.")
         end
       end
     end
@@ -102,7 +102,34 @@ module Pione
     # `PionePackageBuildContext` is a context for `pione package build`.
     class PionePackageBuildContext < Rootage::CommandContext
       def try_to_archive(location)
-        handler = Package::PackageReader.read(location)
+        local_location = location.local
+
+        # action documents
+        actions = local_location.entries.each_with_object(Hash.new) do |entry, actions|
+          if entry.basename.end_with?(".action.md")
+            actions.merge!(LiterateAction::Parser.parse(entry.read))
+          end
+        end
+
+        # compile
+        local_location.each_entry do |entry|
+          if (entry.extname == ".pnml")
+            flow_name = entry.basename(".pnml")
+            net = PNML::Reader.read(entry)
+            option = {
+              :flow_name => flow_name,
+              :literate_actions => actions,
+            }
+            content = PNML::Compiler.new(net, option).compile
+            file = entry.dirname + (flow_name + ".pione")
+            file.write(content)
+          end
+        end
+
+        # update
+        Package::PackageHandler.write_info_files(local_location, force: true)
+
+        handler = Package::PackageReader.read(local_location)
         cache_location = Package::PackageCache.directory_cache(handler.digest)
 
         # make archiver
@@ -112,6 +139,7 @@ module Pione
         return archiver.archive(model[:output], false)
       rescue => e
         Log::Debug.system("PIONE has failed to archive %s: %s" % [location, e.message])
+        return nil
       end
     end
 

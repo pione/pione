@@ -29,7 +29,7 @@ module Pione
       option(:force) do |item|
         item.type    = :boolean
         item.long    = "--force"
-        item.desc    = "update pacakge info files"
+        item.desc    = "Update pacakge information files"
         item.default = true
       end
 

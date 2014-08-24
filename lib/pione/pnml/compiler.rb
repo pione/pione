@@ -25,6 +25,7 @@ module Pione
           rules << OutputDecompositionComplement
           rules << OutputSynchronizationComplement
         end
+        @actions = []
       end
 
       # Compile a PNML file into PIONE document as a string.
@@ -41,8 +42,8 @@ module Pione
 
         # merge literate actions
         rules.each do |rule|
-          if @option[:literate_action]
-            if action = @option[:literate_action][rule.name]
+          if @option[:literate_actions]
+            if action = @option[:literate_actions][rule.name]
               rule.action_content = action[:content]
             end
           end

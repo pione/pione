@@ -189,6 +189,23 @@ Created with Workflow PetriNet Designer Version 1.0 (woped.org)-->
         <orientation>1</orientation>
       </toolspecific>
     </transition>
+    <transition id="t7">
+      <name>
+        <text>.@ PackageName :: "CountChar"</text>
+        <graphics>
+          <offset x="70" y="120"/>
+        </graphics>
+      </name>
+      <graphics>
+        <position x="70" y="80"/>
+        <dimension x="40" y="40"/>
+      </graphics>
+      <toolspecific tool="WoPeD" version="1.0">
+        <time>0</time>
+        <timeUnit>1</timeUnit>
+        <orientation>1</orientation>
+      </toolspecific>
+    </transition>
     <arc id="a9" source="p3" target="t4">
       <inscription>
         <text>1</text>

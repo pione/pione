@@ -89,7 +89,7 @@ module Pione
             :package_name => model[:package_name],
             :editor => model[:editor],
             :tag => model[:tag],
-            :literate_action => model[:literate_action]
+            :literate_actions => model[:literate_action]
           }
           PNML::Compiler.new(net, option).compile
         end
