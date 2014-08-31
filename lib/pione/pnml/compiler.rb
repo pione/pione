@@ -59,7 +59,8 @@ module Pione
       def build_constituent_rule_definitions
         definition = @net.transitions.each_with_object({}) do |transition, table|
           if Perspective.rule?(transition)
-            rule = RuleDefinition.new(transition.name)
+            type = Perspective.flow_rule?(transition) ? :flow : :action
+            rule = RuleDefinition.new(transition.name, type)
 
             # inputs
             @net.find_all_places_by_target_id(transition.id).each do |place|
@@ -85,14 +86,14 @@ module Pione
         end
 
         # save all inner rules
-        rules = definition.values.compact
+        rules = definition.values.select{|rule_def| rule_def.action?}.compact
         flow_elements = definition.values.compact
 
         # conditional branch
         @net.transitions.each do |transition|
           places = @net.find_all_places_by_target_id(transition.id)
-          inputs = places.select {|place| Perspective.file?(place)}
-          inputs = inputs.map {|input| Perspective.normalize_data_name(input.name)}
+          input_places = places.select {|place| Perspective.file?(place)}
+          inputs = input_places.map {|input| Perspective.normalize_data_name(input.name)}
 
           case Perspective.normalize_data_name(transition.name)
           when "if"
@@ -167,7 +168,7 @@ module Pione
           :flow_elements => flow_elements,
         }
 
-        RuleDefinition.new(name, option)
+        RuleDefinition.new(name, :flow, option)
       end
 
       def find_next_rules(base_rule)

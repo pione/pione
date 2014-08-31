@@ -103,6 +103,15 @@ module Pione
         return name.size > 0
       end
 
+      # Return ture if the node is a flow rule.
+      def self.flow_rule?(node)
+        rule?(node) and node.name.strip.start_with?("&")
+      end
+
+      def self.action_rule?(node)
+        rule?(node) and not(flow_rule?(node))
+      end
+
       def self.normalize_data_name(name)
         return nil if name.nil?
 
@@ -191,10 +200,6 @@ module Pione
       #   a declaration string for PIONE's constituent rule
       def as_declaration(option={})
         indent("rule %s" % textize_rule_expr, option)
-      end
-
-      def as_rule_definition
-        RuleDefinition.new()
       end
 
       private
@@ -353,6 +358,7 @@ module Pione
 
     class RuleDefinition < Perspective
       attr_accessor :name
+      attr_accessor :type
       attr_accessor :inputs
       attr_accessor :outputs
       attr_accessor :params
@@ -360,8 +366,9 @@ module Pione
       attr_accessor :flow_elements
       attr_accessor :action_content
 
-      def initialize(name, option={})
+      def initialize(name, type, option={})
         @name = name
+        @type = type
         @inputs = option[:inputs] || []
         @outputs = option[:outputs] || []
         @params = option[:params] || []
@@ -370,15 +377,23 @@ module Pione
         @action_content = nil
       end
 
+      def flow?
+        @type == :flow
+      end
+
+      def action?
+        @type == :action
+      end
+
       def textize
-        if flow_elements.empty?
+        if flow?
+          template = Util::Indentation.cut(FLOW_RULE_TEMPLATE)
+        else
           if @action_content
             template = Util::Indentation.cut(LITERATE_ACTION_RULE_TEMPLATE)
           else
             template = Util::Indentation.cut(ACTION_RULE_TEMPLATE)
           end
-        else
-          template = Util::Indentation.cut(FLOW_RULE_TEMPLATE)
         end
         ERB.new(template, nil, "-").result(binding)
       end
