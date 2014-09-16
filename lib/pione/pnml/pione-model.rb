@@ -103,15 +103,29 @@ module Pione
         return name.size > 0
       end
 
-      # Return ture if the node is a flow rule.
-      def self.flow_rule?(node)
-        rule?(node) and node.name.strip.start_with?("&")
+      # Return ture if the node is an external rule.
+      # @param [PNML::Node] node
+      #   PNML node
+      # @return [Boolean]
+      #   true if the node is external
+      def self.external?(node)
+        node.name.strip.downcase.start_with?("extern ")
       end
 
-      def self.action_rule?(node)
-        rule?(node) and not(flow_rule?(node))
+      # Normalize the rule name.
+      def self.normalize_rule_name(name)
+        return nil if name.nil?
+
+        name = name.strip
+        name = remove_comment(name)
+        if name.strip.downcase.start_with?("extern ")
+          name[6..-1].strip
+        else
+          name
+        end
       end
 
+      # Normalize the data name.
       def self.normalize_data_name(name)
         return nil if name.nil?
 
@@ -366,9 +380,10 @@ module Pione
       attr_accessor :flow_elements
       attr_accessor :action_content
 
-      def initialize(name, type, option={})
+      def initialize(name, type, is_external, option={})
         @name = name
         @type = type
+        @is_external = is_external
         @inputs = option[:inputs] || []
         @outputs = option[:outputs] || []
         @params = option[:params] || []
@@ -383,6 +398,10 @@ module Pione
 
       def action?
         @type == :action
+      end
+
+      def external?
+        @is_external
       end
 
       def textize

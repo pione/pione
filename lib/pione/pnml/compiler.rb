@@ -59,8 +59,10 @@ module Pione
       def build_constituent_rule_definitions
         definition = @net.transitions.each_with_object({}) do |transition, table|
           if Perspective.rule?(transition)
-            type = Perspective.flow_rule?(transition) ? :flow : :action
-            rule = RuleDefinition.new(transition.name, type)
+            type = :action
+            rule_name = Perspective.normalize_rule_name(transition.name)
+            is_external = Perspective.external?(transition)
+            rule = RuleDefinition.new(rule_name, type, is_external)
 
             # inputs
             @net.find_all_places_by_target_id(transition.id).each do |place|
@@ -86,7 +88,7 @@ module Pione
         end
 
         # save all inner rules
-        rules = definition.values.select{|rule_def| rule_def.action?}.compact
+        rules = definition.values.select{|rule_def| not(rule_def.external?)}.compact
         flow_elements = definition.values.compact
 
         # conditional branch
@@ -153,7 +155,7 @@ module Pione
         return [rules, flow_elements]
       end
 
-      # Make a main rule.
+      # Make a flow rule for the net.
       def build_flow_rule_definition(name, flow_elements)
         inputs = @net.places.select {|place| Perspective.file?(place) and Perspective.net_input?(place)}
         inputs = inputs.map {|input| Perspective.normalize_data_name(input.name)}
