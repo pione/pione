@@ -117,7 +117,7 @@ module Pione
             flow_name = entry.basename(".pnml")
             net = PNML::Reader.read(entry)
             option = {
-              :flow_name => flow_name,
+              :flow_rule_name => flow_name,
               :literate_actions => actions,
             }
             content = PNML::Compiler.new(net, option).compile
