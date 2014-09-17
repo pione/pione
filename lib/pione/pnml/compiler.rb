@@ -170,7 +170,7 @@ module Pione
           :flow_elements => flow_elements,
         }
 
-        RuleDefinition.new(name, :flow, option)
+        RuleDefinition.new(name, :flow, false, option)
       end
 
       def find_next_rules(base_rule)
