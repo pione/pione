@@ -1,0 +1,32 @@
+
+Rule CountChar
+  input '*.txt'
+  output '{$*}.count'
+Flow
+  rule CountUTF8Char
+  rule ConvertToUTF8
+End
+
+Rule CountUTF8Char
+  input '*.utf8'
+  output '{$*}.count'.stdout
+Action
+  #!/usr/bin/env ruby
+  # coding: utf-8
+  
+  table = {}
+  text = File.open("{$I[1]}").read
+  text.split("").each do |c|
+    table[c] =  table.has_key?(c) ? table[c].succ : 1
+  end
+  table.keys.sort {|a,b| table[b] <=> table[a] }.each do |key|
+    puts "#{key.inspect[1..-2]}:#{table[key]}"
+  end
+End
+
+Rule ConvertToUTF8
+  input '*.txt'
+  output '{$*}.utf8'
+Action
+  iconv -c -f Shift_JIS -t UTF-8 {$I[1]} > {$O[1]}
+End
