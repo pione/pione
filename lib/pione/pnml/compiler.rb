@@ -38,7 +38,7 @@ module Pione
 
         # build rules
         rules, flow_elements = build_constituent_rule_definitions
-        definition_main = build_flow_rule_definition(@option[:flow_rule_name] || "Main", flow_elements)
+        definition_main = build_flow_rule_definition(net_name, flow_elements)
 
         # merge literate actions
         rules.each do |rule|
@@ -55,6 +55,13 @@ module Pione
 
       private
 
+      # Return name of the net.
+      # @return [String]
+      #   net name
+      def net_name
+        @option[:flow_rule_name] || "Main"
+      end
+
       # Build constituent rule definitions by transitions in the net.
       def build_constituent_rule_definitions
         definition = @net.transitions.each_with_object({}) do |transition, table|
@@ -62,7 +69,7 @@ module Pione
             type = :action
             rule_name = Perspective.normalize_rule_name(transition.name)
             is_external = Perspective.external?(transition)
-            rule = RuleDefinition.new(rule_name, type, is_external)
+            rule = RuleDefinition.new(rule_name, type, is_external, net_name, table.size)
 
             # inputs
             @net.find_all_places_by_target_id(transition.id).each do |place|
@@ -88,7 +95,7 @@ module Pione
         end
 
         # save all inner rules
-        rules = definition.values.select{|rule_def| not(rule_def.external?)}.compact
+        rules = definition.values.compact
         flow_elements = definition.values.compact
 
         # conditional branch
@@ -170,7 +177,7 @@ module Pione
           :flow_elements => flow_elements,
         }
 
-        RuleDefinition.new(name, :flow, false, option)
+        RuleDefinition.new(name, :flow, false, net_name, 0, option)
       end
 
       def find_next_rules(base_rule)

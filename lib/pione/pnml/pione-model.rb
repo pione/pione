@@ -371,7 +371,6 @@ module Pione
     end
 
     class RuleDefinition < Perspective
-      attr_accessor :name
       attr_accessor :type
       attr_accessor :inputs
       attr_accessor :outputs
@@ -380,10 +379,12 @@ module Pione
       attr_accessor :flow_elements
       attr_accessor :action_content
 
-      def initialize(name, type, is_external, option={})
+      def initialize(name, type, is_external, net_name, index, option={})
         @name = name
         @type = type
         @is_external = is_external
+        @net_name = net_name
+        @index = index
         @inputs = option[:inputs] || []
         @outputs = option[:outputs] || []
         @params = option[:params] || []
@@ -404,21 +405,37 @@ module Pione
         @is_external
       end
 
+      def name
+        external? ? generate_wrapper_name(@name) : @name
+      end
+
       def textize
-        if flow?
-          template = Util::Indentation.cut(FLOW_RULE_TEMPLATE)
-        else
-          if @action_content
-            template = Util::Indentation.cut(LITERATE_ACTION_RULE_TEMPLATE)
-          else
-            template = Util::Indentation.cut(ACTION_RULE_TEMPLATE)
-          end
-        end
         ERB.new(template, nil, "-").result(binding)
       end
 
+      def template
+        if external?
+          return Util::Indentation.cut(WRAPPER_TEMPLATE)
+        end
+
+        if flow?
+          return Util::Indentation.cut(FLOW_RULE_TEMPLATE)
+        end
+
+        if @action_content
+          return Util::Indentation.cut(LITERATE_ACTION_RULE_TEMPLATE)
+        else
+          return Util::Indentation.cut(ACTION_RULE_TEMPLATE)
+        end
+      end
+
+      # Generate a name for wrapper rule.
+      def generate_wrapper_name(name)
+        "__%s_%s_%s__" % [@net_name, @name, @index]
+      end
+
       FLOW_RULE_TEMPLATE = <<-RULE
-        Rule <%= @name %>
+        Rule <%= name %>
           <%- @inputs.each do |input| -%>
           input <%= input %>
           <%- end -%>
@@ -440,7 +457,7 @@ module Pione
       RULE
 
       ACTION_RULE_TEMPLATE = <<-RULE
-        Rule <%= @name %>
+        Rule <%= name %>
           <%- @inputs.each do |input| -%>
           input <%= input %>
           <%- end -%>
@@ -454,7 +471,7 @@ module Pione
       RULE
 
       LITERATE_ACTION_RULE_TEMPLATE = <<-RULE
-        Rule <%= @name %>
+        Rule <%= name %>
           <%- @inputs.each do |input| -%>
           input <%= input %>
           <%- end -%>
@@ -466,6 +483,22 @@ module Pione
           <%- end -%>
         Action
         <%= Util::Indentation.indent(@action_content, 2) -%>
+        End
+      RULE
+
+      WRAPPER_TEMPLATE = <<-RULE
+        Rule <%= name %>
+          <%- @inputs.each do |input| -%>
+          input <%= input %>
+          <%- end -%>
+          <%- @outputs.each do |output| -%>
+          output <%= output %>
+          <%- end -%>
+          <%- @params.each do |param| -%>
+          <%= param.as_declaration %>
+          <%- end -%>
+        Flow
+          rule <%= @name %>
         End
       RULE
     end

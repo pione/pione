@@ -4,8 +4,15 @@ Rule Main
   input '*.txt'.all
   output 'summary.out'
 Flow
-  rule CountChar
+  rule __Main_CountChar_0__
   rule Summarize
+End
+
+Rule __Main_CountChar_0__
+  input '*.txt'
+  output '{$*}.count'
+Flow
+  rule CountChar
 End
 
 Rule Summarize
