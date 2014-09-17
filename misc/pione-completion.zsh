@@ -14,6 +14,7 @@ then
     local name3="${words[3]}"
 
     case $name2 in
+      val) _pione_val_options;;
       action)
         case $name3 in
           exec) _pione_action_exec_options;;
@@ -60,7 +61,11 @@ then
   }
 
   _pione_subcommands() {
-     list=(action:"execute an action in literate action document" clean:"Remove PIONE's temporary files, cache, and etc" compile:"translate from PNML to PIONE document" config:"Configure PIONE global variables" diagnosis:"PIONE diagnosis tools" lang:"PIONE language utilities" log:"Log utilities" package:"PIONE package utility") _describe -t common-commands 'common commands' list;
+     list=(val:"Get the value of the PIONE expression" action:"execute an action in literate action document" clean:"Remove PIONE's temporary files, cache, and etc" compile:"translate from PNML to PIONE document" config:"Configure PIONE global variables" diagnosis:"PIONE diagnosis tools" lang:"PIONE language utilities" log:"Log utilities" package:"PIONE package utility") _describe -t common-commands 'common commands' list;
+  }
+
+  _pione_val_options() {
+    _arguments -s -S "--debug[Turn on debug mode about the type]" "--domain-dump[Import the domain dump file]" '*:file:_files' && return 0;
   }
 
   _pione_action_subcommands() {
@@ -84,7 +89,7 @@ then
   }
 
   _pione_compile_options() {
-    _arguments -s -S "--debug[Turn on debug mode about the type]" "--editor[Set package editor]" "--flow-name[Set flow name]" "--package-name[Set package name]" "--tag[Set package tag]" '*:file:_files' && return 0;
+    _arguments -s -S "--action[Set a literate action document]" "--debug[Turn on debug mode about the type]" "--editor[Set package editor]" "--flow-name[Set flow name]" "--package-name[Set package name]" "--tag[Set package tag]" '*:file:_files' && return 0;
   }
 
   _pione_config_subcommands() {
@@ -152,7 +157,7 @@ then
   }
 
   _pione_package_update_options() {
-    _arguments -s -S "--color[Turn on/off color mode]" "--debug[Turn on debug mode about the type]" "--force[update pacakge info files]" '*:file:_files' && return 0;
+    _arguments -s -S "--color[Turn on/off color mode]" "--debug[Turn on debug mode about the type]" "--force[Update pacakge information files]" '*:file:_files' && return 0;
   }
 
   #
@@ -168,7 +173,7 @@ then
   }
 
   _pione-client_options() {
-    _arguments -s -S "--color[Turn on/off color mode]" "--communication-address[Set the IP address for interprocess communication]" "--debug[Turn on debug mode about the type]" "--dry-run[Turn on dry run mode]" "--features[Set features]" "--file-cache-method[use NAME as a file cache method]" "--file-sliding[Enable/disable to slide files in file server]" "--input[Set input directory]" "--notification-receiver[Receiver address that notifications are received at]" "--notification-target[Target address that notifications are sent to]" "--output[Set output directory]" "--params="{Var:1,...}"[Set user parameters]" "--parent-front[set parent front URI]" "--rehearse[rehearse the scenario]" "--request-task-worker[Set request number of task workers]" "--stand-alone[Turn on stand alone mode]" "--stream[Turn on/off stream mode]" "--task-worker-size[Set task worker size that this process creates]" "--timeout[timeout processing after SEC]" '*:file:_files' && return 0;
+    _arguments -s -S "--base[Set process base location]" "--client-ui[Type of the client's user interface]" "--color[Turn on/off color mode]" "--communication-address[Set the IP address for interprocess communication]" "--debug[Turn on debug mode about the type]" "--dry-run[Turn on dry run mode]" "--features[Set features]" "--file-cache-method[use NAME as a file cache method]" "--file-sliding[Enable/disable to slide files in file server]" "--input[Set input directory]" "--notification-receiver[Receiver address that notifications are received at]" "--notification-target[Target address that notifications are sent to]" "--params="{Var:1,...}"[Set user parameters]" "--parent-front[set parent front URI]" "--rehearse[rehearse the scenario]" "--request-from[URI that the client requested the job from]" "--request-task-worker[Set request number of task workers]" "--session-id[Session id of the job]" "--stand-alone[Turn on stand alone mode]" "--stream[Turn on/off stream mode]" "--task-worker-size[Set task worker size that this process creates]" "--timeout[timeout processing after SEC]" '*:file:_files' && return 0;
   }
 
   #
@@ -184,7 +189,7 @@ then
   }
 
   _pione-task-worker_options() {
-    _arguments -s -S "--color[Turn on/off color mode]" "--communication-address[Set the IP address for interprocess communication]" "--debug[Turn on debug mode about the type]" "--features[Set features]" "--file-cache-method[use NAME as a file cache method]" "--file-sliding[Enable/disable to slide files in file server]" "--parent-front[set parent front URI]" "--tuple-space-id[Tuple space ID that the worker joins]" '*:file:_files' && return 0;
+    _arguments -s -S "--color[Turn on/off color mode]" "--communication-address[Set the IP address for interprocess communication]" "--debug[Turn on debug mode about the type]" "--features[Set features]" "--file-cache-method[use NAME as a file cache method]" "--file-sliding[Enable/disable to slide files in file server]" "--parent-front[set parent front URI]" "--request-from[URI that the client requested the job from]" "--session-id[Session id of the job]" "--tuple-space-id[Tuple space ID that the worker joins]" '*:file:_files' && return 0;
   }
 
   #
