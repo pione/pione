@@ -1,7 +1,11 @@
-.@ PackageName :: "ActionError"
 
-Rule Main
-  input null
+Rule ActionError
+  output 'o1'
+Flow
+  rule Error
+End
+
+Rule Error
   output 'o1'
 Action
   sleep 3
