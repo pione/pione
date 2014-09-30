@@ -1,9 +1,12 @@
-.@ PackageName :: "FeatureExample"
 
-# This task can be done by the worker that has feature "^X".
-Rule Main
+Rule FeatureExample
   output 'message.txt'
-  feature +X
+Flow
+  rule FeaturedAction
+End
+
+Rule FeaturedAction
+  output 'message.txt'
 Action
   echo "I can take the task." > {$O[1]}
 End
