@@ -1,6 +1,11 @@
-.@ PackageName :: "HelloWorld"
 
-Rule Main
+Rule HelloWorld
+  output 'message.txt'
+Flow
+  rule Echo
+End
+
+Rule Echo
   output 'message.txt'
 Action
   echo "Hello, world!" > message.txt

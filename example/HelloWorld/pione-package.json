@@ -4,12 +4,16 @@
 
   ],
   "Documents": [
+    "Package.pione",
     "HelloWorld.pione"
   ],
   "Scenarios": [
     "scenario"
   ],
   "Bins": [
+
+  ],
+  "Etcs": [
 
   ]
 }
