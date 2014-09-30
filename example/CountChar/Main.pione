@@ -1,4 +1,3 @@
-.@ PackageName :: "CountChar"
 
 Rule Main
   input '*.txt'.all
