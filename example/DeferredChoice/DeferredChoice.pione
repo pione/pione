@@ -1,8 +1,5 @@
-.@ PackageName :: "DefferredChoice"
 
-param $DIALOG := "zenity"
-
-Rule Main
+Rule DeferredChoice
   output 'result.txt'
 Flow
   rule UserSelect
@@ -27,7 +24,7 @@ Action
     *)
       echo "rule A" > rule.txt
   esac
-
+  
   RULE=`cat rule.txt`
   case "$RULE" in
     "rule A") touch a.txt ;;
@@ -56,4 +53,3 @@ Rule C
 Action
   echo 'You selected rule C' > {$O[1]}
 End
-

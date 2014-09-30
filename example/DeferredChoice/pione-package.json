@@ -1,15 +1,19 @@
 {
-  "PackageName": "DefferredChoice",
+  "PackageName": "DeferredChoice",
   "Parents": [
 
   ],
   "Documents": [
-    "DeferredChoice.pione"
+    "DeferredChoice.pione",
+    "Package.pione"
   ],
   "Scenarios": [
 
   ],
   "Bins": [
     "bin/ui.xml"
+  ],
+  "Etcs": [
+
   ]
 }
