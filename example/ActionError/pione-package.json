@@ -4,12 +4,16 @@
 
   ],
   "Documents": [
-    "ActionError.pione"
+    "ActionError.pione",
+    "Package.pione"
   ],
   "Scenarios": [
 
   ],
   "Bins": [
+
+  ],
+  "Etcs": [
 
   ]
 }
