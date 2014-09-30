@@ -4,12 +4,16 @@
 
   ],
   "Documents": [
+    "Package.pione",
     "FeatureExample.pione"
   ],
   "Scenarios": [
 
   ],
   "Bins": [
+
+  ],
+  "Etcs": [
 
   ]
 }
