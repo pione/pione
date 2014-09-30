@@ -1,0 +1,20 @@
+{
+  "PackageName": "CTFCorrection",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Package.pione",
+    "CTFCorrection.pione",
+    "Params.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
