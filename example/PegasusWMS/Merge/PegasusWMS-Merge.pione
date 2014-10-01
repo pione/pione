@@ -1,0 +1,20 @@
+
+Rule PegasusWMS-Merge
+  output 'binaries.txt'
+Flow
+  rule Join
+  rule List
+End
+
+Rule Join
+  input 'bin_*.txt'.all
+  output 'binaries.txt'
+Action
+  cat {$I[1]} > {$O[1]}
+End
+
+Rule List
+  output 'bin_{$INDEX}.txt'
+Action
+  ls -l {$DIRS[$INDEX+1]} > {$O[1]}
+End
