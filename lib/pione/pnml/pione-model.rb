@@ -74,7 +74,7 @@ module Pione
         # parameter node should be represented as a place
         return false unless node.is_a?(Place)
 
-        # parameter node should be parsed as param sentence
+        # parameter node should be parsed as a param sentence
         begin
           Lang::DocumentParser.new.param_sentence.parse(name)
           return true
