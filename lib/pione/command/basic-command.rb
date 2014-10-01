@@ -37,7 +37,9 @@ module Pione
 
       # Exit the running command and return failure status. Note that this
       # method enters termination phase before it exits.
-      def abort(msg_or_exception, pos=caller(1).first)
+      def abort(msg_or_exception, option={})
+        pos = option[:pos] || caller(1).first
+
         # hide the message because some option errors are meaningless
         if msg_or_exception.is_a?(HideableOptionError)
           Log::Debug.system(msg_or_exception.message, pos)

@@ -63,15 +63,14 @@ module Pione
       #
 
       phase(:setup) do |seq|
-        seq << :source_locations
+        seq << :source_location
       end
 
-      setup(:source_locations) do |item|
+      setup(:source_location) do |item|
         item.desc = "Setup source locations"
 
-        item.assign(:source_locations) do
-          source = model[:source].address
-          [Location[git: source], Location[data: source]]
+        item.assign(:source_location) do
+          Location[data: model[:source].address]
         end
       end
 
@@ -87,29 +86,24 @@ module Pione
         item.desc = "Build a PPG package"
 
         item.process do
-          model[:source_locations].each do |location|
-            if ppg = try_to_archive(location)
-              Log::SystemLog.info('Package %s has been built successfully.' % ppg.address)
-              cmd.terminate
-            end
+          begin
+            ppg = build_package(model[:source_location])
+            Log::SystemLog.info('Package %s has been built successfully.' % ppg.address)
+            cmd.terminate
+          rescue => e
+            cmd.abort("PIONE has failed to build a package of %s." % model[:source_location].address, exception: e)
           end
-
-          cmd.abort("Package build has failed.")
         end
       end
     end
 
     # `PionePackageBuildContext` is a context for `pione package build`.
     class PionePackageBuildContext < Rootage::CommandContext
-      def try_to_archive(location)
+      def build_package(location)
         local_location = location.local
 
         # action documents
-        actions = local_location.entries.each_with_object(Hash.new) do |entry, actions|
-          if entry.basename.end_with?(".action.md")
-            actions.merge!(LiterateAction::Parser.parse(entry.read))
-          end
-        end
+        actions = read_action_documents(local_location)
 
         # compile
         local_location.each_entry do |entry|
@@ -137,9 +131,20 @@ module Pione
 
         # archive
         return archiver.archive(model[:output], false)
-      rescue => e
-        Log::Debug.system("PIONE has failed to archive %s: %s" % [location, e.message])
-        return nil
+      end
+
+      # Read actions from action documents(files that named "*.action.md").
+      #
+      # @param location [Location]
+      #   package directory location
+      # @return [Hash{String=>String}]
+      #   relation table for rule name and the action content
+      def read_action_documents(location)
+        location.entries.each_with_object(Hash.new) do |entry, actions|
+          if entry.basename.end_with?(".action.md")
+            actions.merge!(LiterateAction::Parser.parse(entry.read))
+          end
+        end
       end
     end
 

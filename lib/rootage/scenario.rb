@@ -309,10 +309,28 @@ module Rootage
 
     # Exit the running command and return failure status. Note that this
     # method enters termination phase before it exits.
-    def abort(msg_or_exception, pos=caller(1).first)
-      # setup abortion message
+    #
+    # @param msg_or_exception [String, Exception]
+    #   a message or exception
+    # @param pos [String]
+    #   error position
+    # @param option [Hash]
+    # @option option [String] :pos
+    #   error position
+    # @option option [Exception] :exception
+    #   caused exception
+    def abort(msg_or_exception, option={})
+      pos = option[:pos] || caller(1).first
+
+      # show abortion message
       msg = msg_or_exception.is_a?(Exception) ? msg_or_exception.message : msg_or_exception
       Log.fatal(msg, pos)
+
+      # show optional exception message
+      if option[:exception]
+        errs = [option[:exception].message] + option[:exception].backtrace
+        Log.fatal(errs.join("\n"), pos)
+      end
 
       # set exit status code
       @exit_status = false
