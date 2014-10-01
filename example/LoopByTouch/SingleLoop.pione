@@ -1,5 +1,12 @@
+
 Rule SingleLoop
   input '1'
   output '1'.touch
+Flow
+  rule SingleLoopAction
 End
 
+Rule SingleLoopAction
+  input '1'
+  output ('1'.touch).touch
+End
