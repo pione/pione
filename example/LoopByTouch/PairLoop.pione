@@ -1,18 +1,18 @@
+
 Rule PairLoop
   input '1'
   output '2'
 Flow
-  rule PairA
   rule PairB
-End
-
-Rule PairA
-  input '1'
-  output '2'.touch
+  rule PairA
 End
 
 Rule PairB
   input '2'
-  output '1'.touch
+  output ('1').touch
 End
 
+Rule PairA
+  input '1'
+  output ('2').touch
+End
