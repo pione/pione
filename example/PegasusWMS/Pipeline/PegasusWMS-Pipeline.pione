@@ -1,0 +1,19 @@
+
+Rule PegasusWMS-Pipeline
+Flow
+  rule Count
+  rule GetHTML
+End
+
+Rule Count
+  input 'pegasus.html'
+  output 'count.txt'
+Action
+  wc {$I[1]} > {$O[1]}
+End
+
+Rule GetHTML
+  output 'pegasus.html'
+Action
+  curl -o {$O[1]} "http://pegasus.isi.edu"
+End
