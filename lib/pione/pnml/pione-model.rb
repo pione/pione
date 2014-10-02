@@ -2,6 +2,22 @@ module Pione
   module PNML
     # `Perspective` is a meta class for PIONE's concepts overlayed in PNML.
     class Perspective
+      KEYWORD_IF = "if"
+      KEYWORD_ELSE = "else"
+      KEYWORD_THEN = "then"
+      KEYWORD_CASE = "case"
+      KEYWORD_WHEN = "when"
+      KEYWORD_CONSTRAINT = "constraint"
+
+      TRANSITION_KEYWORDS = [
+        KEYWORD_IF,
+        KEYWORD_ELSE,
+        KEYWORD_THEN,
+        KEYWORD_CASE,
+        KEYWORD_WHEN,
+        KEYWORD_CONSTRAINT
+      ]
+
       # Eliminate comments from the string. This implementation is temporary, we
       # should fix this.
       def self.eliminate_comment(str)
@@ -19,6 +35,15 @@ module Pione
 
         return true if node.name.nil?
         return true if /^[<>]?\s*$/.match(eliminate_comment(node.name.strip))
+      end
+
+      # Return true if the node is an expression in PIONE.
+      def self.expr?(node)
+        Lang::DocumentParser.new.expr.parse(node.name)
+        return true
+      rescue Parslet::ParseFailed => e
+        # the node is not an expression
+        return false
       end
 
       # Return true if the node is named in PIONE model.
@@ -96,7 +121,7 @@ module Pione
         name = node.name.strip
 
         # keywords
-        if ["if", "else", "then"].include?(name)
+        if TRANSITION_KEYWORDS.include?(name)
           return false
         end
 
@@ -174,6 +199,14 @@ module Pione
           return ">"
         end
         return ""
+      end
+
+      def self.keyword_constraint?(node)
+        if node.kind_of?(Transition)
+          node.name.strip == KEYWORD_CONSTRAINT
+        else
+          return false
+        end
       end
 
       private
@@ -313,6 +346,19 @@ module Pione
       end
     end
 
+    # Constraint represents a PIONE's constraint declaration.
+    class Constraint < Perspective
+      attr_reader :expr
+
+      def initialize(expr)
+        @expr = expr
+      end
+
+      def as_declaration(option={})
+        indent("constraint " + @expr, option)
+      end
+    end
+
     # ConditionalBranch is a class represents PIONE's conditional branch
     # declaration.
     class ConditionalBranch < Perspective
@@ -375,6 +421,7 @@ module Pione
       attr_accessor :inputs
       attr_accessor :outputs
       attr_accessor :params
+      attr_accessor :constraints
       attr_accessor :conditions
       attr_accessor :flow_elements
       attr_accessor :action_content
@@ -388,6 +435,7 @@ module Pione
         @inputs = option[:inputs] || []
         @outputs = option[:outputs] || []
         @params = option[:params] || []
+        @constraints = option[:constraints] || []
         @conditions = option[:conditions] || []
         @flow_elements = option[:flow_elements] || []
         @action_content = nil
@@ -443,7 +491,10 @@ module Pione
           output <%= output %>
           <%- end -%>
           <%- @params.each do |param| -%>
-          <%= param.as_declaration %>
+          <%=   param.as_declaration %>
+          <%- end -%>
+          <%- @constraints.each do |constraint| -%>
+          <%=   constraint.as_declaration %>
           <%- end -%>
         Flow
           <%- @flow_elements.each do |element| -%>
@@ -465,7 +516,10 @@ module Pione
           output (<%= output %>).touch
           <%- end -%>
           <%- @params.each do |param| -%>
-          <%= param.as_declaration %>
+          <%=   param.as_declaration %>
+          <%- end -%>
+          <%- @constraints.each do |constraint| -%>
+          <%=   constraint.as_declaration %>
           <%- end -%>
         End
       RULE
@@ -479,7 +533,10 @@ module Pione
           output <%= output %>
           <%- end -%>
           <%- @params.each do |param| -%>
-          <%= param.as_declaration %>
+          <%=   param.as_declaration %>
+          <%- end -%>
+          <%- @constraints.each do |constraint| -%>
+          <%=   constraint.as_declaration %>
           <%- end -%>
         Action
         <%= Util::Indentation.indent(@action_content, 2) -%>
@@ -495,7 +552,10 @@ module Pione
           output <%= output %>
           <%- end -%>
           <%- @params.each do |param| -%>
-          <%= param.as_declaration %>
+          <%=   param.as_declaration %>
+          <%- end -%>
+          <%- @constraints.each do |constraint| -%>
+          <%=   constraint.as_declaration %>
           <%- end -%>
         Flow
           rule <%= @name %>

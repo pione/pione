@@ -68,7 +68,7 @@ module Pione
         source_places.each do |place|
           # rewrite name only if it is empty
           if place.empty_name?
-            place.name = synchronized_place.name
+            place.name = Perspective.normalize_data_name(synchronized_place.name)
           end
         end
       end
