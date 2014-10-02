@@ -99,6 +99,12 @@ module Pione
 
     # `PionePackageBuildContext` is a context for `pione package build`.
     class PionePackageBuildContext < Rootage::CommandContext
+      # Build a package of the location.
+      #
+      # @param location [Location]
+      #   package directory location
+      # @return [Location]
+      #   location of the generated PPG file
       def build_package(location)
         local_location = location.local
 
@@ -106,31 +112,13 @@ module Pione
         actions = read_action_documents(local_location)
 
         # compile
-        local_location.each_entry do |entry|
-          if (entry.extname == ".pnml")
-            flow_name = entry.basename(".pnml")
-            net = PNML::Reader.read(entry)
-            option = {
-              :flow_rule_name => flow_name,
-              :literate_actions => actions,
-            }
-            content = PNML::Compiler.new(net, option).compile
-            file = entry.dirname + (flow_name + ".pione")
-            file.write(content)
-          end
-        end
+        compile_pnml(local_location, actions)
 
         # update
-        Package::PackageHandler.write_info_files(local_location, force: true)
-
-        handler = Package::PackageReader.read(local_location)
-        cache_location = Package::PackageCache.directory_cache(handler.digest)
+        update_package_info(local_location)
 
         # make archiver
-        archiver = Package::PackageArchiver.new(cache_location)
-
-        # archive
-        return archiver.archive(model[:output], false)
+        return archive_package(local_location, model[:output])
       end
 
       # Read actions from action documents(files that named "*.action.md").
@@ -142,9 +130,74 @@ module Pione
       def read_action_documents(location)
         location.entries.each_with_object(Hash.new) do |entry, actions|
           if entry.basename.end_with?(".action.md")
-            actions.merge!(LiterateAction::Parser.parse(entry.read))
+            begin
+              actions.merge!(LiterateAction::Parser.parse(entry.read))
+            rescue
+              Log::SystemLog.fatal("Error has occured when parsing the action document %s." % entry.address)
+              raise
+            end
           end
         end
+      end
+
+      # Compile all PNML files in the location.
+      #
+      # @param location [Location]
+      #   package directory location
+      # @param actions [Hash{String=>String}]
+      #   relation table for rule name and the action content
+      # @return [void]
+      def compile_pnml(location, actions)
+        location.each_entry do |entry|
+          if (entry.extname == ".pnml")
+            begin
+              flow_name = entry.basename(".pnml")
+              net = PNML::Reader.read(entry)
+              option = {
+                :flow_rule_name => flow_name,
+                :literate_actions => actions,
+              }
+              content = PNML::Compiler.new(net, option).compile
+              file = entry.dirname + (flow_name + ".pione")
+              file.write(content)
+            rescue
+              Log::SystemLog.fatal("Error has occured when compiling the PNML file %s." % entry.address)
+              raise
+            end
+          end
+        end
+      end
+
+      # Update package information file.
+      #
+      # @param location [Location]
+      #   package directory location
+      # @return [void]
+      def update_package_info(location)
+        Package::PackageHandler.write_info_files(location, force: true)
+      rescue
+        Log::SystemLog.fatal("Error has occured when updating package information file.")
+        raise
+      end
+
+      # Update package information file.
+      #
+      # @param location [Location]
+      #   package directory location
+      # @return [Location]
+      #   location of the generated PPG file
+      def archive_package(location, output)
+        handler = Package::PackageReader.read(location)
+        cache_location = Package::PackageCache.directory_cache(handler.digest)
+
+        # make archiver
+        archiver = Package::PackageArchiver.new(cache_location)
+
+        # archive
+        return archiver.archive(output, false)
+      rescue
+        Log::SystemLog.fatal("Error has occured when archiving package.")
+        raise
       end
     end
 
