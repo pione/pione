@@ -1,15 +1,19 @@
 {
-  "PackageName": "PegasusWMS-Pipeline",
+  "PackageName": "PegasusWMSPipeline",
   "Parents": [
 
   ],
   "Documents": [
-    "Pipeline.pione"
+    "PegasusWMSPipeline.pione",
+    "Package.pione"
   ],
   "Scenarios": [
 
   ],
   "Bins": [
+
+  ],
+  "Etcs": [
 
   ]
 }

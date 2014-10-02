@@ -1,5 +1,5 @@
 
-Rule PegasusWMS-Pipeline
+Rule PegasusWMSPipeline
 Flow
   rule Count
   rule GetHTML

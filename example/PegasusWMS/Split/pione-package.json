@@ -1,15 +1,19 @@
 {
-  "PackageName": "PegasusWMS-Split",
+  "PackageName": "PegasusWMSSplit",
   "Parents": [
 
   ],
   "Documents": [
-    "Split.pione"
+    "Package.pione",
+    "PegasusWMSSplit.pione"
   ],
   "Scenarios": [
 
   ],
   "Bins": [
+
+  ],
+  "Etcs": [
 
   ]
 }

@@ -1,15 +1,19 @@
 {
-  "PackageName": "PegasusWMS-Merge",
+  "PackageName": "PegasusWMSMerge",
   "Parents": [
 
   ],
   "Documents": [
-    "Merge.pione"
+    "Package.pione",
+    "PegasusWMSMerge.pione"
   ],
   "Scenarios": [
 
   ],
   "Bins": [
+
+  ],
+  "Etcs": [
 
   ]
 }
