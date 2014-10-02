@@ -1,5 +1,5 @@
 
-Rule PegasusWMS-Split
+Rule PegasusWMSSplit
   output 'count.txt.*'.all
 Flow
   rule Split
