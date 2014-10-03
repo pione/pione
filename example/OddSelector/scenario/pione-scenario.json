@@ -2,22 +2,22 @@
   "ScenarioName": "from 1 to 10",
   "ParamSet": null,
   "Inputs": [
-    "input/4.i",
-    "input/3.i",
-    "input/5.i",
     "input/8.i",
-    "input/1.i",
+    "input/4.i",
+    "input/5.i",
     "input/9.i",
     "input/6.i",
     "input/10.i",
-    "input/2.i",
-    "input/7.i"
+    "input/3.i",
+    "input/7.i",
+    "input/1.i",
+    "input/2.i"
   ],
   "Outputs": [
     "output/7.res",
     "output/1.res",
-    "output/3.res",
     "output/9.res",
-    "output/5.res"
+    "output/5.res",
+    "output/3.res"
   ]
 }

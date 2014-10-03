@@ -3,8 +3,7 @@ Rule OddSelector
   input '*.i'.all
 Flow
   rule MakeResult
-  rule OddSelector
-  rule constraint ($I[1][1].i % 2) == 0
+  rule Filter
 End
 
 Rule MakeResult
@@ -12,10 +11,8 @@ Rule MakeResult
   output ('{$*}.res'.touch).touch
 End
 
-Rule OddSelector
-  output ('*.i'.remove).touch
-End
-
-Rule constraint ($I[1][1].i % 2) == 0
+Rule Filter
   input '*.i'
+  output ('*.i'.remove).touch
+  constraint ($I[1][1].i % 2) == 0
 End
