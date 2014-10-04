@@ -70,7 +70,13 @@ module Pione
       # @return [Array<Arc>]
       #   result arcs
       def find_all_arcs_by_source_id(source_id)
-        arcs.select {|arc| arc.source_id == source_id}
+        _arcs = arcs.select {|arc| arc.source_id == source_id}
+
+        if block_given?
+          _arcs.each {|arc| yield arc}
+        else
+          return _arcs
+        end
       end
 
       # Find all arcs by the target ID.
@@ -80,7 +86,13 @@ module Pione
       # @return [Array<Arc>]
       #   result arcs
       def find_all_arcs_by_target_id(target_id)
-        arcs.select {|arc| arc.target_id == target_id}
+        _arcs = arcs.select {|arc| arc.target_id == target_id}
+
+        if block_given?
+          _arcs.each {|arc| yield arc}
+        else
+          return _arcs
+        end
       end
 
       # Return all arcs which have the direction from transtion to place.
@@ -88,7 +100,13 @@ module Pione
       # @return [Array<PNML::Arc>]
       #   arcs
       def tp_arcs
-        arcs.select {|arc| arc.from_transition_to_place?}
+        _arcs = arcs.select {|arc| arc.from_transition_to_place?}
+
+        if block_given?
+          _arcs.each {|arc| yield arc}
+        else
+          return _arcs
+        end
       end
 
       # Return all arcs which have the direction from place to transition.
@@ -96,7 +114,13 @@ module Pione
       # @return [Array<PNML::Arc>]
       #   arcs
       def pt_arcs
-        arcs.select {|arc| arc.from_place_to_transition?}
+        _arcs = arcs.select {|arc| arc.from_place_to_transition?}
+
+        if block_given?
+          _arcs.each {|arc| yield arc}
+        else
+          return _arcs
+        end
       end
 
       # Find a transition by ID.
@@ -116,7 +140,7 @@ module Pione
       # @return [Transition]
       #   a transition, or nil
       def find_transition_by_name(name)
-        _transitions = transitions.select {|transition| transition.name == name}
+        _transitions = find_all_transitions_by_name(name)
 
         # the result shouldn't be ambiguous
         if _transitions.size > 1
@@ -133,7 +157,13 @@ module Pione
       # @return [Array<Transition>]
       #   transitions
       def find_all_transitions_by_name(name)
-        transitions.select {|transition| transition.name == name}
+        _transitions = transitions.select {|transition| transition.name == name}
+
+        if block_given?
+          _transitions.each {|transition| yield transition}
+        else
+          return _transitions
+        end
       end
 
       # Find a transition by the source place ID.
@@ -143,10 +173,7 @@ module Pione
       # @return [Array<Transition>]
       #   result transitions
       def find_transition_by_source_id(place_id)
-        _arcs = arcs.select {|arc| arc.source_id == place_id}
-        _transitions = _arcs.map do |arc|
-          transitions.find {|transition| transition.id == arc.target_id}
-        end.compact.uniq
+        _transitions = find_all_transitions_by_source_id(place_id)
 
         # the result shouldn't be ambiguous
         if _transitions.size > 1
@@ -166,8 +193,13 @@ module Pione
         _arcs = arcs.select {|arc| arc.source_id == place_id}
         _transitions = _arcs.map do |arc|
           transitions.find {|transition| transition.id == arc.target_id}
+        end.compact.uniq
+
+        if block_given?
+          _transitions.each {|transition| yield transition}
+        else
+          return _transitions
         end
-        return _transitions.compact.uniq
       end
 
       # Find a transition by the target place ID.
@@ -177,10 +209,7 @@ module Pione
       # @return [Array<Transition>]
       #   result transitions
       def find_transition_by_target_id(target_id)
-        _arcs = arcs.select {|arc| arc.target_id == target_id}
-        _transitions = _arcs.map do |arc|
-          transitions.find {|transition| transition.id == arc.source_id}
-        end.compact.uniq
+        _transitions = find_all_transitions_by_target_id(target_id)
 
         # the result shouldn't be ambiguous
         if _transitions.size > 1
@@ -200,8 +229,13 @@ module Pione
         _arcs = arcs.select {|arc| arc.target_id == target_id}
         _transitions = _arcs.map do |arc|
           transitions.find {|transition| transition.id == arc.source_id}
+        end.compact.uniq
+
+        if block_given?
+          _transitions.each {|transition| yield transition}
+        else
+          return _transitions
         end
-        return _transitions.compact.uniq
       end
 
       # Find a place by ID.
@@ -221,7 +255,7 @@ module Pione
       # @return [Place]
       #   a place, or nil
       def find_place_by_name(name)
-        _places = places.select {|place| place.name == name}
+        _places = find_all_places_by_name(name)
 
         # the result shouldn't be ambiguous
         if _places.size > 1
@@ -238,7 +272,13 @@ module Pione
       # @return [Array<Place>]
       #   places
       def find_all_places_by_name(name)
-        places.select {|place| place.name == name}
+        _places = places.select {|place| place.name == name}
+
+        if block_given?
+          _places.each {|place| yield place}
+        else
+          return _places
+        end
       end
 
       # Find a place by the source transition ID.
@@ -248,10 +288,7 @@ module Pione
       # @return [Array<Transition>]
       #   a result place
       def find_place_by_source_id(transition_id)
-        _arcs = arcs.select {|arc| arc.source_id == transition_id}
-        _places = _arcs.map do |arc|
-          places.find {|place| place.id == arc.target_id}
-        end.compact.uniq
+        _places = find_all_places_by_source_id(transition_id)
 
         # the result shouldn't be ambiguous
         if _places.size > 1
@@ -271,8 +308,13 @@ module Pione
         _arcs = arcs.select {|arc| arc.source_id == transition_id}
         _places = _arcs.map do |arc|
           places.find {|place| place.id == arc.target_id}
+        end.compact.uniq
+
+        if block_given?
+          _places.each {|place| yield place}
+        else
+          return _places
         end
-        return _places.compact.uniq
       end
 
       # Find a place by the target transition ID.
@@ -282,10 +324,7 @@ module Pione
       # @return [Array<Transition>]
       #   result places
       def find_place_by_target_id(transition_id)
-        _arcs = arcs.select {|arc| arc.target_id == transition_id}
-        _places = _arcs.map do |arc|
-          places.find {|place| place.id == arc.source_id}
-        end.compact.uniq
+        _places = find_all_places_by_target_id(transition_id)
 
         # the result shouldn't be ambiguous
         if _places.size > 1
@@ -305,8 +344,13 @@ module Pione
         _arcs = arcs.select {|arc| arc.target_id == transition_id}
         _places = _arcs.map do |arc|
           places.find {|place| place.id == arc.source_id}
+        end.compact.uniq
+
+        if block_given?
+          _places.each {|place| yield place}
+        else
+          return _places
         end
-        return _places.compact.uniq
       end
     end
 

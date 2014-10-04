@@ -3,6 +3,8 @@ module Pione
   module PNML; end
 end
 
+require 'pione/pnml/pnml-exception'
+
 #
 # language model
 #
@@ -24,6 +26,7 @@ require 'pione/pnml/output-decomposition-complement'
 require 'pione/pnml/output-synchronization-complement'
 require 'pione/pnml/io-expansion'
 require 'pione/pnml/invalid-arc-elimination'
+require 'pione/pnml/ticket-instantiation'
 
 #
 # utility

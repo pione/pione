@@ -82,7 +82,7 @@ module Pione
         return false unless node.is_a?(Place)
 
         # try parsing as a ticket expression
-        Lang::Parser.ticket_expr.parse(node.name)
+        Lang::DocumentParser.new.ticket_expr.parse(node.name)
 
         # the node is a ticket
         return true
@@ -359,6 +359,15 @@ module Pione
       end
     end
 
+    # Ticket represents a PIONE's ticket declaration.
+    class Ticket < Perspective
+      attr_reader :name
+
+      def initialize(name)
+        @name = name
+      end
+    end
+
     # ConditionalBranch is a class represents PIONE's conditional branch
     # declaration.
     class ConditionalBranch < Perspective
@@ -375,21 +384,21 @@ module Pione
         case @type
         when :"if"
           branch_then = @table[:then].map do |rule|
-            "  rule %s" % Perspective.normalize_data_name(rule.name)
+            rule.as_declaration(option.merge(level: option[:level] + 1))
           end.join("\n")
 
           if @table[:else].empty?
             indent(Util::Indentation.cut(TEMPLATE_IF) % [@condition, branch_then], option)
           else
             branch_else = @table[:else].map do |rule|
-              "  rule %s" % Perspective.normalize_data_name(rule.name)
+              rule.as_declaration(option.merge(level: option[:level] + 1))
             end.join("\n")
             indent(Util::Indentation.cut(TEMPLATE_IF_ELSE) % [@condition, branch_then, branch_else], option)
           end
         when :"case"
           branches = @table.each_with_object([]) do |(val, rules), list|
             list << ((val == :else) ? "else" : "when %s" % val)
-            list.concat(rules.map{|rule| "  rule %s" % rule.name})
+            list.concat(rules.map{|rule| rule.as_declaration(option.merge(level: option[:level] + 1))})
           end.join("\n")
           indent(Util::Indentation.cut(TEMPLATE_CASE) % [@condition, branches], option)
         end
@@ -422,6 +431,8 @@ module Pione
       attr_accessor :outputs
       attr_accessor :params
       attr_accessor :constraints
+      attr_accessor :source_tickets
+      attr_accessor :target_tickets
       attr_accessor :conditions
       attr_accessor :flow_elements
       attr_accessor :action_content
@@ -436,6 +447,8 @@ module Pione
         @outputs = option[:outputs] || []
         @params = option[:params] || []
         @constraints = option[:constraints] || []
+        @source_tickets = option[:source_tickets] || []
+        @target_tickets = option[:target_tickets] || []
         @conditions = option[:conditions] || []
         @flow_elements = option[:flow_elements] || []
         @action_content = nil
@@ -455,6 +468,44 @@ module Pione
 
       def name
         external? ? generate_wrapper_name(@name) : @name
+      end
+
+      # Return the declaration form string.
+      def as_declaration(option={})
+        expr_source_tickets =
+          if @source_tickets.size > 0
+            "(%s) ==> " % @source_tickets.map {|ticket| "%s" % ticket.name}.join(" | ")
+          else
+            ""
+          end
+        expr_target_tickets =
+          if @target_tickets.size > 0
+            " ==> (%s)" % @target_tickets.map {|ticket| "%s" % ticket.name}.join(" | ")
+          else
+            ""
+          end
+        "rule %s%s%s" % [expr_source_tickets, name, expr_target_tickets]
+      end
+
+      # Make rule conditions.
+      #
+      # @return [Array<String>]
+      #   rule condition lines
+      def rule_conditions
+        conditions = []
+        @inputs.each do |input|
+          conditions << "input " + input
+        end
+        @outputs.each do |output|
+          conditions << "output " + output
+        end
+        @params.each do |param|
+          conditions << param.as_declaration
+        end
+        @constraints.each do |constraint|
+          conditions << constraint.as_declaration
+        end
+        conditions
       end
 
       def textize
@@ -484,59 +535,28 @@ module Pione
 
       FLOW_RULE_TEMPLATE = <<-RULE
         Rule <%= name %>
-          <%- @inputs.each do |input| -%>
-          input <%= input %>
-          <%- end -%>
-          <%- @outputs.each do |output| -%>
-          output <%= output %>
-          <%- end -%>
-          <%- @params.each do |param| -%>
-          <%=   param.as_declaration %>
-          <%- end -%>
-          <%- @constraints.each do |constraint| -%>
-          <%=   constraint.as_declaration %>
+          <%- rule_conditions.each do |condition| -%>
+          <%=   condition %>
           <%- end -%>
         Flow
           <%- @flow_elements.each do |element| -%>
-          <%- if element.is_a?(RuleDefinition) -%>
-          rule <%= element.name %>
-          <%- else -%>
-        <%= element.as_declaration(level: 1) %>
-          <%- end -%>
+          <%=   element.as_declaration(level: 1) %>
           <%- end -%>
         End
       RULE
 
       ACTION_RULE_TEMPLATE = <<-RULE
         Rule <%= name %>
-          <%- @inputs.each do |input| -%>
-          input <%= input %>
-          <%- end -%>
-          <%- @outputs.each do |output| -%>
-          output (<%= output %>).touch
-          <%- end -%>
-          <%- @params.each do |param| -%>
-          <%=   param.as_declaration %>
-          <%- end -%>
-          <%- @constraints.each do |constraint| -%>
-          <%=   constraint.as_declaration %>
+          <%- rule_conditions.each do |condition| -%>
+          <%=   condition %>
           <%- end -%>
         End
       RULE
 
       LITERATE_ACTION_RULE_TEMPLATE = <<-RULE
         Rule <%= name %>
-          <%- @inputs.each do |input| -%>
-          input <%= input %>
-          <%- end -%>
-          <%- @outputs.each do |output| -%>
-          output <%= output %>
-          <%- end -%>
-          <%- @params.each do |param| -%>
-          <%=   param.as_declaration %>
-          <%- end -%>
-          <%- @constraints.each do |constraint| -%>
-          <%=   constraint.as_declaration %>
+          <%- rule_conditions.each do |condition| -%>
+          <%=   condition %>
           <%- end -%>
         Action
         <%= Util::Indentation.indent(@action_content, 2) -%>
@@ -545,17 +565,8 @@ module Pione
 
       WRAPPER_TEMPLATE = <<-RULE
         Rule <%= name %>
-          <%- @inputs.each do |input| -%>
-          input <%= input %>
-          <%- end -%>
-          <%- @outputs.each do |output| -%>
-          output <%= output %>
-          <%- end -%>
-          <%- @params.each do |param| -%>
-          <%=   param.as_declaration %>
-          <%- end -%>
-          <%- @constraints.each do |constraint| -%>
-          <%=   constraint.as_declaration %>
+          <%- rule_conditions.each do |condition| -%>
+          <%=   condition %>
           <%- end -%>
         Flow
           rule <%= @name %>

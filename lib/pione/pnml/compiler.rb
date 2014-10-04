@@ -26,6 +26,7 @@ module Pione
           rules << InputParallelizationComplement
           rules << OutputDecompositionComplement
           rules << OutputSynchronizationComplement
+          rules << TicketInstantiation
         end
         @actions = []
       end
@@ -113,6 +114,8 @@ module Pione
             rule.outputs = find_outputs(transition)
             rule.params = find_params(transition)
             rule.constraints = find_constraints(transition)
+            rule.source_tickets = find_source_tickets(transition)
+            rule.target_tickets = find_target_tickets(transition)
 
             table[transition.id] = rule
           end
@@ -199,6 +202,34 @@ module Pione
           else
             # multiple constraint keywords found
             raise CompilerError.multiple_constraint_keywords(transition.name)
+          end
+        end
+      end
+
+      # Find source tickets from net.
+      #
+      # @param transition [Transition]
+      #   base transition
+      # @return [Array<Ticket>]
+      #   tickets
+      def find_source_tickets(transition)
+        @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, tickets|
+          if Perspective.ticket?(place)
+            tickets << Ticket.new(place.name)
+          end
+        end
+      end
+
+      # Find target tickets from net.
+      #
+      # @param transition [Transition]
+      #   base transition
+      # @return [Array<Ticket>]
+      #   tickets
+      def find_target_tickets(transition)
+        @net.find_all_places_by_source_id(transition.id).each_with_object([]) do |place, tickets|
+          if Perspective.ticket?(place)
+            tickets << Ticket.new(place.name)
           end
         end
       end
