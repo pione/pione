@@ -3,17 +3,17 @@ Rule OddSelector
   input '*.i'.all
   output '*.res'.all
 Flow
-  rule MakeResult
-  rule Filter
+  rule (<__TICKET_FROM_Filter_TO_MakeResult__>) ==> MakeResult
+  rule Filter ==> (<__TICKET_FROM_Filter_TO_MakeResult__>)
 End
 
 Rule MakeResult
   input '*.i'
-  output ('{$*}.res'.touch).touch
+  output '{$*}.res'
 End
 
 Rule Filter
   input '*.i'
-  output ('*.i'.remove).touch
+  output '*.i'.remove
   constraint ($I[1][1].i % 2) == 0
 End
