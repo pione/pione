@@ -265,7 +265,9 @@ module Pione
       end
     end
 
-    class FlowRuleDeclaration < Declaration
+    class RuleDeclaration < Declaration; end
+
+    class FlowRuleDeclaration < RuleDeclaration
       member :expr                   # rule name
       member :rule_condition_context # rule condition context
       member :flow_context           # flow context
@@ -285,7 +287,7 @@ module Pione
       end
     end
 
-    class ActionRuleDeclaration < Declaration
+    class ActionRuleDeclaration < RuleDeclaration
       member :expr              # rule name
       member :condition_context # rule condition context
       member :action_context    # action context
@@ -305,7 +307,7 @@ module Pione
       end
     end
 
-    class EmptyRuleDeclaration < Declaration
+    class EmptyRuleDeclaration < RuleDeclaration
       member :expr              # rule name
       member :condition_context # rule condition context
 

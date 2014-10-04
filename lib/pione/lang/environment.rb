@@ -231,6 +231,35 @@ module Pione
         rule_table.get!(self, setup_package_id(ref))
       end
 
+      # Return name of entrance rule.
+      #
+      # @param package_id [String]
+      #   pakcage id
+      # @return [String]
+      #   name of entrance rule
+      def entrance_rule_name(package_id=current_package_id)
+        # find main rule name from annotations
+        annotations = package_get(Lang::PackageExpr.new(package_id: package_id)).annotations
+        annotations.each do |annotation|
+          if annotation.annotation_type == "Entrance"
+            return annotation.pieces.first.name
+          end
+        end
+
+        # default name
+        return "Main"
+      end
+
+      # Return entrance rule.
+      #
+      # @param package_id [String]
+      #   pakcage id
+      # @return [RuleDeclaration]
+      #   entrance rule
+      def entrance_rule(package_id=current_package_id)
+        rule_get!(Lang::RuleExpr.new(entrance_rule_name(package_id)))
+      end
+
       # Get the expression of the reference.
       def rule_get_value(ref)
         if val = rule_table.get_value(self, setup_package_id(ref))
@@ -340,12 +369,12 @@ module Pione
         variable_set(Variable.new("MAIN_PARAM_SET"), ParameterSetSequence.of(main_param_set))
 
         # make root rule
-        Package::Document.parse(<<-PIONE, current_package_id, nil, nil, "*System*").eval(self)
+        Package::Document.parse(<<-PIONE % entrance_rule_name, current_package_id, nil, nil, "*System*").eval(self)
            Rule Root
              input '*'.all or null
              output '*'.all
            Flow
-             rule Main.param($MAIN_PARAM_SET)
+             rule %s.param($MAIN_PARAM_SET)
            End
         PIONE
         rule_get(RuleExpr.new("Root"))

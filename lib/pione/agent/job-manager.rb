@@ -11,8 +11,9 @@ module Pione
       attr_reader :package
 
       def initialize(tuple_space, env, package, param_set, stream)
-        unless env.rule_get!(Lang::RuleExpr.new("Main"))
-          raise JobError.new("Rule `Main` not found in the package.")
+        unless env.entrance_rule
+          name = env.entrance_rule_name
+          raise JobError.new("Entrance rule `%s` not found in the package." % name)
         end
 
         super(tuple_space)

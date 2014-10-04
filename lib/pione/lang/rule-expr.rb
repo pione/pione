@@ -65,6 +65,11 @@ module Pione
         # concat sequence
         left + right
       end
+
+      # Specify entrance rule of the package.
+      define_pione_method("Entrance", [], TypeRuleExpr) do |env, rec|
+        rec.set_annotation_type("Entrance")
+      end
     end
   end
 end
