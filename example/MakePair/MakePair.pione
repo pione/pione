@@ -11,20 +11,20 @@ End
 Rule PermutationPair
   input '*.i'
   input '*.i'
-  output ('succ-{$I[1][1]}-{$I[2][1]}.pair').touch
+  output 'succ-{$I[1][1]}-{$I[2][1]}.pair'
   constraint ($I[1][1].i + 1) == $I[2][1].i
 End
 
 Rule CombinationPair
   input '*.i'
   input '*.i'
-  output ('perm-{$I[1][1]}-{$I[2][1]}.pair').touch
+  output 'perm-{$I[1][1]}-{$I[2][1]}.pair'
   constraint $I[1][1].i != $I[2][1].i
 End
 
 Rule SuccessorPair
   input '*.i'
   input '*.i'
-  output ('comb-{$I[1][1]}-{$I[2][1]}.pair').touch
+  output 'comb-{$I[1][1]}-{$I[2][1]}.pair'
   constraint $I[1][1].i < $I[2][1].i
 End

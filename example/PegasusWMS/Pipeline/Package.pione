@@ -1,1 +1,2 @@
 .@ PackageName :: "PegasusWMSPipeline"
+.@ Entrance :: PegasusWMSPipeline

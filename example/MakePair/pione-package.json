@@ -8,9 +8,9 @@
     "MakePair.pione"
   ],
   "Scenarios": [
-    "scenario/case2",
+    "scenario/case3",
     "scenario/case1",
-    "scenario/case3"
+    "scenario/case2"
   ],
   "Bins": [
 
