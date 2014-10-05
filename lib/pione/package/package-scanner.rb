@@ -50,7 +50,7 @@ module Pione
         location.entries.each_with_object([]) do |entry, paths|
           if entry.file?
             # PIONE document has extension ".pione"
-            if /^[^.].+.pione$/.match(entry.basename)
+            if /^[^.].*.pione$/.match(entry.basename)
               # document path should be relative
               paths << entry.path.relative_path_from(@package_location.path).to_s
             end
