@@ -202,7 +202,7 @@ module Pione
       end
 
       def self.keyword_constraint?(node)
-        if node.kind_of?(Transition)
+        if node.kind_of?(Transition) and node.name
           node.name.strip == KEYWORD_CONSTRAINT
         else
           return false
