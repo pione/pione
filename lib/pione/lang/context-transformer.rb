@@ -14,9 +14,19 @@ module Pione
         Lang::ParamContext.new(elements)
       }
 
-      # Transform +rule_condition_context+ into Lang::RuleConditionContext.
-      rule(:rule_condition_context => sequence(:elements)) {
-        Lang::RuleConditionContext.new(elements)
+      # Transform +flow_rule_condition_context+ into Lang::FlowRuleConditionContext.
+      rule(:flow_rule_condition_context => sequence(:elements)) {
+        Lang::FlowRuleConditionContext.new(elements)
+      }
+
+      # Transform +action_rule_condition_context+ into Lang::ActionRuleConditionContext.
+      rule(:action_rule_condition_context => sequence(:elements)) {
+        Lang::ActionRuleConditionContext.new(elements)
+      }
+
+      # Transform +empty_rule_condition_context+ into Lang::EmptyRuleConditionContext.
+      rule(:empty_rule_condition_context => sequence(:elements)) {
+        Lang::EmptyRuleConditionContext.new(elements)
       }
 
       # Transform +flow_context+ into Lang::FlowContext.

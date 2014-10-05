@@ -169,9 +169,27 @@ module Pione
 
       # Evaluate the rule condition context. Return a new definition of rule condition.
       def eval(env)
-        RuleCondition.new.tap do |definition|
-          env.temp(current_definition: definition) {|_env| super(_env)}
+        create_condition.tap do |condition|
+          env.temp(current_definition: condition) {|_env| super(_env)}
         end
+      end
+    end
+
+    class FlowRuleConditionContext < RuleConditionContext
+      def create_condition
+        RuleCondition.new(type: :flow)
+      end
+    end
+
+    class ActionRuleConditionContext < RuleConditionContext
+      def create_condition
+        RuleCondition.new(type: :action)
+      end
+    end
+
+    class EmptyRuleConditionContext < RuleConditionContext
+      def create_condition
+        RuleCondition.new(type: :empty)
       end
     end
 

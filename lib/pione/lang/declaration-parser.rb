@@ -144,21 +144,21 @@ module Pione
 
       # +flow_rule_block+ matches flow rule declarations.
       rule(:flow_rule_block) {
-        ( rule_header >> rule_condition_context.as(:context1) >>
+        ( rule_header >> flow_rule_condition_context.as(:context1) >>
           line(keyword_Flow) >> flow_context.as(:context2) >> rule_footer!
         ).as(:flow_rule_block)
       }
 
       # +action_rule_block+ matches action rule declarations.
       rule(:action_rule_block) {
-        ( rule_header >> rule_condition_context.as(:context1) >>
+        ( rule_header >> action_rule_condition_context.as(:context1) >>
           line(keyword_Action) >> action_context.as(:context2) >> rule_footer!
         ).as(:action_rule_block)
       }
 
       # +empty_rule_block+ matches empty rule declarations.
       rule(:empty_rule_block) {
-        (rule_header >> rule_condition_context.as(:context) >> rule_footer!).as(:empty_rule_block)
+        (rule_header >> empty_rule_condition_context.as(:context) >> rule_footer!).as(:empty_rule_block)
       }
 
       # +rule_header+ matches rule headers.

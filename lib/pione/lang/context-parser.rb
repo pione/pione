@@ -16,8 +16,14 @@ module Pione
       # +param_context+ matches parameter block contexts.
       rule(:param_context) {structural_context.as(:param_context)}
 
-      # +rule_condition_context+ matches rule condition contexts.
-      rule(:rule_condition_context) {structural_context.as(:rule_condition_context)}
+      # +flow_rule_condition_context+ matches flow rule condition contexts.
+      rule(:flow_rule_condition_context) {structural_context.as(:flow_rule_condition_context)}
+
+      # +action_rule_condition_context+ matches action rule condition contexts.
+      rule(:action_rule_condition_context) {structural_context.as(:action_rule_condition_context)}
+
+      # +empty_rule_condition_context+ matches empty rule condition contexts.
+      rule(:empty_rule_condition_context) {structural_context.as(:empty_rule_condition_context)}
 
       # +flow_context+ matches flow contexts.
       rule(:flow_context) {structural_context.as(:flow_context)}

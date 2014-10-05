@@ -2,6 +2,7 @@ module Pione
   module Lang
     # RuleCondition is a storage of rule conditions.
     class RuleCondition < StructX
+      member :type
       member :inputs, default: lambda { Array.new }
       member :outputs, default: lambda { Array.new }
       member :features, default: lambda { Array.new }

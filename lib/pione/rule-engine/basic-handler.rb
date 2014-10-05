@@ -35,7 +35,7 @@ module Pione
         @package_id = param[:package_id]
         @rule_name = param[:rule_name]
         @rule_definition = param[:rule_definition]
-        @rule_condition = @rule_definition.rule_condition_context.eval(@env)
+        @rule_condition = eval_rule_condition()
         @inputs = param[:inputs]
         @outputs = []
         @param_set = param[:param_set]
@@ -92,6 +92,21 @@ module Pione
       # Executes the rule.
       def execute
         raise NotImplementError
+      end
+
+      def eval_rule_condition()
+        rule_condition = @rule_definition.rule_condition_context.eval(@env)
+
+        # change to touch operation if the definition is empty rule
+        # if @rule_definition.kind_of?(Lang::EmptyRuleDefinition)
+        #   rule_condition.outputs.each do |output|
+        #     if output.operation == :write
+        #       output.set(operation: :touch)
+        #     end
+        #   end
+        # end
+
+        return rule_condition
       end
 
       # Make location by data name and the domain.
@@ -180,7 +195,7 @@ module Pione
       # Apply touch operation.
       def apply_touch_operation(condition, tuples)
         _condition = condition.eval(@env)
-        if _condition.operation == :touch
+        if _condition.operation == :touch or (self.kind_of?(EmptyHandler) and _condition.operation == :write)
           if tuples.empty?
             create_data_by_touch_operation(_condition)
           else

@@ -364,6 +364,12 @@ module Pione
         set(current_package_id: package_id, current_definition: definition)
       end
 
+      # Make a root rule definition.
+      #
+      # @param main_param_set [ParameterSet]
+      #   main parameter set
+      # @return [RuleDefinition]
+      #  root rule definition
       def make_root_rule(main_param_set)
         # put variable of parameter set for main rule
         variable_set(Variable.new("MAIN_PARAM_SET"), ParameterSetSequence.of(main_param_set))
