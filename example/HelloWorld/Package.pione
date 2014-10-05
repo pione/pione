@@ -1,1 +1,2 @@
 .@ PackageName :: "HelloWorld"
+.@ Entrance :: HelloWorld

@@ -1,1 +1,2 @@
 .@ PackageName :: "PegasusWMSMerge"
+.@ Entrance :: PegasusWMSMerge

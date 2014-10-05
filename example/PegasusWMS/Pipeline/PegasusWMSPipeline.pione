@@ -1,5 +1,6 @@
 
 Rule PegasusWMSPipeline
+  output 'count.txt'
 Flow
   rule Count
   rule GetHTML

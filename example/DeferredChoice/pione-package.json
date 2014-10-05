@@ -4,14 +4,14 @@
 
   ],
   "Documents": [
-    "DeferredChoice.pione",
-    "Package.pione"
+    "Package.pione",
+    "DeferredChoice.pione"
   ],
   "Scenarios": [
 
   ],
   "Bins": [
-    "bin/ui.xml"
+
   ],
   "Etcs": [
 

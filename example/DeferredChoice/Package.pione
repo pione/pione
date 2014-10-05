@@ -1,1 +1,4 @@
 .@ PackageName :: "DeferredChoice"
+.@ Entrance :: DeferredChoice
+
+param $DIALOG := "zenity"
