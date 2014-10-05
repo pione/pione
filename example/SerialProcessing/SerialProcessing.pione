@@ -1,71 +1,20 @@
-.@ PackageName :: "SerialProcessing"
 
-Rule Main
-  output '*.a'.all
+Rule SerialProcessing
   output '*.b'.all
-Flow
-  rule A ==> <T>
-  rule <T> ==> B
-End
-
-Rule A
   output '*.a'.all
 Flow
-  rule <T> ==> A4
-  rule A1 >>> A2 >>> A3 ==> <T>
+  rule (<T>) ==> __SerialProcessing_B_0__
+  rule __SerialProcessing_A_1__ ==> (<T>)
 End
 
-Rule A1
-  output '1.a'
-Action
-  echo "A1" > {$O[1]}
-End
-
-Rule A2
-  output '2.a'
-Action
-  echo "A2" > {$O[1]}
-End
-
-Rule A3
-  output '3.a'
-Action
-  echo "A3" > {$O[1]}
-End
-
-Rule A4
-  output '4.a'
-Action
-  echo "A4" > {$O[1]}
-End
-
-Rule B
+Rule __SerialProcessing_B_0__
   output '*.b'.all
 Flow
-  rule <T> ==> B4
-  rule B1 >>> B2 >>> B3 ==> <T>
+  rule B
 End
 
-Rule B1
-  output '1.b'
-Action
-  echo "B1" > {$O[1]}
-End
-
-Rule B2
-  output '2.b'
-Action
-  echo "B2" > {$O[1]}
-End
-
-Rule B3
-  output '3.b'
-Action
-  echo "B3" > {$O[1]}
-End
-
-Rule B4
-  output '4.b'
-Action
-  echo "B4" > {$O[1]}
+Rule __SerialProcessing_A_1__
+  output '*.a'.all
+Flow
+  rule A
 End

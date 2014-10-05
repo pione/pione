@@ -1,0 +1,25 @@
+
+Rule B
+  output '*.b'.all
+Flow
+  rule (<__TICKET_FROM_B2_TO_B3__>) ==> B3 ==> (<T>)
+  rule (<__TICKET_FROM_B1_TO_B2__>) ==> B2 ==> (<__TICKET_FROM_B2_TO_B3__>)
+  rule B1 ==> (<__TICKET_FROM_B1_TO_B2__>)
+  rule (<T>) ==> B4
+End
+
+Rule B3
+  output '3.b'
+End
+
+Rule B2
+  output '2.b'
+End
+
+Rule B1
+  output '1.b'
+End
+
+Rule B4
+  output '4.b'
+End
