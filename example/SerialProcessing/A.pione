@@ -1,0 +1,25 @@
+
+Rule A
+  output '*.a'.all
+Flow
+  rule (<__TICKET_FROM_A2_TO_A3__>) ==> A3 ==> (<T>)
+  rule (<__TICKET_FROM_A1_TO_A2__>) ==> A2 ==> (<__TICKET_FROM_A2_TO_A3__>)
+  rule A1 ==> (<__TICKET_FROM_A1_TO_A2__>)
+  rule (<T>) ==> A4
+End
+
+Rule A3
+  output '3.a'
+End
+
+Rule A2
+  output '2.a'
+End
+
+Rule A1
+  output '1.a'
+End
+
+Rule A4
+  output '4.a'
+End
