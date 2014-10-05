@@ -101,7 +101,7 @@ module Pione
 
         # parameter node should be parsed as a param sentence
         begin
-          Lang::DocumentParser.new.param_sentence.parse(name)
+          Lang::DocumentParser.new.strict_param_expr.parse(node.name.strip)
           return true
         rescue
           return false
@@ -330,19 +330,15 @@ module Pione
     # `Param` is a class represents PIONE's paramter declaration.
     class Param < Perspective
       attr_reader :name
-      attr_reader :default_expr
 
       # @param name [String]
-      #   parameter name, note that this name doesn't include heading `$`
-      # @param default expr [String]
-      #   default value expression
-      def initialize(name, default_expr)
-        @name = name
-        @default_expr = default_expr
+      #   parameter name and the default value
+      def initialize(name)
+        @name = name.strip
       end
 
       def as_declaration(option={})
-        indent("param $%s := %s" % [@name, @default_expr], option)
+        indent("param %s" % @name, option)
       end
     end
 

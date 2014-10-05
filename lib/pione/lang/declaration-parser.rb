@@ -73,10 +73,24 @@ module Pione
       # +param_sentence+ matches parameter declarations.
       rule(:param_sentence) {
         type = (keyword_basic | keyword_advanced).as(:type)
+
+        line(((type >> pad).maybe >> keyword_param.as(:declarator) >> pad >> param_expr).as(:param_sentence))
+      }
+
+      # +param_expr+ matches a parameter expression.
+      rule(:param_expr) {
         with_default = expr.as(:expr1) >> padded?(binding_operator) >> expr!.as(:expr2)
         without_default = expr.as(:expr1)
 
-        line(((type >> pad).maybe >> keyword_param.as(:declarator) >> pad >> (with_default | without_default)).as(:param_sentence))
+        with_default | without_default
+      }
+
+      # +param_expr+ natches a parameter expression with variable explicitly.
+      rule(:strict_param_expr) {
+        with_default = variable.as(:expr1) >> padded?(binding_operator) >> expr!.as(:expr2)
+        without_default = variable.as(:expr1)
+
+        with_default | without_default
       }
 
       # +rule_binding_sentence+ matches rule binding declarations.

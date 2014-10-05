@@ -171,9 +171,9 @@ module Pione
       # @return [Array<Param>]
       #   rule parameters
       def find_params(transition)
-        @net.find_all_places_by_source_id(transition.id).each_with_object([]) do |place, params|
+        @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, params|
           if Perspective.param?(place)
-            params << Param.new(place.name, nil)
+            params << Param.new(place.name)
           end
         end
       end
@@ -344,7 +344,7 @@ module Pione
         option = {
           :inputs => inputs,
           :outputs => outputs,
-          :params => @net.places.select {|place| Perspective.param?(place) and Perspective.net_input?},
+          :params => @net.places.select {|place| Perspective.param?(place) and Perspective.net_input?(place)},
           :flow_elements => flow_elements,
         }
 
