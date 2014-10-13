@@ -42,8 +42,8 @@ module Pione
         data["Editor"] = editor if editor
         data["Tag"] = tag if tag
         data["Parents"] = parents
-        data["Documents"] = documents
-        data["Scenarios"] = scenarios
+        data["Documents"] = documents.sort
+        data["Scenarios"] = scenarios.sort
         data["Bins"] = bins
         data["Etcs"] = etcs
         data.to_json(*args)
