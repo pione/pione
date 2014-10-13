@@ -34,7 +34,7 @@ module Pione
       def self.find_subjects(net)
         net.transitions.each do |transition|
           # source transition should have no names
-          next unless transition.empty_name?
+          next unless Perspective.empty_transition?(transition)
 
           # transition should have only one named input
           input_places = net.find_all_places_by_target_id(transition.id)
@@ -44,7 +44,7 @@ module Pione
 
           # collect places
           output_places = net.find_all_places_by_source_id(transition.id)
-          next unless output_places.all? {|output_place| output_place.empty_name?}
+          next unless output_places.all? {|output_place| Perspective.empty_place?(output_place)}
 
           # there should be more than 2 places
           next unless output_places.size > 1

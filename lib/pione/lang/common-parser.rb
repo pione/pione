@@ -154,13 +154,15 @@ module Pione
       rule(:number!) { number.or_error("it should be number") }
 
       # +space+ matches sequences of space character, tab, or comment.
-      rule(:space) { (match("[ \t]") | comment).repeat(1) }
+      rule(:space_char) {match("[ \t]")}
+      rule(:space) { (space_char | comment).repeat(1) }
 
       # +space?+ matches +space+ or empty.
       rule(:space?) { space.maybe }
 
       # +pad+ matches sequences of space character, tab, newline, or comment.
-      rule(:pad) { (match("[ \t\n]") | comment).repeat(1) }
+      rule(:pad_char) {match("[ \t\n]")}
+      rule(:pad) { (pad_char | comment).repeat(1) }
 
       # +pad?+ matches +pad+ or empty.
       rule(:pad?) { pad.maybe }

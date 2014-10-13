@@ -24,7 +24,7 @@ module Pione
       def self.find_subjects(net)
         net.places.each do |place|
           # source place should be empty
-          next unless Perspective.empty?(place)
+          next unless Perspective.empty_place?(place)
 
           # source place should be an output of named transition
           next if net.find_all_transitions_by_target_id(place.id).map do |transition|

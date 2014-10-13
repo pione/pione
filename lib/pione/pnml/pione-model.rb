@@ -2,48 +2,33 @@ module Pione
   module PNML
     # `Perspective` is a meta class for PIONE's concepts overlayed in PNML.
     class Perspective
-      KEYWORD_IF = "if"
-      KEYWORD_ELSE = "else"
-      KEYWORD_THEN = "then"
-      KEYWORD_CASE = "case"
-      KEYWORD_WHEN = "when"
-      KEYWORD_CONSTRAINT = "constraint"
-
-      TRANSITION_KEYWORDS = [
-        KEYWORD_IF,
-        KEYWORD_ELSE,
-        KEYWORD_THEN,
-        KEYWORD_CASE,
-        KEYWORD_WHEN,
-        KEYWORD_CONSTRAINT
-      ]
-
-      # Eliminate comments from the string. This implementation is temporary, we
-      # should fix this.
-      def self.eliminate_comment(str)
-        # FIXME
-        str.sub(/#.*$/, "")
-      end
-
-      # Return true if the node is empty in PIONE model.
+      # Return true if the node is empty.
       #
       # @return [Boolean]
       #   true if the node is empty
       def self.empty?(node)
-        # node should be a place or transition
-        return false unless node.is_a?(Place) or node.is_a?(Transition)
+        empty_place?(node) or empty_transition?(node)
+      end
 
-        return true if node.name.nil?
-        return true if /^[<>]?\s*$/.match(eliminate_comment(node.name.strip))
+      # Return true if the node is an empty place.
+      #
+      # @return [Boolean]
+      #   true if the node is an empty place
+      def self.empty_place?(node)
+        match_place_parser?(node, :empty_place)
+      end
+
+      # Return true if the node is an empty transition.
+      #
+      # @return [Boolean]
+      #   true if the node is an empty transition
+      def self.empty_transition?(node)
+        match_transition_parser?(node, :empty_transition)
       end
 
       # Return true if the node is an expression in PIONE.
       def self.expr?(node)
-        Lang::DocumentParser.new.expr.parse(node.name)
-        return true
-      rescue Parslet::ParseFailed => e
-        # the node is not an expression
-        return false
+        match_palce_parser?(node, :place_expr)
       end
 
       # Return true if the node is named in PIONE model.
@@ -59,18 +44,27 @@ module Pione
       # @return [Boolean]
       #    true if the node is a file
       def self.file?(node)
-        # files should be represented as a place
-        return false unless node.is_a?(Place)
-        return false if node.name.nil?
+        match_place_parser?(node, :place_file)
+      end
 
-        # normalize
-        name = node.name.strip
-        if name.size > 0 and "<>".include?(name[0])
-          name = name.sub(/[<>]/, "")
-        end
+      # Return true if the node is a net's input file.
+      #
+      # @param node [PNML::Node]
+      #   the node
+      # @return [Boolean]
+      #   true if the node is a net's input file.
+      def self.net_input_file?(node)
+        match_place_parser?(node, :place_net_input_file)
+      end
 
-        # test
-        return (name.size > 0 and name[0] == "'")
+      # Return true if the node is a net's output file.
+      #
+      # @param node [PNML::Node]
+      #   the node
+      # @return [Boolean]
+      #   true if the node is a net's output file.
+      def self.net_output_file?(node)
+        match_place_parser?(node, :place_net_output_file)
       end
 
       # Return true if the node is a ticket in PIONE model.
@@ -78,34 +72,23 @@ module Pione
       # @return [Boolean]
       #   true if the node is a ticket
       def self.ticket?(node)
-        # tickets should be represented as a place
-        return false unless node.is_a?(Place)
-
-        # try parsing as a ticket expression
-        Lang::DocumentParser.new.ticket_expr.parse(node.name)
-
-        # the node is a ticket
-        return true
-      rescue Parslet::ParseFailed => e
-        # the node is not a ticket
-        return false
+        match_place_parser?(node, :place_ticket)
       end
 
-      # Return true if the node is a parameter in PIONE model.
+      # Return true if the node is a parameter.
       #
       # @return [Boolean]
       #   true if the node is a parameter
       def self.param?(node)
-        # parameter node should be represented as a place
-        return false unless node.is_a?(Place)
+        match_place_parser?(node, :place_param)
+      end
 
-        # parameter node should be parsed as a param sentence
-        begin
-          Lang::DocumentParser.new.strict_param_expr.parse(node.name.strip)
-          return true
-        rescue
-          return false
-        end
+      # Return true if the node is a net input parameter.
+      #
+      # @return [Boolean]
+      #   true if the node is a net input parameter
+      def self.net_input_param?(node)
+        match_place_parser?(node, :place_net_input_param)
       end
 
       # Return true if the node is a rule.
@@ -115,101 +98,179 @@ module Pione
       # @return [Boolean]
       #   true if the node is a rule.
       def self.rule?(node)
-        return false unless node.is_a?(Transition)
-        return false unless not(node.name.nil?)
-
-        name = node.name.strip
-
-        # keywords
-        if TRANSITION_KEYWORDS.include?(name)
-          return false
-        end
-
-        return name.size > 0
+        return (internal_rule?(node) or external_rule?(node))
       end
 
-      # Return ture if the node is an external rule.
+      # Return ture if the node is an internal rule.
+      #
       # @param [PNML::Node] node
       #   PNML node
       # @return [Boolean]
-      #   true if the node is external
-      def self.external?(node)
-        node.name.strip.downcase.start_with?("extern ")
+      #   true if the node is an internal rule
+      def self.internal_rule?(node)
+        match_transition_parser?(node, :internal_rule)
+      end
+
+      # Return ture if the node is an external rule.
+      #
+      # @param [PNML::Node] node
+      #   PNML node
+      # @return [Boolean]
+      #   true if the node is an external rule
+      def self.external_rule?(node)
+        match_transition_parser?(node, :external_rule)
       end
 
       # Normalize the rule name.
+      #
+      # @param name [String]
+      #   rule expression
+      # @return [String]
+      #   rule expression without modifier and comment
       def self.normalize_rule_name(name)
         return nil if name.nil?
 
-        name = name.strip
-        name = remove_comment(name)
-        if name.strip.downcase.start_with?("extern ")
-          name[6..-1].strip
-        else
-          name
-        end
+        matched = Parser.new.transition_rule.parse(name)
+        offset = matched[:rule_expr].offset
+        tail_offset = matched[:tail] ? matched[:tail].offset : name.size
+        return name[offset, tail_offset - offset]
       end
 
       # Normalize the data name.
+      #
+      # @param name [String]
+      #   data expression
+      # @return [String]
+      #   data expression without modifier and comment
       def self.normalize_data_name(name)
         return nil if name.nil?
 
-        name = name.strip
-        name = remove_comment(name)
-        if name.size > 0 and name[0] == "<" or name[0] == ">"
-          name[1..-1].strip
-        else
-          name
+        matched = Parser.new.place_file.parse(name)
+        offset = find_head_character_position(matched[:expr])
+        tail_offset = matched[:tail] ? matched[:tail].offset : name.size
+        return name[offset, tail_offset - offset]
+      end
+
+      def self.normalize_param(name)
+        return nil if name.nil?
+
+        matched = Parser.new.place_param.parse(name)
+        offset = find_head_character_position(matched[:param])
+        tail_offset = matched[:tail] ? matched[:tail].offset : name.size
+        return name[offset, tail_offset - offset]
+      end
+
+      # Return modifier of the name.
+      #
+      # @param name [String]
+      #   data expression
+      # @return [String]
+      #   modifier or nil
+      def self.place_modifier(node)
+        if node.kind_of?(Place) and not(node.name.nil?)
+          begin
+            matched = Parser.new.place.parse(node.name)
+            return matched[:place_modifier].to_s
+          rescue Parslet::ParseFailed
+          end
         end
+        return nil
       end
 
-      def self.compact(name)
-        remove_comment(name)
-      end
-
-      def self.remove_comment(name)
-        name.sub(/#\s*$/, "").strip
-      end
-
-      # Return true if the node is a net's input.
+      # Return true if the node is keyword "if".
       #
       # @param node [PNML::Node]
-      #   the node
+      #   PNML's node
       # @return [Boolean]
-      #   true if the node is a net's input.
-      def self.net_input?(node)
-        node.name and compact(node.name)[0] == "<"
+      #   true if the node is keyword "if"
+      def self.keyword_if?(node)
+        match_transition_parser?(node, :transition_if)
       end
 
-      # Return true if the node is a net's output.
-      #
+      # Return true if the node is keyword "then".
       # @param node [PNML::Node]
-      #   the node
+      #   PNML's node
       # @return [Boolean]
-      #   true if the node is a net's output.
-      def self.net_output?(node)
-        node.name and compact(node.name)[0] == ">"
+      #   true if the node is keyword "then"
+      def self.keyword_then?(node)
+        match_transition_parser?(node, :transition_then)
       end
 
-      def self.modifier(name)
-        if name.size > 0 and name.strip[0] == "<"
-          return "<"
-        end
-        if name.size > 0 and name.strip[0] == ">"
-          return ">"
-        end
-        return ""
+      # Return true if the node is keyword "else".
+      # @param node [PNML::Node]
+      #   PNML's node
+      # @return [Boolean]
+      #   true if the node is keyword "else"
+      def self.keyword_else?(node)
+        match_transition_parser?(node, :transition_else)
       end
 
+      # Return true if the node is keyword "case".
+      # @param node [PNML::Node]
+      #   PNML's node
+      # @return [Boolean]
+      #   true if the node is keyword "case"
+      def self.keyword_case?(node)
+        match_transition_parser?(node, :transition_case)
+      end
+
+      # Return true if the node is keyword "when".
+      # @param node [PNML::Node]
+      #   PNML's node
+      # @return [Boolean]
+      #   true if the node is keyword "when"
+      def self.keyword_when?(node)
+        match_transition_parser?(node, :transition_when)
+      end
+
+      # Return true if the node is keyword "constraint".
+      # @param node [PNML::Node]
+      #   PNML's node
+      # @return [Boolean]
+      #   true if the node is keyword "constraint"
       def self.keyword_constraint?(node)
-        if node.kind_of?(Transition) and node.name
-          node.name.strip == KEYWORD_CONSTRAINT
-        else
-          return false
-        end
+        match_transition_parser?(node, :transition_constraint)
       end
 
       private
+
+      # Return true if the node matches the place parser.
+      #
+      # @param node [PNML::Node]
+      #   PNML's node
+      # @param parser_name [String]
+      #   place parser name
+      # @return [Boolean]
+      #   true if the node is the place parser
+      def self.match_place_parser?(node, parser_name)
+        if node.kind_of?(Place) and not(node.name.nil?)
+          begin
+            Parser.new.send(parser_name).parse(node.name)
+            return true
+          rescue Parslet::ParseFailed
+          end
+        end
+        return false
+      end
+
+      # Return true if the node matches the transition parser.
+      #
+      # @param node [PNML::Node]
+      #   PNML's node
+      # @param parser_name [String]
+      #   transition parser name
+      # @return [Boolean]
+      #   true if the node is the keyword
+      def self.match_transition_parser?(node, parser_name)
+        if node.kind_of?(Transition) and not(node.name.nil?)
+          begin
+            Parser.new.send(parser_name).parse(node.name)
+            return true
+          rescue Parslet::ParseFailed
+          end
+        end
+        return false
+      end
 
       # Return an indented version of the string. Indentation size is calculated
       # by the optional argument `:level`. If the level is zero, return the
@@ -222,6 +283,32 @@ module Pione
         str.lines.map do |line|
           ("  " * (option[:level] || 0)) + line
         end.join
+      end
+
+      # Find position of head character of parsed tree.
+      #
+      # @param parsed [Hash]
+      #   parsed tree
+      # @return [Integer]
+      #   position of head character or nil
+      def self.find_head_character_position(parsed)
+        return nil if parsed.nil?
+
+        pos = nil
+        parsed.values.each do |value|
+          if value.kind_of?(Hash)
+            if _pos = find_head_character_position(value)
+              if pos.nil? or pos > _pos
+                pos = _pos
+              end
+            end
+          else
+            if value.kind_of?(Parslet::Slice) and (pos.nil? or pos > value.offset)
+              pos = value.offset
+            end
+          end
+        end
+        return pos
       end
     end
 
@@ -259,18 +346,17 @@ module Pione
       # Return a string form of PIONE's parameter set.
       def textize_params
         unless @params.empty?
-          "{%s}" % [@params.map{|param| "%s: $%s" % [param.name, param.name]}.join(", ")]
+          "{%s}" % [@params.map{|param| "%s: %s" % [param.var, param.value]}.join(", ")]
         end
       end
     end
 
     # `DataCondition` is a class represents PIONE's input and output data condition.
-    class DataCondition < Perspective
+    class Data < Perspective
       attr_reader :data_expr
       attr_accessor :input_distribution
       attr_accessor :output_distribution
-      attr_accessor :input_priority
-      attr_accessor :output_priority
+      attr_accessor :priority
       attr_accessor :input_nonexistable
       attr_accessor :output_nonexistable
       attr_accessor :output_for_this_flow
@@ -289,31 +375,19 @@ module Pione
       #   priority of this output condition
       # @option attr [Boolean] :output_for_this_flow
       #   flag for this flow's output
-      def initialize(data_expr, attr={})
-        @data_expr = data_expr
-        @input_distribution = attr[:input_distribution]
-        @output_distribution = attr[:output_distribution]
-        @input_priority = attr[:input_priority] || 1
-        @output_priority = attr[:output_priority] || 1
-        @input_nonexistable = attr[:input_nonexistable]
-        @output_nonexistable = attr[:output_nonexistable]
-        @output_for_this_flow = attr[:output_for_this_flow]
-      end
+      def initialize(node)
+        unless Perspective.file?(node)
+          raise ArgumentError.new("The node %s should be a data." % node)
+        end
 
-      # Return a declaration string of the data expression as input condition.
-      def as_input_declaration(option={})
-        indent("input %s" % textize_data_expr(:input), option)
-      end
-
-      # Return a declaration string of the data expression as output condition.
-      def as_output_declaration(option={})
-        indent("output %s" % textize_data_expr(:output), option)
+        @name = Perspective.normalize_data_name(node.name.strip)
+        @priority = extract_priority(node.name.strip)
       end
 
       private
 
       def textize_data_expr(type)
-        data_expr = "%s" % @data_expr
+        data_expr = "%s" % @name
         if (type == :input and @input_nonexistable) or (type == :output and @output_nonexistable)
           data_expr = data_expr + " or null"
         end
@@ -325,16 +399,45 @@ module Pione
         end
         return data_expr
       end
+
+      def extract_priority(name)
+        matched = Parser.new.data_priority.parse(name)
+        return matched[:priority].to_i
+      rescue Parslet::ParseFailed
+        return nil
+      end
+    end
+
+    class InputData < Data
+      # Return a declaration string of the data expression as input condition.
+      def as_declaration(option={})
+        indent("input %s" % textize_data_expr(:input), option)
+      end
+    end
+
+    class OutputData < Data
+      # Return a declaration string of the data expression as output condition.
+      def as_declaration(option={})
+        indent("output %s" % textize_data_expr(:output), option)
+      end
     end
 
     # `Param` is a class represents PIONE's paramter declaration.
     class Param < Perspective
       attr_reader :name
+      attr_reader :var
+      attr_reader :value
 
-      # @param name [String]
+      # @param node [PNML::Node]
       #   parameter name and the default value
-      def initialize(name)
-        @name = name.strip
+      def initialize(node)
+        @name = Perspective.normalize_param(node.name)
+        parsed = Parser.new.place_param.parse(@name.to_s)
+        @var = parsed[:param][:expr1][:variable][:name]
+        expr2 = parsed[:param][:expr2]
+        expr2_offset = Perspective.find_head_character_position(expr2)
+        tail_offset = parsed[:tail] ? parsed[:tail].offset : @name.size
+        @value = @name[expr2_offset, tail_offset - expr2_offset]
       end
 
       def as_declaration(option={})
@@ -394,7 +497,8 @@ module Pione
         when :"case"
           branches = @table.each_with_object([]) do |(val, rules), list|
             list << ((val == :else) ? "else" : "when %s" % val)
-            list.concat(rules.map{|rule| rule.as_declaration(option.merge(level: option[:level] + 1))})
+            level = (option[:level] || 0) + 1
+            list.concat(rules.map{|rule| rule.as_declaration(option.merge(level: level))})
           end.join("\n")
           indent(Util::Indentation.cut(TEMPLATE_CASE) % [@condition, branches], option)
         end
@@ -489,11 +593,11 @@ module Pione
       #   rule condition lines
       def rule_conditions
         conditions = []
-        @inputs.each do |input|
-          conditions << "input " + input
+        sort_data_list(@inputs).each do |input|
+          conditions << input.as_declaration
         end
-        @outputs.each do |output|
-          conditions << "output " + output
+        sort_data_list(@outputs).each do |output|
+          conditions << output.as_declaration
         end
         @params.each do |param|
           conditions << param.as_declaration
@@ -502,6 +606,23 @@ module Pione
           conditions << constraint.as_declaration
         end
         conditions
+      end
+
+      def sort_data_list(data_list)
+        data_list.sort do |a, b|
+          priority_a = a.priority
+          priority_b = b.priority
+
+          if a.priority and b.priority
+            a.priority <=> b.priority
+          elsif a.priority
+            1
+          elsif b.priority
+            -1
+          else
+            0
+          end
+        end
       end
 
       def textize

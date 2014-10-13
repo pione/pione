@@ -34,19 +34,19 @@ module Pione
       def self.find_subjects(net)
         net.places.each do |place|
           # source place should be empty
-          next unless place.empty_name?
+          next unless Perspective.empty_place?(place)
 
           # there should be more than 2 target transitions
           transitions = net.find_all_transitions_by_source_id(place.id)
           next unless transitions.size > 1
-          next unless transitions.all? {|transition| transition.empty_name?}
+          next unless transitions.all? {|transition| Perspective.empty_transition?(transition)}
 
           # each transition has only one output named place
           component_places = []
           next unless transitions.all? do |transition|
             _places = net.find_all_places_by_source_id(transition.id)
             component_places.concat(_places)
-            _places.size == 1 and not(_places.first.empty_name?)
+            _places.size == 1 and not(Perspective.empty_place?(_places.first))
           end
 
           return [place, component_places]
@@ -70,7 +70,8 @@ module Pione
           Perspective.normalize_data_name(component_place.name)
         end
 
-        place.name = "%s%s" % [Perspective.modifier(place.name), names.sort.join(" or ")]
+        modifier = Perspective.place_modifier(place) || ""
+        place.name = modifier + names.sort.join(" or ")
       end
     end
   end

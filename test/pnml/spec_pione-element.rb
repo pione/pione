@@ -15,93 +15,93 @@ describe Pione::PNML::ConstituentRule do
     end
 
     PNML::ConstituentRule.new(:action, "R").tap do |rule|
-      rule.params << PNML::Param.new("x", "1")
-      rule.as_declaration.should == "rule R {x: $x}"
+      rule.params << PNML::Param.new(PNML::Place.new(name: "$X := 1"))
+      rule.as_declaration.should == "rule R {X: 1}"
     end
 
     PNML::ConstituentRule.new(:action, "R").tap do |rule|
-      rule.params << PNML::Param.new("x", "1")
-      rule.params << PNML::Param.new("y", '"abc"')
-      rule.as_declaration.should == 'rule R {x: $x, y: $y}'
+      rule.params << PNML::Param.new(PNML::Place.new(name: "$X := 1"))
+      rule.params << PNML::Param.new(PNML::Place.new(name: '$Y := "abc"'))
+      rule.as_declaration.should == 'rule R {X: 1, Y: "abc"}'
     end
   end
 end
 
-describe Pione::PNML::DataCondition do
+describe Pione::PNML::Data do
   it "should get input declaration string" do
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
-      cond.as_input_declaration.should == "input 'a.txt'"
+    PNML::InputData.new(PNML::Place.new(name: "'a.txt'")).tap do |cond|
+      cond.as_declaration.should == "input 'a.txt'"
     end
 
-    PNML::DataCondition.new("'a.txt' | 'b.txt' | 'c.txt'").tap do |cond|
-      cond.as_input_declaration.should == "input 'a.txt' | 'b.txt' | 'c.txt'"
+    PNML::InputData.new(PNML::Place.new(name: "'a.txt' | 'b.txt' | 'c.txt'")).tap do |cond|
+      cond.as_declaration.should == "input 'a.txt' | 'b.txt' | 'c.txt'"
     end
 
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
+    PNML::InputData.new(PNML::Place.new(name: "'a.txt'")).tap do |cond|
       cond.input_nonexistable = true
-      cond.as_input_declaration.should == "input 'a.txt' or null"
+      cond.as_declaration.should == "input 'a.txt' or null"
     end
 
-    PNML::DataCondition.new("'*.txt'").tap do |cond|
-      cond.as_input_declaration.should == "input '*.txt'"
+    PNML::InputData.new(PNML::Place.new(name: "'*.txt'")).tap do |cond|
+      cond.as_declaration.should == "input '*.txt'"
     end
 
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
+    PNML::InputData.new(PNML::Place.new(name: "'a.txt'")).tap do |cond|
       cond.input_distribution = :all
-      cond.as_input_declaration.should == "input ('a.txt').all"
+      cond.as_declaration.should == "input ('a.txt').all"
     end
 
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
-      cond.input_priority = 100
-      cond.as_input_declaration.should == "input 'a.txt'"
+    PNML::InputData.new(PNML::Place.new(name: "'a.txt' #100")).tap do |cond|
+      cond.priority.should == 100
+      cond.as_declaration.should == "input 'a.txt'"
     end
   end
 
   it "should get output declaration string" do
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
-      cond.as_output_declaration.should == "output 'a.txt'"
+    PNML::OutputData.new(PNML::Place.new(name: "'a.txt'")).tap do |cond|
+      cond.as_declaration.should == "output 'a.txt'"
     end
 
-    PNML::DataCondition.new("'*.txt'").tap do |cond|
-      cond.as_output_declaration.should == "output '*.txt'"
+    PNML::OutputData.new(PNML::Place.new(name: "'*.txt'")).tap do |cond|
+      cond.as_declaration.should == "output '*.txt'"
     end
 
-    PNML::DataCondition.new("'a.txt' | 'b.txt' | 'c.txt'").tap do |cond|
-      cond.as_output_declaration.should == "output 'a.txt' | 'b.txt' | 'c.txt'"
+    PNML::OutputData.new(PNML::Place.new(name: "'a.txt' | 'b.txt' | 'c.txt'")).tap do |cond|
+      cond.as_declaration.should == "output 'a.txt' | 'b.txt' | 'c.txt'"
     end
 
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
+    PNML::OutputData.new(PNML::Place.new(name: "'a.txt'")).tap do |cond|
       cond.output_nonexistable = true
-      cond.as_output_declaration.should == "output 'a.txt' or null"
+      cond.as_declaration.should == "output 'a.txt' or null"
     end
 
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
+    PNML::OutputData.new(PNML::Place.new(name: "'a.txt'")).tap do |cond|
       cond.output_distribution = :all
-      cond.as_output_declaration.should == "output ('a.txt').all"
+      cond.as_declaration.should == "output ('a.txt').all"
     end
 
-    PNML::DataCondition.new("'a.txt'").tap do |cond|
-      cond.output_priority = 100
-      cond.as_output_declaration.should == "output 'a.txt'"
+    PNML::OutputData.new(PNML::Place.new(name: "'a.txt' #100")).tap do |cond|
+      cond.priority.should == 100
+      cond.as_declaration.should == "output 'a.txt'"
     end
   end
 end
 
 describe Pione::PNML::Param do
   it "should get declaration string" do
-    PNML::Param.new("x", "1").tap do |param|
-      param.as_declaration.should == "param $x := 1"
+    PNML::Param.new(PNML::Place.new(name: "$X := 1")).tap do |param|
+      param.as_declaration.should == "param $X := 1"
     end
   end
 end
 
 describe Pione::PNML::ConditionalBranch do
   it "should get declaration string" do
-    PNML::ConditionalBranch.new(:case, "$x").tap do |cb|
+    PNML::ConditionalBranch.new(:case, "$X").tap do |cb|
       cb.table["true"] << PNML::ConstituentRule.new(:action, "R1")
       cb.table["false"] << PNML::ConstituentRule.new(:action, "R2")
       cb.as_declaration.should == Util::Indentation.cut(<<-PIONE)
-        case $x
+        case $X
         when true
           rule R1
         when false

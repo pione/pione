@@ -9,6 +9,7 @@ require 'pione/pnml/pnml-exception'
 # language model
 #
 
+require 'pione/pnml/parser'
 require 'pione/pnml/pnml-model'  # source models
 require 'pione/pnml/pione-model' # target models
 

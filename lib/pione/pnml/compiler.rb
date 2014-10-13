@@ -53,7 +53,13 @@ module Pione
         end
 
         # textize
-        [*annotations, "", definition_main.textize, *rules.map {|rule| rule.textize}].join("\n")
+        sections = []
+        if annotations and annotations.size > 0
+          sections << annotations << ""
+        end
+        sections << definition_main.textize
+        rules.each {|rule| sections << rule.textize}
+        return sections.join("\n")
       end
     end
 
@@ -82,13 +88,12 @@ module Pione
         @net.transitions.each do |transition|
           places = @net.find_all_places_by_target_id(transition.id)
           input_places = places.select {|place| Perspective.file?(place)}
-          inputs = input_places.map {|input| Perspective.normalize_data_name(input.name)}
+          inputs = input_places.map {|input| InputData.new(input)}
 
-          case Perspective.normalize_data_name(transition.name)
-          when Perspective::KEYWORD_IF
-            flow_elements << create_if_branch(transition)
-          when Perspective::KEYWORD_CASE
-            flow_elements << create_case_branch(transition)
+          if Perspective.keyword_if?(transition)
+            flow_elements << create_if_branch(transition, definition, inputs, flow_elements)
+          elsif Perspective.keyword_case?(transition)
+            flow_elements << create_case_branch(transition, definition, inputs, flow_elements)
           end
         end
 
@@ -106,7 +111,7 @@ module Pione
           if Perspective.rule?(transition)
             type = :action
             rule_name = Perspective.normalize_rule_name(transition.name)
-            is_external = Perspective.external?(transition)
+            is_external = Perspective.external_rule?(transition)
             rule = RuleDefinition.new(rule_name, type, is_external, @net_name, table.size)
 
             # setup rule conditions
@@ -126,12 +131,12 @@ module Pione
       #
       # @param transition [Transition]
       #   base transition
-      # @return [Array]
+      # @return [Array<InputData>]
       #   rule inputs
       def find_inputs(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, inputs|
           if Perspective.file?(place)
-            inputs << Perspective.normalize_data_name(place.name)
+            inputs << InputData.new(place)
           else
             begin
               # consideration for constraint nodes
@@ -139,7 +144,7 @@ module Pione
               if Perspective.keyword_constraint?(prev_transition)
                 @net.find_all_places_by_target_id(prev_transition.id).each do |_place|
                   if Perspective.file?(_place)
-                    inputs << Perspective.normalize_data_name(_place.name)
+                    inputs << InputData.new(_place)
                   end
                 end
               end
@@ -159,7 +164,7 @@ module Pione
       def find_outputs(transition)
         @net.find_all_places_by_source_id(transition.id).each_with_object([]) do |place, outputs|
           if Perspective.file?(place)
-            outputs << Perspective.normalize_data_name(place.name)
+            outputs << OutputData.new(place)
           end
         end
       end
@@ -215,7 +220,7 @@ module Pione
       def find_source_tickets(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, tickets|
           if Perspective.ticket?(place)
-            tickets << Ticket.new(place.name)
+            tickets << Ticket.new(place)
           end
         end
       end
@@ -240,12 +245,12 @@ module Pione
       #   base transition
       # @return [ConditionalBranch]
       #   conditional branch
-      def create_if_branch(transition)
+      def create_if_branch(transition, definition, inputs, flow_elements)
         condition = @net.find_place_by_source_id(transition.id)
 
-        keywords = @net.find_all_transitions_by_source_id(condition.id)
-        key_then = keywords.find{|key| Perspective.compact(key.name) == Perspective::KEYWORD_THEN}
-        key_else = keywords.find{|key| Perspective.compact(key.name) == Perspective::KEYWORD_ELSE}
+        nodes = @net.find_all_transitions_by_source_id(condition.id)
+        key_then = nodes.find{|node| Perspective.keyword_then?(node)}
+        key_else = nodes.find{|node| Perspective.keyword_else?(node)}
 
         branch = ConditionalBranch.new(:if, condition.name)
 
@@ -272,12 +277,12 @@ module Pione
       #   base transition
       # @return [ConditionalBranch]
       #   conditional branch
-      def create_case_branch(transition)
+      def create_case_branch(transition, definition, inputs, flow_elements)
         expr = @net.find_place_by_source_id(transition.id)
 
-        keywords = @net.find_all_transtions_by_source_id(expr.id)
-        keys_when = keywords.select{|key| Perspective.compact(key.name) == Perspective::KEYWORD_WHEN}
-        key_else = keywords.find{|key| Perspective.compact(key.name) == Perspective::KEYWORD_ELSE}
+        nodes = @net.find_all_transtions_by_source_id(expr.id)
+        keys_when = nodes.select{|node| Perspective.keyword_when?(node)}
+        key_else = nodes.find{|node| Perspective.keyword_else?(node)}
 
         branch = ConditionalBranch.new(:case, expr.name)
 
@@ -335,16 +340,19 @@ module Pione
       # @return [RuleDefinition]
       #   a flow rule definition for PNML net
       def build(flow_elements)
-        inputs = @net.places.select {|place| Perspective.file?(place) and Perspective.net_input?(place)}
-        inputs = inputs.map {|input| Perspective.normalize_data_name(input.name)}
+        inputs = @net.places.select {|place| Perspective.net_input_file?(place)}
+        inputs = inputs.map {|input| InputData.new(input)}
 
-        outputs = @net.places.select {|place| Perspective.file?(place) and Perspective.net_output?(place)}
-        outputs = outputs.map {|output| Perspective.normalize_data_name(output.name)}
+        outputs = @net.places.select {|place| Perspective.net_output_file?(place)}
+        outputs = outputs.map {|output| OutputData.new(output)}
+
+        params = @net.places.select {|place| Perspective.net_input_param?(place)}
+        params = params.map {|param| Param.new(param)}
 
         option = {
           :inputs => inputs,
           :outputs => outputs,
-          :params => @net.places.select {|place| Perspective.param?(place) and Perspective.net_input?(place)},
+          :params => params,
           :flow_elements => flow_elements,
         }
 

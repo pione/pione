@@ -208,8 +208,8 @@ module Pione
       #   place ID
       # @return [Array<Transition>]
       #   result transitions
-      def find_transition_by_target_id(target_id)
-        _transitions = find_all_transitions_by_target_id(target_id)
+      def find_transition_by_target_id(place_id)
+        _transitions = find_all_transitions_by_target_id(place_id)
 
         # the result shouldn't be ambiguous
         if _transitions.size > 1
@@ -356,18 +356,6 @@ module Pione
 
     # `Node` is a meta class for `Place` and `Transition`.
     class Node < StructX
-      # Eliminate comments from the string. This implementation is temporary, we
-      # should fix this.
-      def eliminate_comment(str)
-        # FIXME
-        str.sub(/#.*$/, "")
-      end
-
-      # Return true if the name is empty.
-      def empty_name?
-        name.nil? or /^\s*[<>]?\s*$/.match(eliminate_comment(name))
-      end
-
       def inspect
         "#<%s id=%s name=%s>" % [self.class.name, id.inspect, name.inspect]
       end

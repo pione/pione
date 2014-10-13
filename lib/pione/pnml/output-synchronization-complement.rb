@@ -34,7 +34,7 @@ module Pione
       def self.find_subjects(net)
         net.transitions.each do |transition|
           # target transition should be empty
-          next unless transition.empty_name?
+          next unless Perspective.empty_transition?(transition)
 
           # the transition should have only one output place
           synchronized_places = net.find_all_places_by_source_id(transition.id).select do |place|
@@ -45,7 +45,7 @@ module Pione
           # collect source places
           source_places = net.find_all_places_by_target_id(transition.id)
           next unless source_places.size > 1
-          next unless source_places.any? {|place| place.empty_name?}
+          next unless source_places.any? {|place| Perspective.empty_place?(place)}
 
           # return subjects
           return [source_places, synchronized_places.first]
@@ -67,7 +67,7 @@ module Pione
         # rewrite names of empty source places
         source_places.each do |place|
           # rewrite name only if it is empty
-          if place.empty_name?
+          if Perspective.empty_place?(place)
             place.name = Perspective.normalize_data_name(synchronized_place.name)
           end
         end

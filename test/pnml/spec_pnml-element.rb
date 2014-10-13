@@ -309,19 +309,35 @@ end
 
 describe Pione::PNML::Place do
   it "should distinguish empty names" do
-    PNML::Place.new(PNML::Net.new, Util::UUID.generate, "a").should.not.empty_name
-    PNML::Place.new(PNML::Net.new, Util::UUID.generate, "").should.empty_name
-    PNML::Place.new(PNML::Net.new, Util::UUID.generate, " ").should.empty_name
-    PNML::Place.new(PNML::Net.new, Util::UUID.generate, "  #abc").should.empty_name
+    PNML::Perspective.empty_place?(
+      PNML::Place.new(PNML::Net.new, Util::UUID.generate, "a")
+    ).should.not.be.true
+    PNML::Perspective.empty_place?(
+      PNML::Place.new(PNML::Net.new, Util::UUID.generate, "")
+    ).should.be.true
+    PNML::Perspective.empty_place?(
+      PNML::Place.new(PNML::Net.new, Util::UUID.generate, " ")
+    ).should.be.true
+    PNML::Perspective.empty_place?(
+      PNML::Place.new(PNML::Net.new, Util::UUID.generate, "  #abc")
+    ).should.be.true
   end
 end
 
 describe Pione::PNML::Transition do
   it "should distinguish empty names" do
-    PNML::Transition.new(PNML::Net.new, Util::UUID.generate, "a").should.not.empty_name
-    PNML::Transition.new(PNML::Net.new, Util::UUID.generate, "").should.empty_name
-    PNML::Transition.new(PNML::Net.new, Util::UUID.generate, " ").should.empty_name
-    PNML::Transition.new(PNML::Net.new, Util::UUID.generate, "  #abc").should.empty_name
+    PNML::Perspective.empty_transition?(
+      PNML::Transition.new(PNML::Net.new, Util::UUID.generate, "a")
+    ).should.not.be.true
+    PNML::Perspective.empty_transition?(
+      PNML::Transition.new(PNML::Net.new, Util::UUID.generate, "")
+    ).should.be.true
+    PNML::Perspective.empty_transition?(
+      PNML::Transition.new(PNML::Net.new, Util::UUID.generate, " ")
+    ).should.be.true
+    PNML::Perspective.empty_transition?(
+      PNML::Transition.new(PNML::Net.new, Util::UUID.generate, "  #abc")
+    ).should.be.true
   end
 end
 

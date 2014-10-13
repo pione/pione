@@ -17,6 +17,24 @@ module Pione
     #                                 |
     #     'p3' --> empty transition --+
     #
+    # If source places are net inputs or outputs, then rewrites source places to
+    # be not net inputs or outputs and complemented place to be net input or
+    # output.
+    #
+    #     >'p1' --> empty transition --+
+    #                                  |
+    #     >'p2' --> empty transition --+--> empty place -> A
+    #                                  |
+    #     >'p3' --> empty transition --+
+    #
+    # is rewritten as the following.
+    #
+    #     'p1' --> empty transition --+
+    #                                 |
+    #     'p2' --> empty transition --+--> >'p1' or 'p2' or 'p3' -> A
+    #                                 |
+    #     'p3' --> empty transition --+
+    #
     module InputMergeComplement
       # Find subjects(source transitions and target palce) of this rule from the
       # net. The conditions are followings:
@@ -32,15 +50,15 @@ module Pione
       #   source transitions and target place
       def self.find_subjects(net)
         net.places.each do |place|
-          # target place should have no names
-          next unless place.empty_name?
+          # target place should be empty
+          next unless Perspective.empty_place?(place)
 
           # collect transitions
           transitions = net.find_all_transitions_by_target_id(place.id).select do |transition|
             arcs = net.find_all_arcs_by_target_id(transition.id)
             if arcs.size == 1
               _place = net.find_place(arcs.first.source_id)
-              transition.empty_name? and Perspective.file?(_place)
+              Perspective.empty_transition?(transition) and Perspective.file?(_place)
             end
           end
 
@@ -63,15 +81,18 @@ module Pione
       def self.rewrite(net, subjects)
         transitions, place = subjects
 
+        source_places = transitions.map do |transition|
+          net.find_all_places_by_target_id(transition.id)
+        end.flatten
+
         # build a new name
-        new_name = transitions.map do |transition|
-          arcs = net.find_all_arcs_by_target_id(transition.id)
-          _place = net.find_place(arcs.first.source_id)
-          Perspective.normalize_data_name(_place.name)
+        new_name = source_places.map do |source_place|
+          Perspective.normalize_data_name(source_place.name)
         end.sort.join(" or ")
 
         # update the place name
-        place.name = "%s%s" % [Perspective.modifier(place.name), new_name]
+        modifier = Perspective.place_modifier(place) || ""
+        place.name = modifier + new_name
       end
     end
   end
