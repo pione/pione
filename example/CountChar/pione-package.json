@@ -4,9 +4,9 @@
 
   ],
   "Documents": [
-    "Package.pione",
     "CountChar.pione",
-    "Main.pione"
+    "Main.pione",
+    "Package.pione"
   ],
   "Scenarios": [
 

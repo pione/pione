@@ -1,4 +1,3 @@
-
 Rule MakePair
   input '*.i'.all
   output '*.pair'.all
