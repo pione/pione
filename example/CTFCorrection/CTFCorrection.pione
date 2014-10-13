@@ -1,4 +1,3 @@
-
 Rule CTFCorrection
   input '*.tif'.all or '*.mrc'.all
   output '*.ctf'.all

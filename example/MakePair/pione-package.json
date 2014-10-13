@@ -4,13 +4,13 @@
 
   ],
   "Documents": [
-    "Package.pione",
-    "MakePair.pione"
+    "MakePair.pione",
+    "Package.pione"
   ],
   "Scenarios": [
-    "scenario/case3",
     "scenario/case1",
-    "scenario/case2"
+    "scenario/case2",
+    "scenario/case3"
   ],
   "Bins": [
 

@@ -4,8 +4,8 @@
 
   ],
   "Documents": [
-    "Package.pione",
-    "HelloWorld.pione"
+    "HelloWorld.pione",
+    "Package.pione"
   ],
   "Scenarios": [
     "scenario"

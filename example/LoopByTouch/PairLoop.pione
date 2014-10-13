@@ -1,4 +1,3 @@
-
 Rule PairLoop
   input '1'
   output '2'
@@ -9,10 +8,10 @@ End
 
 Rule PairB
   input '2'
-  output ('1').touch
+  output '1'
 End
 
 Rule PairA
   input '1'
-  output ('2').touch
+  output '2'
 End

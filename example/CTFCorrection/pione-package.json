@@ -4,8 +4,8 @@
 
   ],
   "Documents": [
-    "Package.pione",
     "CTFCorrection.pione",
+    "Package.pione",
     "Params.pione"
   ],
   "Scenarios": [

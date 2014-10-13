@@ -1,4 +1,3 @@
-
 Rule CountChar
   input '*.txt'
   output '{$*}.count'

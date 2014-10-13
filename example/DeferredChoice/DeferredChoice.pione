@@ -1,4 +1,3 @@
-
 Rule DeferredChoice
   output 'result.txt'
 Flow

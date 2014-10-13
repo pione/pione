@@ -1,4 +1,3 @@
-
 Rule ActionError
   output 'o1'
 Flow
