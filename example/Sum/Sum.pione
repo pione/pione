@@ -1,42 +1,9 @@
-.@ PackageName :: "Sum"
-
-Rule Main
+Rule Sum
   input 'list.txt'
   output 'sum.txt'
 Flow
-  rule CalcEachLine
   rule Aggregation
-End
-
-Rule CalcEachLine
-  input 'list.txt'
-  output 'line_sum*.txt'.all
-Flow
-  rule MakeHeadTail
-  rule Sum
-End
-
-Rule MakeHeadTail
-  input 'list.txt'
-  output 'head*.txt'.all
-  output 'tail*.txt'.all
-Action
-  #!/usr/bin/env ruby
-  i = 1
-  File.readlines('list.txt').each do |line|
-    head, tail = line.split(',')
-    File.open("head#{i}.txt", "w+"){|f| f.print head}
-    File.open("tail#{i}.txt", "w+"){|f| f.print tail}
-    i += 1
-  end
-End
-
-Rule Sum
-  input 'head*.txt'
-  input 'tail{$*}.txt'
-  output 'line_sum{$*}.txt'.stdout
-Action
-  expr `cat {$INPUT[1]}` + `cat {$INPUT[2]}`
+  rule __Sum_CalcEachLine_1__
 End
 
 Rule Aggregation
@@ -51,4 +18,11 @@ Action
     puts n
   end
   puts "total: #{sum}"
+End
+
+Rule __Sum_CalcEachLine_1__
+  input 'list.txt'
+  output 'line_sum*.txt'.all
+Flow
+  rule CalcEachLine
 End
