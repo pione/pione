@@ -135,22 +135,22 @@ module Pione
       #   rule inputs
       def find_inputs(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, inputs|
-          if Perspective.file?(place)
-            inputs << InputData.new(place)
-          else
-            begin
-              # consideration for constraint nodes
-              prev_transition = @net.find_transition_by_target_id(place.id)
-              if Perspective.keyword_constraint?(prev_transition)
-                @net.find_all_places_by_target_id(prev_transition.id).each do |_place|
-                  if Perspective.file?(_place)
-                    inputs << InputData.new(_place)
-                  end
+          begin
+            # consideration for constraint nodes
+            prev_transition = @net.find_transition_by_target_id(place.id)
+            if Perspective.keyword_constraint?(prev_transition)
+              @net.find_all_places_by_target_id(prev_transition.id).each do |_place|
+                if Perspective.file?(_place)
+                  inputs << InputData.new(_place)
                 end
               end
-            rescue AmbiguousNetQueryResult
-              # ignore
+            else
+              if Perspective.file?(place)
+                inputs << InputData.new(place)
+              end
             end
+          rescue AmbiguousNetQueryResult
+            # ignore
           end
         end
       end
@@ -280,7 +280,7 @@ module Pione
       def create_case_branch(transition, definition, inputs, flow_elements)
         expr = @net.find_place_by_source_id(transition.id)
 
-        nodes = @net.find_all_transtions_by_source_id(expr.id)
+        nodes = @net.find_all_transitions_by_source_id(expr.id)
         keys_when = nodes.select{|node| Perspective.keyword_when?(node)}
         key_else = nodes.find{|node| Perspective.keyword_else?(node)}
 
@@ -295,11 +295,13 @@ module Pione
           end
         end
 
-        find_next_rules(key_else).each do |transition|
-          rule = definition[transition.id]
-          rule.inputs += inputs
-          flow_elements.delete(rule)
-          branch.table[:else] << rule
+        if key_else
+          find_next_rules(key_else).each do |transition|
+            rule = definition[transition.id]
+            rule.inputs += inputs
+            flow_elements.delete(rule)
+            branch.table[:else] << rule
+          end
         end
 
         return branch

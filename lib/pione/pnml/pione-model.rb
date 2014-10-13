@@ -28,7 +28,7 @@ module Pione
 
       # Return true if the node is an expression in PIONE.
       def self.expr?(node)
-        match_palce_parser?(node, :place_expr)
+        match_place_parser?(node, :place_expr)
       end
 
       # Return true if the node is named in PIONE model.
@@ -170,7 +170,9 @@ module Pione
         if node.kind_of?(Place) and not(node.name.nil?)
           begin
             matched = Parser.new.place.parse(node.name)
-            return matched[:place_modifier].to_s
+            if matched.kind_of?(Hash)
+              return matched[:place_modifier].to_s
+            end
           rescue Parslet::ParseFailed
           end
         end
