@@ -1,3 +1,9 @@
-Rule Main
-  output 'touched'.touch
+Rule Touch
+  output 'touched'
+Flow
+  rule TouchRule
+End
+
+Rule TouchRule
+  output 'touched'
 End
