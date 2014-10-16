@@ -1,29 +1,29 @@
-Rule Main
+Rule MultipleInstancesWithoutSynchronization
   output 'o1-*'.all
   output 'o2'
 Flow
-  rule Init
-  rule A
   rule B
+  rule A
+  rule Init
   rule C
-End
-
-Rule Init
-  output 'i1'.touch
-End
-
-Rule A
-  input 'i1'
-  output 'p1'.touch
 End
 
 Rule B
   input 'p1'
-  output 'o2'.touch
+  output 'o2'
+End
+
+Rule A
+  input 'i1'
+  output 'p1'
+End
+
+Rule Init
+  output 'i1'
 End
 
 Rule C
   input 'p1'
-  output 'o1-{$N}'.touch
-  param $N := 1.upto(5)
+  output 'o1-{$N}'
+  param $N := 1.upto($SIZE)
 End
