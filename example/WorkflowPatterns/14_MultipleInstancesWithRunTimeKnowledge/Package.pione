@@ -1,0 +1,4 @@
+.@ PackageName :: "WCP14_MultipleInstancesWithRunTimeKnowledge"
+.@ Entrance :: MultipleInstancesWithRunTimeKnowledge
+
+param $NUM := 5

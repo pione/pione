@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP14_MultipleInstancesWithRunTimeKnowledge",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "MultipleInstancesWithRunTimeKnowledge.pione",
+    "Package.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
