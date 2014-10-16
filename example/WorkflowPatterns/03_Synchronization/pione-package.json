@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP03_Synchronization",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Package.pione",
+    "Synchronization.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
