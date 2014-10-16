@@ -1,4 +1,10 @@
-Rule Main
-  output '{$N}.i'.touch
+Rule SequentialParameter
+  output '*.out'
+Flow
+  rule CreatedByParam
+End
+
+Rule CreatedByParam
+  output '{$N}.out'
   param $N := 1.upto(10)
 End
