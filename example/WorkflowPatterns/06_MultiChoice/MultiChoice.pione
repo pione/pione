@@ -1,48 +1,40 @@
-param $COND1 := true
-param $COND2 := true
-
-Rule Main
-  output 'o1' or null
+Rule MultiChoice
   output 'o2' or null
+  output 'o1' or null
 Flow
   rule Init
-  rule A
   rule B
   rule C
+    if $COND1
+  rule A1
+  end
+
+    if $COND2
+  rule A2
+  end
+
 End
 
 Rule Init
-  output 'i1'.touch
-End
-
-Rule A
-  input 'i1'
-  output 'p1' or null
-  output 'p2' or null
-Flow
-  if $COND1
-    rule A1
-  end
-  if $COND2
-    rule A2
-  end
-End
-
-Rule A1
-  output 'p1'.touch
-End
-
-Rule A2
-  output 'p2'.touch
+  output 'i1'
 End
 
 Rule B
   input 'p1'
-  output 'o1'.touch
+  output 'o1'
 End
 
 Rule C
   input 'p2'
-  output 'o2'.touch
+  output 'o2'
 End
 
+Rule A1
+  input 'i1'
+  output 'p1'
+End
+
+Rule A2
+  input 'i1'
+  output 'p2'
+End
