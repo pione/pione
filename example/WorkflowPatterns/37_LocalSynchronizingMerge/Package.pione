@@ -1,0 +1,5 @@
+.@ PackageName :: "WCP37_LocalSynchronizingMerge"
+.@ Entrance :: LocalSynchronizingMerge
+
+param $ST1 := true
+$ST2 := not :: $ST1
