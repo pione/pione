@@ -1,33 +1,30 @@
-param $NUM := 5
-
-Rule Main
+Rule MultipleInstancesWithRunTimeKnowledge
   output 'o1'
 Flow
-  rule Init
-  rule A
-  rule B
   rule C
+  rule A
+  rule Init
+  rule B
 End
 
-Rule Init
-  output 'i1'.touch
+Rule C
+  input 'p1'
+  output 'p2-{$N}'
+  param $N := 1.upto($NUM)
 End
 
 Rule A
   input 'i1'
-  output 'p1'.touch
-  output 'p3'.touch
+  output 'p1'
+  output 'p3'
+End
+
+Rule Init
+  output 'i1'
 End
 
 Rule B
   input 'p2-*'.all
   input 'p3'
-  output 'o1'.touch
+  output 'o1'
 End
-
-Rule C
-  input 'p1'
-  output 'p2-{$N}'.touch
-  param $N := 1.upto($NUM)
-End
-
