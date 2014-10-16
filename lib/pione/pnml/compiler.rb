@@ -291,7 +291,8 @@ module Pione
             rule = definition[transition.id]
             rule.inputs += inputs
             flow_elements.delete(rule)
-            branch.table[key.name] << rule
+            conditional_value_place = @net.find_place_by_source_id(key.id)
+            branch.table[conditional_value_place.name] << rule
           end
         end
 
