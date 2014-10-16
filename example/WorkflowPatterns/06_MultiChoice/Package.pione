@@ -1,0 +1,5 @@
+.@ PackageName :: "WCP06_MultiChoice"
+.@ Entrance :: MultiChoice
+
+param $COND1 := true
+param $COND2 := true
