@@ -179,6 +179,16 @@ module Pione
         return nil
       end
 
+      # Return true if the node is a transition keyword.
+      #
+      # @param node [PNML::Node]
+      #   PNML's node
+      # @return [Boolean]
+      #   true if the node is a transition keyword
+      def self.transition_keyword?(node)
+        match_transition_parser?(node, :transition_keywords)
+      end
+
       # Return true if the node is keyword "if".
       #
       # @param node [PNML::Node]
@@ -497,10 +507,10 @@ module Pione
             indent(Util::Indentation.cut(TEMPLATE_IF_ELSE) % [@condition, branch_then, branch_else], option)
           end
         when :"case"
-          branches = @table.each_with_object([]) do |(val, rules), list|
-            list << ((val == :else) ? "else" : "when %s" % val)
+          branches = @table.each_with_object([]) do |(val, rules), lines|
+            lines << ((val == :else) ? "else" : "when %s" % val)
             level = (option[:level] || 0) + 1
-            list.concat(rules.map{|rule| rule.as_declaration(option.merge(level: level))})
+            lines.concat(rules.map{|rule| rule.as_declaration(option.merge(level: level))})
           end.join("\n")
           indent(Util::Indentation.cut(TEMPLATE_CASE) % [@condition, branches], option)
         end

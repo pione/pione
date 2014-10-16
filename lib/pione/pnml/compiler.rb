@@ -178,7 +178,11 @@ module Pione
       def find_params(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, params|
           if Perspective.param?(place)
-            params << Param.new(place)
+            prev_transitions = @net.find_all_transitions_by_target_id(place.id)
+            keyword_transitions = prev_transitions.select{|t| Perspective.transition_keyword?(t)}
+            if keyword_transitions.empty?
+              params << Param.new(place)
+            end
           end
         end
       end
