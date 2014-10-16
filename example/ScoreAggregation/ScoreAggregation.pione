@@ -1,28 +1,28 @@
-.@ PackageName :: "ScoreAggregation"
-
-#
-# Main Flow
-#
-
-Rule Main
+Rule ScoreAggregation
   input '*.score'.all
   input 'stat-template.erb'
-  output '*.stat.md'.all
-  output '*.png'.all
+  output '*_bar-graph.png'.all
+  output 'histgram.png'
   output '*.html'.all
 Flow
-  rule PersonalPreStatistics
   rule PersonalStatistics
+  rule PersonalPreStatistics
+  rule MeanSummary
+  rule HistgramGraph
+  rule MD2HTML
+  rule ApplyTemplate
   rule PersonalBarGraph
   rule TotalMean
   rule TotalStatistics
-  rule Histgram
-  rule BuildHTML
 End
 
-#
-#  Personal Aggregations
-#
+Rule PersonalStatistics
+  input '*.pre-stat.md'
+  input '{$*}.dev'
+  output '{$*}.stat.md'
+Action
+  echo "| Deviaion | `cat {$I[2]}` |" | cat {$I[1]} - > {$O[1]}
+End
 
 Rule PersonalPreStatistics
   input '*.score'
@@ -32,56 +32,8 @@ Action
   personal-pre-statistics.rb
 End
 
-Rule PersonalStatistics
-  input '*.pre-stat.md'
-  input '{$*}.dev'
-  output '{$*}.stat.md'
-Action
-   echo "| Deviaion | `cat {$I[2]}` |" | cat {$I[1]} - > {$O[1]}
-End
-
-Rule PersonalBarGraph
-  input '*.score'
-  output '{$*}_bar-graph.png'
-Action
-  personal-bar-graph.sh
-End
-
-#
-# Total Aggregations
-#
-
-Rule TotalMean
-  input '*.mean'.all
-  output 'total.mean'
-Action
-  total-mean.rb > {$O[1]}
-End
-
-Rule TotalStatistics
-  input '*.score'.all
-  input '*.mean'.except('total.mean').all
-  input 'total.mean'
-  output '*.dev'.all
-  output 'total.stat.md'
-Action
-  total-statistics.rb
-End
-
-#
-# Histgram
-#
-
-Rule Histgram
-  input '*.mean'.except('total.mean').all
-  output 'histgram.png'
-Flow
-  rule MeanSummary
-  rule HistgramGraph
-End
-
 Rule MeanSummary
-  input '*.mean'.all
+  input '*.mean'.except('total.mean').all
   output 'total.histgram'
 Action
   mean-summary.rb > {$O[1]}
@@ -94,19 +46,6 @@ Action
   histgram-graph.sh
 End
 
-#
-# Build HTML View
-#
-
-Rule BuildHTML
-  input '*.stat.md'
-  input 'stat-template.erb'
-  output '{$*}.html'
-Flow
-  rule MD2HTML
-  rule ApplyTemplate
-End
-
 Rule MD2HTML
   input '*.stat.md'
   output '{$*}.html.part'
@@ -115,10 +54,32 @@ Action
 End
 
 Rule ApplyTemplate
-  input '*.html.part'
   input 'stat-template.erb'
+  input '*.html.part'
   output '{$*}.html'
 Action
   apply-template.rb > {$O[1]}
 End
 
+Rule PersonalBarGraph
+  input '*.score'
+  output '{$*}_bar-graph.png'
+Action
+  personal-bar-graph.sh
+End
+
+Rule TotalMean
+  input '*.mean'.all
+  output 'total.mean'
+Action
+  total-mean.rb > {$O[1]}
+End
+
+Rule TotalStatistics
+  input '*.mean'.except('total.mean').all
+  input 'total.mean'
+  output '*.dev'.all
+  output 'total.stat.md'
+Action
+  total-statistics.rb
+End
