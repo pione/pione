@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP05_SimpleMerge",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Package.pione",
+    "SimpleMerge.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
