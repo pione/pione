@@ -1,0 +1,4 @@
+.@ PackageName :: "WCP12_MultipleInstancesWithoutSynchronization"
+.@ Entrance :: MultipleInstancesWithoutSynchronization
+
+param $SIZE := 5

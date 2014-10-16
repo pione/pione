@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP12_MultipleInstancesWithoutSynchronization",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "MultipleInstancesWithoutSynchronization.pione",
+    "Package.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
