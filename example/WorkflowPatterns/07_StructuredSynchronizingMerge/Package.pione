@@ -1,0 +1,5 @@
+.@ PackageName :: "WCP07_StructuredSynchronizingMerge"
+.@ Entrance :: StructuredSynchronizingMerge
+
+param $COND1 := true
+$COND2 := not :: $COND1
