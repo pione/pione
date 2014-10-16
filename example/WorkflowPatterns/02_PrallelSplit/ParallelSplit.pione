@@ -1,29 +1,29 @@
-Rule Main
-  output 'o1'
+Rule ParallelSplit
   output 'o2'
+  output 'o1'
 Flow
-  rule Init
-  rule A
   rule B
+  rule A
+  rule Init
   rule C
-End
-
-Rule Init
-  output 'i1'.touch
-End
-
-Rule A
-  input 'i1'
-  output 'p1'.touch
-  output 'p2'.touch
 End
 
 Rule B
   input 'p1'
-  output 'o1'.touch
+  output 'o1'
+End
+
+Rule A
+  input 'i1'
+  output 'p1'
+  output 'p2'
+End
+
+Rule Init
+  output 'i1'
 End
 
 Rule C
   input 'p2'
-  output 'o2'.touch
+  output 'o2'
 End
