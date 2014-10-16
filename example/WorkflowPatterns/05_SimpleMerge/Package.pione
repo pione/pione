@@ -1,0 +1,4 @@
+.@ PackageName :: "WCP05_SimpleMerge"
+.@ Entrance :: SimpleMerge
+
+param $COND := true

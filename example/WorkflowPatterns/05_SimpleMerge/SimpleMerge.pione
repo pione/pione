@@ -1,44 +1,36 @@
-param $CASE := "A"
-
-Rule Main
+Rule SimpleMerge
   output 'o1'
 Flow
-  rule Init
   rule A
   rule B
   rule C
-End
-
-Rule Init
-  output 'i1' or 'i2'
-Flow
-  if $CASE == "A"
-    rule Init1
+    if $COND
+  rule Init1
   else
-    rule Init2
+  rule Init2
   end
+
 End
 
 Rule Init1
-  output 'i1'.touch
+  output 'i1'
 End
 
 Rule Init2
-  output 'i2'.touch
+  output 'i2'
 End
 
 Rule A
   input 'i1'
-  output 'p1'.touch
+  output 'p1'
 End
 
 Rule B
   input 'i2'
-  output 'p1'.touch
+  output 'p1'
 End
 
 Rule C
   input 'p1'
-  output 'o1'.touch
+  output 'o1'
 End
-
