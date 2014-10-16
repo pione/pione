@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP13_MultipleInstancesWithDesignTimeKnowledge",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "MultipleInstancesWithDesignTimeKnowledge.pione",
+    "Package.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}

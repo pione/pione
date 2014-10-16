@@ -1,28 +1,28 @@
-Rule Main
+Rule MultipleInstancesWithDesignTimeKnowledge
   output 'o1'
 Flow
-  rule Init
-  rule A
   rule B
+  rule A
+  rule Init
   rule C
-End
-
-Rule Init
-  output 'i1'.touch
-End
-
-Rule A
-  input 'i1'
-  output 'p1'.touch
 End
 
 Rule B
   input 'p1'
-  output 'p2-{$N}'.touch
+  output 'p2-{$N}'
   param $N := 1.upto(5)
+End
+
+Rule A
+  input 'i1'
+  output 'p1'
+End
+
+Rule Init
+  output 'i1'
 End
 
 Rule C
   input 'p2-*'.all
-  output 'o1'.touch
+  output 'o1'
 End
