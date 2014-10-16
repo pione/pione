@@ -1,0 +1,4 @@
+.@ PackageName :: "WCP04_ExclusiveChoice"
+.@ Entrance :: ExclusiveChoice
+
+param $COND := true
