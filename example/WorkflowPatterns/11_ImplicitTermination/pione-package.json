@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP11_ImplictTermination",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "ImplicitTermination.pione",
+    "Package.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
