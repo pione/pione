@@ -1,0 +1,6 @@
+.@ PackageName :: "WCP38_GeneralSynchronizingMerge"
+.@ Entrance :: GeneralSynchronizingMerge
+
+param $COND1 := true
+param $COND2 := true
+param $COND3 := false # processing is endless if $COND3 is true
