@@ -1,0 +1,4 @@
+.@ PackageName :: "WCP08_MultiMerge"
+.@ Entrance :: MultiMerge
+
+param $CASE := 1
