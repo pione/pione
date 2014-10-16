@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP04_ExclusiveChoice",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "ExclusiveChoice.pione",
+    "Package.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
