@@ -102,8 +102,8 @@ module Pione
         item.long = '--params="{Var:1,...}"'
         item.desc = "Set user parameters"
 
-        item.assign do |str|
-          model[:params].merge(Util.parse_param_set(str))
+        item.assign do |params|
+          model[:params].merge(params)
         end
 
         item.exception(Parslet::ParseFailed) do |e, str|
