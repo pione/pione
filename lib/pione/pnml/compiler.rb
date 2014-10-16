@@ -178,7 +178,7 @@ module Pione
       def find_params(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, params|
           if Perspective.param?(place)
-            params << Param.new(place.name)
+            params << Param.new(place)
           end
         end
       end
