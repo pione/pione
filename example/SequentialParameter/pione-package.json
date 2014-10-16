@@ -1,0 +1,19 @@
+{
+  "PackageName": "SequentialParameter",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Package.pione",
+    "SequentialParameter.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
