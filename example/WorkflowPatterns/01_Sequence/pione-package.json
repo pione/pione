@@ -1,0 +1,19 @@
+{
+  "PackageName": "WCP01_Sequence",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "Package.pione",
+    "Sequence.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}
