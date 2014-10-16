@@ -1,0 +1,2 @@
+.@ PackageName :: "WCP11_ImplictTermination"
+.@ Entrance :: ImplicitTermination

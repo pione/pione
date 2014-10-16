@@ -1,29 +1,21 @@
-Rule Main
+Rule ImplicitTermination
   output 'o1'
-  output 'o2'
-  output 'o3'
 Flow
-  rule Init
-  rule A
   rule B
-  rule C
-End
-
-Rule Init
-  output 'i1'.touch
-End
-
-Rule A
-  input 'i1'
-  output 'o1'.touch
+  rule A
+  rule Init
 End
 
 Rule B
   input 'i1'
-  output 'o2'.touch
+  output 'o2'
 End
 
-Rule C
+Rule A
   input 'i1'
-  output 'o3'.touch
+  output 'o1'
+End
+
+Rule Init
+  output 'i1'
 End
