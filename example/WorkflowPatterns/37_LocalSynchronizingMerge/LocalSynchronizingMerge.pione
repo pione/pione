@@ -1,101 +1,67 @@
-param $ST1 := true
-$ST2 := not :: $ST1
-
-Rule Main
+Rule LocalSynchronizingMerge
   output 'o1'
 Flow
+  rule __LocalSynchronizingMerge_A_0__
   rule Init
-  rule A
-  rule B
-  rule C
   rule D
-  rule E
-  rule S1
   rule S2
   rule S3
+  rule C
+  rule E
+  rule B
+  rule S1
+End
+
+Rule __LocalSynchronizingMerge_A_0__
+  input 'i1'
+  output 'p1.*'
+  output 'p2.*'
+Flow
+  rule A
 End
 
 Rule Init
-  output 'i1'.touch
-End
-
-Rule A
-  input 'i1'
-  output 'p1-c'
-  output 'p1-true' or 'p1-false'
-  output 'p2-c'
-  output 'p2-true' or 'p2-false'
-Flow
-  rule A1
-  rule A2
-  rule A3
-  rule A4
-End
-
-Rule A1
-  output 'p1-c'.touch
-  output 'p1-true'.touch
-  constraint $ST1
-End
-
-Rule A2
-  output 'p1-c'.touch
-  output 'p1-false'.touch
-  constraint not :: $ST1
-End
-
-Rule A3
-  output 'p2-c'.touch
-  output 'p2-true'.touch
-  constraint $ST2
-End
-
-Rule A4
-  output 'p2-c'.touch
-  output 'p2-false'.touch
-  constraint not :: $ST2
-End
-
-Rule B
-  input 'p1-c'
-  input 'p1-true'
-  output 'p3-c'.touch
-  output 'p3-true'.touch
-End
-
-Rule C
-  input 'p2-c'
-  input 'p2-true'
-  output 'p5'.touch
+  output 'i1'
 End
 
 Rule D
-  input 'p3-c'
-  input 'p3-true'
-  output 'p4'.touch
+  input 'p3.*'
+  output 'p4'
+  constraint $* == "true"
+End
+
+Rule S2
+  input 'p3.*'
+  output 'p4'
+  constraint $* == "false"
+End
+
+Rule S3
+  input 'p2.*'
+  output 'p5'
+  constraint $* == "false"
+End
+
+Rule C
+  input 'p2.*'
+  output 'p5'
+  constraint $* == "true"
 End
 
 Rule E
   input 'p4'
   input 'p5'
-  output 'o1'.touch
+  output 'o1'
+End
+
+Rule B
+  input 'p1.*'
+  output 'p3.{$*}'
+  constraint $* == "true"
 End
 
 Rule S1
-  input 'p1-c'
-  input 'p1-false'
-  output 'p3-c'.touch
-  output 'p3-false'.touch
-End
-
-Rule S2
-  input 'p3-c'
-  input 'p3-false'
-  output 'p4'.touch
-End
-
-Rule S3
-  input 'p2-c'
-  input 'p2-false'
-  output 'p5'.touch
+  input 'p1.*'
+  output 'p3.{$*}'
+  constraint $* == "false"
 End

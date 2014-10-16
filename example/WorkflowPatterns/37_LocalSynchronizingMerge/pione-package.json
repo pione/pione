@@ -1,0 +1,20 @@
+{
+  "PackageName": "WCP37_LocalSynchronizingMerge",
+  "Parents": [
+
+  ],
+  "Documents": [
+    "A.pione",
+    "LocalSynchronizingMerge.pione",
+    "Package.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}

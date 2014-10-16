@@ -1,0 +1,34 @@
+Rule A
+  input 'i1'
+  output 'p1.*'
+  output 'p2.*'
+Flow
+  rule A1
+  rule A2
+  rule A3
+  rule A4
+End
+
+Rule A1
+  input 'i1'
+  output 'p1.true'
+  constraint $ST1
+End
+
+Rule A2
+  input 'i1'
+  output 'p1.false'
+  constraint not :: $ST1
+End
+
+Rule A3
+  input 'i1'
+  output 'p2.true'
+  constraint $ST2
+End
+
+Rule A4
+  input 'i1'
+  output 'p2.false'
+  constraint not :: $ST2
+End
