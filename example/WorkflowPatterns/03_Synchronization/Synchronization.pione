@@ -1,30 +1,29 @@
-Rule Main
+Rule Synchronization
   output 'o1'
 Flow
-  rule Init
-  rule A
   rule B
+  rule A
+  rule Init
   rule C
-End
-
-Rule Init
-  output 'i1'.touch
-  output 'i2'.touch
-End
-
-Rule A
-  input 'i1'
-  output 'p1'.touch
 End
 
 Rule B
   input 'i2'
-  output 'p2'.touch
+  output 'p2'
+End
+
+Rule A
+  input 'i1'
+  output 'p1'
+End
+
+Rule Init
+  output 'i1'
+  output 'i2'
 End
 
 Rule C
-  input 'p1'
   input 'p2'
-  output 'o1'.touch
+  input 'p1'
+  output 'o1'
 End
-
