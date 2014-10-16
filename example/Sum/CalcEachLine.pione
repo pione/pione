@@ -1,4 +1,6 @@
 Rule CalcEachLine
+  input 'list.txt'
+  output 'line_sum*.txt'.all
 Flow
   rule MakeHeadTail
   rule SumFiles

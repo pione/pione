@@ -4,9 +4,9 @@
 
   ],
   "Documents": [
+    "CalcEachLine.pione",
     "Package.pione",
-    "Sum.pione",
-    "CalcEachLine.pione"
+    "Sum.pione"
   ],
   "Scenarios": [
     "scenario"
