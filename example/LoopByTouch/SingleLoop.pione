@@ -1,4 +1,3 @@
-
 Rule SingleLoop
   input '1'
   output '1'.touch
@@ -8,5 +7,5 @@ End
 
 Rule SingleLoopAction
   input '1'
-  output ('1'.touch).touch
+  output '1'.touch
 End
