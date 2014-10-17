@@ -1,4 +1,3 @@
-
 Rule TripletLoop
   input '1'
   output '3'
@@ -10,15 +9,15 @@ End
 
 Rule TripleC
   input '3'
-  output ('1').touch
+  output '1'
 End
 
 Rule TripleB
   input '2'
-  output ('3').touch
+  output '3'
 End
 
 Rule TripleA
   input '1'
-  output ('2').touch
+  output '2'
 End

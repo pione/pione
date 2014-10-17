@@ -4,10 +4,11 @@
 
   ],
   "Documents": [
+    "LoopByTouch.pione",
+    "Package.pione",
     "PairLoop.pione",
     "SingleLoop.pione",
-    "TripletLoop.pione",
-    "LoopByTouch.pione"
+    "TripletLoop.pione"
   ],
   "Scenarios": [
 
