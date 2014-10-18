@@ -88,7 +88,7 @@ module Pione
               :session_id   => @session_id,
               :client_ui    => @client_ui
             }
-            RuleEngine.make(engine_param).handle
+            RuleEngine.make(engine_param).handle || terminate
           end
         end
 

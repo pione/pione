@@ -6,16 +6,14 @@ module Pione
           new(:success)
         end
 
-        def error(message)
-          new(:error, message)
+        def error(property={})
+          new(:error, property)
         end
       end
 
-      attr_reader :message
-
-      def initialize(status, message=nil)
+      def initialize(status, property={})
         @status = status
-        @message = message
+        @property = property
       end
 
       def success?
@@ -24,6 +22,14 @@ module Pione
 
       def error?
         @status == :error
+      end
+
+      def message
+        @property[:message]
+      end
+
+      def exception
+        @property[:exception]
       end
     end
   end

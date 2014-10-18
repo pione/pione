@@ -51,6 +51,9 @@ module Pione
       end
 
       # Handle the rule and return the outputs.
+      #
+      # @return [Boolean]
+      #   true if rule execution has succeeded, or false
       def handle
         # make rule and task process log
         process_log(make_task_process_record.merge(transition: "start"))
@@ -65,7 +68,7 @@ module Pione
           Log::DomainLog.new(self).save
 
           # save a domain dump file
-          domain_dump_location = @working_directory ? @working_directory :@domain_location
+          domain_dump_location = @working_directory ? @working_directory.location : @domain_location
           System::DomainDump.new(env.dumpable).write(domain_dump_location)
         end
 
@@ -87,6 +90,14 @@ module Pione
         # put rule and task process log
         process_log(make_rule_process_record.merge(transition: "complete"))
         process_log(make_task_process_record.merge(transition: "complete"))
+
+        return true
+
+      rescue Object => e
+        user_message("ERROR: " + e.message, 0, "info", :red)
+        status = System::Status.error(message: e.message, exception: e)
+        write(TupleSpace::CommandTuple.new(name: "terminate", args: [status]))
+        return false
       end
 
       # Executes the rule.

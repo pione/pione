@@ -352,7 +352,7 @@ module Pione
         item.assign(:job_terminator) do
           Agent::JobTerminator.start(model[:tuple_space]) do |status|
             if status.error?
-              cmd.abort("pione-client catched the error: %s" % status.message)
+              cmd.abort("pione-client catched the error: %s" % status.message, exception: status.exception)
             else
               cmd.terminate
             end

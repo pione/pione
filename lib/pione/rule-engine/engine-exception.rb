@@ -3,15 +3,19 @@ module Pione
     # Exception class for rule execution failure.
     class RuleExecutionError < StandardError
       def initialize(handler)
-        @handler = handler
+        @rule_name = handler.rule_name
+        @inputs = handler.inputs
+        @outputs = handler.outputs
+        @params = handler.param_set
+        @package_id = handler.package_id
       end
 
       def message
         "Execution error when handling the rule '%s': inputs=%s, output=%s, param_set=%s" % [
-          @handler.rule_name,
-          @handler.inputs,
-          @handler.outputs,
-          @handler.param_set
+          @rule_name,
+          @inputs,
+          @outputs,
+          @param_set
         ]
       end
     end
@@ -35,7 +39,7 @@ module Pione
       end
 
       def message
-        args = [@handler.rule_name, @handler.package_id, @outputs]
+        args = [@rule_name, @package_id, @outputs]
         "Outputs of rule '%s' in package &%s are invalid: %s" % args
       end
     end

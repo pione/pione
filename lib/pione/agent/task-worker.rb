@@ -92,13 +92,7 @@ module Pione
 
         # start the engine
         @execution_thread = Thread.new do
-          begin
-            engine.handle
-          rescue RuleEngine::RuleExecutionError, Lang::LangError => e
-            user_message("ERROR: " + e.message, 0, "info", :red)
-            write(TupleSpace::CommandTuple.new(name: "terminate", args: [System::Status.error(e.message)]))
-            terminate
-          end
+          engine.handle || terminate
         end
 
         # spawn child task worker if flow

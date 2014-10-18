@@ -33,7 +33,7 @@ module Pione
           :dry_run => handler.dry_run.to_s
         }
         if handler.respond_to?(:working_directory)
-          @record[:working_directory] = handler.working_directory.uri.to_s
+          @record[:working_directory] = handler.working_directory.location.uri.to_s
         end
       end
 
