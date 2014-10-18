@@ -41,11 +41,11 @@ module Pione
         data["PackageName"] = name
         data["Editor"] = editor if editor
         data["Tag"] = tag if tag
-        data["Parents"] = parents
+        data["Parents"] = parents.sort
         data["Documents"] = documents.sort
         data["Scenarios"] = scenarios.sort
-        data["Bins"] = bins
-        data["Etcs"] = etcs
+        data["Bins"] = bins.sort
+        data["Etcs"] = etcs.sort
         data.to_json(*args)
       end
     end

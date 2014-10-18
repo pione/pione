@@ -26,8 +26,8 @@ module Pione
         data = Hash.new
         data["ScenarioName"] = name
         data["ParamSet"] = textual_param_sets
-        data["Inputs"] = inputs
-        data["Outputs"] = outputs
+        data["Inputs"] = inputs.sort
+        data["Outputs"] = outputs.sort
         data.to_json(*args)
       end
     end
