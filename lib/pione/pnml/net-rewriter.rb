@@ -22,11 +22,13 @@ module Pione
       #
       # @param net [PNML::Net]
       #   a net that is a target of this transformation
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [void]
-      def rewrite(net)
+      def rewrite(net, env)
         # find rewriting subjects
         rule, subjects = @rules.inject(nil) do |res, _rule|
-          if res.nil? and _subjects = _rule.find_subjects(net)
+          if res.nil? and _subjects = _rule.find_subjects(net, env)
             [_rule, _subjects]
           else
             res
@@ -35,8 +37,8 @@ module Pione
 
         # rewrite the net with subjects and go next
         if subjects
-          rule.rewrite(net, subjects)
-          rewrite(net)
+          rule.rewrite(net, subjects, env)
+          rewrite(net, env)
         end
       end
     end

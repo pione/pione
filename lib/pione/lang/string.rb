@@ -11,7 +11,7 @@ module Pione
     end
 
     class StringSequence < OrdinalSequence
-      pione_type TypeString
+      set_pione_type TypeString
       piece_class PioneString
 
       # Return a string that is joined pieces string.

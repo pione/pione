@@ -24,8 +24,8 @@ module Pione
       #   matching test target
       # @return [Boolean]
       #   true if it matches, or false
-      def match(target)
-        target_type = target.pione_type
+      def match(env, target)
+        target_type = target.pione_type(env)
         while target_type do
           return true if self == target_type
           target_type = target_type.parent_type
@@ -48,7 +48,7 @@ module Pione
 
           # try immediate methods
           _args = args.map {|arg| arg.eval(env)} # FIXME : should be replaced by type inference
-          return group[:immediate].find {|m| m.validate_inputs(rec, _args)}
+          return group[:immediate].find {|m| m.validate_inputs(env, rec, _args)}
         end
 
         # find from parent type
@@ -70,9 +70,9 @@ module Pione
       # Return true if the data has the type.
       #
       # @return [void]
-      def check(data)
-        unless match(data)
-          raise LangTypeError.new(data, self)
+      def check(env, data)
+        unless match(env, data)
+          raise LangTypeError.new(data, self, env)
         end
       end
 
@@ -212,7 +212,7 @@ module Pione
     # ticket expression type
     TypeTicketExpr = Type.new("ticket-expr", TypeOrdinalSequence)
 
-    def TypeSequence.match(other)
+    def TypeSequence.match(env, other)
       true
     end
   end

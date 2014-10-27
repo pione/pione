@@ -8,9 +8,12 @@ module Pione
     #   is a concept of elements joined by sequencial operators and the
     #   receivers should be evaluated.
     class Variable < Expr
-      pione_type TypeVariable
       member :name
       member :package_id
+
+      def pione_type(env)
+        env.variable_get(self).get_type(env)
+      end
 
       # Get the value from variable table in the environment.
       def eval(env)

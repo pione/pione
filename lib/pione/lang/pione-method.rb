@@ -39,13 +39,13 @@ module Pione
 
       # Call the method with recevier and arguemnts.
       def call(env, receiver, args)
-        _output = receiver.pione_type.instance_exec(env, receiver, *args, &body)
+        _output = receiver.pione_type(env).instance_exec(env, receiver, *args, &body)
         if _output.nil?
           p self
           p receiver
           p args
         end
-        validate_output(receiver, _output)
+        validate_output(env, receiver, _output)
         return _output
       end
 
@@ -57,14 +57,14 @@ module Pione
       #   arguments
       # @return [Boolean]
       #   true if input data are valid
-      def validate_inputs(rec, args)
+      def validate_inputs(env, rec, args)
         # check size
         return false unless inputs.size == args.size
 
         # check type
         inputs.each_with_index do |input, i|
           input = get_type(input, rec)
-          unless input.match(args[i])
+          unless input.match(env, args[i])
             return false
           end
         end
@@ -72,9 +72,9 @@ module Pione
       end
 
       # Validate output data type for the method.
-      def validate_output(receiver, value)
+      def validate_output(env, receiver, value)
         _output = get_type(output, receiver)
-        unless _output.match(value)
+        unless _output.match(env, value)
           raise MethodInterfaceError.new(:output, name, [_output], [value])
         end
       end

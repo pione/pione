@@ -2,7 +2,7 @@ module Pione
   module Lang
     # KeyedSequence is a sequence that have key and value pairs.
     class KeyedSequence < Sequence
-      pione_type TypeKeyedSequence
+      set_pione_type TypeKeyedSequence
 
       member :pieces, default: {}
       member :piece_type
@@ -43,12 +43,12 @@ module Pione
         end
       end
 
-      def index_type
-        pieces.keys.first.pione_type
+      def index_type(env)
+        pieces.keys.first.pione_type(env)
       end
 
-      def element_type
-        pieces.values.first.pione_type
+      def element_type(env)
+        pieces.values.first.pione_type(env)
       end
 
       def eval(env)

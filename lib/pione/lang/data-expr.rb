@@ -87,7 +87,7 @@ module Pione
     end
 
     class DataExprSequence < OrdinalSequence
-      pione_type TypeDataExpr
+      set_pione_type TypeDataExpr
       piece_class DataExpr
 
       member :output_mode, :default => :file, :values => [:file, :stdout, :stderr]

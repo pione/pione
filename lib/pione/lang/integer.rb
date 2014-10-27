@@ -7,7 +7,7 @@ module Pione
 
     # IntegerSequence is a sequence of PIONE integer.
     class IntegerSequence < OrdinalSequence
-      pione_type TypeInteger
+      set_pione_type TypeInteger
       piece_class PioneInteger
 
       def textize

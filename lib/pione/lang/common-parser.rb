@@ -196,7 +196,7 @@ module Pione
 
       # Create an atom that matches a line with the content.
       def line(content)
-        space? >> content >> line_end
+        space? >> content >> line_end.as(:tail)
       end
     end
   end

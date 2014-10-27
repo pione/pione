@@ -7,7 +7,7 @@ module Pione
 
     # BooleanSequence is a class for sequences of boolean.
     class BooleanSequence < OrdinalSequence
-      pione_type TypeBoolean
+      set_pione_type TypeBoolean
       piece_class PioneBoolean
 
       def value

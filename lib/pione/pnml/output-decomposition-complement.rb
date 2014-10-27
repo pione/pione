@@ -29,9 +29,11 @@ module Pione
       #
       # @param net [PNML::Net]
       #   rewriting target net
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [Array]
       #   source place and component places
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         net.places.each do |place|
           # source place should be empty
           next unless Perspective.empty_place?(place)
@@ -61,8 +63,10 @@ module Pione
       #   rewriting target net
       # @param subjects [Array]
       #   source place and component places
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [void]
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         place, component_places = subjects
 
         # component places' names
@@ -70,7 +74,7 @@ module Pione
           Perspective.normalize_data_name(component_place.name)
         end
 
-        modifier = Perspective.place_modifier(place) || ""
+        modifier = Perspective.data_modifier(place) || ""
         place.name = modifier + names.sort.join(" or ")
       end
     end

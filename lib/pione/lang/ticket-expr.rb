@@ -23,7 +23,7 @@ module Pione
 
     # TicketExprSequence is a ordinal sequence of ticket expressions.
     class TicketExprSequence < OrdinalSequence
-      pione_type TypeTicketExpr
+      set_pione_type TypeTicketExpr
       piece_class TicketExpr
 
       # Return ticket names of all elements in the sequence.

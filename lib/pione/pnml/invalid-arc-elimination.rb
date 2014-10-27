@@ -8,7 +8,7 @@ module Pione
       # - There is a arc.
       # - It should connect source place and target transition, or source
       #   transition and target place.
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         net.arcs.each do |arc|
           source_transition = net.find_transition(arc.source_id)
           source_place = net.find_place(arc.source_id)
@@ -30,7 +30,7 @@ module Pione
       end
 
       # Rewrite the net by eliminating isolated node.
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         arc = subjects.first
 
         # eliminate

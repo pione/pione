@@ -13,7 +13,7 @@ module Pione
     module TicketInstantiation
       TICKET_NAME = "__TICKET_FROM_%s_TO_%s__"
 
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         net.places.each do |place|
           next unless place.name.strip == ">>>"
 
@@ -30,7 +30,7 @@ module Pione
       # Rewrite the net with subjects by the following way.
       #
       # - Change the place name
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         transition_from, transition_to, place = subjects
         name_from = Perspective.normalize_rule_name(transition_from.name)
         name_to = Perspective.normalize_rule_name(transition_to.name)

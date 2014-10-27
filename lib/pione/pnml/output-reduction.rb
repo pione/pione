@@ -19,9 +19,11 @@ module Pione
       #
       # @param net [PNML::Net]
       #   rewriting target net
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [Array]
       #   source place, target transition, and the arc
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         net.places.each do |place|
           # source place should be empty
           next unless Perspective.empty_place?(place)
@@ -59,8 +61,12 @@ module Pione
       #
       # @param net [PNML::Net]
       #   rewriting target net
+      # @param subjects [Array]
+      #   source transitions and target place
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [void]
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         place, transition, arc = subjects
 
         # remove subjects from the net

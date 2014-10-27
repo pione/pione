@@ -17,7 +17,7 @@ module Pione
       # - There is an empty source transition.
       # - There is an empty target place. It is an input of named transition.
       # - There is an arc that connects the source and the target.
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         net.transitions.each do |rule|
           # rule has its name
           next unless Perspective.named?(rule)
@@ -54,7 +54,7 @@ module Pione
       # - Remove the subject transition.
       # - Remove the subject and related arcs.
       # - Connect discontinuous nodes by new arcs.
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         transition, place, arc = subjects
 
         # remove subjects from the net

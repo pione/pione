@@ -89,7 +89,7 @@ module Pione
     end
 
     class ParameterSetSequence < OrdinalSequence
-      pione_type TypeParameterSet
+      set_pione_type TypeParameterSet
       piece_class ParameterSet
 
       def each

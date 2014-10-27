@@ -6,7 +6,7 @@ module Pione
     end
 
     class FloatSequence < OrdinalSequence
-      pione_type TypeFloat
+      set_pione_type TypeFloat
       piece_class PioneFloat
 
       def value

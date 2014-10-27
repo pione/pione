@@ -28,7 +28,7 @@ module Pione
     end
 
     class PackageExprSequence < OrdinalSequence
-      pione_type TypePackageExpr
+      set_pione_type TypePackageExpr
       piece_class PackageExpr
     end
 

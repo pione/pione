@@ -156,15 +156,16 @@ module Pione
 
     # LangTypeError represents type mismatch error in PIONE language.
     class LangTypeError < StandardError
-      def initialize(obj, type)
+      def initialize(obj, type, env)
         @obj = obj
         @type = type
+        @env = env
       end
 
       def message
         args = [
           @type.name,
-          @obj.pione_type.name,
+          @obj.pione_type(env).name,
           @obj.line,
           @obj.column
         ]
@@ -179,21 +180,24 @@ module Pione
       attr_reader :arguments
 
       # Creates an exception.
+      # @param env [Environment]
+      #   language environment
       # @param name [String]
       #   method name
       # @param receiver [Callable]
       #   method reciever
       # @param arguments [Array<Callable>]
       #   method arguments
-      def initialize(name, receiver, arguments)
+      def initialize(env, name, receiver, arguments)
+        @env = env
         @name = name
         @receiver = receiver
         @arguments = arguments
       end
 
       def message
-        rec_type = @receiver.pione_type
-        arg_types = @arguments.map{|arg| arg.pione_type}.join(" -> ")
+        rec_type = @receiver.pione_type(@env)
+        arg_types = @arguments.map{|arg| arg.pione_type(@env)}.join(" -> ")
         "PIONE method \"%s\" is not found: %s. %s" % [@name, rec_type, arg_types]
       end
     end

@@ -157,7 +157,7 @@ module Pione
 
     # FeatureSequence represents disjunction of feature pieces.
     class FeatureSequence < OrdinalSequence
-      pione_type TypeFeature
+      set_pione_type TypeFeature
       piece_class EmptyFeature
       piece_class AlmightyFeature
       piece_class PossibleFeature

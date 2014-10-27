@@ -7,7 +7,7 @@ module Pione
       #
       # - There is a place or transition.
       # - It has no arcs.
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         (net.places + net.transitions).each do |node|
           input_arcs = net.find_all_arcs_by_source_id(node.id)
           output_arcs = net.find_all_arcs_by_target_id(node.id)
@@ -20,7 +20,7 @@ module Pione
       end
 
       # Rewrite the net by eliminating isolated node.
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         subjects.each do |node|
           # eliminate the node
           net.transitions.delete(node)

@@ -29,16 +29,18 @@ module Pione
       #
       # @param net [PNML::Net]
       #   rewriting target net
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [Array]
       #   input place and target places
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         net.transitions.each do |transition|
           # source transition should have no names
           next unless Perspective.empty_transition?(transition)
 
           # transition should have only one named input
           input_places = net.find_all_places_by_target_id(transition.id)
-          unless input_places.size == 1 and Perspective.file?(input_places.first)
+          unless input_places.size == 1 and Perspective.data_place?(input_places.first, env)
             next
           end
 
@@ -61,8 +63,10 @@ module Pione
       #   rewriting target net
       # @param subjects [Array]
       #   input place and target places
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [void]
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         input_place, target_places = subjects
 
         # rewrite names of target places

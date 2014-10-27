@@ -20,22 +20,24 @@ module Pione
       #
       # @param net [PNML::Net]
       #   rewriting target net
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [Array]
       #   sandwiched place and target side arcs
-      def self.find_subjects(net)
+      def self.find_subjects(net, env)
         net.transitions.each do |transition|
           # transition should be a rule
-          next unless Perspective.rule?(transition)
+          next unless Perspective.rule_transition?(transition)
 
           net.find_all_places_by_source_id(transition.id).each do |place|
             # place should be a file
-            next unless Perspective.file?(place)
+            next unless Perspective.data_place?(place, env)
 
             # collect target side arcs
             all_target_arcs = net.find_all_arcs_by_source_id(place.id)
             target_arcs = all_target_arcs.select do |arc|
               transition = net.find_transition(arc.target_id)
-              transition and Perspective.rule?(transition)
+              transition and Perspective.rule_transition?(transition)
             end
             next unless target_arcs.size > 0
 
@@ -57,8 +59,10 @@ module Pione
       #   rewriting target net
       # @param subjects [Array]
       #   sandwiched place and target side arcs
+      # @param env [Lang::Environment]
+      #   language environment
       # @return [void]
-      def self.rewrite(net, subjects)
+      def self.rewrite(net, subjects, env)
         place, target_arcs = subjects
 
         # remove arcs

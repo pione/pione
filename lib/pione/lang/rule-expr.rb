@@ -13,7 +13,7 @@ module Pione
 
     # RuleExprSequence is a ordinal sequence of rule expressions.
     class RuleExprSequence < OrdinalSequence
-      pione_type TypeRuleExpr
+      set_pione_type TypeRuleExpr
       piece_class RuleExpr
     end
 

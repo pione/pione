@@ -6,21 +6,19 @@ module Pione
       immutable true
 
       class << self
-        attr_reader :pione_type
-
         # Set pione model type of the model.
-        def pione_type(type=nil)
-          if type
-            @pione_type = type
-            Type.table[type.name][:sequence_class] = self
-          else
-            @pione_type
-          end
+        def pione_type(env=nil)
+          @pione_type
+        end
+
+        def set_pione_type(type)
+          @pione_type = type
+          Type.table[type.name][:sequence_class] = self
         end
 
         def inherited(subclass)
           if @pione_type
-            subclass.pione_type(@pione_type)
+            subclass.set_pione_type(@pione_type)
           end
         end
       end
@@ -54,7 +52,7 @@ module Pione
         # check arguments
         raise ArgumentError.new(args) unless args.is_a?(Array)
 
-        if pione_method = pione_type.find_method(env, name, self, args)
+        if pione_method = pione_type(env).find_method(env, name, self, args)
           # evaluate arguments if the method type is immediate
           if pione_method.method_type == :immediate
             args = args.map {|arg| arg.eval(env)}
@@ -62,7 +60,7 @@ module Pione
           # call it
           pione_method.call(env, self, args)
         else
-          raise MethodNotFound.new(name, self, args)
+          raise MethodNotFound.new(env, name, self, args)
         end
       end
     end
