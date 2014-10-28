@@ -1,0 +1,6 @@
+.@ PackageName :: "Fib"
+.@ Editor :: "keita.yamaguchi@gmail.com"
+.@ "Fib.pione calculates the value of Fibonacci number."
+.@ Entrance :: Fib
+
+param $NUM := 3
