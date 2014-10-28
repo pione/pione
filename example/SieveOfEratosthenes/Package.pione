@@ -1,0 +1,4 @@
+.@ PackageName :: "SieveOfEratosthenes"
+.@ Entrance :: SieveOfEratosthenes
+
+param $MAX := 10

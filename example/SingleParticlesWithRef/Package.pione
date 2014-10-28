@@ -1,0 +1,42 @@
+#
+# Eos for 3D reconstrucion from 2D rois using 3D initail reference
+#
+
+#
+# Variables
+#
+
+# Target structure name
+$TARGET := "all"
+
+#
+# Search Area for 3D
+#
+
+# Rot1
+$ROT1MIN := 0
+$ROT1MAX := 359
+$ROT1D   := 30
+$nRot1   := 12
+
+# Rot2
+$ROT2MIN := 0
+$ROT2MAX := 359
+$ROT2D   := 30
+$nRot2   := 12
+
+# Rot3
+$ROT3MIN := 0
+$ROT3MAX := 0
+$ROT3D   := 30
+$nRot3   := 1
+
+# For 2D
+$STEP   := 12
+$ROTMIN := 0
+$ROTMAX := 359
+$nROT   := 360 / $STEP
+
+# Pad size for 2D
+$PAD_W := 64
+$PAD_H := 64
