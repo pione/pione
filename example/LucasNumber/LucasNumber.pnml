@@ -43,7 +43,7 @@ Created with Workflow PetriNet Designer Version 3.2.0 (woped.org)-->
       <name>
         <text>'LucasNumber{$NUM}.txt'</text>
         <graphics>
-          <offset x="480" y="130"/>
+          <offset x="480" y="70"/>
         </graphics>
       </name>
       <graphics>
@@ -85,9 +85,9 @@ Created with Workflow PetriNet Designer Version 3.2.0 (woped.org)-->
     </transition>
     <transition id="t2">
       <name>
-        <text>LucasNumber</text>
+        <text>extern LucasNumberN</text>
         <graphics>
-          <offset x="400" y="130"/>
+          <offset x="380" y="130"/>
         </graphics>
       </name>
       <graphics>
