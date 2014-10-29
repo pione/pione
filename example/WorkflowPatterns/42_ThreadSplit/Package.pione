@@ -1,0 +1,2 @@
+.@ PackageName :: "WCP42_ThreadSplit"
+.@ Entrance :: ThreadSplit
