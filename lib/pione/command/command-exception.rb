@@ -4,6 +4,20 @@ module Pione
 
     # SpawnError is raised when the command failed to run.
     class SpawnError < CommandException
+      # Create a spawn error caused that child process is dead
+      #
+      # @param caller [String]
+      #   caller name
+      # @param callee [String]
+      #   callee name
+      # @param argv [Array<String>]
+      #   arguments of process call
+      # @return [SpawnError]
+      #   a spawn error
+      def self.child_process_is_dead(caller, callee, argv)
+        new(caller, callee, argv, "child process is dead")
+      end
+
       def initialize(caller, callee, argv, cause)
         @caller = caller
         @callee = callee

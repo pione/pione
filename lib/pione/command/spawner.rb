@@ -23,9 +23,14 @@ module Pione
         # keep to watch child process
         @thread = Process.detach(@pid)
 
+        # fail to spawn if the monitor thread is nil
+        unless @thread
+          return self
+        end
+
         # find child front while child process is alive
         Timeout.timeout(10) do
-          while @thread and @thread.alive? do
+          while @thread.alive? do
             # find front and save its uri and pid
             if child_front = find_child_front(@pid)
               @child_front = child_front
@@ -36,8 +41,12 @@ module Pione
             end
           end
 
-          # when process is dead, raise an error
-          raise SpawnError.new(@model[:scenario_name], @name, @argv, "child process is dead")
+          # error if the process has failed
+          unless not(@thread.alive?) and @thread.value.success?
+            raise SpawnError.child_process_is_dead(@model[:scenario_name], @name, @argv)
+          end
+
+          return self
         end
       rescue Timeout::Error
         raise SpawnError.new(@model[:scenario_name], @name, @argv, "timed out")
