@@ -1,0 +1,20 @@
+{
+  "PackageName": "ChildPackage",
+  "Parents": [
+    {
+      "PackageName": "ParentPackage"
+    }
+  ],
+  "Documents": [
+    "ChildPackage.pione"
+  ],
+  "Scenarios": [
+
+  ],
+  "Bins": [
+
+  ],
+  "Etcs": [
+
+  ]
+}

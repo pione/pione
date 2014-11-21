@@ -1,0 +1,13 @@
+.@ PackageName :: "ParentPackage"
+
+Rule Main
+  output 'result.txt'
+Flow
+  rule DoAction
+End
+
+Rule DoAction
+  output 'result.txt'.stdout
+Action
+  echo "This is a parent's action."
+End
