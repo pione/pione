@@ -75,6 +75,20 @@ module Pione
         @table[name][editor || "origin"][tag]
       end
 
+      # Return true if the package exists in database.
+      #
+      # @param [String] name
+      #   package name
+      # @param [String] editor
+      #   editor name
+      # @param [String] tag
+      #   tag name
+      # @return [Boolean]
+      #   true if the package exists in database
+      def exist?(name, editor, tag)
+        not(find(name, editor, tag).nil?)
+      end
+
       # Save the database to the location.
       def save(location=Global.package_database_location)
         json = JSON.generate(self)
@@ -92,7 +106,7 @@ module Pione
       # Convert to JSON.
       def to_json(*args)
         @table.each_with_object([]) do |(_, t1), list|
-          t1.each{|_, t2| t2.each{|_, record| list << record}}
+          t1.each{|_, t2| t2.each{|_, record| list << record if record}}
         end.to_json(*args)
       end
     end
@@ -109,7 +123,7 @@ module Pione
       def to_json(*args)
         data = Hash.new
         data["PackageName"] = name
-        data["Editor"] = editor
+        data["Editor"] = editor || "origin"
         data["Tag"] = tag
         data["Location"] = location if location
         data["State"] = state if state

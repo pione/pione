@@ -14,6 +14,7 @@ then
     local name3="${COMP_WORDS[2]}"
 
     case $name2 in
+      val) _pione_val_options;;
       action)
         case $name3 in
           exec) _pione_action_exec_options;;
@@ -60,7 +61,11 @@ then
   }
 
   _pione_subcommands() {
-     COMPREPLY=($(compgen -W "action clean compile config diagnosis lang log package" -- "${COMP_WORDS[COMP_CWORD]}"));
+     COMPREPLY=($(compgen -W "val action clean compile config diagnosis lang log package" -- "${COMP_WORDS[COMP_CWORD]}"));
+  }
+
+  _pione_val_options() {
+    COMPREPLY=($(compgen -W "--debug --domain-dump" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   _pione_action_subcommands() {
@@ -84,7 +89,7 @@ then
   }
 
   _pione_compile_options() {
-    COMPREPLY=($(compgen -W "--debug --editor --flow-name --package-name --tag" -- "${COMP_WORDS[COMP_CWORD]}"));
+    COMPREPLY=($(compgen -W "--action --debug --editor --flow-name --package-name --tag" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   _pione_config_subcommands() {
@@ -168,7 +173,7 @@ then
   }
 
   _pione-client_options() {
-    COMPREPLY=($(compgen -W "--color --communication-address --debug --dry-run --features --file-cache-method --file-sliding --input --notification-receiver --notification-target --output --params="{Var:1,...}" --parent-front --rehearse --request-task-worker --stand-alone --stream --task-worker-size --timeout" -- "${COMP_WORDS[COMP_CWORD]}"));
+    COMPREPLY=($(compgen -W "--base --client-ui --color --communication-address --debug --dry-run --features --file-cache-method --file-sliding --input --notification-receiver --notification-target --params="{Var:1,...}" --parent-front --rehearse --request-from --request-task-worker --session-id --stand-alone --stream --task-worker-size --timeout" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   #
@@ -184,7 +189,7 @@ then
   }
 
   _pione-task-worker_options() {
-    COMPREPLY=($(compgen -W "--color --communication-address --debug --features --file-cache-method --file-sliding --parent-front --tuple-space-id" -- "${COMP_WORDS[COMP_CWORD]}"));
+    COMPREPLY=($(compgen -W "--color --communication-address --debug --features --file-cache-method --file-sliding --parent-front --request-from --session-id --tuple-space-id" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   #
