@@ -64,12 +64,12 @@ module Pione
         new(args)
       end
 
-      def to_json
+      def to_json(*args)
         data = {}
         data["PackageName"] = name
         data["Editor"] = editor if editor
         data["Tag"] = tag if tag
-        data.to_json
+        data.to_json(*args)
       end
     end
   end
