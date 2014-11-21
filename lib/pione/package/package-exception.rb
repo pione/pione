@@ -6,7 +6,7 @@ module Pione
     class NotFound < PackageError
       def initialize(name, editor, tag)
         @name = name
-        @editor = eidition
+        @editor = editor
         @tag = tag
       end
 
