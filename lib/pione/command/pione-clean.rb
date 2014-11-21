@@ -115,10 +115,15 @@ module Pione
         # remove PPG packages
         item.process do
           Global.ppg_package_cache_directory.each_entry do |entry|
-            unless model[:db].has_digest?(Package::PackageFilename.parse(entry.basename).digest)
-              if delete?(entry)
-                entry.delete
+            begin
+              digest = Package::PackageFilename.parse(entry.basename).digest
+              unless model[:db].has_digest?(digest)
+                if delete?(entry)
+                  entry.delete
+                end
               end
+            rescue
+              # do nothing
             end
           end
         end
@@ -141,9 +146,11 @@ module Pione
         item.process do
           test(type?("profile"))
 
-          Location[Global.profile_report_directory].each_entry do |entry|
-            if delete?(entry)
-              entry.delete
+          if (Location[Global.profile_report_directory].exist?)
+            Location[Global.profile_report_directory].each_entry do |entry|
+              if delete?(entry)
+                entry.delete
+              end
             end
           end
         end
