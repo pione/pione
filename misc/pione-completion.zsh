@@ -54,6 +54,7 @@ then
           build) _pione_package_build_options;;
           show) _pione_package_show_options;;
           update) _pione_package_update_options;;
+          remove) _pione_package_remove_options;;
           *) _pione_package_subcommands;;
         esac;;
       *) _pione_subcommands;;
@@ -141,7 +142,7 @@ then
   }
 
   _pione_package_subcommands() {
-     list=(add:"Add the package to package database" build:"Build PIONE archive package" show:"Show the package informations" update:"Update the package to package database") _describe -t common-commands 'common commands' list;
+     list=(add:"Add the package to package database" build:"Build PIONE archive package" show:"Show the package informations" update:"Update the package to package database" remove:"Remove the package from package database") _describe -t common-commands 'common commands' list;
   }
 
   _pione_package_add_options() {
@@ -158,6 +159,10 @@ then
 
   _pione_package_update_options() {
     _arguments -s -S "--color[Turn on/off color mode]" "--debug[Turn on debug mode about the type]" "--force[Update pacakge information files]" '*:file:_files' && return 0;
+  }
+
+  _pione_package_remove_options() {
+    _arguments -s -S "--editor[Specify editor name]" "--tag[Specify tag name]" '*:file:_files' && return 0;
   }
 
   #
