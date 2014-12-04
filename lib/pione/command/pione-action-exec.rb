@@ -68,7 +68,7 @@ module Pione
 
         item.process do
           if action = LiterateAction::Document.load(model[:location]).find(model[:name])
-            action.execute(model[:domain_info], model[:directory])
+            action.execute(model[:domain_info], model[:directory] || Location[Global.pwd])
           else
             cmd.abort("The action not found.")
           end
