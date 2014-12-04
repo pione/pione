@@ -14,9 +14,10 @@
 ## Arguments
 
   <%- arguments.each do |arg| -%>
-<%= argument_heading(arg) %>
+<%= arg.name %>
 : <%= arg.desc %>
   <%- end -%>
+
 <%- end -%>
 <%- if cmd.has_subcommands? -%>
 
@@ -26,6 +27,7 @@
 <%= key %>
 : <%= subcmd.desc %>
   <%- end -%>
+
 <%- end -%>
 <%- if not(options.empty?) -%>
 
@@ -34,6 +36,7 @@
   <%- options.each do |opt| -%>
 <%= option_heading(opt) %>
 : <%= opt.desc %>
+
   <%- end -%>
 <%- end -%>
 
