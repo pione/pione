@@ -1,9 +1,9 @@
 module Pione
   module LiterateAction
-    # Handler is action rule handler.
+    # Handler handles action documents.
     class Handler
       def initialize(action)
-        @lang = action[:lang]
+        @lang = action[:lang] || "sh"
         @content = action[:content]
       end
 
@@ -14,11 +14,11 @@ module Pione
 
       # Execute the action.
       def execute(domain_info, dir=Location[Global.pwd])
-        text = textize(domain_info)
         location = Location[Temppath.create]
-        location.write(("#!/usr/bin/env %s\n" % @lang) + text)
+        location.write(("#!/usr/bin/env %s\n" % @lang) + textize(domain_info))
         location.path.chmod(0700)
-        `cd #{dir.path}; #{location.path}`
+
+        system(location.path.to_s, chdir: dir.path)
       end
     end
   end
