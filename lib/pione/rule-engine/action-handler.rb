@@ -97,16 +97,17 @@ module Pione
 
         # write the action
         if @dry_run
-          @rule.outputs.flatten.each do |output|
-            file.create("touch %s" % output.eval(@env).name)
+          rule_condition = @rule_definition.rule_condition_context.eval(@env)
+          rule_condition.outputs.flatten.each do |output|
+            file.append("touch %s" % output.eval(@env).pieces.first.pattern)
           end
         else
           file.create(sh)
+        end
 
-          # chmod 700
-          if @working_directory.scheme == "local"
-            FileUtils.chmod(0700, file.path)
-          end
+        # chmod 700
+        if @working_directory.scheme == "local"
+          FileUtils.chmod(0700, file.path)
         end
 
         # message
