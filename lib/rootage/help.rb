@@ -134,6 +134,7 @@ module Rootage
     define(:help) do |item|
       item.type    = :symbol_downcase
       item.range   = [:txt, :md]
+      item.short   = "-h"
       item.long    = "--help"
       item.arg     = "[FORMAT]"
       item.desc    = "Show this help message"
