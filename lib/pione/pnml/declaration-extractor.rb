@@ -1,5 +1,6 @@
 module Pione
   module PNML
+    # DeclarationExtractor extracts declarations from net.
     class DeclarationExtractor
       def initialize(env, net, option={})
         @env = env
@@ -7,9 +8,18 @@ module Pione
         @declarations = ExtractedDeclarations.new
       end
 
+      def extract
+        extract_params
+        extract_variable_bindings
+        extract_feature
+      end
+
+      private
+
+      # Extract net parameters.
       def extract_params
         @net.transitions.each_with_object([]) do |transition, sentences|
-          if Perspective.param_sentence?(transition)
+          if Perspective.param_sentence_transition?(transition)
             # evaluate the sentence for updating language environment
             Perspective.eval_param_sentence_transition(@env, transition)
             @declarations.add_param(transition.name)
@@ -17,6 +27,7 @@ module Pione
         end
       end
 
+      # Extract net variable bindings.
       def extract_variable_bindings
         @net.transitions.each do |transition|
           if Perspective.variable_binding?(transition)
@@ -25,6 +36,7 @@ module Pione
         end
       end
 
+      # Extract net features.
       def extract_features
         @net.transitions.each_with_object([]) do |transition, sentences|
           if Perspective.feature_sentence?(transition)
@@ -35,6 +47,7 @@ module Pione
       end
     end
 
+    # ExtractedDeclarations is a store of declarations.
     class ExtractedDeclarations
       attr_reader :params
       attr_reader :variable_bindings
@@ -46,15 +59,27 @@ module Pione
         @features = []
       end
 
+      # Add the parameter.
+      #
+      # @param param [String]
+      #   a string of parameter
       def add_param(param)
         @params << Perspective.normalize_declaration(param)
       end
 
+      # Add the variable binding.
+      #
+      # @param variable_binding [String]
+      #   a string of variable binding
       def add_variable_binding(variable_binding)
         @variable_bindings <<
           Perspective.normalize_declaration(variable_binding)
       end
 
+      # Add the feature.
+      #
+      # @param variable_binding [String]
+      #   a string of feature
       def add_feature(feature)
         @features <<
           Perspective.normalize_declaration(feature)

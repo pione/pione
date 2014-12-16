@@ -64,7 +64,7 @@ module Pione
       # @example
       #   {a: 1, b: 2, c: 3}
       rule(:parameter_set) {
-        (lbrace.as(:header) >> padded?(parameter_set_elements.maybe.as(:elements)) >> rbrace!).as(:parameter_set)
+        (lbrace.as(:header) >> padded?(parameter_set_elements.maybe.as(:elements)) >> rbrace!.as(:footer)).as(:parameter_set)
       }
 
       # +parameter_set_elements+ matches elements of parameter set.
@@ -72,7 +72,7 @@ module Pione
       # @example
       #   a: 1, b: 2, c: 3
       rule(:parameter_set_elements) {
-        parameter_set_element >> (padded?(comma) >> parameter_set_element).repeat
+        parameter_set_element >> (padded?(comma).as(:separator) >> parameter_set_element).repeat
       }
 
       # +parameter_set_element+ matches each element of parameter set.

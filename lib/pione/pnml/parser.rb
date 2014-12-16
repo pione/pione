@@ -13,8 +13,8 @@ module Pione
       # symbols and keywords
       #
 
-      rule(:symbol_net_input) { str("<") }
-      rule(:symbol_net_output) { str(">") }
+      rule(:symbol_net_input_data) { str("<") }
+      rule(:symbol_net_output_data) { str(">") }
 
       rule(:keyword_then) { str("then") }
       rule(:keyword_extern) { str("extern") }
@@ -67,36 +67,20 @@ module Pione
       # place syntax
       #
 
-      rule(:place_modifier) {
-        (symbol_net_input | symbol_net_output).as(:modifier)
+      rule(:data_modifier) {
+        (symbol_net_input_data | symbol_net_output_data).as(:modifier)
       }
 
       rule(:empty_place) {
-        space? >> place_modifier >> space?.as(:tail) | space?.as(:tail)
-      }
-
-      rule(:expr_place) {
-        space? >> place_modifier >> space? >> expr >> space?.as(:tail)
+        (space? >> data_modifier >> space?.as(:tail)) | space?.as(:tail)
       }
 
       rule(:data_place) {
-        net_io_data_place | expr_place
+        (space? >> data_modifier >> expr_place) | expr_place
       }
 
-      rule(:net_io_data_place) {
-        space? >> place_modifier >> expr_place
-      }
-
-      rule(:param_place) {
-        net_input_param_place | internal_param_place
-      }
-
-      rule(:internal_param_place) {
-        space? >> strict_param_expr.as(:param) >> space?.as(:tail)
-      }
-
-      rule(:net_input_param_place) {
-        space? >> place_modifier >> strict_param_expr.as(:param) >> space?.as(:tail)
+      rule(:expr_place) {
+        space? >> expr >> space?.as(:tail)
       }
 
       #

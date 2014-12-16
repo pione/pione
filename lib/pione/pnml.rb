@@ -34,6 +34,7 @@ require 'pione/pnml/ticket-instantiation'
 #
 
 require 'pione/pnml/annotation-extractor'
+require 'pione/pnml/declaration-extractor'
 require 'pione/pnml/reader'
 require 'pione/pnml/compiler'
 

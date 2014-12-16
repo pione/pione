@@ -7,6 +7,7 @@ TestHelper.scope do |this|
 
   describe Pione::PNML::OutputSynchronizationComplement do
     it "should name source place in simple case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::SIMPLE)
 
       # elements
@@ -18,7 +19,7 @@ TestHelper.scope do |this|
       place_RC = net.find_all_places_by_source_id(transition_C.id).first
 
       # apply "output synchronization complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::OutputSynchronizationComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::OutputSynchronizationComplement}.rewrite(net, env)
 
       # test
       place_RA.name.should == "'*.p1'"
@@ -27,6 +28,7 @@ TestHelper.scope do |this|
     end
 
     it "should name source place in complex case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::COMPLEX)
 
       # elements
@@ -48,7 +50,7 @@ TestHelper.scope do |this|
       place_RC_p2 = places_RC.find {|place| net.find_arc(place.id, transition_Lp2.id)}
 
       # apply "output synchronization complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::OutputSynchronizationComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::OutputSynchronizationComplement}.rewrite(net, env)
 
       # test
       place_RA_p1.name.should == "'*.p1'"

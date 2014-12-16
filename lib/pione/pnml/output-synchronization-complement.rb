@@ -36,7 +36,7 @@ module Pione
       def self.find_subjects(net, env)
         net.transitions.each do |transition|
           # target transition should be empty
-          next unless Perspective.empty_transition?(transition)
+          next unless Perspective.empty_transition?(env, transition)
 
           # the transition should have only one output place
           synchronized_places = net.find_all_places_by_source_id(transition.id).select do |place|

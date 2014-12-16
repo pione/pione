@@ -7,94 +7,75 @@ module Pione
       class << self
         # Return true if the node is empty.
         #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
         # @return [Boolean]
         #   true if the node is empty
-        def empty?(node)
-          empty_place?(node) or empty_transition?(node)
+        def empty?(env, node)
+          empty_place?(env, node) or empty_transition?(env, node)
         end
 
         # Return true if the node is an empty place.
         #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
         # @return [Boolean]
         #   true if the node is an empty place
-        def empty_place?(node)
-          match_place_parser?(node, :empty_place)
+        def empty_place?(env, node)
+          match_place_parser?(env, node, :empty_place)
         end
 
         # Return true if the node is an empty transition.
         #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
         # @return [Boolean]
         #   true if the node is an empty transition
-        def empty_transition?(node)
-          match_transition_parser?(node, :empty_transition)
+        def empty_transition?(env, node)
+          match_transition_parser?(env, node, :empty_transition)
         end
 
-        # Return true if the node is an expression in PIONE.
-        def expr_place?(node)
+        # Return true if the node is an expression place.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
+        # @return [Boolean]
+        #   true if the node is an exression place
+        def expr_place?(env, node)
           match_place_parser?(node, :expr_place)
-        end
-
-        # Return true if the node is named in PIONE model.
-        #
-        # @return [Boolean]
-        #   true if the node is named
-        def named?(node)
-          not(empty?(node))
-        end
-
-        # Return true if the string is net input symbol.
-        #
-        # @param [String]
-        #   string
-        # @return [Boolean]
-        #   true if the string is net input symbol
-        def net_input_symbol?(str)
-          return false if str.nil?
-
-          Parser.new.net_input_symbol.parse(str)
-          return true
-        rescue Parslet::ParseFailed
-          return false
-        end
-
-        # Return true if the string is net output symbol.
-        #
-        # @param [String]
-        #   string
-        # @return [Boolean]
-        #   true if the string is net output symbol
-        def net_output_symbol?(str)
-          return false if str.nil?
-
-          Parser.new.net_output_symbol.parse(str)
-          return true
-        rescue Parslet::ParseFailed
-          return false
         end
 
         # Return true if the node is a data place.
         #
-        # @param node [PNML::Node]
-        #   the node
         # @param env [Lang::Environment]
         #   language environment
+        # @param node [PNML::Node]
+        #   the node
         # @return [Boolean]
         #    true if the node is a data place
-        def data_place?(node, env)
-          match_place_parser_with_type?(node, :data_place, :expr, Lang::TypeDataExpr, env)
+        def data_place?(env, node)
+          match_place_parser_with_type?(env, node, :data_place, :expr, Lang::TypeDataExpr)
         end
 
         # Return true if the node is a net input data place.
         #
-        # @param node [PNML::Node]
-        #   the node
         # @param env [Lang::Environment]
         #   language environment
+        # @param node [PNML::Node]
+        #   the node
         # @return [Boolean]
         #   true if the node is a net input data place
-        def net_input_data_place?(node, env)
-          if data_place?(node, env)
-            return net_input_symbol?(data_modifier(node))
+        def net_input_data_place?(env, node)
+          if data_place?(env, node)
+            return net_input_data_symbol?(data_modifier(env, node))
           else
             return false
           end
@@ -102,279 +83,42 @@ module Pione
 
         # Return true if the node is a net output data place.
         #
-        # @param node [PNML::Node]
-        #   the node
         # @param env [Lang::Environment]
         #   language environment
+        # @param node [PNML::Node]
+        #   the node
         # @return [Boolean]
         #   true if the node is a net output data place
-        def net_output_data_place?(node, env)
-          if data_place?(node, env)
-            return net_output_symbol?(data_modifier(node))
+        def net_output_data_place?(env, node)
+          if data_place?(env, node)
+            return net_output_data_symbol?(data_modifier(node))
           else
             return false
           end
         end
 
-        # Return true if the node is a ticket place.
-        #
-        # @param node [PNML::Node]
-        #   the node
-        # @param env [Lang::Environment]
-        #   language environment
-        # @return [Boolean]
-        #   true if the node is a ticket place
-        def ticket_place?(node, env)
-          match_place_parser_with_type?(node, :expr_place, :expr, Lang::TypeTicketExpr, env)
-        end
-
-        # Return true if the node is a feature place.
-        #
-        # @param node [PNML::Node]
-        #   the node
-        # @param env [Lang::Environment]
-        #   language environment
-        # @return [Boolean]
-        #   true if the node is a feature place
-        def feature_place?(node, env)
-          match_place_parser_with_type?(node, :expr_place, :expr, Lang::TypeFeature, env)
-        end
-
-        def extract_feature(node, env)
-          parsed = parse_transition(node)
-          if parsed and parsed[:feature_sentence]
-            parsed_expr = parsed[:feature_sentence][:expr]
-            if parsed_expr
-              parsed_expr.offset
-              tail = parsed[:feature_sentence][:tail]
-              tail_offset = tail ? tail.offset : node.name.size
-              
-              feature = Feature.new(expr)
-              
-        end
-
-        # Return true if the node is a feature place.
-        #
-        # @param node [PNML::Node]
-        #   the node
-        # @param env [Lang::Environment]
-        #   language environment
-        # @return [Boolean]
-        #   true if the node is a feature place
-        def net_feature_place?(node, env)
-          match_place_parser_with_type?(node, :expr_place, :expr, Lang::TypeFeature, env) do |parsed|
-            parsed[:modifier] and net_input_symbol?(parsed[:modifier].to_s)
-          end
-        end
-
         # Return true if the node is a parameter.
         #
+        # @param env [Lang::Environment]
+        #   language environment
         # @param node [PNML::Node]
         #   the node
         # @return [Boolean]
         #   true if the node is a parameter
-        def param_place?(node)
-          match_place_parser?(node, :param_place)
-        end
-
-        # Return true if the node is a net input parameter.
-        #
-        # @param node [PNML::Node]
-        #   the node
-        # @return [Boolean]
-        #   true if the node is a net input parameter
-        def net_input_param_place?(node)
-          match_place_parser?(node, :net_input_param_place)
-        end
-
-        # Return true if the node is a rule.
-        #
-        # @param node [PNML::Node]
-        #   the node
-        # @return [Boolean]
-        #   true if the node is a rule.
-        def rule_transition?(node)
-          match_transition_parser?(node, :rule_transition)
-        end
-
-        # Return ture if the node is an internal rule.
-        #
-        # @param [PNML::Node] node
-        #   PNML node
-        # @return [Boolean]
-        #   true if the node is an internal rule
-        def internal_rule_transition?(node)
-          match_transition_parser?(node, :internal_rule_transition)
-        end
-
-        # Return ture if the node is an external rule.
-        #
-        # @param [PNML::Node] node
-        #   PNML node
-        # @return [Boolean]
-        #   true if the node is an external rule
-        def external_rule_transition?(node)
-          match_transition_parser?(node, :external_rule_transition)
-        end
-
-        # Normalize the rule name.
-        #
-        # @param name [String]
-        #   rule expression
-        # @return [String]
-        #   rule expression without modifier and comment
-        def normalize_rule_name(name)
-          return nil if name.nil?
-
-          parsed = Parser.new.rule_transition.parse(name)
-          offset = find_head_character_position(parsed[:expr])
-          tail_offset = parsed[:tail] ? parsed[:tail].offset : name.size
-          return name[offset, tail_offset - offset]
-        end
-
-        # Normalize the data name.
-        #
-        # @param name [String]
-        #   data expression
-        # @return [String]
-        #   data expression without modifier and comment
-        def normalize_data_name(name)
-          return nil if name.nil?
-
-          parsed = Parser.new.data_place.parse(name)
-          offset = find_head_character_position(parsed[:expr])
-          tail_offset = parsed[:tail] ? parsed[:tail].offset : name.size
-          return name[offset, tail_offset - offset]
-        end
-
-        # Normalize the param name.
-        #
-        # @param name [String]
-        #   parameter string
-        # @return [String]
-        #   data expression without modifier and comment
-        def normalize_param(name)
-          return nil if name.nil?
-
-          parsed = Parser.new.param_place.parse(name)
-          offset = find_head_character_position(parsed[:param])
-          tail_offset = parsed[:tail] ? parsed[:tail].offset : name.size
-          return name[offset, tail_offset - offset]
-        end
-
-        # Normalize the param name.
-        #
-        # @param name [String]
-        #   parameter string
-        # @return [String]
-        #   data expression without modifier and comment
-        def normalize_param_sentence(name)
-          return nil if name.nil?
-
-          parsed = Parser.new.param_sentence.parse(name)
-          offset = find_head_character_position(parsed[:param_sentence])
-          tail = find_parsed_part(parsed, :tail)
-          tail_offset = tail ? tail.offset : name.size
-          return name[offset, tail_offset - offset]
-        end
-
-        # Return modifier of the name.
-        #
-        # @param name [String]
-        #   data expression
-        # @return [String]
-        #   modifier or nil
-        def data_modifier(node)
-          if node.kind_of?(Place) and not(node.name.nil?)
-            begin
-              parsed = Parser.new.data_place.parse(node.name)
-              if parsed.kind_of?(Hash)
-                return parsed[:modifier].to_s
-              end
-            rescue Parslet::ParseFailed
-            end
-          end
-          return nil
-        end
-
-        # Return true if the node is a transition with keyword.
-        #
-        # @param node [PNML::Node]
-        #   PNML's node
-        # @return [Boolean]
-        #   true if the node is a transition with keyword
-        def keyword_transition?(node)
-          match_transition_parser?(node, :keyword_transition)
-        end
-
-        # Return true if the node is a transition with keyword "if".
-        #
-        # @param node [PNML::Node]
-        #   PNML's node
-        # @return [Boolean]
-        #   true if the node is a transition with keyword "if"
-        def if_transition?(node)
-          match_transition_parser?(node, :if_transition)
-        end
-
-        # Return true if the node is a transition with keyword "then".
-        #
-        # @param node [PNML::Node]
-        #   PNML's node
-        # @return [Boolean]
-        #   true if the node is a transition with keyword "then"
-        def then_transition?(node)
-          match_transition_parser?(node, :then_transition)
-        end
-
-        # Return true if the node is a transition with keyword "else".
-        #
-        # @param node [PNML::Node]
-        #   PNML's node
-        # @return [Boolean]
-        #   true if the node is a transition with keyword "else"
-        def else_transition?(node)
-          match_transition_parser?(node, :else_transition)
-        end
-
-        # Return true if the node is a transition with keyword "case".
-        #
-        # @param node [PNML::Node]
-        #   PNML's node
-        # @return [Boolean]
-        #   true if the node is a transition with keyword "case"
-        def case_transition?(node)
-          match_transition_parser?(node, :case_transition)
-        end
-
-        # Return true if the node is a transition with keyword "when".
-        #
-        # @param node [PNML::Node]
-        #   PNML's node
-        # @return [Boolean]
-        #   true if the node is a transition with keyword "when"
-        def when_transition?(node)
-          match_transition_parser?(node, :when_transition)
-        end
-
-        # Return true if the node is a transition with keyword "constraint".
-        #
-        # @param node [PNML::Node]
-        #   PNML's node
-        # @return [Boolean]
-        #   true if the node is a transition with keyword "constraint"
-        def constraint_transition?(node)
-          match_transition_parser?(node, :constraint_transition)
+        def param_place?(env, node)
+          match_place_parser?(env, node, :param_place)
         end
 
         # Return true if the node is a parameter sentence transition.
         #
+        # @param env [Lang::Environment]
+        #   language environment
         # @param node [PNML::Node]
         #   PNML's node
         # @return [Boolean]
         #   true if the node is a parameter sentence transition
-        def param_sentence_transition?(node)
-          match_transition_parser?(node, :param_sentence)
+        def param_transition?(env, node)
+          match_transition_parser?(env, node, :param_sentence)
         end
 
         # Evaluate the node as a parameter sentence.
@@ -389,17 +133,238 @@ module Pione
           eval_transition(env, node, :param_sentence, :param_sentence)
         end
 
+        # Return true if the node is a ticket place.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
+        # @return [Boolean]
+        #   true if the node is a ticket place
+        def ticket_place?(env, node)
+          match_place_parser_with_type?(env, node, :expr_place, :expr, Lang::TypeTicketExpr)
+        end
+
+        # Return true if the node is a feature place.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
+        # @return [Boolean]
+        #   true if the node is a feature place
+        def feature_place?(env, node)
+          match_place_parser_with_type?(env, node, :expr_place, :expr, Lang::TypeFeature)
+        end
+
+        # Return true if the node is a feature transition.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
+        # @return [Boolean]
+        #   true if the node is a feature transition
+        def feature_transition?(env, node)
+          match_place_parser?(env, node, :feature_sentence)
+        end
+
+        # Return true if the node is a variable binding transition.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
+        # @return [Boolean]
+        #   true if the node is a variable binding transition
+        def variable_binding_transition?(env, node)
+          match_transition_parser?(env, node, :variable_binding_sentence)
+        end
+
+        # Return true if the node is a rule.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   the node
+        # @return [Boolean]
+        #   true if the node is a rule.
+        def rule_transition?(env, node)
+          match_transition_parser?(env, node, :rule_transition)
+        end
+
+        # Return ture if the node is an internal rule.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param [PNML::Node] node
+        #   PNML node
+        # @return [Boolean]
+        #   true if the node is an internal rule
+        def internal_rule_transition?(env, node)
+          match_transition_parser?(env, node, :internal_rule_transition)
+        end
+
+        # Return ture if the node is an external rule.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param [PNML::Node] node
+        #   PNML node
+        # @return [Boolean]
+        #   true if the node is an external rule
+        def external_rule_transition?(env, node)
+          match_transition_parser?(env, node, :external_rule_transition)
+        end
+
+        # Return modifier of the name.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param name [String]
+        #   data expression
+        # @return [String]
+        #   modifier or nil
+        def data_modifier(env, node)
+          if node.kind_of?(Place) and not(node.name.nil?)
+            begin
+              parsed = Parser.new.data_place.parse(node.name)
+              if parsed.kind_of?(Hash)
+                return parsed[:modifier].to_s
+              end
+            rescue Parslet::ParseFailed
+            end
+          end
+          return nil
+        end
+
+        # Return true if the node is a transition with keyword.
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   PNML's node
+        # @return [Boolean]
+        #   true if the node is a transition with keyword
+        def keyword_transition?(env, node)
+          match_transition_parser?(env, node, :keyword_transition)
+        end
+
+        # Return true if the node is a transition with keyword "if".
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   PNML's node
+        # @return [Boolean]
+        #   true if the node is a transition with keyword "if"
+        def if_transition?(env, node)
+          match_transition_parser?(env, node, :if_transition)
+        end
+
+        # Return true if the node is a transition with keyword "then".
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   PNML's node
+        # @return [Boolean]
+        #   true if the node is a transition with keyword "then"
+        def then_transition?(env, node)
+          match_transition_parser?(env, node, :then_transition)
+        end
+
+        # Return true if the node is a transition with keyword "else".
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   PNML's node
+        # @return [Boolean]
+        #   true if the node is a transition with keyword "else"
+        def else_transition?(env, node)
+          match_transition_parser?(env, node, :else_transition)
+        end
+
+        # Return true if the node is a transition with keyword "case".
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   PNML's node
+        # @return [Boolean]
+        #   true if the node is a transition with keyword "case"
+        def case_transition?(env, node)
+          match_transition_parser?(env, node, :case_transition)
+        end
+
+        # Return true if the node is a transition with keyword "when".
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   PNML's node
+        # @return [Boolean]
+        #   true if the node is a transition with keyword "when"
+        def when_transition?(env, node)
+          match_transition_parser?(env, node, :when_transition)
+        end
+
+        # Return true if the node is a transition with keyword "constraint".
+        #
+        # @param env [Lang::Environment]
+        #   language environment
+        # @param node [PNML::Node]
+        #   PNML's node
+        # @return [Boolean]
+        #   true if the node is a transition with keyword "constraint"
+        def constraint_transition?(env, node)
+          match_transition_parser?(env, node, :constraint_transition)
+        end
+
         private
+
+        # Return true if the string is net input data symbol.
+        #
+        # @param [String]
+        #   string
+        # @return [Boolean]
+        #   true if the string is net input data symbol
+        def net_input_data_symbol?(str)
+          return false if str.nil?
+
+          Parser.new.net_input_symbol.parse(str)
+          return true
+        rescue Parslet::ParseFailed
+          return false
+        end
+
+        # Return true if the string is net output data symbol.
+        #
+        # @param [String]
+        #   string
+        # @return [Boolean]
+        #   true if the string is net output data symbol
+        def net_output_data_symbol?(str)
+          return false if str.nil?
+
+          Parser.new.net_output_symbol.parse(str)
+          return true
+        rescue Parslet::ParseFailed
+          return false
+        end
 
         # Return true if the node matches the place parser.
         #
+        # @param env [Lang::Environment]
+        #   language environment
         # @param node [PNML::Node]
         #   PNML's node
         # @param parser_name [String]
         #   place parser name
         # @return [Boolean]
         #   true if the node is the place parser
-        def parse_place(node, parser_name)
+        def parse_place(env, node, parser_name)
           if node.kind_of?(Place) and not(node.name.nil?)
             begin
               return Parser.new.send(parser_name).parse(node.name)
@@ -410,14 +375,16 @@ module Pione
 
         # Return true if the node matches the place parser.
         #
+        # @param env [Lang::Environment]
+        #   language environment
         # @param node [PNML::Node]
         #   PNML's node
         # @param parser_name [String]
         #   place parser name
         # @return [Boolean]
         #   true if the node is the place parser
-        def match_place_parser?(node, parser_name)
-          parsed = parse_place(node, parser_name)
+        def match_place_parser?(env, node, parser_name)
+          parsed = parse_place(env, node, parser_name)
           if not(parsed.nil?)
             if block_given?
               return yield parsed
@@ -431,6 +398,8 @@ module Pione
 
         # Return true if the node matches the place parser and expected type.
         #
+        # @param env [Lang::Environment]
+        #   language environment
         # @param node [PNML::Node]
         #   PNML's node
         # @param parser_name [String]
@@ -439,12 +408,10 @@ module Pione
         #   target name that has expected type
         # @param expected_type [Pione::Lang::Type]
         #   expected PIONE type
-        # @param env [Lang::Environment]
-        #   language environment
         # @return [Boolean]
         #   true if the node is the place parser
-        def match_place_parser_with_type?(node, parser_name, target_name, expected_type, env)
-          parsed = parse_place(node, parser_name)
+        def match_place_parser_with_type?(env, node, parser_name, target_name, expected_type)
+          parsed = parse_place(env, node, parser_name)
           if parsed and parsed[target_name]
             expr = Lang::DocumentTransformer.new.apply(parsed[target_name], TRANSFORMER_OPT)
             return expr.pione_type(env) == expected_type
@@ -455,13 +422,15 @@ module Pione
 
         # Return true if the node matches the transition parser.
         #
+        # @param env [Lang::Environment]
+        #   language environment
         # @param node [PNML::Node]
         #   PNML's node
         # @param parser_name [Symbol]
         #   place parser name
         # @return [Boolean]
         #   true if the node is the transition parser
-        def parse_transition(node, parser_name)
+        def parse_transition(env, node, parser_name)
           if node.kind_of?(Transition) and not(node.name.nil?)
             begin
               return Parser.new.send(parser_name).parse(node.name)
@@ -472,14 +441,16 @@ module Pione
 
         # Return true if the node matches the transition parser.
         #
+        # @param env [Lang::Environment]
+        #   language environment
         # @param node [PNML::Node]
         #   PNML's node
         # @param parser_name [Symbol]
         #   transition parser name
         # @return [Boolean]
         #   true if the node is the keyword
-        def match_transition_parser?(node, parser_name)
-          not(parse_transition(node, parser_name).nil?)
+        def match_transition_parser?(env, node, parser_name)
+          not(parse_transition(env, node, parser_name).nil?)
         end
 
         # Evaluate the transition and return the result.
@@ -503,6 +474,178 @@ module Pione
           else
             return nil
           end
+        end
+      end
+    end
+
+    # LabelExtractor extracts PIONE string from node label.
+    module LabelExtractor
+      class << self
+        # Extract a rule expression.
+        #
+        # @param label [String]
+        #   node label
+        # @return [String]
+        #   rule expression without modifier and comment
+        def extract_rule_expr(label)
+          extract_string(label, :rule_transition, :expr)
+        end
+
+        # Extract a data expression.
+        #
+        # @param label [String]
+        #   node label
+        # @return [String]
+        #   data expression without modifier and comment
+        def extract_data_expr(label)
+          extract_string(label, :data_place, :expr)
+        end
+
+        # Extract a param set.
+        #
+        # @param name [String]
+        #   node label
+        # @return [String]
+        #   parameter set string without modifier and comment
+        def extract_param_set(label)
+          extract_string(label, :expr_place, :expr)
+        end
+
+        # Extract a ticket.
+        #
+        # @param label [String]
+        #   node label
+        # @return [String]
+        #   ticket string without modifier and comment
+        def extract_ticket(label)
+          extract_string(label, :expr_place, :expr)
+        end
+
+        # Extract a feature.
+        #
+        # @param label [String]
+        #   node label
+        # @return [String]
+        #   feature string without modifier and comment
+        def extract_feature(label)
+          extract_string(label, :expr_place, :expr)
+        end
+
+        # Extract a param sentence.
+        #
+        # @param label [String]
+        #   node label
+        # @return [String]
+        #   data expression without modifier and comment
+        def extract_param_sentence(label)
+          extract_string(label, :param_sentence, :param_sentence)
+        end
+
+        # Extract a feature sentence.
+        #
+        # @param label [String]
+        #   node label
+        # @return [String]
+        #   feature sentence string without modifier and comment
+        def extract_feature_sentence(label)
+          extract_string(label, :feature_sentence, :feature_sentence)
+        end
+
+        # Extract a variable binding sentence.
+        #
+        # @param label [String]
+        #   node label
+        # @return [String]
+        #   variable binding sentence string without modifier and comment
+        def extract_variable_binding(label)
+          extract_string(label, :variable_binding_sentence, :variable_binding_sentence)
+        end
+
+        # Extract priority.
+        #
+        # @param label [String]
+        #   node label
+        # @return [Integer]
+        #   priority
+        def extract_priority(label)
+          matched = Parser.new.data_priority.parse(label)
+          return matched[:priority].to_i
+        rescue Parslet::ParseFailed
+          return nil
+        end
+
+        # Extract key and value pairs from parameter set string.
+        #
+        # @param label [String]
+        #   node label
+        # @return [Hash]
+        #   key and value pairs
+        def extract_data_from_param_set(label)
+          param_set = LabelExtractor.extract_param_set(label)
+
+          parsed = Parser.new.expr_place.parse(param_set)
+          tail_offset = parsed[:tail] ? parsed[:tail].offset : label.size
+
+          keys = []
+          values = []
+
+          found = find_all_by_tree_names(parsed, [:key, :value, :separator, :footer])
+          found.each_with_index do |item, index|
+            if index % 3 == 0
+              keys << item.to_s
+            end
+
+            if index % 3 == 1
+              offset = find_head_character_position(item)
+              separator_offset = found[index + 1] ? found[index + 1].offset : tail_offset
+              values << label[offset, separator_offset - offset]
+            end
+          end
+
+          return Hash[keys.zip(values)]
+        end
+
+        # Extract key and value pairs from parameter set string.
+        #
+        # @param label [String]
+        #   node label
+        # @return [Hash]
+        #   key and value pairs
+        def extract_data_from_param_sentence(label)
+          param_sentence = LabelExtractor.extract_param_sentence(label)
+          parsed = Parser.new.param_sentence.parse(param_sentence)
+
+          # variable
+          var = parsed[:param_sentence][:expr1][:expr][:variable][:name].to_s
+
+          # value
+          expr2 = parsed[:param_sentence][:expr2]
+          expr2_offset = find_head_character_position(expr2)
+          tail_offset = offset_of(parsed[:tail]) || label.size
+          value = label[expr2_offset, tail_offset - expr2_offset]
+
+          return {var => value}
+        end
+
+        private
+
+        # Extract the string of expression.
+        #
+        # @param label [String]
+        #   node label
+        # @param paser_name [Symbol]
+        #   parser name
+        # @param tree_name [Symbol]
+        #   tree name
+        # @return [String]
+        #   expression without modifier and comment
+        def extract_string(label, parser_name, tree_name)
+          return nil if label.nil?
+
+          parsed = Parser.new.send(parser_name).parse(label)
+          offset = find_head_character_position(parsed[tree_name])
+          tail_offset = offset_of(find_parsed_element(parsed, :tail)) || label.size
+          return label[offset, tail_offset - offset]
         end
 
         # Find position of head character of parsed tree.
@@ -531,6 +674,12 @@ module Pione
           return pos
         end
 
+        def offset_of(value)
+          if value.kind_of?(Parslet::Slice)
+            value.offset
+          end
+        end
+
         # Find a parsed element by the name.
         #
         # @param parsed [Hash]
@@ -547,15 +696,44 @@ module Pione
               return value
             else
               if value.kind_of?(Hash)
-                find_parsed_element(value, name)
+                if elt = find_parsed_element(value, name)
+                  return elt
+                end
               end
             end
           end
 
           return nil
         end
-      end
 
+        def find_all_by_tree_names(parsed, names)
+          list = []
+          return list if parsed.nil?
+
+          parsed.each do |key, value|
+            if names.include?(key)
+              list << value
+            else
+              if value.kind_of?(Hash)
+                list += find_all_by_tree_names(value, names)
+              end
+
+              if value.kind_of?(Array)
+                value.each do |elt|
+                  if elt.kind_of?(Hash)
+                    list += find_all_by_tree_names(elt, names)
+                  end
+                end
+              end
+            end
+          end
+
+          return list
+        end
+      end
+    end
+
+    class PioneModel
       # Return an indented version of the string. Indentation size is calculated
       # by the optional argument `:level`. If the level is zero, return the
       # string as is.
@@ -570,8 +748,8 @@ module Pione
       end
     end
 
-    # `ConstituentRule` is a class represents PIONE's constituent rule.
-    class ConstituentRule < Perspective
+    # ConstituentRule is a class represents PIONE's constituent rule.
+    class ConstituentRule < PioneModel
       attr_reader :type
       attr_reader :name
       attr_reader :params
@@ -596,21 +774,27 @@ module Pione
 
       private
 
-      # Return a string form of PIONE's rule expression.
+      # Return a string of rule expression.
+      #
+      # @return [String]
+      #   a string of rule expression
       def textize_rule_expr
         [@name, textize_params].compact.join(" ")
       end
 
-      # Return a string form of PIONE's parameter set.
+      # Return a string of parameter set.
+      #
+      # @return [String]
+      #   a string of parameter set
       def textize_params
         unless @params.empty?
-          "{%s}" % [@params.map{|param| "%s: %s" % [param.var, param.value]}.join(", ")]
+          @params.inject(Param.new){|res, param| res + param}.as_expr
         end
       end
     end
 
     # `DataCondition` is a class represents PIONE's input and output data condition.
-    class Data < Perspective
+    class Data < PioneModel
       attr_reader :data_expr
       attr_accessor :input_distribution
       attr_accessor :output_distribution
@@ -619,23 +803,11 @@ module Pione
       attr_accessor :output_nonexistable
       attr_accessor :output_for_this_flow
 
-      # @param data_expr [String]
+      # @param nod [PNML::Node]
       #   data expression as a PIONE's expression string
-      # @param attr [Hash]
-      #   various attributes for the data expression
-      # @option attr [Symbol] :input_distribution
-      #   input distribution type of either `:each` or `:all`
-      # @option attr [Symbol] :output_distribution
-      #   output distribution type of either `:each` or `:all`
-      # @option attr [Integer] :input_priority
-      #   priority of this input condition
-      # @option attr [Integer] :output_priority
-      #   priority of this output condition
-      # @option attr [Boolean] :output_for_this_flow
-      #   flag for this flow's output
       def initialize(node)
-        @name = Perspective.normalize_data_name(node.name)
-        @priority = extract_priority(node.name.strip)
+        @name = LabelExtractor.extract_data_expr(node.name)
+        @priority = LabelExtractor.extract_priority(node.name)
       end
 
       private
@@ -653,13 +825,6 @@ module Pione
         end
         return data_expr
       end
-
-      def extract_priority(name)
-        matched = Parser.new.data_priority.parse(name)
-        return matched[:priority].to_i
-      rescue Parslet::ParseFailed
-        return nil
-      end
     end
 
     class InputData < Data
@@ -676,31 +841,55 @@ module Pione
       end
     end
 
-    # `Param` is a class represents PIONE's paramter declaration.
-    class Param < Perspective
-      attr_reader :name
-      attr_reader :var
-      attr_reader :value
-
+    # Param is a class represents PIONE's paramter set.
+    class Param < PioneModel
+      # Create a parameter from the parameter set node.
+      #
       # @param node [PNML::Node]
-      #   parameter name and the default value
-      def initialize(node)
-        @name = Perspective.normalize_param(node.name)
-        parsed = Parser.new.place_param.parse(@name.to_s)
-        @var = parsed[:param][:expr1][:variable][:name]
-        expr2 = parsed[:param][:expr2]
-        expr2_offset = Perspective.find_head_character_position(expr2)
-        tail_offset = parsed[:tail] ? parsed[:tail].offset : @name.size
-        @value = @name[expr2_offset, tail_offset - expr2_offset]
+      #   parameter set node
+      # @return [Param]
+      #   parameter
+      def self.set_of(node)
+        new(LabelExtractor.extract_data_from_param_set(node.name))
       end
 
-      def as_declaration(option={})
-        indent("param %s" % @name, option)
+      # Create a parameter from the parameter sentence node.
+      #
+      # @param node [PNML::Node]
+      #   parameter sentence node
+      # @return [Param]
+      #   parameter
+      def self.sentence_of(node)
+        new(LabelExtractor.extract_data_from_param_sentence(node.name))
+      end
+
+      attr_reader :data
+
+      # @param data [Hash]
+      #   param set data
+      def initialize(data={})
+        @data = data
+      end
+
+      def as_expr
+        @data.map do |var, expr|
+          "%s: %s" % [var, expr]
+        end.join(", ").tap {|x| return "{%s}" % x}
+      end
+
+      def as_declarations(option={})
+        @data.map do |var, expr|
+          indent("param $%s := %s" % [var, expr], option)
+        end
+      end
+
+      def +(other)
+        self.class.new(@data.merge(other.data))
       end
     end
 
     # Constraint represents a PIONE's constraint declaration.
-    class Constraint < Perspective
+    class Constraint < PioneModel
       attr_reader :expr
 
       def initialize(expr)
@@ -713,7 +902,7 @@ module Pione
     end
 
     # Ticket represents a PIONE's ticket declaration.
-    class Ticket < Perspective
+    class Ticket < PioneModel
       attr_reader :name
 
       def initialize(name)
@@ -722,7 +911,7 @@ module Pione
     end
 
     # Feature represents a feature declaration in PIONE.
-    class Feature < Perspective
+    class Feature < PioneModel
       attr_reader :expr
 
       def initialize(expr)
@@ -736,7 +925,7 @@ module Pione
 
     # ConditionalBranch is a class represents PIONE's conditional branch
     # declaration.
-    class ConditionalBranch < Perspective
+    class ConditionalBranch < PioneModel
       attr_reader :condition
       attr_reader :table
 
@@ -792,7 +981,7 @@ module Pione
       TXT
     end
 
-    class RuleDefinition < Perspective
+    class RuleDefinition < PioneModel
       attr_accessor :type
       attr_accessor :inputs
       attr_accessor :outputs
@@ -871,7 +1060,7 @@ module Pione
           conditions << output.as_declaration
         end
         @params.each do |param|
-          conditions << param.as_declaration
+          conditions += param.as_declarations
         end
         @constraints.each do |constraint|
           conditions << constraint.as_declaration

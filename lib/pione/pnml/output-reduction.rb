@@ -26,11 +26,11 @@ module Pione
       def self.find_subjects(net, env)
         net.places.each do |place|
           # source place should be empty
-          next unless Perspective.empty_place?(place)
+          next unless Perspective.empty_place?(env, place)
 
           # source place should be an output of named transition
           next if net.find_all_transitions_by_target_id(place.id).map do |transition|
-            Perspective.named?(transition)
+            not(Perspective.empty_transition?(env, transition))
           end.empty?
 
           transitions = net.find_all_transitions_by_source_id(place.id)
@@ -42,7 +42,7 @@ module Pione
             # the transtion is connected to only one place at source side
             if net.find_all_places_by_target_id(transition.id).size == 1
               # target transition should be empty
-              next unless Perspective.empty?(transition)
+              next unless Perspective.empty?(env, transition)
 
               return [place, transition, net.find_arc(place.id, transition.id)]
             end
