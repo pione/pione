@@ -138,7 +138,7 @@ module Pione
         item.arg  = '[SCENARIO]'
         item.desc = 'rehearse the scenario'
 
-        item.assign {|val| not(val.nil?) and val.size != 0 ? val : :anything}
+        item.assign {|val| (not(val.nil?) and val.size != 0) ? val : :anything}
       end
 
       option(:timeout) do |item|
@@ -535,7 +535,7 @@ module Pione
 
           pscenario = test(model[:package_handler].find_scenario(model[:rehearse]))
 
-          errors = pscenario.validate(model[:base_location])
+          errors = pscenario.validate(model[:base_location] + "output")
           if errors.empty?
             Log::SystemLog.info "Rehearsal Result: Succeeded"
           else
