@@ -92,7 +92,7 @@ module Pione
           else
             model[:trace_filters] << Proc.new do |trace|
               trace.attributes.include?(XES.string("pione:traceType", "agent_activity")) and
-                model[:agent_types].includes?(trace.events.first.org_resource)
+                model[:agent_types].include?(trace.events.first.org_resource)
             end
           end
         end
