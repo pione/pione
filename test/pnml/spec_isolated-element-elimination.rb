@@ -5,10 +5,11 @@ TestHelper.scope do |this|
 
   describe Pione::PNML::IsolatedElementElimination do
     it "should elminate floating elements" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::DOC)
 
       # apply floating element elimination
-      PNML::NetRewriter.new{|rules| rules << PNML::IsolatedElementElimination}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::IsolatedElementElimination}.rewrite(net, env)
 
       # test
       net.find_transition_by_name("A").should.not.nil

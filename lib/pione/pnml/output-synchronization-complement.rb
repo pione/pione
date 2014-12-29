@@ -40,14 +40,14 @@ module Pione
 
           # the transition should have only one output place
           synchronized_places = net.find_all_places_by_source_id(transition.id).select do |place|
-            Perspective.data_place?(place, env)
+            Perspective.data_place?(env, place)
           end
           next unless synchronized_places.size == 1
 
           # collect source places
           source_places = net.find_all_places_by_target_id(transition.id)
           next unless source_places.size > 1
-          next unless source_places.any? {|place| Perspective.empty_place?(place)}
+          next unless source_places.any? {|place| Perspective.empty_place?(env, place)}
 
           # return subjects
           return [source_places, synchronized_places.first]
@@ -71,8 +71,8 @@ module Pione
         # rewrite names of empty source places
         source_places.each do |place|
           # rewrite name only if it is empty
-          if Perspective.empty_place?(place)
-            place.name = Perspective.normalize_data_name(synchronized_place.name)
+          if Perspective.empty_place?(env, place)
+            place.name = LabelExtractor.extract_data_expr(synchronized_place.name)
           end
         end
       end

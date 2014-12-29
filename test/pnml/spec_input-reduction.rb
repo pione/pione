@@ -8,6 +8,7 @@ TestHelper.scope do |this|
 
   describe Pione::PNML::InputReduction do
     it "should reduce nodes by `input reduction` in simple case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::SIMPLE)
 
       # save net elements
@@ -17,7 +18,7 @@ TestHelper.scope do |this|
       arc_A_o1 = net.find_arc(transition_A.id, place_o1.id)
 
       # apply input reduction
-      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net, env)
 
       # test transitions
       net.transitions.size.should == 1
@@ -35,6 +36,7 @@ TestHelper.scope do |this|
     end
 
     it "should reduce nodes by `input reduction` in complex case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::COMPLEX)
 
       # save net elements
@@ -45,7 +47,7 @@ TestHelper.scope do |this|
       place_o1 = net.find_place_by_name(">'o1'")
 
       # apply output reduction
-      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net, env)
 
       # test transitions
       net.transitions.size.should == 1
@@ -67,6 +69,7 @@ TestHelper.scope do |this|
     end
 
     it "should reduce nodes by `input reduction` in long case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::LONG)
 
       # save net elements
@@ -76,7 +79,7 @@ TestHelper.scope do |this|
       arc_A_o1 = net.find_arc(transition_A.id, place_o1.id)
 
       # apply input reduction
-      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net, env)
 
       # test transitions
       net.transitions.size.should == 1
@@ -94,6 +97,7 @@ TestHelper.scope do |this|
     end
 
     it "should not reduce any nodes if there aren't output reducible nodes" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::DIR + "OutputReductionSimple.pnml")
 
       # save net elements
@@ -102,7 +106,7 @@ TestHelper.scope do |this|
       arcs = net.arcs.clone
 
       # apply input reduction
-      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputReduction}.rewrite(net, env)
 
       # test
       net.places.should == places

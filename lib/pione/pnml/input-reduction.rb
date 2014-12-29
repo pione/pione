@@ -20,12 +20,12 @@ module Pione
       def self.find_subjects(net, env)
         net.transitions.each do |rule|
           # rule has its name
-          next unless Perspective.named?(rule)
+          next if Perspective.empty?(env, rule)
 
           # find source places
           net.find_all_places_by_target_id(rule.id).each do |place|
             # the source place has empty name
-            next unless Perspective.empty?(place)
+            next unless Perspective.empty?(env, place)
 
             # find transtions that generates the source place
             transitions = net.find_all_transitions_by_target_id(place.id)
@@ -37,7 +37,7 @@ module Pione
               # the transition is connected to only one place at target side
               if net.find_all_places_by_source_id(transition.id).size == 1
                 # the transition has empty name
-                if Perspective.empty?(transition)
+                if Perspective.empty?(env, transition)
                   return [transition, place, net.find_arc(transition.id, place.id)]
                 end
               end

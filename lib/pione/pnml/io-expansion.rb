@@ -27,17 +27,17 @@ module Pione
       def self.find_subjects(net, env)
         net.transitions.each do |transition|
           # transition should be a rule
-          next unless Perspective.rule_transition?(transition)
+          next unless Perspective.rule_transition?(env, transition)
 
           net.find_all_places_by_source_id(transition.id).each do |place|
             # place should be a file
-            next unless Perspective.data_place?(place, env)
+            next unless Perspective.data_place?(env, place)
 
             # collect target side arcs
             all_target_arcs = net.find_all_arcs_by_source_id(place.id)
             target_arcs = all_target_arcs.select do |arc|
               transition = net.find_transition(arc.target_id)
-              transition and Perspective.rule_transition?(transition)
+              transition and Perspective.rule_transition?(env, transition)
             end
             next unless target_arcs.size > 0
 

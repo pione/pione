@@ -34,14 +34,14 @@ module Pione
       def self.find_subjects(net, env)
         net.places.each do |place|
           # target place should be empty
-          next unless Perspective.empty_place?(place)
+          next unless Perspective.empty_place?(env, place)
 
           # collect transitions
           transitions = net.find_all_transitions_by_target_id(place.id).select do |transition|
             arcs = net.find_all_arcs_by_target_id(transition.id)
             if arcs.size == 1
               _place = net.find_place(arcs.first.source_id)
-              Perspective.empty_transition?(transition) and Perspective.data_place?(_place, env)
+              Perspective.empty_transition?(env, transition) and Perspective.data_place?(env, _place)
             end
           end
 
@@ -72,11 +72,11 @@ module Pione
 
         # build a new name
         new_name = source_places.map do |source_place|
-          Perspective.normalize_data_name(source_place.name)
+          LabelExtractor.extract_data_expr(source_place.name)
         end.sort.join(" or ")
 
         # update the place name
-        modifier = Perspective.data_modifier(place) || ""
+        modifier = Perspective.data_modifier(env, place) || ""
         place.name = modifier + new_name
       end
     end

@@ -2,6 +2,7 @@ require 'pione/test-helper'
 
 describe Pione::PNML::InvalidArcElimination do
   it "should eliminate invalid arcs" do
+    env = Lang::Environment.new
     net = PNML::Net.new
 
     # place and transition
@@ -24,7 +25,7 @@ describe Pione::PNML::InvalidArcElimination do
     net.arcs << PNML::Arc.new(net, net.generate_id, transition.id, transition.id)
 
     # apply "invalid arc elimination" rule
-    PNML::NetRewriter.new{|rules| rules << PNML::InvalidArcElimination}.rewrite(net)
+    PNML::NetRewriter.new{|rules| rules << PNML::InvalidArcElimination}.rewrite(net, env)
 
     # test
     net.arcs.size.should == 1

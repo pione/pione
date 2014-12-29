@@ -1,11 +1,22 @@
 require 'pione/test-helper'
 
 describe Pione::PNML::Perspective do
-  it "should be empty places" do
+  def test(name, args, expected)
     env = Lang::Environment.new
-    ["", "   ", ">", " > ", "# abc", " # a # b # c"].each do |label|
-      PNML::Perspective.empty?(env, PNML::Place.new(name: label)).should.true
-    end
+    PNML::Perspective.send(name, env, *args).should == expected
+  end
+
+  def test_place(name, label, expected)
+    test(name, [PNML::Place.new(name: label)], expected)
+  end
+
+  it "should be empty places" do
+    test_place(:empty?, "", true)
+    test_place(:empty?, "   ", true)
+    test_place(:empty?, ">", true)
+    test_place(:empty?, " > ", true)
+    test_place(:empty?, "# abc", true)
+    test_place(:empty?, " # a # b # c", true)
   end
 
   it "should be empty transitions" do
@@ -40,113 +51,6 @@ describe Pione::PNML::Perspective do
     f.call("<'*.a' # abc", true)
     f.call(">'*.a'", false)
     f.call(">'*.a' # abc", false)
-  end
-end
-
-describe Pione::PNML::LabelExtractor do
-  it "should extract rule expressions" do
-    { "A" => "A",
-      "A # abc" => "A",
-      "A # a # b # c" => "A",
-      "A {X: 1}" => "A {X: 1}",
-      "extern A" => "A",
-      "extern A {X: 1}" => "A {X: 1}"
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_rule_expr(label).should == expr
-    end
-  end
-
-  it "sohuld extract data expressions" do
-    { "'*.a'" => "'*.a'",
-      "'*.a' # abc" => "'*.a'",
-      "'#.a' # abc" => "'#.a'",
-      "'*.a' # a # b # c" => "'*.a'",
-      "< '*.a'" => "'*.a'",
-      "< '*.a' # abc" => "'*.a'",
-      "> '*.a'" => "'*.a'",
-      "> '*.a' # abc" => "'*.a'"
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_data_expr(label).should == expr
-    end
-  end
-
-  it "should extract param set expressions" do
-    { "{X: 1}" => "{X: 1}",
-      "{X: 1} # abc" => "{X: 1}",
-      "{X: 1, Y: 2, Z: 3}" => "{X: 1, Y: 2, Z: 3}",
-      "{X: 1, Y: 2, Z: 3} # abc" => "{X: 1, Y: 2, Z: 3}"
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_param_set(label).should == expr
-    end
-  end
-
-  it "should extract ticket expressions" do
-    { "<T>" => "<T>",
-      "<T> # abc" => "<T>"
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_ticket(label).should == expr
-    end
-  end
-
-  it "should extract feature expressions" do
-    { "+X" => "+X",
-      "-X" => "-X",
-      "!X" => "!X",
-      "?X" => "?X",
-      "+X # abc" => "+X",
-      "-X # abc" => "-X",
-      "!X # abc" => "!X",
-      "?X # abc" => "?X",
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_feature(label).should == expr
-    end
-  end
-
-  it "should extract parameter sentences" do
-    { "param $X" => "param $X",
-      "param $X := 1" => "param $X := 1",
-      "basic param $X" => "basic param $X",
-      "advanced param $X" => "advanced param $X",
-      "param $X # abc" => "param $X",
-      "param $X := 1 # abc" => "param $X := 1",
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_param_sentence(label).should == expr
-    end
-  end
-
-  it "should extract feature sentences" do
-    { "feature +X" => "feature +X",
-      "feature -X" => "feature -X",
-      "feature !X" => "feature !X",
-      "feature ?X" => "feature ?X",
-      "feature +X # abc" => "feature +X",
-      "feature -X # abc" => "feature -X",
-      "feature !X # abc" => "feature !X",
-      "feature ?X # abc" => "feature ?X",
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_feature_sentence(label).should == expr
-    end
-  end
-
-  it "should extract variable binding sentences" do
-    { "$X := 1" => "$X := 1",
-      "$X := 1 # abc" => "$X := 1",
-      '$X := "# abc" # abc' => '$X := "# abc"',
-    }.each do |label, expr|
-      PNML::LabelExtractor.extract_feature_sentence(label).should == expr
-    end
-  end
-
-  it "should extract priority" do
-    { "'*.a' #1" => 1,
-      "'*.a' #2" => 2,
-      "'*.a' #3" => 3,
-      "'*.a' #1 # abc" => 1,
-      "'#1' #1000" => 1000,
-      "'*.a'" => nil,
-    }.each do |label, priority|
-      PNML::LabelExtractor.extract_priority(label).should == priority
-    end
   end
 end
 

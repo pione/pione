@@ -11,6 +11,7 @@ require 'pione/pnml/pnml-exception'
 
 require 'pione/pnml/parser'
 require 'pione/pnml/pnml-model'  # source models
+require 'pione/pnml/label-extractor'
 require 'pione/pnml/pione-model' # target models
 
 #

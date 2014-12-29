@@ -36,17 +36,17 @@ module Pione
       def self.find_subjects(net, env)
         net.transitions.each do |transition|
           # source transition should have no names
-          next unless Perspective.empty_transition?(transition)
+          next unless Perspective.empty_transition?(env, transition)
 
           # transition should have only one named input
           input_places = net.find_all_places_by_target_id(transition.id)
-          unless input_places.size == 1 and Perspective.data_place?(input_places.first, env)
+          unless input_places.size == 1 and Perspective.data_place?(env, input_places.first)
             next
           end
 
           # collect places
           output_places = net.find_all_places_by_source_id(transition.id)
-          next unless output_places.all? {|output_place| Perspective.empty_place?(output_place)}
+          next unless output_places.all? {|output_place| Perspective.empty_place?(env, output_place)}
 
           # there should be more than 2 places
           next unless output_places.size > 1
@@ -71,7 +71,7 @@ module Pione
 
         # rewrite names of target places
         target_places.each do |place|
-          place.name = Perspective.normalize_data_name(input_place.name)
+          place.name = LabelExtractor.extract_data_expr(input_place.name)
         end
       end
     end

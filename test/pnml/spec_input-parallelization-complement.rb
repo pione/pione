@@ -7,6 +7,7 @@ TestHelper.scope do |this|
 
   describe Pione::PNML::InputParallelizationComplement do
     it "should name by `input parallelization` in simple case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::SIMPLE)
 
       # elements
@@ -18,7 +19,7 @@ TestHelper.scope do |this|
       place_LC = net.find_all_places_by_target_id(transition_C.id).first
 
       # apply "input parallelization complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::InputParallelizationComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputParallelizationComplement}.rewrite(net, env)
 
       # test
       place_LA.name.should == "'i1'"
@@ -27,6 +28,7 @@ TestHelper.scope do |this|
     end
 
     it "should name by `input parallelization` in complex case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::COMPLEX)
 
       # elements
@@ -38,7 +40,7 @@ TestHelper.scope do |this|
       places_LC = net.find_all_places_by_target_id(transition_C.id)
 
       # apply "input parallelization complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::InputParallelizationComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputParallelizationComplement}.rewrite(net, env)
 
       # test
       places_LA.map{|place| place.name}.sort.should == ["'i1'", "'i2'"]

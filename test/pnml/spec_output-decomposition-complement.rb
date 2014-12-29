@@ -7,6 +7,7 @@ TestHelper.scope do |this|
 
   describe Pione::PNML::OutputDecompositionComplement do
     it "should complement the name of source place in simple case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::SIMPLE)
 
       # elements
@@ -14,13 +15,14 @@ TestHelper.scope do |this|
       place_RA = net.find_all_places_by_source_id(transition_A.id).first
 
       # apply "output decomposition complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::OutputDecompositionComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::OutputDecompositionComplement}.rewrite(net, env)
 
       # test
       place_RA.name.should == ">'o1' or 'o2' or 'o3'"
     end
 
     it "should complement the name of source place in complex case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::COMPLEX)
 
       # elements
@@ -30,7 +32,7 @@ TestHelper.scope do |this|
       place_RB = net.find_all_places_by_source_id(transition_B.id).first
 
       # apply "output decomposition complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::OutputDecompositionComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::OutputDecompositionComplement}.rewrite(net, env)
 
       # test
       place_RA.name.should == ">'o1' or 'o2' or 'o3'"

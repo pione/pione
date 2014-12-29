@@ -7,6 +7,7 @@ TestHelper.scope do |this|
 
   describe Pione::PNML::IOExpansion do
     it "should expand in simple case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::SIMPLE)
 
       # save elements
@@ -19,7 +20,7 @@ TestHelper.scope do |this|
       arc_p1_B = net.find_arc(place_p1.id, transition_B.id)
 
       # apply "input/output expansion"
-      PNML::NetRewriter.new{|rules| rules << PNML::IOExpansion}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::IOExpansion}.rewrite(net, env)
 
       # new elements
       places_p1= net.find_all_places_by_name("'p1'")
@@ -46,6 +47,7 @@ TestHelper.scope do |this|
     end
 
     it "should expand in complex case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::COMPLEX)
 
       # save elements
@@ -68,7 +70,7 @@ TestHelper.scope do |this|
       arc_p2_E = net.find_arc(place_p2.id, transition_E.id)
 
       # apply "input/output expansion"
-      PNML::NetRewriter.new{|rules| rules << PNML::IOExpansion}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::IOExpansion}.rewrite(net, env)
 
       # test the net
       net.should.valid

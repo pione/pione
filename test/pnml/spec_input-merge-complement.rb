@@ -7,6 +7,7 @@ TestHelper.scope do |this|
 
   describe Pione::PNML::InputMergeComplement do
     it "should name by `input merge` in simple case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::SIMPLE)
 
       # transition
@@ -14,13 +15,14 @@ TestHelper.scope do |this|
       place = net.find_all_places_by_target_id(transition_A.id).first
 
       # apply "input merge complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::InputMergeComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputMergeComplement}.rewrite(net, env)
 
       # test
       place.name.should == "<'i1' or 'i2' or 'i3'"
     end
 
     it "should name by `input merge` in complex case" do
+      env = Lang::Environment.new
       net = PNML::Reader.read(this::COMPLEX)
 
       # transition
@@ -30,7 +32,7 @@ TestHelper.scope do |this|
       place_LB = net.find_all_places_by_target_id(transition_B.id).first
 
       # apply "input merge complement" rule
-      PNML::NetRewriter.new{|rules| rules << PNML::InputMergeComplement}.rewrite(net)
+      PNML::NetRewriter.new{|rules| rules << PNML::InputMergeComplement}.rewrite(net, env)
 
       # test
       place_LA.name.should == "<'i1' or 'i2' or 'i3'"
