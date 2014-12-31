@@ -10,6 +10,10 @@ describe Pione::PNML::Perspective do
     test(name, [PNML::Place.new(name: label)], expected)
   end
 
+  def test_transition(name, label, expected)
+    test(name, [PNML::Transition.new(name: label)], expected)
+  end
+
   it "should be empty places" do
     test_place(:empty?, "", true)
     test_place(:empty?, "   ", true)
@@ -20,37 +24,28 @@ describe Pione::PNML::Perspective do
   end
 
   it "should be empty transitions" do
-    env = Lang::Environment.new
-    ["", "   ", "# abc", " # a # b # c"].each do |label|
-      PNML::Perspective.empty?(env, PNML::Transition.new(name: label)).should.true
-    end
+    test_transition(:empty?, "", true)
+    test_transition(:empty?, "   ", true)
+    test_transition(:empty?, "# abc", true)
+    test_transition(:empty?, " # a # b # c", true)
   end
 
   it "should be data places" do
-    env = Lang::Environment.new
-    [ "'*.a'",
-      "'*.a' # abc",
-      "<'*.a'",
-      "<'*.a' # abc",
-      ">'*.a'",
-      ">'*.a' # abc"
-    ].each do |label|
-      PNML::Perspective.data_place?(env, PNML::Place.new(name: label)).should.true
-    end
+    test_place(:data_place?, "'*.a'", true)
+    test_place(:data_place?, "'*.a' # abc", true)
+    test_place(:data_place?, "<'*.a'", true)
+    test_place(:data_place?, "<'*.a' # abc", true)
+    test_place(:data_place?, ">'*.a'", true)
+    test_place(:data_place?, ">'*.a' # abc", true)
   end
 
   it "should be net input data places" do
-    f = lambda {|labe, re|
-      env = Lang::Environment.new
-      PNML::Perspective.net_input_data_place?(env, PNML::Place.new(name: labe)).should == re
-    }
-
-    f.call("'*.a'", false)
-    f.call("'*.a' # abc", false)
-    f.call("<'*.a'", true)
-    f.call("<'*.a' # abc", true)
-    f.call(">'*.a'", false)
-    f.call(">'*.a' # abc", false)
+    test_place(:net_input_data_place?, "'*.a'", false)
+    test_place(:net_input_data_place?, "'*.a' # abc", false)
+    test_place(:net_input_data_place?, "<'*.a'", true)
+    test_place(:net_input_data_place?, "<'*.a' # abc", true)
+    test_place(:net_input_data_place?, ">'*.a'", false)
+    test_place(:net_input_data_place?, ">'*.a' # abc", false)
   end
 end
 

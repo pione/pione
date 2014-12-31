@@ -88,11 +88,11 @@ module Pione
       #
 
       rule(:net_input_symbol) {
-        space? >> net_input_symbol >> space?
+        space? >> symbol_net_input_data >> space?
       }
 
       rule(:net_output_symbol) {
-        space? net_output_symbol >> space?
+        space? >> symbol_net_output_data >> space?
       }
 
       rule(:data_priority) {
