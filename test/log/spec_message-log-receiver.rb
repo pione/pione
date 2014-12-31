@@ -7,7 +7,7 @@ describe Pione::Log::CUIMessageLogReceiver do
   end
 
   it "should receive a message" do
-    @receiver.receive("test message", 0, "TEST", :red)
+    @receiver.receive("test message", 0, "TEST", :red, nil)
     @io.string.chomp.should == "%s test message" % " TEST".color(:red)
   end
 end
