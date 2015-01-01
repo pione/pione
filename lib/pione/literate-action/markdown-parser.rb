@@ -1,6 +1,7 @@
 module Pione
   module LiterateAction
-    class Parser
+    # MarkdownParser is a parser for literate action document.
+    class MarkdownParser
       # Parse the source string and return the result.
       def self.parse(src)
         new(src).parse

@@ -8,17 +8,32 @@ module Pione
       end
 
       # Convert the action to a string.
-      def textize(domain_info)
+      def textize(domain_dump)
         @content.to_s
       end
 
       # Execute the action.
-      def execute(domain_info, dir=Location[Global.pwd])
+      #
+      # @param options [Hash]
+      #   the options
+      # @option options [DomainDump] :domain_dump
+      #   domain dump
+      # @option options [Loacation] :chdir
+      #   the location of working directory for action
+      # @option options [Location] :out
+      #   the file writing STDOUT
+      # @return [Boolean]
+      #   true if the action succeeded
+      def execute(options={})
         location = Location[Temppath.create]
-        location.write(("#!/usr/bin/env %s\n" % @lang) + textize(domain_info))
+        location.write(("#!/usr/bin/env %s\n" % @lang) + textize(options[:domain_dump]))
         location.path.chmod(0700)
 
-        system(location.path.to_s, chdir: dir.path)
+        _options = {}
+        _options[:chdir] = options[:chdir] ? options[:chdir].path.to_s : Location[Global.pwd].path.to_s
+        _options[:out] = options[:out].path.to_s if options.has_key?(:out)
+
+        return system(location.path.to_s, _options)
       end
     end
   end

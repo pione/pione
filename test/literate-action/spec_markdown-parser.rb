@@ -1,8 +1,8 @@
 require 'pione/test-helper'
 
-describe Pione::LiterateAction::Parser do
+describe Pione::LiterateAction::MarkdownParser do
   it "should parse" do
-    parsed = LiterateAction::Parser.parse(Util::Indentation.cut(<<-ACTION))
+    parsed = LiterateAction::MarkdownParser.parse(Util::Indentation.cut(<<-ACTION))
       # Titile
 
       desc
@@ -37,7 +37,7 @@ describe Pione::LiterateAction::Parser do
   end
 
   it "should get a rule name without needless spaces" do
-    parsed = LiterateAction::Parser.parse(Util::Indentation.cut(<<-ACTION))
+    parsed = LiterateAction::MarkdownParser.parse(Util::Indentation.cut(<<-ACTION))
       # Title
 
       ##    Test    

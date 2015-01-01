@@ -142,7 +142,7 @@ module Pione
       def read_action_documents(location)
         location.entries.each_with_object(Hash.new) do |entry, actions|
           if entry.basename.end_with?(".action.md")
-            actions.merge!(LiterateAction::Parser.parse(entry.read))
+            actions.merge!(LiterateAction::MarkdownParser.parse(entry.read))
           end
         end
       end

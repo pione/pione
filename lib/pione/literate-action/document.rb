@@ -7,7 +7,7 @@ module Pione
       end
 
       def initialize(src)
-        @action = Parser.parse(src)
+        @action = MarkdownParser.parse(src)
       end
 
       # Return action rule names in the document.
