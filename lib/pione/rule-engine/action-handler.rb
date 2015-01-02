@@ -130,7 +130,7 @@ module Pione
         # execute command
         # `cd #{}; PATH=#{(@working_directory + "bin").path}:$PATH; ./#{scriptname} > #{out} 2> #{err}`
         callee_env = {
-          "PATH" => (@working_directory + "bin").path.to_s + ";" + ENV["PATH"],
+          "PATH" => (@working_directory + "bin").path.to_s + ":" + ENV["PATH"],
           "PIONE_SESSION_ID" => @session_id,
           "PIONE_REQUEST_FROM" => @request_from.to_s,
           "PIONE_CLIENT_UI" => @client_ui.to_s
