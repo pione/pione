@@ -127,7 +127,18 @@ structural_context:
       # comment
       rule Test2
 
-rule_condition_context:
+flow_rule_condition_context:
+  valid:
+    - | # parameters without default values
+      param $X
+      basic param $Y
+      advanced param $Z
+    - | # parameters with default values
+      param $X := 1
+      basic param $Y := 2
+      advanced param $Z := 3
+
+action_rule_condition_context:
   valid:
     - | # parameters without default values
       param $X
