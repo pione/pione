@@ -41,7 +41,7 @@ module Pione
 
           # exist deferred methods
           if group.has_key?(:deferred)
-            if m = group[:deferred].find {|m| m.validate_inputs(rec, args)}
+            if m = group[:deferred].find {|m| m.validate_inputs(env, rec, args)}
               return m
             end
           end

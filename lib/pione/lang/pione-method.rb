@@ -63,7 +63,7 @@ module Pione
 
         # check type
         inputs.each_with_index do |input, i|
-          input = get_type(input, rec)
+          input = get_type(env, input, rec)
           unless input.match(env, args[i])
             return false
           end
@@ -73,33 +73,33 @@ module Pione
 
       # Validate output data type for the method.
       def validate_output(env, receiver, value)
-        _output = get_type(output, receiver)
+        _output = get_type(env, output, receiver)
         unless _output.match(env, value)
           raise MethodInterfaceError.new(:output, name, [_output], [value])
         end
       end
 
       # Get the input types of receiver.
-      def get_input_types(receiver)
-        inputs.map{|input| get_type(input, receiver)}
+      def get_input_types(env, receiver)
+        inputs.map{|input| get_type(env, input, receiver)}
       end
 
       # Get the output type of receiver.
-      def get_output_type(receiver)
-        get_type(output, receiver)
+      def get_output_type(env, receiver)
+        get_type(env, output, receiver)
       end
 
       private
 
       # Get a type object.
-      def get_type(type, receiver)
+      def get_type(env, type, receiver)
         case type
         when :index_type
-          receiver.index_type
+          receiver.index_type(env)
         when :element_type
-          receiver.element_type
+          receiver.element_type(env)
         when :receiver_type
-          receiver.pione_type
+          receiver.pione_type(env)
         else
           type
         end

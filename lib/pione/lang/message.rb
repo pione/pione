@@ -9,7 +9,7 @@ module Pione
       # Return PIONE model type of the message result according to type interface.
       def pione_type(env)
         if pione_method = receiver.pione_type(env).find_method(env, name, receiver, arguments)
-          pione_method.get_output_type(receiver)
+          pione_method.get_output_type(env, receiver)
         else
           raise MethodNotFound.new(env, name.to_s, receiver, arguments)
         end
