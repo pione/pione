@@ -17,6 +17,7 @@ module Pione
       require 'pione/command/pione-package-build'
       require 'pione/command/pione-package-show'
       require 'pione/command/pione-package-update'
+      require 'pione/command/pione-package-remove'
     end
 
     PioneCommand.define_subcommand("package", PionePackage)

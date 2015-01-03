@@ -1,0 +1,8 @@
+.@ PackageName :: "ChildPackage"
+.@ Parent :: &ParentPackage
+
+Rule DoAction
+  output 'result.txt'.stdout
+Action
+  echo "This is a child's action."
+End

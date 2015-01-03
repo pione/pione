@@ -241,16 +241,17 @@ module Pione
 
         # write the action
         if @dry_run
-          @rule.outputs.flatten.each do |output|
-            @location.create("touch %s" % output.eval(@env).name)
+          rule_condition = @rule_definition.rule_condition_context.eval(@env)
+          rule_definition.outputs.flatten.each do |output|
+            @location.append("touch %s" % output.eval(@env).pieces.first.pattern)
           end
         else
           @location.create(sh)
+        end
 
-          # chmod 700
-          if @working_directory.location.scheme == "local"
-            FileUtils.chmod(0700, @location.path)
-          end
+        # chmod 700
+        if @working_directory.location.scheme == "local"
+          FileUtils.chmod(0700, @location.path)
         end
 
         return sh
@@ -267,7 +268,7 @@ module Pione
       # @return [void]
       def call(session_id, request_from, client_ui)
         callee_env = {
-          "PATH" => (@working_directory.location + "bin").path.to_s + ";" + ENV["PATH"],
+          "PATH" => (@working_directory.location + "bin").path.to_s + ":" + ENV["PATH"],
           "PIONE_SESSION_ID" => session_id,
           "PIONE_REQUEST_FROM" => request_from.to_s,
           "PIONE_CLIENT_UI" => client_ui.to_s

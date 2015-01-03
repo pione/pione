@@ -106,14 +106,18 @@ module Pione
       # Load parent packages from package database. Parent packages should be
       # recorded in the database, or Package::NotFound error is raised.
       def load_parent_package(env, name, editor, tag)
-        if digest = Global.package_database.find(name, editor, tag)
-          parent_location = PackageCache.directory_cache(digest)
-          handler = PackageHandler.new(parent_location, digest: digest)
-          handler.eval(env)
-          return env.current_package_id
-        else
-          raise NotFound.new(name, editor, tag)
+        db = Database::load(Global.package_database_location)
+
+        if record = db.find(name, editor, tag)
+          if digest = record.digest
+            parent_location = PackageCache.directory_cache(digest)
+            handler = PackageHandler.new(parent_location, digest: digest)
+            _env = handler.eval(env)
+            return _env.current_package_id
+          end
         end
+
+        raise NotFound.new(name, editor, tag)
       end
     end
   end

@@ -132,7 +132,7 @@ TestHelper.scope do |this|
         tuple_a = TupleSpace::DataTuple.new(name: '1.a', location: location_a, time: Time.now)
         inputs = [tuple_a]
 
-        sh = (@ts.base_location + "package" + "bin" + "test.sh")
+        sh = @ts.base_location + "package" + "bin" + "test.sh"
         sh.write("echo abc > 1.b")
         sh.path.chmod(0700)
 

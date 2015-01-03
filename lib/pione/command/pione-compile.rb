@@ -74,7 +74,7 @@ module Pione
 
         item.assign(:literate_action) do
           if document = model[:literate_action_document]
-            LiterateAction::Parser.parse(Location[document].read)
+            LiterateAction::MarkdownParser.parse(Location[document].read)
           end
         end
       end

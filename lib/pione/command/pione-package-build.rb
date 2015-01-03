@@ -194,10 +194,7 @@ module Pione
         archiver = Package::PackageArchiver.new(cache_location)
 
         # archive
-        return archiver.archive(output, false)
-      rescue
-        Log::SystemLog.fatal("Error has occured when archiving package.")
-        raise
+        return archiver.archive(model[:output], false)
       end
     end
 

@@ -126,7 +126,7 @@ module Pione
         item.process do
           arg = {name: model[:name], info: model[:info]}
           Log::SystemLog.info(
-            'Package "%{name}"%{info} was added to package database' % arg
+            'Package "%{name}"%{info} has been added to package database.' % arg
           )
         end
       end

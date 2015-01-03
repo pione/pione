@@ -54,6 +54,7 @@ then
           build) _pione_package_build_options;;
           show) _pione_package_show_options;;
           update) _pione_package_update_options;;
+          remove) _pione_package_remove_options;;
           *) _pione_package_subcommands;;
         esac;;
       *) _pione_subcommands;;
@@ -141,7 +142,7 @@ then
   }
 
   _pione_package_subcommands() {
-     COMPREPLY=($(compgen -W "add build show update" -- "${COMP_WORDS[COMP_CWORD]}"));
+     COMPREPLY=($(compgen -W "add build show update remove" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   _pione_package_add_options() {
@@ -158,6 +159,10 @@ then
 
   _pione_package_update_options() {
     COMPREPLY=($(compgen -W "--color --debug --force" -- "${COMP_WORDS[COMP_CWORD]}"));
+  }
+
+  _pione_package_remove_options() {
+    COMPREPLY=($(compgen -W "--editor --tag" -- "${COMP_WORDS[COMP_CWORD]}"));
   }
 
   #
