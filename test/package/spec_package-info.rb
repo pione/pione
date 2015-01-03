@@ -6,7 +6,7 @@ describe Pione::Package::PackageInfo do
       name: "P1",
       editor: "yamaguchi",
       tag: "test",
-      parents: [Package::PackageInfo.new(name: "P2"), Package::PackageInfo.new(name: "P3")],
+      parents: [Package::ParentPackageInfo.new(name: "P2"), Package::ParentPackageInfo.new(name: "P3")],
       documents: ["D1.pione", "D2.pione", "D3.pione"],
       scenarios: ["s1", "s2", "s3"]
     )

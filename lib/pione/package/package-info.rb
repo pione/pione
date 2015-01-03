@@ -64,6 +64,12 @@ module Pione
         new(args)
       end
 
+      def <=>(other)
+        (name <=> other.name).tap {|x| return x unless x == 0}
+        (editor <=> other.editor).tap {|x| return x unless x == 0}
+        (tag <=> other.tag).tap {|x| return x unless x == 0}
+      end
+
       def to_json(*args)
         data = {}
         data["PackageName"] = name
