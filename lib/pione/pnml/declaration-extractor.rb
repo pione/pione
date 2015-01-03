@@ -11,7 +11,9 @@ module Pione
       def extract
         extract_params
         extract_variable_bindings
-        extract_feature
+        extract_features
+
+        return @declarations
       end
 
       private
@@ -19,9 +21,9 @@ module Pione
       # Extract net parameters.
       def extract_params
         @net.transitions.each_with_object([]) do |transition, sentences|
-          if Perspective.param_sentence_transition?(transition)
+          if Perspective.param_transition?(@env, transition)
             # evaluate the sentence for updating language environment
-            Perspective.eval_param_sentence_transition(@env, transition)
+            Perspective.eval_param_sentence(@env, transition)
             @declarations.add_param(transition.name)
           end
         end
@@ -30,7 +32,7 @@ module Pione
       # Extract net variable bindings.
       def extract_variable_bindings
         @net.transitions.each do |transition|
-          if Perspective.variable_binding?(transition)
+          if Perspective.variable_binding_transition?(@env, transition)
             @declarations.add_variable_binding(transition.name)
           end
         end
@@ -39,8 +41,7 @@ module Pione
       # Extract net features.
       def extract_features
         @net.transitions.each_with_object([]) do |transition, sentences|
-          if Perspective.feature_sentence?(transition)
-            
+          if Perspective.feature_transition?(@env, transition)
             @declarations.add_feature(transition.name)
           end
         end

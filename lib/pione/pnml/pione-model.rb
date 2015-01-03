@@ -106,7 +106,7 @@ module Pione
         # @return [Boolean]
         #   true if the node is a parameter
         def param_place?(env, node)
-          match_place_parser?(env, node, :param_place)
+          match_place_parser_with_type?(env, node, :expr_place, :expr, Lang::TypeParameterSet)
         end
 
         # Return true if the node is a parameter sentence transition.

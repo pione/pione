@@ -100,9 +100,9 @@ module Pione
             Perspective.data_place?(place, @env)
           end.map {|input| InputData.new(input)}
 
-          if Perspective.if_transition?(transition)
+          if Perspective.if_transition?(@env, transition)
             flow_elements << create_if_branch(transition, definition, inputs, flow_elements)
-          elsif Perspective.case_transition?(transition)
+          elsif Perspective.case_transition?(@env, transition)
             flow_elements << create_case_branch(transition, definition, inputs, flow_elements)
           end
         end
@@ -118,10 +118,10 @@ module Pione
       #   relatioin table between transition ID and rule definition
       def build_rule_definition_table
         return @net.transitions.each_with_object({}) do |transition, table|
-          if Perspective.rule_transition?(transition)
+          if Perspective.rule_transition?(@env, transition)
             type = :action
-            rule_name = Perspective.normalize_rule_name(transition.name)
-            is_external = Perspective.external_rule_transition?(transition)
+            rule_name = LabelExtractor.extract_rule_expr(transition.name)
+            is_external = Perspective.external_rule_transition?(@env, transition)
             rule = RuleDefinition.new(rule_name, type, is_external, @net_name, table.size)
 
             # setup rule conditions
@@ -149,7 +149,7 @@ module Pione
           begin
             # consideration for constraint nodes
             prev_transition = @net.find_transition_by_target_id(place.id)
-            if Perspective.constraint_transition?(prev_transition)
+            if Perspective.constraint_transition?(@env, prev_transition)
               @net.find_all_places_by_target_id(prev_transition.id).each do |_place|
                 if Perspective.data_place?(_place, @env)
                   inputs << InputData.new(_place)
@@ -174,7 +174,7 @@ module Pione
       #   rule outputs
       def find_outputs(transition)
         @net.find_all_places_by_source_id(transition.id).each_with_object([]) do |place, outputs|
-          if Perspective.data_place?(place, @env)
+          if Perspective.data_place?(@env, place)
             outputs << OutputData.new(place)
           end
         end
@@ -188,7 +188,7 @@ module Pione
       #   rule parameters
       def find_params(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, params|
-          if Perspective.param_place?(place)
+          if Perspective.param_place?(@env, place)
             prev_transitions = @net.find_all_transitions_by_target_id(place.id)
             keyword_transitions = prev_transitions.select{|t| Perspective.keyword_transition?(t)}
             if keyword_transitions.empty?
@@ -207,7 +207,7 @@ module Pione
       def find_constraints(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, constraints|
           prev_transitions = @net.find_all_transitions_by_target_id(place.id)
-          constraint_transitions = prev_transitions.select{|t| Perspective.constraint_transition?(t)}
+          constraint_transitions = prev_transitions.select{|t| Perspective.constraint_transition?(@env, t)}
 
           case constraint_transitions.size
           when 0
@@ -379,7 +379,7 @@ module Pione
       #   flow elements
       # @return [RuleDefinition]
       #   a flow rule definition for PNML net
-      def build(flow_elements, params, features, variable_binding)
+      def build(flow_elements, params, features, variable_bindings)
         inputs = @net.places.select {|place| Perspective.net_input_data_place?(place, @env)}
         inputs = inputs.map {|input| InputData.new(input)}
 
