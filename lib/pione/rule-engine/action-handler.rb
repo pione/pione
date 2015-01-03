@@ -7,11 +7,13 @@ module Pione
       end
 
       attr_reader :working_directory
+      attr_reader :shell_script
 
       def initialize(param)
         super(param)
 
         @working_directory = WorkingDirectory.new(@env, @base_location, @inputs)
+        @shell_script = ActionShellScript.new(@env, @working_directory, @rule_definition, @dry_run)
       end
 
       # Execute the action.
@@ -20,17 +22,16 @@ module Pione
         @working_directory.import
 
         # call shell script
-        script = ActionShellScript.new(@env, @working_directory, @rule_definition, @dry_run)
-        sh = script.write
+        sh = @shell_script.write
         user_message(["-"*60, sh.split("\n"), "-"*60].flatten, 0, "SH")
-        result = script.call(@sesstion_id, @request_from, @client_ui)
+        result = @shell_script.call(@sesstion_id, @request_from, @client_ui)
         unless result
           # the case the script has errored
-          raise ActionError.new(self, @digest, script.stderr.read)
+          raise ActionError.new(self, @digest, @shell_script.stderr.read)
         end
 
         # handle stdout mode of outputs
-        copy_stdout_to_outputs(script.stdout)
+        copy_stdout_to_outputs(@shell_script.stdout)
 
         # collect outputs
         output_conditions = @rule_condition.outputs.map {|condition| condition.eval(@env)}
@@ -223,6 +224,8 @@ module Pione
 
     # ActionShellScript handles action rule's shell script.
     class ActionShellScript
+      attr_reader :location
+
       def initialize(env, working_directory, rule_definition, dry_run)
         @env = env
         @working_directory = working_directory

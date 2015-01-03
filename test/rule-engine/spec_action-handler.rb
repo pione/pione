@@ -66,31 +66,23 @@ TestHelper.scope do |this|
       end
 
       it 'should have working directory' do
-        @handler_sh1.working_directory.should.exist
-        @handler_sh2.working_directory.should.exist
-        @handler_ruby.working_directory.should.exist
+        @handler_sh1.working_directory.location.should.exist
+        @handler_sh2.working_directory.location.should.exist
+        @handler_ruby.working_directory.location.should.exist
       end
 
       it 'should make different working directories' do
-        @handler_sh1.working_directory.should != @handler_sh2.working_directory
-        @handler_sh2.working_directory.should != @handler_ruby.working_directory
-        @handler_ruby.working_directory.should != @handler_sh1.working_directory
+        @handler_sh1.working_directory.location.should != @handler_sh2.working_directory.location
+        @handler_sh2.working_directory.location.should != @handler_ruby.working_directory.location
+        @handler_ruby.working_directory.location.should != @handler_sh1.working_directory.location
       end
 
       it 'should write a shell script' do
-        @handler_sh1.write_shell_script do |path|
-          File.should.exist(path)
-          File.should.executable(path)
-          File.read(path).should == "VAL1=`cat 1.a`;\nVAL2=`cat 1.b`;\nexpr $VAL1 + $VAL2 > 1.c\n"
-        end
-      end
-
-      it 'should call shell script' do
-        @handler_sh1.setup_working_directory
-        @handler_sh1.write_shell_script do |path|
-          @handler_sh1.call_shell_script(path)
-          (@handler_sh1.working_directory + "1.b").should.exist
-        end
+        @handler_sh1.shell_script.write
+        location = @handler_sh1.shell_script.location
+        location.should.exist
+        location.path.should.executable
+        location.read.should == "VAL1=`cat 1.a`;\nVAL2=`cat 1.b`;\nexpr $VAL1 + $VAL2 > 1.c\n"
       end
 
       [:sh1, :sh2, :ruby].each do |sym|
