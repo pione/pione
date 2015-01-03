@@ -12,7 +12,7 @@ module Pione
       member :package_id
 
       def pione_type(env)
-        env.variable_get(self).get_type(env)
+        env.variable_get(self).pione_type(env)
       end
 
       # Get the value from variable table in the environment.

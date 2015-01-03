@@ -48,7 +48,11 @@ module Pione
 
           # try immediate methods
           _args = args.map {|arg| arg.eval(env)} # FIXME : should be replaced by type inference
-          return group[:immediate].find {|m| m.validate_inputs(env, rec, _args)}
+          if group.has_key?(:immediate)
+            return group[:immediate].find {|m| m.validate_inputs(env, rec, _args)}
+          else
+            return nil
+          end
         end
 
         # find from parent type
@@ -212,8 +216,13 @@ module Pione
     # ticket expression type
     TypeTicketExpr = Type.new("ticket-expr", TypeOrdinalSequence)
 
-    def TypeSequence.match(env, other)
+    def TypeSequence.match(env, target)
       true
+    end
+
+    # Type variable matches variable object.
+    def TypeVariable.match(env, target)
+      target.kind_of?(Variable)
     end
   end
 end
