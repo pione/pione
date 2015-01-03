@@ -22,7 +22,7 @@ module Pione
         def inherited(subclass)
           members.each {|member_name| subclass.member(member_name, default: default_values[member_name])}
           subclass.immutable true
-          subclass.index_type(index_type)
+          subclass.set_index_type(index_type(nil))
         end
 
         # Get/set piece class.
@@ -35,8 +35,13 @@ module Pione
         end
 
         # Set the index type.
-        def index_type(type=nil)
-          type ? @index_type = type : @index_type
+        def index_type(env)
+          @index_type
+        end
+
+        # Set the index type.
+        def set_index_type(type)
+          @index_type = type
         end
       end
 

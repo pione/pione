@@ -105,6 +105,9 @@ module Pione
       rule(:parameter_set_element => subtree(:tree)) {
         OpenStruct.new(key: tree[:key].str, value: tree[:value])
       }
+      rule(:separator => simple(:sep), :parameter_set_element => subtree(:tree)) {
+        OpenStruct.new(key: tree[:key].str, value: tree[:value])
+      }
 
       # Transform +feature+ into FeatureSequence.
       rule(:feature => simple(:piece)) do

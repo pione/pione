@@ -35,12 +35,13 @@ describe "Pione::Lang::PioneMethod" do
   end
 
   it "should validate inputs" do
-    @method_1.validate_inputs(@int_1, []).should.be.false
-    @method_2.validate_inputs(@int_1, []).should.be.false
-    @method_2.validate_inputs(@int_1, [@str_1]).should.be.false
-    @method_2.validate_inputs(@int_1, [@int_2]).should.be.false
-    @method_2.validate_inputs(@int_1, [@int_2, @int_3, @str_1]).should.be.false
-    @method_3.validate_inputs(@int_1, [@int_2]).should.be.false
+    env = Lang::Environment.new
+    @method_1.validate_inputs(env, @int_1, []).should.be.false
+    @method_2.validate_inputs(env, @int_1, []).should.be.false
+    @method_2.validate_inputs(env, @int_1, [@str_1]).should.be.false
+    @method_2.validate_inputs(env, @int_1, [@int_2]).should.be.false
+    @method_2.validate_inputs(env, @int_1, [@int_2, @int_3, @str_1]).should.be.false
+    @method_3.validate_inputs(env, @int_1, [@int_2]).should.be.false
   end
 
   it "should call" do

@@ -2,7 +2,7 @@ module Pione
   module Lang
     # OridinalSequence is a sequence that has an ordinal number index.
     class OrdinalSequence < Sequence
-      index_type TypeInteger
+      set_index_type TypeInteger
       member :separator, default: " "
 
       class << self
