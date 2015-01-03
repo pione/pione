@@ -25,7 +25,7 @@ module Pione
       }
 
       # Transform +param_sentence+ into +Lang::ParamDeclaration+.
-      rule(:param_sentence => subtree(:tree)) {
+      rule(:param_sentence => subtree(:tree), :tail => simple(:tail_message)) {
         type = (tree[:type] || "basic").to_sym
 
         Lang::ParamDeclaration.new(type, tree[:expr1], tree[:expr2]).tap do |declaration|
