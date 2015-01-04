@@ -4,7 +4,7 @@ rvm:
 #  - "2.0.0" # pione doesn't work with 2.0
 #  - jruby-19mode
 #  - rbx-19mode # pione doesn't work with 2.0
-script: rake test
+script: rake -I lib test
 
 env:
   global:
