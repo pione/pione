@@ -31,10 +31,10 @@ module Pione
       }
 
       # +else_context+ matches +else+ block.
-      rule(:else_context) { line(keyword_else) >> conditional_branch_context.as(:else_context) }
+      rule(:else_context) { _line(keyword_else) >> conditional_branch_context.as(:else_context) }
 
       # +branch_end+ matches conditional branch block end.
-      rule(:branch_end) { line(keyword_end) }
+      rule(:branch_end) { _line(keyword_end) }
       rule(:branch_end!) { branch_end.or_error("conditional branch end not found") }
 
       # +case_branch+ matches +case+ conditional branches.

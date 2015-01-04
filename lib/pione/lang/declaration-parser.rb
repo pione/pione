@@ -159,14 +159,14 @@ module Pione
       # +flow_rule_block+ matches flow rule declarations.
       rule(:flow_rule_block) {
         ( rule_header >> flow_rule_condition_context.as(:context1) >>
-          line(keyword_Flow) >> flow_context.as(:context2) >> rule_footer!
+          _line(keyword_Flow) >> flow_context.as(:context2) >> rule_footer!
         ).as(:flow_rule_block)
       }
 
       # +action_rule_block+ matches action rule declarations.
       rule(:action_rule_block) {
         ( rule_header >> action_rule_condition_context.as(:context1) >>
-          line(keyword_Action) >> action_context.as(:context2) >> rule_footer!
+          _line(keyword_Action) >> action_context.as(:context2) >> rule_footer!
         ).as(:action_rule_block)
       }
 
@@ -177,11 +177,11 @@ module Pione
 
       # +rule_header+ matches rule headers.
       rule(:rule_header) {
-        line(keyword_Rule.as(:declarator) >> space >> expr!("should be rule name").as(:expr))
+        _line(keyword_Rule.as(:declarator) >> space >> expr!("should be rule name").as(:expr))
       }
 
       # +rule_footer+ matches rule end keywords.
-      rule(:rule_footer) { line(keyword_End) }
+      rule(:rule_footer) { _line(keyword_End) }
       rule(:rule_footer!) { rule_footer.or_error("rule footer not found") }
     end
   end

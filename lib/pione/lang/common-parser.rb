@@ -198,6 +198,9 @@ module Pione
       def line(content)
         space? >> content >> line_end.as(:tail)
       end
+      def _line(content)
+        space? >> content >> line_end
+      end
     end
   end
 end
