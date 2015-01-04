@@ -58,6 +58,7 @@ module Pione
         @request_from = @tuple_space.attribute("request_from")
         @session_id = @tuple_space.attribute("session_id")
         @client_ui = @tuple_space.attribute("client_ui")
+        super
       end
 
       # Take a task and turn it to foreground.

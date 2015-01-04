@@ -46,7 +46,7 @@ module Pione
               @task_workers << spawner.child_front
               spawner.when_terminated {delete_task_worker(spawner.child_front)}
             rescue Command::SpawnError => e
-              Log::Debug.system("Task worker broker agent failed to spawn a task worker: %e" % e.message)
+              Log::Debug.system("Task worker broker agent failed to spawn a task worker: %s" % e.message)
               res = false
             end
           else
