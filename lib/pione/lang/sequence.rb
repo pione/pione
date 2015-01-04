@@ -104,7 +104,7 @@ module Pione
         if block_given?
           pieces.each {|e| yield set(pieces: [e])}
         else
-          Enumerator.new(self, :each)
+          to_enum(:each)
         end
       end
 

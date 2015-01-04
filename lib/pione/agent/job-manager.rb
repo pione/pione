@@ -68,7 +68,7 @@ module Pione
 
       def transit_to_run
         finder = RuleEngine::DataFinder.new(@tuple_space, 'root')
-        list = Enumerator.new(finder, :find, :input, @rule_condition.inputs, @env).to_a
+        list = finder.to_enum(:find, :input, @rule_condition.inputs, @env).to_a
         if list.empty?
           user_message "error: no inputs"
           terminate
