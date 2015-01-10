@@ -7,9 +7,14 @@ module Pione
 
       forward! Proc.new{thread}, :alive?, :stop?
 
-      # Kill the process.
+      # Kill the process. This method waits the process to be dead.
+      #
+      # @param signal [Symbol]
+      #   the signal to send
+      # @return [void]
       def kill(signal = :TERM)
         Process.kill(signal, pid)
+        wait
       end
 
       # Wait until the process is dead.

@@ -19,7 +19,11 @@ describe "Pione::Util::ProcessInfo" do
     end
 
     after do
-      @info.kill if @info.alive?
+      begin
+        @info.kill if @info.alive?
+      rescue
+        # ignore
+      end
     end
 
     it "should get pid" do
