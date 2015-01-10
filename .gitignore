@@ -7,17 +7,16 @@
 .yardoc
 Gemfile.lock
 gems
-log.txt
-nohup.out
-test-report.txt
-*.log
 
-/input
-/output
 /process
-/result
 /html
 /vendor
 /coverage
 /pkg
 /*.ppg
+
+log.txt
+nohup.out
+test-report.txt
+*.log
+scenario-test-result.txt
