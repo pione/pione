@@ -3,17 +3,57 @@ module Pione
     SystemLog = Rootage::Log
     SystemLog.set_logger_block {Global.system_logger}
 
+    # BasicLogger provides common functions for PIONE's loggers.
+    class BasicLogger < Rootage::Logger
+      include DRbUndumped
+
+      # log level
+      attr_accessor :level
+
+      def initialize
+        @level = :info
+      end
+
+      private
+
+      # Return true if the level message can be loggable.
+      #
+      # @param level [Symbol]
+      #   the level
+      # @return [Boolean]
+      #   true if the level message can be loggable
+      def loggable?(level)
+        level_to_i(@level) >= level_to_i(level)
+      end
+
+      # Return the number of the level.
+      #
+      # @param level [Symbol]
+      #   the level
+      # @return [Integer]
+      #   the number of the level
+      def level_to_i(level)
+        case level
+        when :fatal; 0
+        when :error; 1
+        when :warn ; 2
+        when :info ; 3
+        when :debug; 4
+        end
+      end
+    end
+
     # `Log::PioneSystemLogger` is a PIONE original logger. This generates very
     # colorful message for identifiability and detailed informations.
-    class PioneSystemLogger < Rootage::Logger
-      include DRbUndumped
+    class PioneSystemLogger < BasicLogger
 
       attr_accessor :level
 
       def initialize(out = nil)
+        super()
+
         @queue = Queue.new
         @thread = make_writer_thread
-        @level = :info
         @lock = Mutex.new
         @out = out
       end
@@ -49,16 +89,6 @@ module Pione
 
       private
 
-      def level_to_i(level)
-        case level
-        when :fatal; 0
-        when :error; 1
-        when :warn ; 2
-        when :info ; 3
-        when :debug; 4
-        end
-      end
-
       def make_writer_thread
         Thread.new do
           while true do
@@ -69,7 +99,7 @@ module Pione
       end
 
       def push(level, msg, pos, pid)
-        if level_to_i(@level) >= level_to_i(level)
+        if loggable?(level)
           @queue.push([level, msg, pos, pid, Time.now])
         end
       end
@@ -88,31 +118,32 @@ module Pione
       end
     end
 
-    class DelegatableLogger < Rootage::Logger
-      include DRbUndumped
-
+    # DelegatableLogger delegates logging functions to another logger.
+    class DelegatableLogger < BasicLogger
       def initialize(logger)
+        super()
+
         @logger = logger
       end
 
       def fatal(msg, pos=caller(1).first, pid=Process.pid)
-        send_message(msg, pos, pid) {@logger.fatal(msg, pos, pid)}
+        send_message(:fatal, msg, pos, pid) {@logger.fatal(msg, pos, pid)}
       end
 
       def error(msg, pos=caller(1).first, pid=Process.pid)
-        send_message(msg, pos, pid) {@logger.error(msg, pos, pid)}
+        send_message(:error, msg, pos, pid) {@logger.error(msg, pos, pid)}
       end
 
       def warn(msg, pos=caller(1).first, pid=Process.pid)
-        send_message(msg, pos, pid) {@logger.warn(msg, pos, pid)}
+        send_message(:warn, msg, pos, pid) {@logger.warn(msg, pos, pid)}
       end
 
       def info(msg, pos=caller(1).first, pid=Process.pid)
-        send_message(msg, pos, pid) {@logger.info(msg, pos, pid)}
+        send_message(:info, msg, pos, pid) {@logger.info(msg, pos, pid)}
       end
 
       def debug(msg, pos=caller(1).first, pid=Process.pid)
-        send_message(msg, pos, pid) {@logger.debug(msg, pos, pid)}
+        send_message(:debug, msg, pos, pid) {@logger.debug(msg, pos, pid)}
       end
 
       def terminate
@@ -121,11 +152,15 @@ module Pione
 
       private
 
-      def send_message(msg, pos, pid, &block)
-        block.call
-      rescue Exception
-        # print stdout directly if the logger fails
-        $stdout.puts("%s (%s) #%s" % [msg, pos, pid])
+      def send_message(level, msg, pos, pid, &block)
+        if loggable?(level)
+          begin
+            block.call
+          rescue Exception
+            # print stdout directly if the logger fails
+            $stdout.puts("%s (%s) #%s" % [msg, pos, pid])
+          end
+        end
       end
     end
 
