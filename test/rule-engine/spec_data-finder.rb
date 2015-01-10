@@ -87,7 +87,7 @@ describe 'Pione::RuleEngine::DataFinder' do
       }
 
       # test
-      enum = Enumerator.new(finder, :find, :input, query, @env)
+      enum = finder.to_enum(:find, :input, query, @env)
       enum.to_a.map{|env, combination| combination }.should == results
     end
   end
