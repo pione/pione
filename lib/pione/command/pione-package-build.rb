@@ -131,7 +131,7 @@ module Pione
         location.entries.each_with_object(Hash.new) do |entry, actions|
           if entry.basename.end_with?(".action.md")
             begin
-              actions.merge!(LiterateAction::Parser.parse(entry.read))
+              actions.merge!(LiterateAction::MarkdownParser.parse(entry.read))
             rescue
               Log::SystemLog.fatal("Error has occured when parsing the action document %s." % entry.address)
               raise
