@@ -36,7 +36,7 @@ module Pione
       def setup_env(package_pione)
         @env = @env.setup_new_package(:pnml_compiler)
 
-        if package_pione.exist?
+        if package_pione and package_pione.exist?
           parsed = Lang::DocumentParser.new.parse(package_pione.read)
           package_document = Lang::DocumentTransformer.new.apply(parsed, {package_name: true, filename: true})
           package_document.eval(@env)
