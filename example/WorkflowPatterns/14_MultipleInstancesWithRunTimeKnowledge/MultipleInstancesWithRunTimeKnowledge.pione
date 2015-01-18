@@ -10,7 +10,6 @@ End
 Rule C
   input 'p1'
   output 'p2-{$N}'
-  param $N := 1.upto($NUM)
 End
 
 Rule A

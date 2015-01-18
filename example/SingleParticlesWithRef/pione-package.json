@@ -1,16 +1,15 @@
 {
-  "PackageName": "SerialProcessing",
+  "PackageName": "SingleParticlesWithRef",
   "Parents": [
 
   ],
   "Documents": [
-    "A.pione",
-    "B.pione",
+    "Create3dinfo.pione",
     "Package.pione",
-    "SerialProcessing.pione"
+    "SingleParticlesWithRef.pione"
   ],
   "Scenarios": [
-    "scenario"
+
   ],
   "Bins": [
 

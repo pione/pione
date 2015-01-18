@@ -1,4 +1,3 @@
-
 Rule OddSelector
   input '*.i'.all
   output '*.res'.all

@@ -71,7 +71,7 @@ module Pione
       }
 
       # +enlosed_expr+ matches expressions enclosed by parens.
-      rule(:enclosed_expr) { lparen >> expr >> rparen! }
+      rule(:enclosed_expr) {lparen.as(:header) >> expr >> rparen! }
 
       # +expr_operator+ matches expression operators.
       #

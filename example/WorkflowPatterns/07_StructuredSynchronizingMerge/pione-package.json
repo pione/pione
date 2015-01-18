@@ -1,16 +1,14 @@
 {
-  "PackageName": "SerialProcessing",
+  "PackageName": "WCP07_StructuredSynchronizingMerge",
   "Parents": [
 
   ],
   "Documents": [
-    "A.pione",
-    "B.pione",
     "Package.pione",
-    "SerialProcessing.pione"
+    "StructuredSynchronizingMerge.pione"
   ],
   "Scenarios": [
-    "scenario"
+
   ],
   "Bins": [
 

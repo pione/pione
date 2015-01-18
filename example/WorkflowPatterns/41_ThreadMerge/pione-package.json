@@ -1,16 +1,16 @@
 {
-  "PackageName": "SerialProcessing",
+  "PackageName": "WCP41_ThreadMerge",
   "Parents": [
 
   ],
   "Documents": [
     "A.pione",
-    "B.pione",
+    "A1.pione",
     "Package.pione",
-    "SerialProcessing.pione"
+    "ThreadMerge.pione"
   ],
   "Scenarios": [
-    "scenario"
+
   ],
   "Bins": [
 

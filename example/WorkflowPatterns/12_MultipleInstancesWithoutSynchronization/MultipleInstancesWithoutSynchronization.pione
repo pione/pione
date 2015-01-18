@@ -25,5 +25,4 @@ End
 Rule C
   input 'p1'
   output 'o1-{$N}'
-  param $N := 1.upto($SIZE)
 End

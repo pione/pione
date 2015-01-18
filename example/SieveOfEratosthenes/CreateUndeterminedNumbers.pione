@@ -1,0 +1,11 @@
+Rule CreateUndeterminedNumbers
+  output '*.ud'.all
+  param $N := 2.upto($MAX)
+Flow
+  rule CreateData
+End
+
+Rule CreateData
+  output '{$NAME}'
+  param $NAME := "{$N}.ud"
+End

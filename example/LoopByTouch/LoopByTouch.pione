@@ -1,5 +1,6 @@
 Rule LoopByTouch
   output '1' or '2' or '3'
+  param $N := 1
 Flow
   rule Init
     case $N
@@ -18,7 +19,6 @@ Rule Init
 End
 
 Rule __LoopByTouch_TripletLoop_1__
-  input 3
   input '1'
   output '3'
 Flow
@@ -26,7 +26,6 @@ Flow
 End
 
 Rule __LoopByTouch_SingleLoop_2__
-  input 1
   input '1'
   output '1'
 Flow
@@ -34,7 +33,6 @@ Flow
 End
 
 Rule __LoopByTouch_PairLoop_3__
-  input 2
   input '1'
   output '2'
 Flow

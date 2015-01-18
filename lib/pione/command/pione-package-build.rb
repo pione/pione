@@ -156,6 +156,7 @@ module Pione
               option = {
                 :flow_rule_name => flow_name,
                 :literate_actions => actions,
+                :package_pione => location + "Package.pione"
               }
               content = PNML::Compiler.new(net, option).compile
               file = entry.dirname + (flow_name + ".pione")

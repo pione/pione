@@ -16,5 +16,4 @@ Rule Init
   output '{$N}.i1'
   output '{$N}.i2'
   output '{$N}.i3'
-  param $N := (1 | 2 | 3 | 4 | 5)
 End

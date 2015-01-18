@@ -1,25 +1,16 @@
-.@ PackageName :: "SelectRuleByParam"
-
-Rule Main
+Rule SelectRuleByParam
   output 'message.txt'
   param $NAME := "A"
 Flow
-  case $NAME
+    case $NAME
   when "A"
-    $RULE := A
+  rule A
   when "B"
-    $RULE := B
+  rule B
   when "C"
-    $RULE := C
+  rule C
   end
-  rule RuleSelector {R: $RULE}
-End
 
-Rule RuleSelector
-  output 'message.txt'
-  param $R
-Flow
-  rule $R
 End
 
 Rule A
@@ -39,4 +30,3 @@ Rule C
 Action
   echo "This is rule C." > {$O[1]}
 End
-

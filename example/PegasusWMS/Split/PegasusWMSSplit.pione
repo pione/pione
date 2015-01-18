@@ -1,4 +1,3 @@
-
 Rule PegasusWMSSplit
   output 'count.txt.*'.all
 Flow

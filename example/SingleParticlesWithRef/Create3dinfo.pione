@@ -1,0 +1,36 @@
+Rule Create3dinfo
+  input '{$TARGET}.ref2d'
+  input '*.roi'
+  output '{$*}.fit'
+  output '{$*}.3dinfo'
+Flow
+  rule ConvertPadToCorinfo
+  rule ConvertRoiToPad
+  rule ConvertCorinfoTo3dinfo
+End
+
+Rule ConvertPadToCorinfo
+  input '{$TARGET}.ref2d'
+  input '*.pad'
+  output '{$*}.corinfo'
+  output '{$*}.fit'
+Action
+  mrcImageAutoRotationCorrelation -i {$*}.pad -r {$TARGET}.ref2d -O {$*}.corinfo -fit {$*}.fit -cor {$*}.cormap -n {$nROT} -m 18 -range {$ROTMIN} {$ROTMAX} -Iter 2 -nRot2 {$nRot2} -nRot1 {$nRot1} -nRot3 {$nRot3} 2> /dev/null
+End
+
+Rule ConvertRoiToPad
+  input '*.roi'
+  output '{$*}.pad'
+Action
+  mrcImageWindowing -i {$*}.roi -o {$*}.mask -W 0.1 0.0 0.05 0.0 -m 18
+  mrcImagePad -i {$*}.mask -o {$*}.padtmp -W {$PAD_W} -H {$PAD_H} -m 3
+  mrcImageWindowing -i {$*}.padtmp -o {$*}.pad -W 0.1 0.0 0.1 0.0 -m 2
+End
+
+Rule ConvertCorinfoTo3dinfo
+  input '*.corinfo'
+  output '{$*}.3dinfo'
+Action
+  awk '/Cor/ { print $7,$16,$2,$3,$4,$5,$9,$11,$12}' {$*}.corinfo | sort -r | sed -e s/.pad/.fit/ > {$*}.3dinfolst
+  head -n 1 {$*}.3dinfolst | awk '{print $2,$3,$4,$5,$6,$1}' > {$*}.3dinfo
+End

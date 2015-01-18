@@ -5,7 +5,7 @@ module Pione
       def initialize(env, net, option={})
         @env = env
         @net = net
-        @declarations = ExtractedDeclarations.new
+        @declarations = ExtractedDeclarations.new(@env)
       end
 
       def extract
@@ -54,7 +54,8 @@ module Pione
       attr_reader :variable_bindings
       attr_reader :features
 
-      def initialize
+      def initialize(env)
+        @env = env
         @params = []
         @variable_bindings = []
         @features = []
@@ -65,7 +66,12 @@ module Pione
       # @param param [String]
       #   a string of parameter
       def add_param(param)
-        @params << Perspective.normalize_declaration(param)
+        sentence = LabelExtractor.extract_param_sentence(param)
+        parsed = Lang::DocumentParser.new.parse(sentence)
+        value = Lang::DocumentTransformer.new.apply(parsed, {package_name: true, filename: true})
+        param_decl = value.elements.first
+        param_decl.eval(@env)
+        @params << sentence
       end
 
       # Add the variable binding.
@@ -73,8 +79,12 @@ module Pione
       # @param variable_binding [String]
       #   a string of variable binding
       def add_variable_binding(variable_binding)
-        @variable_bindings <<
-          Perspective.normalize_declaration(variable_binding)
+        sentence = LabelExtractor.extract_variable_binding(variable_binding)
+        parsed = Lang::DocumentParser.new.parse(sentence)
+        value = Lang::DocumentTransformer.new.apply(parsed, {package_name: true, filename: true})
+        variable_binding_decl = value.elements.first
+        variable_binding_decl.eval(@env)
+        @variable_bindings << variable_binding
       end
 
       # Add the feature.
@@ -83,7 +93,7 @@ module Pione
       #   a string of feature
       def add_feature(feature)
         @features <<
-          Perspective.normalize_declaration(feature)
+          LabelExtractor.extract_feature_sentence(feature)
       end
     end
   end

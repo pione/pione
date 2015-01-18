@@ -4,7 +4,8 @@
 
   ],
   "Documents": [
-    "Interaction.pione"
+    "Interaction.pione",
+    "Package.pione"
   ],
   "Scenarios": [
 
@@ -13,12 +14,12 @@
     "bin/show-environment.cgi"
   ],
   "Etcs": [
+    "etc/.hidden-file.txt",
+    "etc/cgi.html",
     "etc/create-files.html",
-    "etc/list-files.html",
+    "etc/delete-files.html",
     "etc/get-files.html",
     "etc/index.html",
-    "etc/delete-files.html",
-    "etc/cgi.html",
-    "etc/.hidden-file.txt"
+    "etc/list-files.html"
   ]
 }

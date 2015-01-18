@@ -1,16 +1,16 @@
-Rule Main
+Rule ThreadSplit
   output 'o1-*'.all
 Flow
-  rule Init
   rule A
-End
-
-Rule Init
-  output 'p1'.touch
+  rule Init
 End
 
 Rule A
   input 'p1'
-  output 'o1-{$N}'.touch
+  output 'o1-{$N}'
   param $N := 1.upto(5)
+End
+
+Rule Init
+  output 'p1'
 End

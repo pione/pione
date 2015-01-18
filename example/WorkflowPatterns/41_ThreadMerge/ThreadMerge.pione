@@ -1,43 +1,20 @@
-Rule Main
-  output 'o1'
+Rule ThreadMerge
 Flow
+  rule __ThreadMerge_A_0__
   rule Init
-  rule A
 End
 
-Rule Init
-  output 'i1'.touch
-  output 'cont'.touch
-  output '0.count'.touch
-End
-
-Rule A
+Rule __ThreadMerge_A_0__
   input 'i1'
   input 'cont'
   input '0.count'
   output 'o1'
 Flow
-  rule A1
-  rule A2
+  rule A
 End
 
-Rule A1
-  input '*.count'.all or null
-  input 'cont'
-  output '{$*.length}.count'
-Flow
-  rule A1Count {N: $*.length}
-End
-
-Rule A1Count
-  output '{$N}.count'.touch
-  param $N
-End
-
-Rule A2
-  input '*.count'.all
-  input 'cont'
-  output 'o1'.touch
-  output 'cont'.remove
-  constraint $*.length > 5
+Rule Init
+  output 'i1'
+  output 'cont'
+  output '0.count'
 End

@@ -1,4 +1,3 @@
-
 Rule FeatureExample
   output 'message.txt'
 Flow
@@ -7,6 +6,7 @@ End
 
 Rule FeaturedAction
   output 'message.txt'
+  feature +X
 Action
   echo "I can take the task." > {$O[1]}
 End

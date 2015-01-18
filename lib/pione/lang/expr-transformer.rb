@@ -18,6 +18,8 @@ module Pione
       # Extract the content of +:expr+.
       rule(:expr => simple(:obj)) { obj }
 
+      rule({:header => simple(:header), :expr => simple(:obj)}) { obj }
+
       # Transform receiver and messages as Lang::Message.
       rule({ :receiver => simple(:receiver),
              :messages => sequence(:messages) }) {

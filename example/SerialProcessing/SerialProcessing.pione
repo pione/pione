@@ -1,4 +1,3 @@
-
 Rule SerialProcessing
   output '*.b'.all
   output '*.a'.all

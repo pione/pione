@@ -1,0 +1,24 @@
+Rule A
+  input '0.count'
+  input 'cont'
+  output 'o1'
+Flow
+  rule __A_A1_0__
+  rule A2
+End
+
+Rule __A_A1_0__
+  input '*.count'.all
+  input 'cont'
+  output '{$*.length}.count'
+Flow
+  rule A1
+End
+
+Rule A2
+  input 'cont'
+  input '*.count'.all
+  output 'o1'
+  output 'cont'.remove
+  constraint $*.length > 5
+End

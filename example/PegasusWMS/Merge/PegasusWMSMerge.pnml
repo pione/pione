@@ -41,7 +41,7 @@ Created with Workflow PetriNet Designer Version 1.0 (woped.org)-->
     </place>
     <place id="p2">
       <name>
-        <text>$DIRS := ("/bin" | "/usr/bin" | "/usr/local/bin").all</text>
+        <text>{DIRS: ("/bin" | "/usr/bin" | "/usr/local/bin").all}</text>
         <graphics>
           <offset x="100" y="290"/>
         </graphics>
@@ -56,7 +56,7 @@ Created with Workflow PetriNet Designer Version 1.0 (woped.org)-->
     </place>
     <place id="p1">
       <name>
-        <text>$INDEX := 0.upto(2)</text>
+        <text>{INDEX: 0.upto(2)}</text>
         <graphics>
           <offset x="100" y="210"/>
         </graphics>

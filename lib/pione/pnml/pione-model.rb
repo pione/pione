@@ -50,7 +50,7 @@ module Pione
         # @return [Boolean]
         #   true if the node is an exression place
         def expr_place?(env, node)
-          match_place_parser?(node, :expr_place)
+          match_place_parser?(env, node, :expr_place)
         end
 
         # Return true if the node is a data place.
@@ -91,7 +91,7 @@ module Pione
         #   true if the node is a net output data place
         def net_output_data_place?(env, node)
           if data_place?(env, node)
-            return net_output_data_symbol?(data_modifier(node))
+            return net_output_data_symbol?(data_modifier(env, node))
           else
             return false
           end
@@ -475,7 +475,7 @@ module Pione
         # @return [Boolean]
         #   true if the node is the place parser
         def eval_transition(env, node, parser_name, target_name)
-          parsed = parse_transition(node)
+          parsed = parse_transition(env, node, parser_name)
           if parsed and parsed[target_name]
             return Lang::DocumentTransformer.new.apply(parsed[target_name], TRANSFORMER_OPT)
           else
@@ -812,13 +812,25 @@ module Pione
           conditions << output.as_declaration
         end
         @params.each do |param|
-          conditions += param.as_declarations
+          if param.kind_of?(Param)
+            conditions += param.as_declarations
+          else
+            conditions << param
+          end
         end
         @constraints.each do |constraint|
-          conditions << constraint.as_declaration
+          if constraint.kind_of?(Constraint)
+            conditions << constraint.as_declaration
+          else
+            conditions << constraint
+          end
         end
         @features.each do |feature|
-          conditions << feature.as_declaration
+          if feature.kind_of?(Feature)
+            conditions << feature.as_declaration
+          else
+            conditions << feature
+          end
         end
         conditions
       end

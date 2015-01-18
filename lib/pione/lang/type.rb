@@ -25,7 +25,7 @@ module Pione
       # @return [Boolean]
       #   true if it matches, or false
       def match(env, target)
-        target_type = target.pione_type(env)
+        target_type = target.kind_of?(Type) ? target : target.pione_type(env)
         while target_type do
           return true if self == target_type
           target_type = target_type.parent_type
@@ -47,7 +47,7 @@ module Pione
           end
 
           # try immediate methods
-          _args = args.map {|arg| arg.eval(env)} # FIXME : should be replaced by type inference
+          _args = args.map {|arg| arg.pione_type(env)} # FIXME : should be replaced by type inference
           if group.has_key?(:immediate)
             return group[:immediate].find {|m| m.validate_inputs(env, rec, _args)}
           else

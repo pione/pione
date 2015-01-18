@@ -15,6 +15,7 @@ module Pione
         @net = net
         @net_name = option[:flow_rule_name] || "Main"
         @env = option[:env] || Lang::Environment.new
+        setup_env(option[:package_pione])
 
         @option = option
         @net_rewriter = NetRewriter.new do |rules|
@@ -30,6 +31,22 @@ module Pione
           rules << TicketInstantiation
         end
         @actions = []
+      end
+
+      def setup_env(package_pione)
+        @env = @env.setup_new_package(:pnml_compiler)
+
+        if package_pione.exist?
+          parsed = Lang::DocumentParser.new.parse(package_pione.read)
+          package_document = Lang::DocumentTransformer.new.apply(parsed, {package_name: true, filename: true})
+          package_document.eval(@env)
+        end
+
+        val = Lang::KeyedSequence.new
+        val = val.put(Lang::IntegerSequence.of(1), Lang::DataExprSequence.of("pnml_compiler"))
+        @env.variable_set!(Lang::Variable.new("I"), val)
+        @env.variable_set!(Lang::Variable.new("*"), Lang::StringSequence.of("pnml_compiler"))
+        @env.variable_set!(Lang::Variable.new("O"), val)
       end
 
       # Compile a PNML file into PIONE document as a string.
@@ -97,7 +114,7 @@ module Pione
         # conditional branch
         @net.transitions.each do |transition|
           inputs = @net.find_all_places_by_target_id(transition.id).select do |place|
-            Perspective.data_place?(place, @env)
+            Perspective.data_place?(@env, place)
           end.map {|input| InputData.new(input)}
 
           if Perspective.if_transition?(@env, transition)
@@ -151,12 +168,12 @@ module Pione
             prev_transition = @net.find_transition_by_target_id(place.id)
             if Perspective.constraint_transition?(@env, prev_transition)
               @net.find_all_places_by_target_id(prev_transition.id).each do |_place|
-                if Perspective.data_place?(_place, @env)
+                if Perspective.data_place?(@env, _place)
                   inputs << InputData.new(_place)
                 end
               end
             else
-              if Perspective.data_place?(place, @env)
+              if Perspective.data_place?(@env, place)
                 inputs << InputData.new(place)
               end
             end
@@ -190,9 +207,9 @@ module Pione
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, params|
           if Perspective.param_place?(@env, place)
             prev_transitions = @net.find_all_transitions_by_target_id(place.id)
-            keyword_transitions = prev_transitions.select{|t| Perspective.keyword_transition?(t)}
+            keyword_transitions = prev_transitions.select{|t| Perspective.keyword_transition?(@env, t)}
             if keyword_transitions.empty?
-              params << Param.new(place)
+              params << Param.set_of(place)
             end
           end
         end
@@ -213,7 +230,7 @@ module Pione
           when 0
             # ignore
           when 1
-            if Perspective.expr_place?(place)
+            if Perspective.expr_place?(@env, place)
               constraints << Constraint.new(place.name)
             else
               # the place should be constraint expression
@@ -234,8 +251,8 @@ module Pione
       #   tickets
       def find_source_tickets(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, tickets|
-          if Perspective.ticket_place?(place, @env)
-            tickets << Ticket.new(place)
+          if Perspective.ticket_place?(@env, place)
+            tickets << Ticket.new(place.name)
           end
         end
       end
@@ -248,7 +265,7 @@ module Pione
       #   tickets
       def find_target_tickets(transition)
         @net.find_all_places_by_source_id(transition.id).each_with_object([]) do |place, tickets|
-          if Perspective.ticket_place?(place, @env)
+          if Perspective.ticket_place?(@env, place)
             tickets << Ticket.new(place.name)
           end
         end
@@ -262,9 +279,9 @@ module Pione
       #   features
       def find_features(transition)
         @net.find_all_places_by_target_id(transition.id).each_with_object([]) do |place, features|
-          if Perspective.feature_place?(place, @env)
+          if Perspective.feature_place?(@env, place)
             keyword_transitions = @net.find_all_transitions_by_target_id(place.id).select do |t|
-              Perspective.keyword_transition?(t)
+              Perspective.keyword_transition?(@env, t)
             end
             if keyword_transitions.empty?
               features << Feature.new(place.name)
@@ -283,8 +300,8 @@ module Pione
         condition = @net.find_place_by_source_id(transition.id)
 
         nodes = @net.find_all_transitions_by_source_id(condition.id)
-        key_then = nodes.find{|node| Perspective.then_transition?(node)}
-        key_else = nodes.find{|node| Perspective.else_transition?(node)}
+        key_then = nodes.find{|node| Perspective.then_transition?(@env, node)}
+        key_else = nodes.find{|node| Perspective.else_transition?(@env, node)}
 
         branch = ConditionalBranch.new(:if, condition.name)
 
@@ -295,11 +312,13 @@ module Pione
           branch.table[:then] << rule
         end
 
-        find_next_rules(key_else).each do |transition|
-          rule = definition[transition.id]
-          rule.inputs += inputs
-          flow_elements.delete(rule)
-          branch.table[:else] << rule
+        if key_else
+          find_next_rules(key_else).each do |transition|
+            rule = definition[transition.id]
+            rule.inputs += inputs
+            flow_elements.delete(rule)
+            branch.table[:else] << rule
+          end
         end
 
         return branch
@@ -315,8 +334,8 @@ module Pione
         expr = @net.find_place_by_source_id(transition.id)
 
         nodes = @net.find_all_transitions_by_source_id(expr.id)
-        keys_when = nodes.select{|node| Perspective.when_transition?(node)}
-        key_else = nodes.find{|node| Perspective.else_transition?(node)}
+        keys_when = nodes.select{|node| Perspective.when_transition?(@env, node)}
+        key_else = nodes.find{|node| Perspective.else_transition?(@env, node)}
 
         branch = ConditionalBranch.new(:case, expr.name)
 
@@ -349,7 +368,7 @@ module Pione
       def find_next_rules(base_rule)
         @net.find_all_places_by_source_id(base_rule.id).each_with_object([]) do |place, res|
           @net.find_all_transitions_by_source_id(place.id).each do |transition|
-            if Perspective.rule_transition?(transition)
+            if Perspective.rule_transition?(@env, transition)
               res << transition
             else
               find_next_rules(transition)
@@ -380,10 +399,10 @@ module Pione
       # @return [RuleDefinition]
       #   a flow rule definition for PNML net
       def build(flow_elements, params, features, variable_bindings)
-        inputs = @net.places.select {|place| Perspective.net_input_data_place?(place, @env)}
+        inputs = @net.places.select {|place| Perspective.net_input_data_place?(@env, place)}
         inputs = inputs.map {|input| InputData.new(input)}
 
-        outputs = @net.places.select {|place| Perspective.net_output_data_place?(place, @env)}
+        outputs = @net.places.select {|place| Perspective.net_output_data_place?(@env, place)}
         outputs = outputs.map {|output| OutputData.new(output)}
 
         option = {

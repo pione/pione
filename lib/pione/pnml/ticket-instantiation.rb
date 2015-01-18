@@ -32,8 +32,8 @@ module Pione
       # - Change the place name
       def self.rewrite(net, subjects, env)
         transition_from, transition_to, place = subjects
-        name_from = Perspective.normalize_rule_name(transition_from.name)
-        name_to = Perspective.normalize_rule_name(transition_to.name)
+        name_from = LabelExtractor.extract_rule_expr(transition_from.name)
+        name_to = LabelExtractor.extract_rule_expr(transition_to.name)
 
         place.name = "<%s>" % (TICKET_NAME % [name_from, name_to])
       end

@@ -1,71 +1,45 @@
-param $COND1 := true
-$COND2 := not :: $COND1
-
-Rule Main
+Rule StructuredSynchronizingMerge
   output 'o1'
 Flow
-  rule Init
   rule A
-  rule B
-  rule C
-  rule D
+  rule Init
   rule E
-End
+  rule D
+    if $COND1
+  rule B
+  end
 
-Rule Init
-  output 'i1'.touch
+    if $COND2
+  rule C
+  end
+
 End
 
 Rule A
   input 'i1'
-  output 'p1' or null
-  output 'p2' or null
-  output 'p4' or null
-  output 'p5' or null
-Flow
-  rule A1
-  rule A2
-  rule A3
-  rule A4
 End
 
-Rule A1
-  output 'p1'.touch
-  constraint $COND1
-End
-
-Rule A2
-  output 'p4'.touch
-  constraint not :: $COND1
-End
-
-Rule A3
-  output 'p2'.touch
-  constraint $COND2
-End
-
-Rule A4
-  output 'p5'.touch
-  constraint not :: $COND2
-End
-
-Rule B
-  input 'p1'
-  output 'p3'.touch
+Rule Init
+  output 'i1'
 End
 
 Rule C
   input 'p2'
-  output 'p5'.touch
+  output 'p5'
+End
+
+Rule E
+  input 'p5'
+  input 'p4'
+  output 'o1'
+End
+
+Rule B
+  input 'p1'
+  output 'p3'
 End
 
 Rule D
   input 'p3'
-  output 'p4'.touch
-End
-
-Rule E
-  input 'p4'
-  input 'p5'
-  output 'o1'.touch
+  output 'p4'
 End

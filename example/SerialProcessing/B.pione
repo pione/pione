@@ -1,4 +1,3 @@
-
 Rule B
   output '*.b'.all
 Flow

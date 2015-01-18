@@ -1,14 +1,14 @@
 {
-  "PackageName": "OddSelector",
+  "PackageName": "WCP42_ThreadSplit",
   "Parents": [
 
   ],
   "Documents": [
-    "OddSelector.pione",
-    "Package.pione"
+    "Package.pione",
+    "ThreadSplit.pione"
   ],
   "Scenarios": [
-    "scenario"
+
   ],
   "Bins": [
 

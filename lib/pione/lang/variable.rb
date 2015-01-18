@@ -15,6 +15,14 @@ module Pione
         env.variable_get(self).pione_type(env)
       end
 
+      def index_type(env)
+        env.variable_get(self).index_type(env)
+      end
+
+      def element_type(env)
+        env.variable_get(self).element_type(env)
+      end
+
       # Get the value from variable table in the environment.
       def eval(env)
         env.variable_get(self)

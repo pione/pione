@@ -1,0 +1,14 @@
+Rule A1
+  input 'cont'
+  input '*.count'.all
+  output '{$N}.count'
+Flow
+  rule A1Count
+End
+
+Rule A1Count
+  input 'cont'
+  input '*.count'.all
+  output '{$N}.count'
+  param $N := $*.length
+End

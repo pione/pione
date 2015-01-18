@@ -1,4 +1,3 @@
-
 Rule PegasusWMSPipeline
   output 'count.txt'
 Flow
