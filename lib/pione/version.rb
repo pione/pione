@@ -1,4 +1,4 @@
 module Pione
   # version of pione
-  VERSION = "0.5.0.alpha.2"
+  VERSION = "0.5.0"
 end
