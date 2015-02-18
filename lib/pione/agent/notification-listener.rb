@@ -75,7 +75,7 @@ module Pione
           begin
             Timeout.timeout(3) {DRb::DRbObject.new_with_uri(uri).notify(message)}
           rescue Timeout::Error, DRb::DRbConnError, DRbPatch::ReplyReaderError => e
-            Log::Debug.notification("Notification recipient %s disconnected: %s" % [uri, e.message])
+            Log::SystemLog.debug("Notification recipient %s disconnected." % uri, e)
             bad_recipients << uri
           end
         end

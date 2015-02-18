@@ -77,5 +77,31 @@ module Pione
       item.desc = "IP address for interprocess communication"
       item.init = Util::IPAddress.myself
     end
+
+    #
+    # tuple space server
+    #
+
+    define_external_item(:tuple_space_broker_front_port_range_begin) do |item|
+      item.desc = "Begin port number of tuple space broker"
+      item.type = :integer
+      item.init = 35000
+    end
+
+    define_external_item(:tuple_space_broker_front_port_range_end) do |item|
+      item.desc = "End port number of tuple space broker"
+      item.type = :integer
+      item.init = 35100
+    end
+
+    define_computed_item(:tuple_space_broker_front_port_range,
+      [:tuple_space_broker_front_port_range_begin, :tuple_space_broker_front_port_range_end]) do |item|
+      item.desc = "port range of tuple space broker"
+      item.define_updater do
+        Range.new(
+          Global.tuple_space_broker_front_port_range_begin,
+          Global.tuple_space_broker_front_port_range_end)
+      end
+    end
   end
 end

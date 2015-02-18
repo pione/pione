@@ -155,6 +155,14 @@ module Pione
         item.desc = "Type of the client's user interface"
       end
 
+      option(:delegate_tuple_space) do |item|
+        item.type    = :boolean
+        item.long    = '--delegate-tuple-space'
+        item.desc    = 'Delegate tuple space to broker'
+        item.init    = false
+        item.default = true
+      end
+
       option_post(:validate_task_worker_size) do |item|
         item.desc = "Validate task worker size"
         item.process do
@@ -182,6 +190,7 @@ module Pione
         seq << ProcessAction.connect_parent
         seq << :spawner_thread_group
         seq << :ftp_server
+        seq << :tuple_space_provider
         seq << :tuple_space
         seq << :base_location
         seq << :lang_environment
@@ -214,17 +223,63 @@ module Pione
         end
       end
 
+      # Spawn a tuple space provider
+      setup(:tuple_space_provider_spawner) do |item|
+        item.process do
+          spawner = Command::PioneTupleSpaceProvider.spawn(cmd)
+          model[:tuple_space_provider_spawner] = spawner
+          model[:tuple_space_provider] = spawner.child_front
+
+          spawner.when_terminated do
+            if cmd.current_phase == :setup or cmd.current_phase == :execution
+              cmd.abort("%s is terminated because child tuple space provider is maybe dead." % cmd.name)
+            end
+          end
+        end
+
+        item.exception(SpawnError) do |e|
+          if cmd.current_phase == :termination
+            Log::Debug.system(e.message)
+          else
+            cmd.abort(e)
+          end
+        end
+      end
+
+      # Spawn a tuple space provider.
+      setup(:tuple_space_provider) do |item|
+        item.process do
+          if model[:delegate_tuple_space]
+            # get tuple space from tuple space broker
+            begin
+              Log::SystemLog.info("Find tuple space broker...")
+              Timeout.timeout(5) do
+                message = Notification::Message.new("CLIENT", "FIND_TUPLE_SPACE_BROKER", {"front" => model[:front].uri})
+                Notification::Transmitter.transmit(message)
+                model[:thread] = Thread.current
+                Thread.stop
+              end
+              Log::SystemLog.info('Tuple space broker "%s" has found.' % model[:tuple_space_broker_front_uri])
+            rescue Timeout::Error
+              cmd.abort("Tuple space broker has not found.")
+            end
+          else
+            # create tuple space by myself
+            cmd.phase(:setup).find_item(:tuple_space_provider_spawner).execute(cmd)
+            model[:tuple_space] = model[:tuple_space_provider].tuple_space()
+          end
+        end
+      end
+
       setup(:tuple_space) do |item|
         item.desc = "Make a tuple space"
-
-        item.assign(:tuple_space) do
-          TupleSpace::TupleSpaceServer.new(task_worker_resource: model[:request_task_worker])
-        end
 
         item.process do
           model[:front].set_tuple_space(model[:tuple_space])
 
           # write tuples
+          resource = model[:request_task_worker] || 1
+          model[:tuple_space].write(TupleSpace::TaskWorkerResourceTuple.new(number: resource))
           model[:tuple_space].write(TupleSpace::ProcessInfoTuple.new('standalone', 'Standalone'))
           model[:tuple_space].write(TupleSpace::DryRunTuple.new(model[:dry_run]))
 
@@ -340,7 +395,6 @@ module Pione
         seq << :messenger
         seq << :logger
         seq << :input_generator
-        seq << :tuple_space_provider
         seq << :task_worker
         seq << :job_manager
         seq << :check_rehearsal_result
@@ -396,41 +450,6 @@ module Pione
         end
       end
 
-      execution(:tuple_space_provider_spawner) do |item|
-        item.desc = "Spawn a tuple space provider"
-
-        item.assign(:tuple_space_provider) do
-          spawner = Command::PioneTupleSpaceProvider.spawn(cmd)
-          spawner.when_terminated do
-            if cmd.current_phase == :execution
-              cmd.abort("%s is terminated because child tuple space provider is maybe dead." % cmd.name)
-            end
-          end
-          spawner.child_front
-        end
-
-        item.exception(SpawnError) do |e|
-          if cmd.current_phase == :termination
-            Log::Debug.system(e.message)
-          else
-            cmd.abort(e)
-          end
-        end
-      end
-
-      execution(:tuple_space_provider) do |item|
-        item.desc = "Spawn a tuple space provider"
-
-        item.process do
-          test(not(model[:without_tuple_space_provider]))
-
-          thread = Thread.new do
-            cmd.phase(:execution).find_item(:tuple_space_provider_spawner).execute(cmd)
-          end
-          model[:spawner_threads].add(thread)
-        end
-      end
-
       # Spawn a task worker command. This is used from `task_worker` action.
       execution(:task_worker_spawner) do |item|
         item.desc = "Spawn a task worker"
@@ -441,7 +460,7 @@ module Pione
             :tuple_space_id => model[:tuple_space].uuid
           }
 
-          Command::PioneTaskWorker.spawn(model, param)
+          model[:task_worker_spawners] << Command::PioneTaskWorker.spawn(model, param)
         end
 
         item.exception(SpawnError) do |e|
@@ -477,6 +496,8 @@ module Pione
         # distribution mode
         item.process do
           test(not(model[:stand_alone]))
+
+          model[:task_worker_spawners] = []
 
           # spawn task worker commands
           model[:task_worker_size].times do
@@ -554,7 +575,6 @@ module Pione
         seq.configure(:timeout => 10)
 
         seq << :spawner_thread
-        seq << ProcessAction.terminate_children
         seq << :job_manager
         seq << :job_terminator
         seq << :task_worker
@@ -562,6 +582,8 @@ module Pione
         seq << :logger
         seq << :messenger
         seq << :tuple_space
+        seq << :kill_task_worker_processes
+        seq << ProcessAction.terminate_children
         seq << ProcessAction.disconnect_parent
       end
 
@@ -577,12 +599,10 @@ module Pione
         end
       end
 
-      # Be careful that main thread of `pione-client` command waits to stop the
-      # job manager's chain thread, so pione-client cannot terminate until the
-      # thread terminated.
+      # Terminate job manager agent. Be careful that main thread of
+      # `pione-client` command waits to stop the job manager's chain thread, so
+      # pione-client cannot terminate until the thread terminated.
       termination(:job_manager) do |item|
-        item.desc = "Terminate job manager agent"
-
         item.process do
           test(model[:job_manager])
           test(not(model[:job_manager].terminated?))
@@ -653,6 +673,17 @@ module Pione
           test(model[:tuple_space])
 
           model[:tuple_space].terminate
+        end
+      end
+
+      # Kill task worker processes.
+      termination(:kill_task_worker_processes) do |item|
+        item.process do
+          unless model[:task_worker_spawners].nil?
+            model[:task_worker_spawners].each do |child|
+              Util.ignore_exception {Process.kill(:TERM, child.pid)}
+            end
+          end
         end
       end
     end

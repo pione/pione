@@ -52,6 +52,7 @@ module Pione
       # @return [void]
       def transmit(message)
         LOCK.synchronize do
+          Log::SystemLog.debug("Transmit a notification to %s:%s." % [@uri.host, @uri.port])
           @socket.send(message.dump, 0, @uri.host, @uri.port)
         end
       end

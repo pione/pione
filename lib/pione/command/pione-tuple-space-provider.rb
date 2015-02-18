@@ -56,7 +56,14 @@ module Pione
       phase(:setup) do |item|
         item.configure(:timeout => 5)
 
+        item << :tuple_space
         item << ProcessAction.connect_parent
+      end
+
+      setup(:tuple_space) do |item|
+        item.process do
+          model[:tuple_space] = TupleSpace::TupleSpaceServer.new()
+        end
       end
 
       #
@@ -65,20 +72,18 @@ module Pione
 
       phase(:execution) do |item|
         item << :start_agent
-        item << :wait_agent
+        item << :sleep
       end
 
+      # Start agent's activity.
       execution(:start_agent) do |item|
-        item.desc = "Start an agent activity"
-
         item.assign(:agent) do
           Agent::TupleSpaceProvider.start(model[:front].uri)
         end
       end
 
-      execution(:wait_agent) do |item|
-        item.desc = "Wait agent to terminate"
-
+      # Sleep until agent is terminated.
+      execution(:sleep) do |item|
         item.process do
           model[:agent].wait_until_terminated(nil)
         end
@@ -100,7 +105,7 @@ module Pione
 
         item.process do
           test(model[:agent])
-          test(model[:agent].terminated?)
+          test(not(model[:agent].terminated?))
 
           model[:agent].terminate
           model[:agent].wait_until_terminated(nil)

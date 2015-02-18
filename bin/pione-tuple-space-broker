@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+
+require 'pione'
+require 'pione/front/tuple-space-broker-front'
+require 'pione/command/pione-tuple-space-broker'
+
+Pione::Command::PioneTupleSpaceBroker.run(ARGV)

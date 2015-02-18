@@ -24,6 +24,9 @@ module Pione
         data, addr = LOCK.synchronize {@socket.recvfrom(MAX_SIZE)}
         ip_address = addr[3]
         message = Message.load(data)
+        Log::SystemLog.debug(
+          "Notification data has been received from %s: {notifier: %s, type: %s}." %
+          [ip_address, message.notifier, message.type])
         return [ip_address, message]
       rescue TypeError, NoMethodError
         ip_address = ip_address || "(unknown)"
